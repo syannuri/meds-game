@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0f1a22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Rel Nusantara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--GAME-START-->
+<div id="game">
+  <canvas id="world" aria-label="Pemandangan jalur kereta"></canvas>
+
+  <div id="hud" hidden>
+    <div class="hud-top">
+      <button id="btnPause" class="panel icon-btn" aria-label="Jeda">II</button>
+      <div class="panel">
+        <span class="lbl">Waktu</span>
+        <span class="val" id="clock">06.00</span>
+      </div>
+      <div class="panel next">
+        <span class="lbl">Stasiun berikutnya</span>
+        <span class="val" id="nextName">CIBENING</span>
+        <span class="sub" id="nextSched">jadwal tiba 06.13</span>
+      </div>
+      <div class="panel comfort">
+        <span class="lbl">Kenyamanan</span>
+        <div class="bar"><i id="comfortBar"></i></div>
+        <span class="sub" id="comfortVal">100%</span>
+      </div>
+      <div class="panel coins">
+        <span class="lbl">Koin</span>
+        <span class="val" id="coins">0</span>
+      </div>
+      <button id="btnMusic" class="panel icon-btn" aria-label="Matikan musik">♪</button>
+      <button id="btnMute" class="panel icon-btn" aria-label="Matikan semua suara"></button>
+    </div>
+
+    <div class="hud-left">
+      <div class="panel speedo" id="speedo">
+        <span class="num" id="speed">0</span>
+        <div class="limit-sign" id="limit" aria-label="Batas kecepatan">40</div>
+        <span class="unit">km/h</span>
+        <span class="nextlim" id="nextLimit">&nbsp;</span>
+      </div>
+      <div class="actions">
+        <button class="act" id="btnHorn"><b>♫</b>Klakson</button>
+        <button class="act" id="btnDoor"><b>⇆</b><span id="doorLbl">Tutup pintu</span></button>
+      </div>
+    </div>
+
+    <div class="panel hud-bottom">
+      <canvas id="strip" aria-label="Peta jalur di depan"></canvas>
+      <div class="stopdist" id="stopBox">
+        <span class="lbl">Titik henti</span>
+        <span class="num" id="stopDist">—</span>
+      </div>
+    </div>
+
+    <div class="panel" id="lever" role="slider" aria-label="Tuas kendali: tenaga dan rem" aria-valuemin="-5" aria-valuemax="4" aria-valuenow="0" tabindex="0">
+      <span class="lbl">Tuas</span>
+      <div class="rows" id="leverRows">
+        <div class="thumb" id="leverThumb"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <section class="screen" id="screenTitle">
+    <div class="screen-inner">
+      <div>
+        <div class="eyebrow">Prototipe · Misi 1-4</div>
+        <h1 class="logo">Rel<span>Nusantara</span></h1>
+        <p class="lead">Kemudikan Si Gagah, lokomotif uap tua peninggalan kakek Raka, dari Sukamaju ke Pasar Lama. Patuhi sinyal, jaga penumpang tetap nyaman, dan berhenti tepat di marka peron.</p>
+        <div class="btn-row">
+          <button class="btn primary" id="btnStart">Mulai misi</button>
+          <button class="btn" id="btnMusicTitle">Musik: nyala</button>
+          <button class="btn" id="btnSoundTitle">Suara: nyala</button>
+        </div>
+        <div class="best" id="bestLine"></div>
+      </div>
+      <div class="card">
+        <span class="lbl">Cara bermain</span>
+        <ul class="howto" style="margin-top:10px">
+          <li><kbd>P1–P4</kbd><span>Geser tuas ke atas untuk menambah tenaga. Tenaga baru bekerja setelah pintu ditutup.</span></li>
+          <li><kbd>B1–B4</kbd><span>Geser ke bawah untuk mengerem. Rem bereaksi perlahan, jadi mulai lebih awal. Lepas ke B1 sesaat sebelum berhenti agar tidak menyentak.</span></li>
+          <li><kbd>EB</kbd><span>Rem darurat. Paling kuat, tapi penumpang terguncang.</span></li>
+          <li><kbd>♫</kbd><span>Bunyikan klakson sebelum perlintasan dan saat ada hewan di rel.</span></li>
+          <li><kbd>3</kbd><span>Berhenti dengan moncong lokomotif tepat di marka kuning bernomor 3.</span></li>
+          <li><kbd>♪</kbd><span>Lebih seru pakai headphone.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screenBrief" hidden>
+    <div class="screen-inner">
+      <div>
+        <div class="eyebrow">Babak 1 · Jawa · Misi 1-4</div>
+        <h2>Pagi Pertama Pasar Minggu</h2>
+        <div class="speaker">
+          <div class="avatar" aria-hidden="true">BW</div>
+          <p class="quote"><small>Bu Wulan, kepala stasiun</small>Raka, pedagang pasar sudah menunggu di Cibening. Jangan sampai sayur mereka layu! Pagi ini berkabut, jadi perhatikan sinyal di petak jembatan.</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" id="btnGo">Berangkat</button>
+          <button class="btn" id="btnBack">Kembali</button>
+        </div>
+      </div>
+      <div class="card">
+        <dl class="facts">
+          <dt>Rute</dt><dd>Sukamaju → Cibening → Pasar Lama</dd>
+          <dt>Jarak</dt><dd>2,6 km · 2 pemberhentian</dd>
+          <dt>Kereta</dt><dd>Si Gagah + 2 gerbong</dd>
+          <dt>Berangkat</dt><dd>06.00, kabut ringan</dd>
+          <dt>Jadwal</dt><dd>Cibening 06.13 · Pasar Lama 06.26</dd>
+        </dl>
+        <ul class="goals">
+          <li><span class="star">★</span>Tiba dengan selamat</li>
+          <li><span class="star">★</span>Tiba di Pasar Lama tepat waktu</li>
+          <li><span class="star">★</span>Kenyamanan minimal 80% dan semua pemberhentian Good atau Perfect</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screenPause" hidden>
+    <div class="screen-inner">
+      <div>
+        <div class="eyebrow">Jeda</div>
+        <h2>Kereta berhenti sejenak</h2>
+        <div class="btn-row">
+          <button class="btn primary" id="btnResume">Lanjutkan</button>
+          <button class="btn" id="btnRestart">Ulangi misi</button>
+          <button class="btn" id="btnQuit">Ke menu</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screenResult" hidden>
+    <div class="screen-inner">
+      <div>
+        <div class="eyebrow" id="resEyebrow">Misi 1-4</div>
+        <h2 id="resTitle">Misi selesai</h2>
+        <div class="stars" id="resStars"></div>
+        <p class="fail-reason" id="resFail" hidden></p>
+        <div class="btn-row">
+          <button class="btn primary" id="btnAgain">Main lagi</button>
+          <button class="btn" id="btnMenu">Ke menu</button>
+        </div>
+      </div>
+      <div class="card" id="resCard"></div>
+    </div>
+  </section>
+
+  <div id="rotate" hidden>
+    <div>
+      <div class="phone" aria-hidden="true"></div>
+      <p>Putar ponsel ke posisi mendatar (landscape) untuk pengalaman terbaik.</p>
+      <button class="btn" id="btnRotateSkip">Tetap main</button>
+    </div>
+  </div>
+</div>
+<script src="game.js"></script>
+<!--GAME-END-->
+</body>
+</html>
