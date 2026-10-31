@@ -86,6 +86,7 @@ button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
 .hud-top .comfort { width: 128px; }
 .bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
 .bar i { display: block; height: 100%; width: 100%; background: var(--sig-green); transition: width 0.2s, background-color 0.3s; }
+.icon-btn.off { color: var(--muted); text-decoration: line-through; }
 .icon-btn {
   width: 44px; min-height: 44px;
   display: grid; place-items: center;

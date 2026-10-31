@@ -63,67 +63,296 @@
   const notchLabel = (n) => NOTCHES[4 - n];
 
   // ---------- audio (WebAudio sintetis, tanpa berkas) ----------
+  // Tiga jalur: efek (sfx), suasana (amb), musik. Semua bunyi dibuat dari osilator & noise.
   const Sound = (() => {
-    let ac = null, master = null, noise = null, muted = false;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    let ac = null, master = null, sfx = null, amb = null, music = null;
+    let white = null, brown = null, panOk = false;
+    let muted = store.get('rn.mute') === '1';
+    let musicOn = store.get('rn.music') !== '0';
+    const L = {};                    // lapisan bunyi kontinu
+    let nextBird = 0, nextBell = 0, nextCricket = 0, duckUntil = 0;
+    let musicTimer = null, nextBeat = 0, beat = 0, musicLevel = 0.16;
+    let idVoice = null;
+
+    function g(v) { const n = ac.createGain(); n.gain.value = v; return n; }
+    function set(param, v, tc = 0.15) { param.setTargetAtTime(v, ac.currentTime, tc); }
+    function makeNoise(sec, isBrown) {
+      const len = Math.floor(ac.sampleRate * sec);
+      const b = ac.createBuffer(1, len, ac.sampleRate);
+      const d = b.getChannelData(0);
+      let last = 0;
+      for (let i = 0; i < len; i++) {
+        const w = Math.random() * 2 - 1;
+        if (isBrown) { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w;
+      }
+      return b;
+    }
+    function loop(buf, type, freq, q, bus) {
+      const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+      const f = ac.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+      const gn = g(0);
+      src.connect(f).connect(gn).connect(bus);
+      src.start(0, Math.random() * buf.duration);
+      return { f, g: gn };
+    }
+    function panner(p) {
+      if (!panOk) return null;
+      const n = ac.createStereoPanner(); n.pan.value = p; return n;
+    }
+
     function init() {
       if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+      if (!AC) return;
       try {
-        ac = new (window.AudioContext || window.webkitAudioContext)();
-        master = ac.createGain(); master.gain.value = muted ? 0 : 0.6; master.connect(ac.destination);
-        const len = Math.floor(ac.sampleRate * 0.6);
-        noise = ac.createBuffer(1, len, ac.sampleRate);
-        const d = noise.getChannelData(0);
-        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        ac = new AC();
+        panOk = typeof ac.createStereoPanner === 'function';
+        const comp = ac.createDynamicsCompressor();
+        comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = 0.01; comp.release.value = 0.25;
+        master = g(muted ? 0 : 0.8); master.connect(comp).connect(ac.destination);
+        sfx = g(1); sfx.connect(master);
+        amb = g(1); amb.connect(master);
+        music = g(musicOn ? musicLevel : 0); music.connect(master);
+        white = makeNoise(2.2, false); brown = makeNoise(3.1, true);
+
+        L.rumble = loop(brown, 'lowpass', 140, 0.7, sfx);      // gemuruh roda
+        L.hiss = loop(white, 'highpass', 4200, 0.5, sfx);       // desis uap saat diam
+        L.squeal = loop(white, 'bandpass', 3300, 28, sfx);      // decit rem
+        L.wind = loop(brown, 'bandpass', 520, 0.6, amb);        // angin
+        L.river = loop(white, 'bandpass', 900, 0.6, amb);       // sungai di bawah jembatan
+        L.crowd = loop(brown, 'bandpass', 520, 1.3, amb);       // riuh penumpang di peron
+        // embusan angin pelan
+        const lfo = ac.createOscillator(); lfo.frequency.value = 0.11;
+        const lg = g(0.025); lfo.connect(lg).connect(L.wind.g.gain); lfo.start();
+        // gumam kerumunan: modulasi seperti suku kata
+        const mod = ac.createOscillator(); mod.frequency.value = 3.3;
+        const mg = g(0.03); mod.connect(mg).connect(L.crowd.g.gain); mod.start();
+
+        loadVoice();
+        startMusic();
       } catch (e) { ac = null; }
     }
-    function burst(freq, q, vol, dur, type) {
-      if (!ac || muted) return;
-      const t = ac.currentTime;
-      const src = ac.createBufferSource(); src.buffer = noise;
-      const f = ac.createBiquadFilter(); f.type = type || 'bandpass'; f.frequency.value = freq; f.Q.value = q;
-      const g = ac.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      src.connect(f).connect(g).connect(master);
-      src.start(t, Math.random() * 0.2); src.stop(t + dur + 0.02);
+
+    function loadVoice() {
+      if (!('speechSynthesis' in window)) return;
+      const pick = () => {
+        const vs = window.speechSynthesis.getVoices() || [];
+        idVoice = vs.find((v) => /^(id|in)[-_]/i.test(v.lang)) || null;
+      };
+      pick();
+      try { window.speechSynthesis.addEventListener('voiceschanged', pick); } catch (e) { /* old webview */ }
     }
+
+    // ---- bunyi sesaat ----
+    function burst(freq, q, vol, dur, type, bus, delay = 0) {
+      if (!ac || muted) return;
+      const t = ac.currentTime + delay;
+      const src = ac.createBufferSource(); src.buffer = white;
+      const f = ac.createBiquadFilter(); f.type = type || 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+      const gn = ac.createGain();
+      gn.gain.setValueAtTime(0.0001, t);
+      gn.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+      gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      src.connect(f).connect(gn).connect(bus || sfx);
+      src.start(t, Math.random() * 1.5); src.stop(t + dur + 0.05);
+    }
+    function tone(freq, vol, dur, opts = {}) {
+      if (!ac || muted) return;
+      const t = ac.currentTime + (opts.delay || 0);
+      const o = ac.createOscillator(); o.type = opts.type || 'sine';
+      o.frequency.setValueAtTime(freq, t);
+      if (opts.to) o.frequency.exponentialRampToValueAtTime(opts.to, t + (opts.glide || dur));
+      const gn = ac.createGain();
+      gn.gain.setValueAtTime(0.0001, t);
+      gn.gain.exponentialRampToValueAtTime(vol, t + (opts.attack || 0.008));
+      gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      let out = o.connect(gn);
+      const pn = opts.pan !== undefined ? panner(opts.pan) : null;
+      if (pn) out = out.connect(pn);
+      out.connect(opts.bus || sfx);
+      o.start(t); o.stop(t + dur + 0.05);
+    }
+    // logam berbilah (saron/bonang/bel): nada dasar + parsial tak harmonis + "ombak" (detak)
+    function metal(freq, vol, dur, bus, delay = 0) {
+      tone(freq, vol, dur, { bus, delay });
+      tone(freq + 2.6, vol * 0.6, dur * 0.9, { bus, delay });
+      tone(freq * 2.76, vol * 0.18, dur * 0.35, { bus, delay });
+      tone(freq * 4.1, vol * 0.06, dur * 0.18, { bus, delay });
+    }
+
+    // ---- musik latar bernuansa gamelan (laras slendro, buatan sendiri) ----
+    const SL = { 1: 1, 2: 1.147, 3: 1.318, 5: 1.512, 6: 1.737, 7: 2 }; // 7 = 1 tinggi
+    const BALUNGAN = [2, 1, 2, 6, 2, 1, 2, 6, 3, 5, 6, 7, 6, 5, 3, 2, 5, 3, 5, 6, 7, 6, 5, 3, 6, 5, 3, 2, 3, 5, 3, 2];
+    const BASE = 233;
+    const BEAT = 0.62;
+    function startMusic() {
+      if (musicTimer) return;
+      nextBeat = ac.currentTime + 0.3;
+      musicTimer = setInterval(scheduleMusic, 90);
+    }
+    function scheduleMusic() {
+      if (!ac || ac.state !== 'running') return;
+      while (nextBeat < ac.currentTime + 0.4) { playBeat(beat, nextBeat - ac.currentTime); nextBeat += BEAT; beat++; }
+    }
+    function playBeat(i, d) {
+      if (muted || !musicOn) return;
+      const n = BALUNGAN[i % BALUNGAN.length];
+      const nx = BALUNGAN[(i + 1) % BALUNGAN.length];
+      const pos = i % 16;
+      metal(BASE * SL[n], 0.22, 1.5, music, d);                       // saron
+      metal(BASE * 2 * SL[n], 0.07, 0.5, music, d + BEAT * 0.5);      // bonang (imbal)
+      metal(BASE * 2 * SL[nx], 0.05, 0.4, music, d + BEAT * 0.75);
+      if (pos % 4 === 3) metal(BASE * 0.5 * SL[n] * 2, 0.12, 2.2, music, d);   // kenong
+      if (pos === 5 || pos === 9 || pos === 13) metal(BASE * 0.5 * SL[n], 0.1, 2.6, music, d); // kempul
+      if (pos === 15) {                                                // gong ageng
+        tone(62, 0.45, 6, { bus: music, delay: d, attack: 0.03 });
+        tone(63.3, 0.3, 6, { bus: music, delay: d, attack: 0.03 });
+        tone(130, 0.08, 3, { bus: music, delay: d, attack: 0.03 });
+      }
+      // kendang: "dhung" dan "tak" sederhana
+      if (pos % 2 === 0) tone(110, 0.16, 0.22, { bus: music, delay: d, to: 70, glide: 0.18 });
+      if (pos % 4 === 1) burst(2200, 1.5, 0.05, 0.06, 'bandpass', music, d + BEAT * 0.5);
+    }
+
+    // ---- satwa & suasana ----
+    function bird(vol) {
+      const pan = Math.random() * 1.6 - 0.8;
+      if (Math.random() < 0.5) { // cuitan cepat
+        const k = 2 + Math.floor(Math.random() * 3), f0 = 2600 + Math.random() * 1400;
+        for (let i = 0; i < k; i++) tone(f0, vol, 0.08, { to: f0 * 1.45, glide: 0.06, delay: i * 0.12, bus: amb, pan });
+      } else { // siulan tiga nada ala kutilang
+        const f0 = 1700 + Math.random() * 500;
+        [[1, 0], [1.33, 0.16], [1.18, 0.3]].forEach(([m, dl]) => tone(f0 * m, vol, 0.16, { to: f0 * m * 1.06, delay: dl, bus: amb, pan }));
+      }
+    }
+    function cricket(vol) {
+      const f = 4300 + Math.random() * 500, pan = Math.random() * 1.4 - 0.7;
+      for (let i = 0; i < 4; i++) tone(f, vol, 0.03, { type: 'square', delay: i * 0.045, bus: amb, pan });
+    }
+    function crossingBell(vol) { // "teng" palang pintu perlintasan
+      tone(1180, vol, 0.45, { bus: amb, pan: 0.35 });
+      tone(2830, vol * 0.35, 0.25, { bus: amb, pan: 0.35 });
+      burst(5000, 2, vol * 0.25, 0.03, 'highpass', amb);
+    }
+
+    // ---- dipanggil tiap frame ----
+    function update(info) {
+      if (!ac) return;
+      const t = ac.currentTime;
+      const live = !muted;
+      const run = live && info.running;
+      const v = info.v || 0;
+      set(L.rumble.g.gain, run ? Math.min(0.55, v * 0.032) * (info.onBridge ? 1.7 : 1) : 0, 0.2);
+      L.rumble.f.frequency.setTargetAtTime(100 + v * 9 + (info.onBridge ? 70 : 0), t, 0.25);
+      set(L.hiss.g.gain, live && info.scene ? (v < 0.4 ? 0.022 : 0.006) : 0, 0.3);
+      set(L.squeal.g.gain, run && info.braking && v > 0.25 && v < 5 ? 0.05 * (1.1 - v / 5) : 0, 0.08);
+      set(L.wind.g.gain, live && info.scene ? 0.045 + v * 0.004 + info.fog * 0.03 : 0, 0.5);
+      set(L.river.g.gain, live && info.scene ? info.river * 0.13 : 0, 0.4);
+      set(L.crowd.g.gain, live && info.scene ? info.crowd * 0.08 : 0, 0.5);
+      // musik turun saat bermain, makin turun saat pengumuman
+      const want = !musicOn || muted ? 0 : t < duckUntil ? 0.04 : info.running ? 0.09 : 0.16;
+      if (Math.abs(want - musicLevel) > 0.001) { musicLevel = want; set(music.gain, want, 0.6); }
+      if (!live || !info.scene) return;
+      if (info.bell > 0 && t >= nextBell) { crossingBell(0.05 + info.bell * 0.12); nextBell = t + 0.55; }
+      if (t >= nextBird) {
+        if (info.fog < 0.6) bird(0.02 + Math.random() * 0.025);
+        nextBird = t + 0.8 + Math.random() * (info.fog > 0.3 ? 6 : 2.6);
+      }
+      if (info.dawn && t >= nextCricket) { cricket(0.012); nextCricket = t + 0.35 + Math.random() * 0.5; }
+    }
+
+    // ---- pengumuman stasiun ----
+    function chime() { [784, 659, 523, 659].forEach((f, i) => metal(f, 0.13, 1.1, sfx, i * 0.42)); }
+    function announce(text) {
+      if (!ac || muted) return;
+      chime();
+      duckUntil = ac.currentTime + 2 + text.length * 0.07;
+      if (!idVoice || !('speechSynthesis' in window)) return;
+      setTimeout(() => {
+        try {
+          const u = new SpeechSynthesisUtterance(text);
+          u.voice = idVoice; u.lang = idVoice.lang; u.rate = 0.95; u.pitch = 1.05; u.volume = 0.9;
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(u);
+        } catch (e) { /* speech not available */ }
+      }, 1700);
+    }
+
     return {
-      init,
+      init, update, announce,
       chuff(vol) { burst(380 + Math.random() * 140, 0.9, vol, 0.2); },
       click(vol) { burst(2600, 2.5, vol, 0.05, 'highpass'); },
-      squeal(vol) { burst(3400, 18, vol, 0.25); },
+      squeal(vol) { burst(3400, 18, vol, 0.35); },
+      tick() { burst(3200, 3, 0.05, 0.03, 'bandpass'); tone(140, 0.08, 0.06); },
+      airApply() { burst(2400, 0.7, 0.05, 0.25, 'highpass'); },
+      airRelease(vol = 0.11) { burst(1800, 0.6, vol, 0.8, 'highpass'); },
+      doorSlide(open) {
+        if (!ac || muted) return;
+        const t = ac.currentTime;
+        const src = ac.createBufferSource(); src.buffer = white;
+        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2;
+        f.frequency.setValueAtTime(open ? 500 : 1300, t); f.frequency.linearRampToValueAtTime(open ? 1300 : 500, t + 0.55);
+        const gn = g(0); gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.06, t + 0.05); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+        src.connect(f).connect(gn).connect(sfx); src.start(t); src.stop(t + 0.65);
+        tone(90, 0.18, 0.12, { delay: 0.58 });
+      },
       whistle() {
         if (!ac || muted) return;
         const t = ac.currentTime;
-        const g = ac.createGain();
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.16, t + 0.07);
-        g.gain.setValueAtTime(0.16, t + 0.8);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
+        const gn = ac.createGain();
+        gn.gain.setValueAtTime(0.0001, t);
+        gn.gain.exponentialRampToValueAtTime(0.16, t + 0.07);
+        gn.gain.setValueAtTime(0.16, t + 0.8);
+        gn.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
-        g.connect(lp).connect(master);
+        gn.connect(lp).connect(sfx);
         [466.16, 587.33, 698.46].forEach((fr) => {
           const o = ac.createOscillator(); o.type = 'triangle';
           o.frequency.setValueAtTime(fr * 0.96, t); o.frequency.linearRampToValueAtTime(fr, t + 0.1);
-          o.connect(g); o.start(t); o.stop(t + 1.1);
+          o.connect(gn); o.start(t); o.stop(t + 1.1);
         });
         burst(1700, 1.2, 0.04, 0.6);
+        // gema dari bukit
+        tone(587.33, 0.025, 0.7, { delay: 0.45, type: 'triangle', attack: 0.1, bus: amb });
       },
       ding() {
+        [[988, 0], [784, 0.28]].forEach(([fr, dt]) => tone(fr, 0.15, 0.6, { delay: dt }));
+      },
+      bleat() {
         if (!ac || muted) return;
         const t = ac.currentTime;
-        [[988, 0], [784, 0.28]].forEach(([fr, dt]) => {
-          const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = fr;
-          const g = ac.createGain();
-          g.gain.setValueAtTime(0.0001, t + dt);
-          g.gain.exponentialRampToValueAtTime(0.15, t + dt + 0.01);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.6);
-          o.connect(g).connect(master); o.start(t + dt); o.stop(t + dt + 0.65);
-        });
+        const o = ac.createOscillator(); o.type = 'sawtooth';
+        o.frequency.setValueAtTime(420, t); o.frequency.linearRampToValueAtTime(360, t + 0.55);
+        const vib = ac.createOscillator(); vib.frequency.value = 9;
+        const vg = g(28); vib.connect(vg).connect(o.frequency);
+        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1100; f.Q.value = 2.5;
+        const gn = g(0);
+        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.12, t + 0.04);
+        gn.gain.setValueAtTime(0.1, t + 0.4); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+        const pn = panner(0.4);
+        let out = o.connect(f).connect(gn); if (pn) out = out.connect(pn); out.connect(amb);
+        o.start(t); vib.start(t); o.stop(t + 0.7); vib.stop(t + 0.7);
       },
-      toggle() { muted = !muted; if (master) master.gain.value = muted ? 0 : 0.6; return muted; },
+      crash() {
+        burst(180, 0.5, 0.5, 1.4, 'lowpass');
+        burst(900, 4, 0.2, 0.9, 'bandpass', sfx, 0.05);
+        metal(310, 0.2, 1.6, sfx, 0.02);
+      },
+      stars(n) {
+        const notes = [523.25, 659.25, 783.99];
+        for (let i = 0; i < n; i++) metal(notes[i] * 2, 0.16, 1.4, sfx, 0.35 + i * 0.3);
+        if (n === 3) metal(1046.5 * 2, 0.12, 2, sfx, 1.4);
+      },
+      failSting() { [392, 311, 233].forEach((f, i) => tone(f, 0.12, 0.7, { type: 'triangle', delay: i * 0.3 })); },
+      toggleMute() {
+        muted = !muted; store.set('rn.mute', muted ? '1' : '0');
+        if (master) set(master.gain, muted ? 0 : 0.8, 0.05);
+        if (muted && 'speechSynthesis' in window) { try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } }
+        return muted;
+      },
+      toggleMusic() { musicOn = !musicOn; store.set('rn.music', musicOn ? '1' : '0'); return musicOn; },
       get muted() { return muted; },
+      get musicOn() { return musicOn; },
     };
   })();
 
@@ -267,7 +496,7 @@
     S.failReason = reason;
     S.mode = 'fail';
     S.shake = 1.4;
-    Sound.squeal(0.12);
+    Sound.crash();
     setTimeout(() => showResult(), 1100);
   }
 
@@ -276,6 +505,9 @@
     if (n === S.notch) return;
     const prev = S.notch;
     S.notch = n;
+    Sound.tick();
+    if (prev < 0 && n > prev) Sound.airRelease(n >= 0 ? 0.11 : 0.05);
+    else if (n < 0 && n < prev) Sound.airApply();
     if (n === -5 && prev !== -5 && S.v > 1) {
       S.comfort = clamp(S.comfort - 10, 0, 100);
       S.shake = 0.8;
@@ -298,6 +530,7 @@
     }
     if (S.goat.state === 'idle' && S.x >= g.hornFrom && S.x < g.x - 25) {
       S.goat.state = 'flee'; S.goat.t = 0;
+      setTimeout(() => Sound.bleat(), 350);
       toast('Kambing menyingkir dari rel.', 'good', 2, null, 2);
     }
   }
@@ -307,13 +540,13 @@
     if (S.phase === 'dwell') {
       const step = S.dwell.step;
       if (step === 'open') {
-        S.doors = 'open'; Sound.ding();
+        S.doors = 'open'; Sound.ding(); Sound.doorSlide(true);
         S.dwell.step = ROUTE.stations[S.st].final ? 'alight' : 'board';
         S.dwell.timer = 0;
         return;
       }
       if (step === 'close') {
-        S.doors = 'closed'; Sound.ding();
+        S.doors = 'closed'; Sound.ding(); Sound.doorSlide(false);
         S.dwell.step = 'signal'; S.dwell.timer = 0;
         toast('Pintu tertutup. Tunggu sinyal berangkat hijau.', 'info', 2.4, null, 2);
         return;
@@ -353,6 +586,7 @@
     const where = d > 0 ? 'lewat' : 'kurang';
     const kind = rating.c === 'miss' ? 'bad' : rating.c === 'ok' ? 'info' : 'good';
     toast(`${rating.r.toUpperCase()}! ${fmtM(Math.abs(d))} m ${where} dari marka. Buka pintu.`, kind, 3.2, null, 3);
+    if (st.final) setTimeout(() => Sound.announce('Kereta telah tiba di Stasiun Pasar Lama, stasiun akhir. Terima kasih telah bepergian bersama Si Gagah.'), 900);
   }
 
   function updateDwell(dt) {
@@ -456,13 +690,18 @@
     if (prevX < c.hornFrom && S.x >= c.hornFrom) hintOnce('crossing', 'Perlintasan sebidang 300 m lagi. Bunyikan klakson!', 'warn');
     if (prevX < c.x && S.x >= c.x && !S.horned.crossing) violation('crossing', 'Tidak membunyikan klakson sebelum perlintasan', 8);
     if (prevX < g.hornFrom && S.x >= g.hornFrom && S.goat.state === 'idle') hintOnce('goat', 'Ada kambing di rel! Bunyikan klakson.', 'warn');
-    if (S.goat.state === 'idle' && S.x >= g.x - 25) { S.goat.state = 'flee'; S.goat.t = 0; violation('goat', 'Hampir menabrak kambing. Klakson lebih awal.', 6); }
+    if (S.goat.state === 'idle' && S.x >= g.x - 25) { S.goat.state = 'flee'; S.goat.t = 0; Sound.bleat(); violation('goat', 'Hampir menabrak kambing. Klakson lebih awal.', 6); }
     if (S.goat.state === 'flee') { S.goat.t += dt; if (S.goat.t > 2.2) S.goat.state = 'gone'; }
 
     // --- petunjuk ---
     if (S.x > 260) hintOnce('curve', 'Tikungan Bukit di depan: batas 30 km/h. Rem lebih awal.');
     if (S.x > ROUTE.fog.from) hintOnce('fog', 'Kabut menebal. Sinyal jauh tidak terlihat di peta jalur.', 'info');
     const ns = nextStation();
+    if (ns && S.phase === 'run' && ns.x - S.x < 420 && ns.x - S.x > 0 && !S.hints['ann' + S.st]) {
+      S.hints['ann' + S.st] = true;
+      const nm = ns.name.charAt(0) + ns.name.slice(1).toLowerCase().replace(/ (\w)/g, (m0, c1) => ' ' + c1.toUpperCase());
+      Sound.announce(`Sesaat lagi kereta akan tiba di Stasiun ${nm}. Periksa kembali barang bawaan Anda.`);
+    }
     if (ns && S.phase === 'run' && ns.x - S.x < 260 && ns.x - S.x > 0) hintOnce('stop' + S.st, `Stasiun ${ns.name}: berhenti tepat di marka kuning "3".`);
 
     // --- tiba di stasiun ---
@@ -542,6 +781,7 @@
     const r = computeResult();
     const best = Number(store.get('relnusantara.best.1-4') || 0);
     if (r.stars > best) store.set('relnusantara.best.1-4', String(r.stars));
+    if (r.failed) Sound.failSting(); else Sound.stars(r.stars);
     $('resTitle').textContent = r.failed ? 'Misi gagal' : 'Misi selesai';
     $('resEyebrow').textContent = r.failed ? 'Misi 1-4 · Pagi Pertama Pasar Minggu' : `Misi 1-4 · tiba ${fmtClock(S.clock)}`;
     $('resStars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < r.stars ? 'on' : 'off'}">${STAR_SVG}</span>`).join('');
@@ -588,6 +828,7 @@
     fitStrip();
     renderLever();
     toast('Selamat pagi, Masinis Raka! Tutup pintu untuk bersiap berangkat.', 'info', 4, null, 3);
+    setTimeout(() => { if (S && S.st === 0) Sound.announce('Perhatian. Kereta lokal Si Gagah tujuan Pasar Lama di jalur satu akan segera diberangkatkan.'); }, 600);
   }
 
   // ---------- input ----------
@@ -659,12 +900,25 @@
   $('btnGo').addEventListener('click', () => { Sound.init(); startMission(); });
   $('btnAgain').addEventListener('click', () => { Sound.init(); startMission(); });
   $('btnMenu').addEventListener('click', () => { S = null; showScreen('title'); });
-  $('btnMute').addEventListener('click', () => {
-    Sound.init();
-    const m = Sound.toggle();
-    $('btnMute').textContent = m ? '×' : '♪';
-    $('btnMute').setAttribute('aria-label', m ? 'Nyalakan suara' : 'Matikan suara');
-  });
+  const SPK_ON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  const SPK_OFF = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  function syncAudioButtons() {
+    const m = Sound.muted, mu = Sound.musicOn;
+    $('btnMute').innerHTML = m ? SPK_OFF : SPK_ON;
+    $('btnMute').setAttribute('aria-label', m ? 'Nyalakan suara' : 'Matikan semua suara');
+    $('btnMusic').classList.toggle('off', !mu);
+    $('btnMusic').setAttribute('aria-label', mu ? 'Matikan musik' : 'Nyalakan musik');
+    $('btnMusicTitle').textContent = `Musik: ${mu ? 'nyala' : 'mati'}`;
+    $('btnSoundTitle').textContent = `Suara: ${m ? 'mati' : 'nyala'}`;
+  }
+  $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
+  $('btnSoundTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
+  $('btnMusic').addEventListener('click', () => { Sound.init(); Sound.toggleMusic(); syncAudioButtons(); });
+  $('btnMusicTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMusic(); syncAudioButtons(); });
+  syncAudioButtons();
+  // browser hanya mengizinkan audio setelah sentuhan pertama
+  document.addEventListener('pointerdown', () => Sound.init(), { once: true });
+  document.addEventListener('keydown', () => Sound.init(), { once: true });
   $('btnRotateSkip').addEventListener('click', () => { rotateSkipped = true; checkOrientation(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
   window.addEventListener('resize', resize);
@@ -1324,6 +1578,28 @@
     }
   }
 
+  // ---------- info untuk audio ----------
+  function audioInfo() {
+    const st = S || idleState;
+    const scene = mode !== 'pause';
+    const running = !!S && mode === 'play' && S.mode === 'play';
+    const b = ROUTE.bridge, c = ROUTE.crossing;
+    const onBridge = st.x > b.from && st.x - TRAIN_LEN < b.to;
+    const river = clamp(1 - Math.abs(st.x - 25 - (b.from + b.to) / 2) / 240, 0, 1);
+    let crowd = 0;
+    ROUTE.stations.forEach((s, i) => {
+      const prox = clamp(1 - Math.abs(st.x - 25 - (s.x - 40)) / 170, 0, 1);
+      const people = (st.waiting ? st.waiting[i] : s.waiting) > 0 ? 1 : 0.35;
+      crowd = Math.max(crowd, prox * people);
+    });
+    if (S && S.phase === 'dwell' && (S.dwell.step === 'board' || S.dwell.step === 'alight')) crowd = 1.3;
+    const bell = st.x > c.x - 320 && st.x - TRAIN_LEN < c.x + 5 ? clamp(1 - Math.abs(c.x - st.x) / 320, 0.15, 1) : 0;
+    return {
+      scene, running, v: st.v, braking: st.aCmd < -0.3, onBridge, river, crowd, bell,
+      fog: fogAt(st.x + 30), dawn: st.clock < 420,
+    };
+  }
+
   // ---------- loop ----------
   const idleState = (() => { const s = newState(); s.x = 30; s.notch = 0; return s; })();
   let last = performance.now();
@@ -1355,6 +1631,7 @@
     }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) ui.toast.className = ''; }
     if (W && H) render(dt);
+    Sound.update(audioInfo());
     if (S && (mode === 'play' || mode === 'pause')) { updateHud(); renderStrip(); }
     requestAnimationFrame(frame);
   }

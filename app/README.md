@@ -13,7 +13,14 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 - Kabut yang menyembunyikan sinyal jauh dari peta jalur
 - Berhenti presisi di marka "3" (Perfect / Good / OK / Miss), buka-tutup pintu, penumpang naik
 - Jadwal dan jam game, kenyamanan penumpang, koin, 3 bintang, layar hasil, rekor tersimpan
-- Suara sintetis (WebAudio): uap, sambungan rel "jeglak-jeglek", peluit, bel pintu
+- Audio sintetis (WebAudio, tanpa berkas suara):
+  - Musik latar bernuansa gamelan (laras slendro: saron, bonang, kenong, kempul, gong, kendang)
+  - Suasana: kicau burung, jangkrik saat fajar, angin, sungai di bawah jembatan, riuh penumpang di peron
+  - Kereta: hentakan uap, gemuruh roda (lebih bergema di jembatan), "jeglak-jeglek" sambungan rel,
+    desis uap saat diam, rem angin, decit rem, peluit dengan gema
+  - Bel perlintasan "teng-teng", embik kambing, pintu geser, bel pintu, tabrakan
+  - Pengumuman stasiun dengan nada "ting-tung"; jika perangkat punya suara Bahasa Indonesia, pengumuman dibacakan
+  - Jingle bintang di layar hasil; tombol terpisah untuk musik dan semua suara
 - Kontrol sentuh (HP) dan keyboard (desktop)
 
 ## Coba di browser
