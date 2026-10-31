@@ -204,7 +204,7 @@ button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
 h1.logo {
   font-family: var(--display);
   font-weight: 900;
-  font-size: clamp(48px, 11vw, 104px);
+  font-size: clamp(40px, min(11vw, 17vh), 104px);
   line-height: 0.86;
   letter-spacing: 0.01em;
   margin: 8px 0 10px;
@@ -223,6 +223,7 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 30px; line-height
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--line);
 }
+.btn.sm { min-height: 40px; padding: 0 14px; font-size: 13px; }
 .btn.primary { background: var(--saffron); color: #1b1305; border-color: transparent; }
 .btn.primary:active { filter: brightness(0.92); }
 
@@ -291,6 +292,38 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 30px; line-height
 @keyframes turn { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 #rotate p { max-width: 30ch; margin: 0 auto 16px; line-height: 1.5; }
 
+/* misi */
+.missions { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.mission {
+  width: 100%; min-height: 56px;
+  display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  text-align: left; padding: 8px 12px;
+  border-radius: 10px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.04);
+}
+.mission:hover, .mission.sel { border-color: rgba(242, 165, 22, 0.6); background: rgba(242, 165, 22, 0.08); }
+.mission .mid { font-size: 24px; color: var(--saffron); }
+.mission .mtxt { display: grid; gap: 2px; min-width: 0; }
+.mission .mtxt b { font-size: 14px; }
+.mission .mtxt small { font-size: 11px; color: var(--muted); }
+.mission .mstars { color: var(--saffron); letter-spacing: 0.1em; font-size: 14px; white-space: nowrap; }
+
+.act.sand { grid-column: 1 / 3; min-height: 38px; flex-direction: row; font-size: 12px; }
+.act.sand.active { background: rgba(176, 138, 85, 0.45); border-color: #b08a55; }
+
+#radio {
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  max-width: min(520px, 56vw);
+  display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; align-items: center;
+  padding: 8px 12px;
+  border-color: rgba(240, 138, 36, 0.6);
+  pointer-events: none;
+}
+#radio p { margin: 0; font-size: 13px; line-height: 1.4; }
+#radio small { display: block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #f6b36a; font-weight: 700; }
+.avatar.sm { width: 36px; height: 36px; font-size: 9px; padding-bottom: 2px; }
+
 /* compact HUD on short screens (phone landscape) */
 @media (max-height: 420px) {
   .hud-top .val { font-size: 17px; }
@@ -298,6 +331,9 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 30px; line-height
   .hud-left { width: 136px; }
   .speedo .num { font-size: 38px; }
   .act { min-height: 50px; }
+  .act.sand { min-height: 32px; }
+  #radio { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); padding: 6px 10px; }
+  #radio p { font-size: 12px; }
   #strip { height: 50px; }
   #lever { width: 70px; }
   .rows span { font-size: 13px; }

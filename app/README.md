@@ -1,8 +1,16 @@
-# Rel Nusantara: Prototipe Misi 1-4
+# Rel Nusantara: Prototipe Babak 1
 
-Prototipe yang bisa dimainkan untuk misi **"Pagi Pertama Pasar Minggu"** dari
+Prototipe yang bisa dimainkan untuk Misi 1-4 **"Pagi Pertama Pasar Minggu"** dan Misi 1-5 **"Hujan di Lengkung Watu"** dari
 [`docs/GAME_DESIGN.md`](../docs/GAME_DESIGN.md). Game ditulis dengan HTML5 Canvas + JavaScript
 murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai aplikasi native iOS dan Android.
+
+## Misi
+| Misi | Rute | Tantangan |
+|---|---|---|
+| 1-4 Pagi Pertama Pasar Minggu | Sukamaju → Cibening → Pasar Lama (2,6 km, 06.00) | Tikungan 30 km/h, perlintasan, kambing, kabut, sinyal blok merah |
+| 1-5 Hujan di Lengkung Watu | Pasar Lama → Kali Jernih → Watugede (3,0 km, 15.30) | Hujan & petir (rem lebih lemah, roda selip, tombol pasir), turunan 15‰, tanjakan 20‰, Terowongan Lengkung Watu, wesel yang disabotase (Dimas memeriksa lewat radio) |
+
+Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MISSIONS` dalam `game.js`.
 
 ## Yang sudah ada di prototipe
 - Tuas kendali (master controller) P1–P4 / N / B1–B4 / EB dengan respons rem yang bertahap
@@ -28,7 +36,7 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 cd app
 npm run serve        # buka http://localhost:8080 (di HP: pakai IP komputer, posisi landscape)
 ```
-Keyboard: `↑/W` tenaga, `↓/S` rem, `Spasi` rem darurat, `H` klakson, `D/Enter` pintu, `Esc` jeda.
+Keyboard: `↑/W` tenaga, `↓/S` rem, `Spasi` rem darurat, `H` klakson, `D/Enter` pintu, `A` pasir, `Esc` jeda.
 
 ## Build aplikasi Android & iOS
 Prasyarat: Node 18+, Android Studio (Android), Xcode di macOS (iOS).
@@ -55,4 +63,4 @@ app/
   www/game.js      mesin game (rute, fisika, aturan, render, audio)
   capacitor.config.json
 ```
-Data rute ada di objek `ROUTE` di `game.js`. Menambah misi baru cukup dengan menambah rute lain.
+Data misi ada di objek `MISSIONS` di `game.js` (stasiun, zona kecepatan, sinyal, skrip sinyal, perlintasan, hewan, kabut, jembatan, terowongan, landai, petunjuk). Menambah misi baru cukup dengan menambah entri di sana dan di `MISSION_ORDER`.
