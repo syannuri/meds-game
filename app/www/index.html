@@ -45,12 +45,13 @@
       <div class="panel speedo" id="speedo">
         <span class="num" id="speed">0</span>
         <div class="limit-sign" id="limit" aria-label="Batas kecepatan">40</div>
-        <span class="unit">km/h</span>
+        <span class="unit" id="speedUnit">km/h</span>
         <span class="nextlim" id="nextLimit">&nbsp;</span>
       </div>
       <div class="actions">
         <button class="act" id="btnHorn"><b>♫</b>Klakson</button>
         <button class="act" id="btnDoor"><b>⇆</b><span id="doorLbl">Tutup pintu</span></button>
+        <button class="act sand" id="btnSand" hidden><span id="sandLbl">Pasir (3)</span></button>
       </div>
     </div>
 
@@ -71,30 +72,49 @@
   </div>
 
   <div id="toast" role="status" aria-live="polite"></div>
+  <div id="radio" class="panel" role="status" aria-live="polite" hidden>
+    <div class="avatar sm" aria-hidden="true">DM</div>
+    <p><small>Radio · Dimas</small><span id="radioText"></span></p>
+  </div>
 
   <section class="screen" id="screenTitle">
     <div class="screen-inner">
       <div>
-        <div class="eyebrow">Prototipe · Misi 1-4</div>
+        <div class="eyebrow">Prototipe · Babak 1</div>
         <h1 class="logo">Rel<span>Nusantara</span></h1>
-        <p class="lead">Kemudikan Si Gagah, lokomotif uap tua peninggalan kakek Raka, dari Sukamaju ke Pasar Lama. Patuhi sinyal, jaga penumpang tetap nyaman, dan berhenti tepat di marka peron.</p>
+        <p class="lead">Kemudikan Si Gagah, lokomotif uap tua peninggalan kakek Raka. Patuhi sinyal, jaga penumpang tetap nyaman, dan berhenti tepat di marka peron.</p>
         <div class="btn-row">
-          <button class="btn primary" id="btnStart">Mulai misi</button>
-          <button class="btn" id="btnMusicTitle">Musik: nyala</button>
-          <button class="btn" id="btnSoundTitle">Suara: nyala</button>
+          <button class="btn sm" id="btnHowto">Cara bermain</button>
+          <button class="btn sm" id="btnMusicTitle">Musik: nyala</button>
+          <button class="btn sm" id="btnSoundTitle">Suara: nyala</button>
         </div>
-        <div class="best" id="bestLine"></div>
       </div>
       <div class="card">
-        <span class="lbl">Cara bermain</span>
-        <ul class="howto" style="margin-top:10px">
+        <span class="lbl">Pilih misi</span>
+        <ul class="missions" id="missionList"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="screenHowto" hidden>
+    <div class="screen-inner">
+      <div>
+        <div class="eyebrow">Panduan masinis</div>
+        <h2>Cara bermain</h2>
+        <p class="lead">Kendalikan kereta dengan satu tuas di kanan layar. Tombol aksi ada di kiri bawah.</p>
+        <div class="btn-row"><button class="btn primary" id="btnHowtoBack">Kembali</button></div>
+      </div>
+      <div class="card">
+        <ul class="howto">
           <li><kbd>P1–P4</kbd><span>Geser tuas ke atas untuk menambah tenaga. Tenaga baru bekerja setelah pintu ditutup.</span></li>
           <li><kbd>B1–B4</kbd><span>Geser ke bawah untuk mengerem. Rem bereaksi perlahan, jadi mulai lebih awal. Lepas ke B1 sesaat sebelum berhenti agar tidak menyentak.</span></li>
           <li><kbd>EB</kbd><span>Rem darurat. Paling kuat, tapi penumpang terguncang.</span></li>
           <li><kbd>♫</kbd><span>Bunyikan klakson sebelum perlintasan dan saat ada hewan di rel.</span></li>
           <li><kbd>3</kbd><span>Berhenti dengan moncong lokomotif tepat di marka kuning bernomor 3.</span></li>
-          <li><kbd>♪</kbd><span>Lebih seru pakai headphone.</span></li>
+          <li><kbd>Pasir</kbd><span>Saat hujan, roda selip kalau tenaga terlalu besar di kecepatan rendah. Tabur pasir atau turunkan ke P1–P2.</span></li>
+          <li><kbd>‰</kbd><span>Papan miring di tepi rel menandai tanjakan dan turunan. Di turunan kereta melaju sendiri, tahan rem.</span></li>
         </ul>
+        <p class="best">Keyboard: ↑/W tenaga · ↓/S rem · Spasi rem darurat · H klakson · D pintu · A pasir · Esc jeda</p>
       </div>
     </div>
   </section>
@@ -102,11 +122,11 @@
   <section class="screen" id="screenBrief" hidden>
     <div class="screen-inner">
       <div>
-        <div class="eyebrow">Babak 1 · Jawa · Misi 1-4</div>
-        <h2>Pagi Pertama Pasar Minggu</h2>
+        <div class="eyebrow" id="briefEyebrow">Babak 1 · Jawa · Misi 1-4</div>
+        <h2 id="briefTitle">Pagi Pertama Pasar Minggu</h2>
         <div class="speaker">
-          <div class="avatar" aria-hidden="true">BW</div>
-          <p class="quote"><small>Bu Wulan, kepala stasiun</small>Raka, pedagang pasar sudah menunggu di Cibening. Jangan sampai sayur mereka layu! Pagi ini berkabut, jadi perhatikan sinyal di petak jembatan.</p>
+          <div class="avatar" aria-hidden="true" id="briefAvatar">BW</div>
+          <p class="quote"><small id="briefWho">Bu Wulan, kepala stasiun</small><span id="briefText"></span></p>
         </div>
         <div class="btn-row">
           <button class="btn primary" id="btnGo">Berangkat</button>
@@ -114,16 +134,10 @@
         </div>
       </div>
       <div class="card">
-        <dl class="facts">
-          <dt>Rute</dt><dd>Sukamaju → Cibening → Pasar Lama</dd>
-          <dt>Jarak</dt><dd>2,6 km · 2 pemberhentian</dd>
-          <dt>Kereta</dt><dd>Si Gagah + 2 gerbong</dd>
-          <dt>Berangkat</dt><dd>06.00, kabut ringan</dd>
-          <dt>Jadwal</dt><dd>Cibening 06.13 · Pasar Lama 06.26</dd>
-        </dl>
+        <dl class="facts" id="briefFacts"></dl>
         <ul class="goals">
           <li><span class="star">★</span>Tiba dengan selamat</li>
-          <li><span class="star">★</span>Tiba di Pasar Lama tepat waktu</li>
+          <li><span class="star">★</span><span id="briefGoal2">Tiba tepat waktu</span></li>
           <li><span class="star">★</span>Kenyamanan minimal 80% dan semua pemberhentian Good atau Perfect</li>
         </ul>
       </div>
@@ -152,7 +166,8 @@
         <div class="stars" id="resStars"></div>
         <p class="fail-reason" id="resFail" hidden></p>
         <div class="btn-row">
-          <button class="btn primary" id="btnAgain">Main lagi</button>
+          <button class="btn primary" id="btnNext" hidden>Lanjut</button>
+          <button class="btn" id="btnAgain">Main lagi</button>
           <button class="btn" id="btnMenu">Ke menu</button>
         </div>
       </div>
