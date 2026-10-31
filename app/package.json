@@ -1,0 +1,19 @@
+{
+  "name": "rel-nusantara",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rel Nusantara: game simulasi masinis kereta api (prototipe Misi 1-4)",
+  "scripts": {
+    "serve": "npx --yes http-server www -p 8080 -c-1",
+    "android": "npx cap sync android && npx cap open android",
+    "ios": "npx cap sync ios && npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/ios": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}

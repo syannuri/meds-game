@@ -1,0 +1,8 @@
+{
+  "appId": "id.relnusantara.game",
+  "appName": "Rel Nusantara",
+  "webDir": "www",
+  "backgroundColor": "#0f1a22",
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "never" }
+}
