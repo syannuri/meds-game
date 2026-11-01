@@ -51,6 +51,13 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
     stasiun, dentum panel karet saat melintasi jalan perlintasan
   - Klakson udara tiga nada dengan hembusan udara dan gema perbukitan; berbunyi selama tombol
     (atau tombol `H`) ditahan
+- Layar judul: peta perjalanan Jawa–Sumatra dengan rute tiap misi (sentuh karcis untuk menyorot,
+  ketuk rute dua kali untuk memilih) dan tab Garasi yang menampilkan Si Gagah di meja putar depo
+- Palet khas tiap misi: fajar keemasan (1-4), hujan biru-abu (1-5), takbiran ungu-oranye (1-6),
+  Sumatra lembap dengan kabut (2-1), lewat warna langit dan gradasi warna akhir di seluruh dunia
+- Kabin lebih kaya: tekstur batu balas, kilap rel, patok hektometer, papan semboyan 35 sebelum
+  perlintasan, speedometer jarum, serta tuas notch dan tuas rem yang ikut bergerak
+- Tikungan 3D menurunkan resolusinya sendiri bila perangkat terlalu lambat
 - HUD ringkas: panel atas satu baris, speedometer kecil tembus pandang, tuas ramping, tombol bulat;
   strip rute dan titik henti hanya muncul saat mendekati stasiun, sinyal, perlintasan, satwa, atau
   perubahan batas kecepatan. Di tampilan kabin, kecepatan pindah ke panel dasbor

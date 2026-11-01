@@ -525,3 +525,30 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 /* tampilan kabin: kecepatan pindah ke dasbor */
 #hud.cab .hud-gauge { display: none; }
 @media (orientation: portrait) { :root { --gauge: 100px; } }
+
+/* ---------- layar judul: peta misi & garasi ---------- */
+.maphead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.maphead .lbl { color: #e9e2d3; letter-spacing: 0.18em; }
+.maptabs { display: inline-flex; border: 1px solid var(--glass-line); border-radius: 999px; padding: 2px; background: var(--glass); }
+.maptabs button { border: 0; background: transparent; color: var(--muted); font: 700 12px var(--body); padding: 4px 12px; border-radius: 999px; cursor: pointer; }
+.maptabs button[aria-pressed="true"] { background: var(--saffron); color: #1b1304; }
+.mapbox { padding: 0; overflow: hidden; border-radius: 14px; }
+#mapCv { display: block; width: 100%; aspect-ratio: 540 / 300; height: auto; cursor: pointer; }
+/* karcis jadi ringkas dua kolom di bawah peta */
+.tickets { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.ticket .stub { width: 52px; flex-basis: 52px; }
+.ticket .stub b { font-size: 22px; }
+.ticket .tbody { padding: 6px 10px; gap: 2px; }
+.ticket .tbody b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ticket .tbody small { display: none; }
+.ticket .tstars { font-size: 12px; }
+.ticket .tnew { font-size: 9.5px; }
+@media (max-height: 460px) {
+  #mapCv { aspect-ratio: 540 / 240; }
+  .title-right { gap: 6px; }
+  .tickets { gap: 6px; }
+  .ticket .stub { width: 44px; flex-basis: 44px; }
+  .ticket .stub b { font-size: 18px; }
+  .ticket .tbody { padding: 4px 8px; }
+  .ticket .tbody b { font-size: 13px; }
+}
