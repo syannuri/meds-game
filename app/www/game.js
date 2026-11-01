@@ -1305,20 +1305,26 @@
 
     // --- asap ---
     const power = S.notch > 0 && !powerLocked ? S.notch / 4 : 0;
-    const rateSmoke = 5 + power * 22 + S.v * 0.4;
+    const rateSmoke = 7 + power * 26 + S.v * 1.1;
     if (Math.random() < rateSmoke * dt) S.smoke.push(puff(S.x - 2.6, 5.4, false, power));
     if (power > 0 && S.v < 4 && Math.random() < 20 * dt) S.smoke.push(steamPuff(S.x - 3.5));
     if (S.slip && Math.random() < 30 * dt) S.smoke.push(puff(S.x - 2.6, 5.4, false, 1));
     if (S.sandT > 0 && Math.random() < 25 * dt) S.smoke.push(sandPuff(S.x - 7 - Math.random() * 4));
     for (const p of S.smoke) {
-      p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy *= 0.995; p.r += p.grow * dt;
+      p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy *= 0.993; p.vx *= 0.995; p.r += p.grow * dt * (1 - p.life / (p.max * 1.6));
     }
     S.smoke = S.smoke.filter((p) => p.life < p.max);
     if (S.shake > 0) S.shake = Math.max(0, S.shake - dt * 1.6);
   }
 
   function puff(x, y, white, power = 0) {
-    return { x, y, r: white ? 0.3 : 0.45, grow: white ? 1.4 : 1.1 + power, vx: (Math.random() - 0.5) * 0.6 - 0.8, vy: white ? 1.2 + Math.random() : 2 + power * 2 + Math.random(), life: 0, max: white ? 1.2 : 3.2 + Math.random(), white, a: white ? 0.7 : 0.38 + power * 0.25 };
+    return {
+      x: x + (Math.random() - 0.5) * 0.4, y, r: white ? 0.35 : 0.55 + power * 0.25,
+      grow: white ? 1.5 : 1.0 + power * 0.9 + Math.random() * 0.4,
+      vx: (Math.random() - 0.5) * 0.8 - 1.5, vy: white ? 1.2 + Math.random() : 2.2 + power * 2.6 + Math.random() * 0.8,
+      life: 0, max: white ? 1.3 : 3.4 + Math.random() * 1.2, white, a: white ? 0.75 : 0.55 + power * 0.3,
+      spin: Math.random() * 6.28,
+    };
   }
   function sandPuff(x) {
     return { x, y: 0.3, r: 0.15, grow: 0.5, vx: (Math.random() - 0.5) * 1.2, vy: 0.2, life: 0, max: 0.8, sand: true, a: 0.6 };
@@ -1652,13 +1658,13 @@
     drawGoats(V);
     drawTrain(V);
     drawBus(V);
-    drawSmoke(V);
     drawBridgeTruss(V);
     drawTunnelPortals(V);
     drawFrontProps(V);
     drawFog(V);
     drawWeather(V);
     drawNight(V);
+    drawSmoke(V);
     drawTunnelDark(V);
   }
 
@@ -2466,14 +2472,45 @@
     c.textAlign = 'start'; c.textBaseline = 'alphabetic';
   }
 
+  // gumpalan asap lembut: sprite gradasi radial yang dibuat sekali per warna
+  const puffSprites = {};
+  function puffSprite(rgb) {
+    if (puffSprites[rgb]) return puffSprites[rgb];
+    const cv2 = document.createElement('canvas'); cv2.width = cv2.height = 64;
+    const x = cv2.getContext('2d');
+    const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, `rgba(${rgb},1)`); gr.addColorStop(0.45, `rgba(${rgb},0.75)`); gr.addColorStop(0.75, `rgba(${rgb},0.3)`); gr.addColorStop(1, `rgba(${rgb},0)`);
+    x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+    puffSprites[rgb] = cv2;
+    return cv2;
+  }
   function drawSmoke(V) {
     const { c, ppm, gy, X, st, p } = V;
+    // warna asap mengikuti cahaya: abu kecokelatan saat fajar, abu terang saat mendung, abu kebiruan diterangi bulan
+    let dark;
+    if (V.night) dark = '122,128,150';
+    else if (V.storm) dark = '128,134,144';
+    else { const k = Math.round(lerp(92, 128, p)); dark = `${k},${k - 4},${k - 2}`; }
+    const smokeSp = puffSprite(dark), steamSp = puffSprite('246,246,246'), sandSp = puffSprite('176,138,85');
+    c.save();
     for (const s of st.smoke || []) {
       const t = s.life / s.max;
-      const a = s.a * (1 - t);
+      const fade = t < 0.08 ? t / 0.08 : 1 - (t - 0.08) / 0.92;
+      const a = s.a * fade * (V.night && !s.white && !s.sand ? 0.6 : 1);
       if (a <= 0.01) continue;
-      c.fillStyle = s.sand ? `rgba(176,138,85,${a})` : s.white ? `rgba(245,245,245,${a})` : `rgba(${Math.round(lerp(70, 110, p))},${Math.round(lerp(66, 108, p))},${Math.round(lerp(70, 112, p))},${a})`;
-      c.beginPath(); c.arc(X(s.x), gy - s.y * ppm, s.r * ppm, 0, 7); c.fill();
+      const r = s.r * ppm * 1.35;
+      c.globalAlpha = Math.min(1, a);
+      c.drawImage(s.sand ? sandSp : s.white ? steamSp : smokeSp, X(s.x) - r, gy - s.y * ppm - r, r * 2, r * 2);
+    }
+    c.restore();
+    // nyala api ketel memantul di pangkal asap saat malam
+    if (V.night && st.notch > 0) {
+      const cx = X(st.x - 2.6), cy = gy - 5.8 * ppm;
+      c.save(); c.globalCompositeOperation = 'lighter';
+      const gl = c.createRadialGradient(cx, cy, 0, cx, cy, 3 * ppm);
+      gl.addColorStop(0, 'rgba(255,150,70,0.35)'); gl.addColorStop(1, 'rgba(255,150,70,0)');
+      c.fillStyle = gl; c.beginPath(); c.arc(cx, cy, 3 * ppm, 0, 7); c.fill();
+      c.restore();
     }
   }
 
