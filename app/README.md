@@ -15,8 +15,14 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MISSIONS` dalam `game.js`.
 
 ## Tampilan (Visual 2.0)
-- Kereta: lokomotif diesel-elektrik CC "Si Gagah" RN 2001 (kabin depan, kap panjang) dan dua gerbong
-  stainless berjendela panorama. Livery orisinal putih-safron-toska, tanpa logo operator mana pun.
+- Kereta: lokomotif diesel-elektrik CC "Si Gagah" RN 2001 (kabin depan dengan muka 3/4, kap panjang
+  berkisi radiator dan kipas atap, bogie berpegas, tangki bahan bakar, pelindung depan) dan tiga gerbong
+  stainless berjendela berbingkai dengan AC atap. Marka henti di peron bernomor 4 (lokomotif + 3 gerbong). Livery orisinal putih-safron-toska, tanpa logo operator mana pun.
+- Kedalaman 2.5D: petak sawah berperspektif menuju titik hilang, lapisan latar depan yang bergerak lebih
+  cepat (paralaks), rel dua batang dengan bantalan berperspektif, muka atas atap kereta dan peron, pegunungan
+  berlapis yang makin pucat di kejauhan, bayangan panjang kereta dan tiang saat pagi.
+- Jembatan baja busur modern (tied-arch) dengan rusuk depan-belakang, batang gantung, lampu malam, dan
+  pantulan di sungai.
 - Pemandangan: sinar matahari pagi, kabut tipis di kaki gunung, genangan sawah yang memantulkan langit,
   cahaya tepi pada kereta dan pohon, bayangan kereta, gas buang diesel dengan semburan saat tuas dinaikkan.
 - HUD kaca buram: speedometer analog, tuas logam dengan kenop kuningan, cincin kenyamanan,
