@@ -14,6 +14,15 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 
 Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MISSIONS` dalam `game.js`.
 
+## Tampilan (Visual 2.0)
+- Kereta: lokomotif diesel-elektrik CC "Si Gagah" RN 2001 (kabin depan, kap panjang) dan dua gerbong
+  stainless berjendela panorama. Livery orisinal putih-safron-toska, tanpa logo operator mana pun.
+- Pemandangan: sinar matahari pagi, kabut tipis di kaki gunung, genangan sawah yang memantulkan langit,
+  cahaya tepi pada kereta dan pohon, bayangan kereta, gas buang diesel dengan semburan saat tuas dinaikkan.
+- HUD kaca buram: speedometer analog, tuas logam dengan kenop kuningan, cincin kenyamanan,
+  diagram jalur, dan pemandu titik henti yang muncul saat mendekati marka "3".
+- Layar judul dengan karcis misi bergaya karcis kereta lama.
+
 ## Yang sudah ada di prototipe
 - Tuas kendali (master controller) P1–P4 / N / B1–B4 / EB dengan respons rem yang bertahap
 - Fisika kereta: percepatan, hambatan, pengereman, sentakan (jerk)
@@ -26,9 +35,9 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Audio sintetis (WebAudio, tanpa berkas suara):
   - Musik latar bernuansa gamelan (laras slendro: saron, bonang, kenong, kempul, gong, kendang)
   - Suasana: kicau burung, jangkrik saat fajar, angin, sungai di bawah jembatan, riuh penumpang di peron
-  - Mesin uap: hentakan uap dijadwalkan di jam audio sehingga ritmenya rata dan menyatu menjadi desis
-    kontinu saat cepat, dengung api ketel, dentum silinder saat berangkat, pompa udara saat berhenti,
-    "jeglak-jeglek" tiap gandar di sambungan rel, gemuruh roda (bergema di jembatan & terowongan)
+  - Mesin diesel: dengung mesin yang putarannya naik pelan mengikuti tuas tenaga, desing turbo,
+    gemuruh knalpot, dengung motor traksi yang naik turun mengikuti kecepatan, kompresor udara saat
+    berhenti, "jeglak-jeglek" tiap gandar di sambungan rel, klakson udara dua nada
   - Pengereman: desis katup saat tuas ke B, gesekan blok rem yang mengikuti kecepatan, decit roda
     menjelang berhenti, lalu hentakan sambungan gerbong dan desis pelepasan panjang saat kereta berhenti
   - Pintu: buka = katup udara > geser > benturan; tutup = bel peringatan > katup > geser > benturan + kunci

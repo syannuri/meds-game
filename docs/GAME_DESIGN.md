@@ -72,7 +72,7 @@ Di peta jaringan (tampilan atas, gaya peta ilustrasi):
 
 ### Prolog — "Peluit Terakhir"
 Raka pulang ke kota kelahirannya setelah kakeknya, Pak Harjo (mantan masinis legendaris),
-wafat. Ia mewarisi **Depo Sukamaju** yang terbengkalai dan satu lokomotif uap tua bernama **"Si Gagah"**.
+wafat. Ia mewarisi **Depo Sukamaju** yang terbengkalai dan satu lokomotif diesel-elektrik tua bernama **"Si Gagah"** (RN 2001) yang dipulihkan bersama Dimas.
 Kepala stasiun tua, **Bu Wulan**, memberinya buku catatan kakek berisi peta jalur-jalur lama
 yang telah ditutup.
 *Tutorial: menyalakan lokomotif, jalan pelan, berhenti di peron.*
@@ -121,7 +121,8 @@ yang telah ditutup.
 
 | Kelas | Contoh (fiktif, terinspirasi era nyata) | Ciri |
 |---|---|---|
-| Lokomotif uap | “Si Gagah” | Lambat, ikonik, butuh manajemen uap |
+| Lokomotif uap | “Mbah Sepur” (koleksi museum, misi spesial) | Lambat, ikonik, butuh manajemen uap |
+| Diesel-elektrik CC | “Si Gagah” RN 2001 (kereta utama) | Kabin depan, kap panjang, kuat di tanjakan |
 | Diesel hidrolik | Seri DH-Nusa | Seimbang, kereta lokal |
 | Diesel elektrik | Seri CC-Garuda | Kuat untuk barang & antarkota |
 | KRL | Seri Komuter | Akselerasi cepat, banyak stasiun |
