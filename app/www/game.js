@@ -317,11 +317,12 @@
     let musicOn = store.get('rn.music') !== '0';
     const L = {};                    // lapisan bunyi kontinu
     const tails = [];                // ekor desis yang boleh dipotong halus
-    let nextBird = 0, nextBell = 0, nextCricket = 0, nextFrog = 0, nextBedug = 6;
+    let nextBird = 0, nextBell = 0, nextCricket = 0, nextFrog = 0, nextBedug = 6, nextDove = 4, nextRooster = 3, nextCicada = 8, nextBird2 = 1.5;
     let eventBusyUntil = 0;
     let musicTimer = null, nextBeat = 0, beat = 0, musicLevel = MIX.musicIdle;
     let idVoice = null;
-    let lastJoint = null, nextPump = 0, rpm = 0.22, lastUpd = 0;
+    let lastJoint = null, nextPump = 0, rpm = 0.2, turboS = 0.2, lastUpd = 0, lastFX = null;
+    let hornNodes = null, track = { turnouts: [], decks: [], bridge: null }, railBus = null, lastGirder = null, nextStep = 0;
     const meters = {};
 
     function g(v) { const n = ac.createGain(); n.gain.value = v; return n; }
@@ -398,7 +399,27 @@
 
         // lapisan kontinu mesin & roda
         L.rumble = loop(brown, 'lowpass', 140, 0.7, engine);    // gemuruh roda di rel
-        L.hiss = loop(white, 'highpass', 4200, 0.5, engine);    // desis sistem udara saat diam
+        // jembatan: bunyi roda lewat jalur 'rail' yang juga dikirim ke gema lembah
+        railBus = g(1); railBus.connect(engine);
+        {
+          const dl = ac.createDelay(1); dl.delayTime.value = 0.36;
+          const fb = g(0.32), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1500;
+          L.echoSend = g(0); railBus.connect(L.echoSend).connect(dl);
+          dl.connect(lp).connect(fb).connect(dl); lp.connect(g(0.9)).connect(engine);
+        }
+        L.boom = loop(brown, 'bandpass', 150, 2.5, engine);      // dentum berongga gelagar
+        {
+          // dengung baja panjang dengan tremolo, dan denting halus rangka di atasnya
+          const steel = g(0), sw = g(0.6), trem = ac.createOscillator(), tg = g(0.4);
+          trem.frequency.value = 3.1; trem.connect(tg).connect(sw.gain); trem.start();
+          sw.connect(steel).connect(engine);
+          [87, 131, 196, 262].forEach((f, i) => { const o = ac.createOscillator(); o.type = i === 3 ? 'triangle' : 'sine'; o.frequency.value = f * (1 + (Math.random() - 0.5) * 0.004); o.connect(g([1, 0.7, 0.4, 0.15][i])).connect(sw); o.start(); });
+          const ring = g(0);
+          [1180, 1745, 2630].forEach((f, i) => { const o = ac.createOscillator(); o.frequency.value = f; const lfo = ac.createOscillator(); lfo.frequency.value = 0.7 + i * 0.5; const og = g(0.5); lfo.connect(g(0.5)).connect(og.gain); o.connect(og).connect(ring); o.start(); lfo.start(); });
+          ring.connect(engine);
+          L.steel = { g: steel }; L.ring = { g: ring };
+        }
+        L.hiss = loop(white, 'bandpass', 2400, 0.5, engine);    // desis sistem udara saat diam (lembut)
         // mesin diesel: dua gergaji sedikit sumbang + sub-oktaf, diredam lowpass, berdenyut seperti silinder
         {
           const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 300; f.Q.value = 0.9;
@@ -420,8 +441,45 @@
           const gn = g(0); o.connect(gn).connect(engine); o.start();
           L.turbo = { o, g: gn };
         }
-        L.turboAir = loop(white, 'bandpass', 2600, 1.2, engine);
+        L.turboAir = loop(white, 'bandpass', 2000, 0.8, engine);
         L.exhaust = loop(brown, 'lowpass', 110, 0.7, engine);    // gemuruh knalpot
+        // denyut pembakaran: noise yang dibuka-tutup sesuai frekuensi letupan silinder ("dug-dug-dug")
+        {
+          const src = ac.createBufferSource(); src.buffer = brown; src.loop = true;
+          const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 240; bp.Q.value = 1.1;
+          const am = g(0), out = g(0);
+          const mod = ac.createOscillator(); mod.type = 'sine'; mod.frequency.value = 10;
+          const sh = ac.createWaveShaper(); const curve = new Float32Array(256);
+          for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; curve[i] = Math.pow(Math.max(0, x), 3); }
+          sh.curve = curve;
+          mod.connect(sh).connect(am.gain);
+          src.connect(bp).connect(am).connect(out).connect(engine);
+          src.start(0, Math.random() * 2); mod.start();
+          L.comb = { mod, bp, g: out };
+        }
+        // geraman saat menarik beban: cabang terdistorsi lembut dari suara mesin
+        {
+          const sh = ac.createWaveShaper(); const curve = new Float32Array(512);
+          for (let i = 0; i < 512; i++) { const x = i / 255.5 - 1; curve[i] = Math.tanh(x * 4); }
+          sh.curve = curve;
+          const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
+          const out = g(0);
+          L.diesel.f.connect(sh).connect(lp).connect(out).connect(engine);
+          L.grit = { g: out };
+        }
+        // desis rel saat melaju ("rel bernyanyi") dan decit flens roda di tikungan
+        L.railHiss = loop(white, 'bandpass', 2600, 0.5, engine);
+        {
+          const sq2 = g(0), f2 = ac.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 3600; f2.Q.value = 5;
+          [3420, 3880].forEach((fq, i) => {
+            const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = fq;
+            const lfo = ac.createOscillator(); lfo.frequency.value = 2.3 + i * 1.7;
+            const lg = g(40); lfo.connect(lg).connect(o.frequency);
+            o.connect(f2); o.start(); lfo.start();
+          });
+          f2.connect(sq2).connect(brake);
+          L.flange = { g: sq2 };
+        }
         // dengung motor traksi listrik (naik turun mengikuti kecepatan)
         {
           const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 100;
@@ -448,6 +506,17 @@
         L.crowd = loop(brown, 'bandpass', 520, 1.3, amb);
         L.rain = loop(white, 'bandpass', 2400, 0.35, amb);
         L.rainLow = loop(brown, 'lowpass', 500, 0.5, amb);
+        // gemerisik daun pepohonan: noise lembut yang naik-turun pelan seperti tertiup angin
+        L.leaves = loop(white, 'bandpass', 1500, 0.4, amb);
+        {
+          const lpL = ac.createBiquadFilter(); lpL.type = 'lowpass'; lpL.frequency.value = 2600;
+          L.leaves.g.disconnect(); L.leaves.g.connect(lpL).connect(amb);
+          const swell = g(0.6), l1 = ac.createOscillator(), l2 = ac.createOscillator();
+          l1.frequency.value = 0.07; l2.frequency.value = 0.19;
+          l1.connect(g(0.35)).connect(swell.gain); l2.connect(g(0.18)).connect(swell.gain);
+          l1.start(); l2.start();
+          L.leavesOut = swell; lpL.disconnect(); lpL.connect(swell).connect(amb);
+        }
         const lfo = ac.createOscillator(); lfo.frequency.value = 0.11;
         const lg = g(0.025); lfo.connect(lg).connect(L.wind.g.gain); lfo.start();
         const mod = ac.createOscillator(); mod.frequency.value = 3.3;
@@ -524,14 +593,18 @@
     }
     // desis udara dengan filter bergeser (katup rem, pintu pneumatik)
     function hiss(t, dur, vol, f0, f1, bus) {
+      // desis dibuat lebih lembut: volume dikurangi, frekuensi diturunkan, puncak tajam dipotong lowpass,
+      // naik dan turun lebih pelan agar tidak menusuk telinga
+      vol *= 0.5; f0 *= 0.72; f1 *= 0.72;
       const src = ac.createBufferSource(); src.buffer = white;
-      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.7;
+      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.45;
       f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200; lp.Q.value = 0.5;
       const gn = ac.createGain();
       gn.gain.setValueAtTime(0.0001, t);
-      gn.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.08, dur * 0.2));
-      gn.gain.setTargetAtTime(0.0001, t + dur * 0.4, dur * 0.22);
-      src.connect(f).connect(gn).connect(bus);
+      gn.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.18, dur * 0.3));
+      gn.gain.setTargetAtTime(0.0001, t + dur * 0.4, dur * 0.3);
+      src.connect(f).connect(lp).connect(gn).connect(bus);
       src.start(t, Math.random() * 1.2); src.stop(t + dur * 1.6 + 0.05);
       return gn;
     }
@@ -544,9 +617,22 @@
     }
 
     // ---- roda & udara ----
-    function clack(t, vol) { // "jeglak" roda melewati sambungan rel
-      nz(t, 'bandpass', 760, 1.4, vol, 0.05, engine, 0.004);
-      tone(118, vol * 0.7, 0.07, { at: t, to: 80, bus: engine, attack: 0.004 });
+    function clack(t, vol) { // "jeglak" roda melewati sambungan rel: tik logam + dentum + dengung rel
+      const b = railBus || engine;
+      nz(t, 'highpass', 2600, 0.8, vol * 0.6, 0.025, b, 0.002);
+      nz(t, 'bandpass', 420 + Math.random() * 80, 1.1, vol, 0.07, b, 0.003);
+      tone(1800 + Math.random() * 250, vol * 0.1, 0.09, { at: t, bus: b, attack: 0.002 });
+    }
+    function girder(t, vol) { // dentum berongga tiap segmen gelagar jembatan
+      nz(t, 'lowpass', 190, 0.8, vol * 1.6, 0.2, railBus, 0.004);
+      tone(96, vol * 0.9, 0.35, { at: t, to: 82, bus: railBus, attack: 0.004 });
+      clack(t + 0.004, vol * 0.45);
+    }
+    function klang(t, vol) { // sambungan muai di ujung jembatan
+      clack(t, vol * 1.3);
+      tone(420 + Math.random() * 40, vol * 0.5, 0.25, { at: t + 0.002, type: 'triangle', bus: railBus, attack: 0.002 });
+      tone(633, vol * 0.25, 0.4, { at: t + 0.002, bus: railBus, attack: 0.002 });
+      nz(t, 'lowpass', 220, 0.8, vol * 1.8, 0.18, railBus, 0.003);
     }
     function pump(t) { // pompa udara lokomotif saat berhenti
       nz(t, 'lowpass', 300, 0.7, 0.03, 0.2, engine, 0.03);
@@ -600,6 +686,53 @@
         [[1, 0], [1.33, 0.16], [1.18, 0.3]].forEach(([m, dl]) => tone(f0 * m, vol, 0.16, { to: f0 * m * 1.06, delay: dl, bus: amb, pan }));
       }
     }
+    // kutilang: kicau bernada naik-turun beberapa not
+    function bulbul(vol) {
+      const pan = Math.random() * 1.6 - 0.8, base = 1700 + Math.random() * 500;
+      const notes = [1, 1.26, 1.12, 1.5, 1.33, 1.19].slice(0, 4 + Math.floor(Math.random() * 3));
+      let d = 0;
+      notes.forEach((m, i) => {
+        const len = 0.09 + Math.random() * 0.07;
+        tone(base * m, vol * (0.8 + Math.random() * 0.3), len, { delay: d, to: base * m * (i % 2 ? 0.94 : 1.08), glide: len, bus: amb, pan, attack: 0.012 });
+        d += len + 0.03 + Math.random() * 0.04;
+      });
+    }
+    // prenjak: "cwit-cwit" tajam berulang, terdengar dari kejauhan
+    function prenjak(vol) {
+      const pan = Math.random() * 1.6 - 0.8, f = 3400 + Math.random() * 700, n = 3 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < n; i++) tone(f, vol * 0.7, 0.06, { delay: i * 0.17, to: f * 1.25, glide: 0.05, bus: amb, pan, attack: 0.005 });
+    }
+    // perkutut/tekukur: dekur rendah "kuk-kruu-kuk"
+    function dove(vol) {
+      const pan = Math.random() * 1.2 - 0.6, f = 430 + Math.random() * 60;
+      [[1, 0, 0.22], [1.12, 0.3, 0.42], [0.95, 0.85, 0.3], [1.05, 1.25, 0.5]].forEach(([m, d, len]) => {
+        tone(f * m, vol, len, { delay: d, to: f * m * 0.9, glide: len, type: 'sine', bus: amb, pan, attack: 0.06 });
+        tone(f * m * 2, vol * 0.18, len, { delay: d, to: f * m * 1.8, glide: len, bus: amb, pan, attack: 0.06 });
+      });
+    }
+    // ayam jago di kejauhan saat fajar
+    function rooster(vol) {
+      const pan = Math.random() < 0.5 ? -0.7 : 0.7;
+      [[520, 0, 0.16, 640], [700, 0.2, 0.18, 760], [760, 0.42, 0.55, 520]].forEach(([f, d, len, to]) => {
+        tone(f, vol, len, { delay: d, to, glide: len, type: 'sawtooth', bus: amb, pan, attack: 0.03 });
+      });
+    }
+    // tonggeret: dengung serangga siang yang membesar lalu mereda
+    function cicada(vol) {
+      if (!ac) return;
+      const t = ac.currentTime + 0.05, dur = 3 + Math.random() * 2.5;
+      const o = ac.createOscillator(); o.type = 'square'; o.frequency.value = 4600 + Math.random() * 600;
+      const am = ac.createOscillator(); am.frequency.value = 48 + Math.random() * 20;
+      const ag = ac.createGain(); ag.gain.value = 0; am.connect(g(0.5)).connect(ag.gain);
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 5000; bp.Q.value = 2;
+      const env = ac.createGain(); env.gain.setValueAtTime(0.0001, t);
+      env.gain.exponentialRampToValueAtTime(vol, t + dur * 0.4); env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      const pn = panner(Math.random() * 1.4 - 0.7);
+      let out = o.connect(bp).connect(ag).connect(env);
+      if (pn) out = out.connect(pn);
+      out.connect(amb);
+      o.start(t); am.start(t); o.stop(t + dur + 0.1); am.stop(t + dur + 0.1);
+    }
     function cricket(vol) {
       const f = 4300 + Math.random() * 500, pan = Math.random() * 1.4 - 0.7;
       for (let i = 0; i < 4; i++) tone(f, vol, 0.03, { type: 'square', delay: i * 0.045, bus: amb, pan });
@@ -631,33 +764,72 @@
       const power = info.power || 0;
       const brakeF = info.brake || 0;
 
-      // mesin diesel: putaran naik pelan saat tuas tenaga dinaikkan, turun lebih cepat saat dilepas
+      // mesin diesel: putaran bertingkat sesuai notch, naik perlahan (governor) dan turun lebih cepat
       const dtA = lastUpd ? Math.min(0.1, t - lastUpd) : 0; lastUpd = t;
-      const rpmTarget = info.slip ? 1 : 0.22 + 0.78 * power;
-      rpm += (rpmTarget - rpm) * Math.min(1, dtA * (rpmTarget > rpm ? 0.75 : 1.3));
-      const fr = 22 + rpm * 36;
+      const notchRpm = [0.2, 0.4, 0.58, 0.78, 1][Math.round(power * 4)];
+      const rpmTarget = info.slip ? 1 : notchRpm;
+      rpm += clamp(rpmTarget - rpm, -0.4 * dtA, 0.22 * dtA);
+      turboS += (rpm - turboS) * Math.min(1, dtA * 0.5);            // turbo menyusul belakangan
+      const load = run && power > 0 ? rpm : 0;
+      const fr = 16 + rpm * 34;
       L.diesel.o1.frequency.setTargetAtTime(fr, t, 0.08);
       L.diesel.o2.frequency.setTargetAtTime(fr * 1.006, t, 0.08);
       L.diesel.o3.frequency.setTargetAtTime(fr / 2, t, 0.08);
       L.diesel.puls.frequency.setTargetAtTime(fr / 4, t, 0.08);
-      L.diesel.f.frequency.setTargetAtTime(220 + rpm * 900, t, 0.2);
-      set(L.diesel.g.gain, scene ? 0.022 + rpm * 0.08 : 0, 0.25);
-      L.turbo.o.frequency.setTargetAtTime(900 + rpm * 2200, t, 0.3);
-      set(L.turbo.g.gain, scene ? rpm * rpm * 0.008 : 0, 0.3);
-      L.turboAir.f.frequency.setTargetAtTime(1800 + rpm * 2000, t, 0.3);
-      set(L.turboAir.g.gain, scene ? rpm * rpm * 0.03 : 0, 0.3);
-      set(L.exhaust.g.gain, scene ? 0.008 + rpm * 0.05 : 0, 0.3);
+      L.diesel.f.frequency.setTargetAtTime(200 + rpm * 800 + load * 300, t, 0.2);
+      set(L.diesel.g.gain, scene ? 0.02 + rpm * 0.07 : 0, 0.25);
+      L.comb.mod.frequency.setTargetAtTime(6 + rpm * 22, t, 0.1);
+      L.comb.bp.frequency.setTargetAtTime(200 + rpm * 160, t, 0.2);
+      set(L.comb.g.gain, scene ? 0.05 + rpm * 0.05 + load * 0.04 : 0, 0.25);
+      set(L.grit.g.gain, scene ? load * 0.022 : 0, 0.3);
+      L.turbo.o.frequency.setTargetAtTime(700 + turboS * 2600, t, 0.2);
+      set(L.turbo.g.gain, scene ? turboS * turboS * 0.009 : 0, 0.3);
+      L.turboAir.f.frequency.setTargetAtTime(1300 + turboS * 1400, t, 0.4);
+      set(L.turboAir.g.gain, scene ? turboS * turboS * 0.012 : 0, 0.6);
+      set(L.exhaust.g.gain, scene ? 0.008 + rpm * 0.045 + load * 0.02 : 0, 0.3);
+      // desis rel & decit flens di tikungan
+      set(L.railHiss.g.gain, run ? Math.pow(Math.min(v, 22) / 22, 2) * 0.008 * (info.tunnel ? 1.4 : 1) : 0, 0.8);
+      L.railHiss.f.frequency.setTargetAtTime(1900 + Math.min(v, 22) * 40, t, 0.8);
+      set(L.flange.g.gain, run && info.curve && v > 3 ? clamp(0.25 + ((info.lat || 0) - 0.5) * 0.8, 0.2, 1.3) * clamp((v - 3) / 6, 0, 1) * 0.03 : 0, 0.25);
+      // wesel & panel perlintasan: bunyi khas tiap gandar yang melintas
+      if (run && v > 0.4 && lastFX !== null) {
+        const hit = (list, fn) => list.forEach((px) => {
+          if (lastFX < px && info.x >= px) AXLES.forEach((off, k) => { const d = off / v; if (d < 3) fn(t + d, clamp(0.02 + v * 0.003, 0.02, 0.075) * (k % 2 ? 0.8 : 1)); });
+        });
+        hit(track.turnouts, (at, vol) => { clack(at, vol * 1.2); clack(at + 0.035, vol * 0.8); clack(at + 0.075, vol * 0.9); });
+        hit(track.decks, (at, vol) => { nz(at, 'lowpass', 260, 0.8, vol * 1.3, 0.12, engine, 0.004); clack(at + 0.02, vol * 0.5); });
+        if (track.bridge) hit([track.bridge.from, track.bridge.to], (at, vol) => klang(at, vol));
+      }
+      lastFX = run ? info.x : null;
       const mv = info.slip ? v + 9 : v;
       L.motor.o.frequency.setTargetAtTime(90 + mv * 34, t, 0.15);
       L.motor.o2.frequency.setTargetAtTime((90 + mv * 34) * 3, t, 0.15);
       set(L.motor.g.gain, run && (power > 0 || brakeF > 0.3) ? clamp(mv / 2, 0, 1) * 0.012 : 0, 0.3);
       set(L.rumble.g.gain, run ? Math.min(0.32, v * 0.018) * (info.onBridge ? 1.6 : 1) * (info.tunnel ? 1.5 : 1) : 0, 0.25);
       L.rumble.f.frequency.setTargetAtTime(100 + v * 9 + (info.onBridge ? 70 : 0) + (info.tunnel ? 90 : 0), t, 0.25);
-      set(L.hiss.g.gain, scene ? (v < 0.4 ? 0.006 : 0.002) : 0, 0.4);
+      set(L.hiss.g.gain, scene ? (v < 0.4 ? 0.0022 : 0.0008) : 0, 0.8);
+      // jembatan: lapisan suara mengikuti bagian rangkaian yang berada di atas jembatan
+      const bf = run ? info.bridgeFrac || 0 : 0, vk = clamp(v / 10, 0, 1);
+      set(L.boom.g.gain, bf * (0.04 + vk * 0.12), 0.3);
+      set(L.steel.g.gain, bf * vk * 0.04, 0.4);
+      set(L.ring.g.gain, bf * vk * 0.005, 0.5);
+      set(L.echoSend.gain, bf * 0.55, 0.3);
+      const Bd = track.bridge, onDeck = !!Bd && info.x > Bd.from && info.x < Bd.to;
+      if (run && v > 0.5 && onDeck) {
+        // di atas jembatan: dentum gelagar tiap 12 m menggantikan sambungan rel biasa
+        const j = Math.floor((info.x - Bd.from) / 12);
+        if (lastGirder === null) lastGirder = j;
+        if (j !== lastGirder) {
+          lastGirder = j;
+          const vol = clamp(0.018 + v * 0.003, 0.018, 0.075);
+          AXLES.forEach((off, i) => { const d = off / v; if (d < 2.6) girder(t + d, vol * (i % 2 ? 0.75 : 1)); });
+        }
+      } else lastGirder = null;
       // sambungan rel: setiap gandar berbunyi sesuai jaraknya
       if (run && v > 0.5) {
         const j = Math.floor(info.x / 25);
         if (lastJoint === null) lastJoint = j;
+        if (j !== lastJoint && onDeck) lastJoint = j;
         if (j !== lastJoint) {
           lastJoint = j;
           const vol = clamp(0.015 + v * 0.0028, 0.015, 0.07);
@@ -687,9 +859,28 @@
       if (!scene) return;
       if (info.bell > 0 && t >= nextBell) { crossingBell(0.04 + info.bell * 0.1); nextBell = t + 0.55; }
       const quiet = t < duckEnd.amb; // jangan tambah bunyi satwa saat ada peristiwa penting
+      // suasana asri: gemerisik daun dan aneka burung, lebih ramai saat kereta pelan atau berhenti
+      const open = !info.tunnel && !info.rain && !info.night, calm = clamp(1 - v / 20, 0.35, 1);
+      set(L.leaves.g.gain, scene && !info.tunnel ? (info.rain ? 0.004 : 0.016 * calm) : 0, 0.8);
       if (t >= nextBird) {
-        if (!quiet && info.fog < 0.6 && !info.rain && !info.tunnel && !info.night) bird(0.018 + Math.random() * 0.02);
-        nextBird = t + 0.8 + Math.random() * (info.fog > 0.3 ? 6 : 2.6);
+        if (!quiet && info.fog < 0.6 && open) (Math.random() < 0.5 ? bird : bulbul)((0.014 + Math.random() * 0.018) * calm);
+        nextBird = t + 0.7 + Math.random() * (info.fog > 0.3 ? 5 : 2.2) / calm;
+      }
+      if (t >= nextBird2) {
+        if (!quiet && open && Math.random() < 0.7) prenjak((0.01 + Math.random() * 0.012) * calm);
+        nextBird2 = t + 2.5 + Math.random() * 4;
+      }
+      if (t >= nextDove) {
+        if (!quiet && open) dove((0.03 + Math.random() * 0.015) * calm);
+        nextDove = t + 9 + Math.random() * 10;
+      }
+      if (info.dawn && t >= nextRooster) {
+        if (!quiet && open) rooster(0.012 + Math.random() * 0.006);
+        nextRooster = t + 22 + Math.random() * 20;
+      }
+      if (!info.dawn && t >= nextCicada) {
+        if (!quiet && open) cicada((0.006 + Math.random() * 0.004) * calm);
+        nextCicada = t + 10 + Math.random() * 12;
       }
       if (!quiet && (info.dawn || info.night) && !info.tunnel && t >= nextCricket) { cricket(0.01); nextCricket = t + 0.35 + Math.random() * 0.5; }
       if (!quiet && info.night && !info.tunnel && t >= nextFrog) { frog(0.04); nextFrog = t + 0.6 + Math.random() * 1.6; }
@@ -804,29 +995,63 @@
         tone(990, 0.02, 0.4, { at: t, bus: sfx, attack: 0.01 });
       },
       ding() { this.signalChime(); },
-      whistle() { // klakson udara lokomotif diesel, dua nada
-        if (!ac || muted) return;
+      // klakson udara tiga nada: berbunyi selama tombol ditahan
+      hornStart() {
+        if (!ac || muted || hornNodes) return;
         const t = ac.currentTime;
         const gn = ac.createGain();
-        gn.gain.setValueAtTime(0.0001, t);
-        gn.gain.exponentialRampToValueAtTime(0.12, t + 0.05);
-        gn.gain.setValueAtTime(0.12, t + 0.85);
-        gn.gain.exponentialRampToValueAtTime(0.0001, t + 1.12);
-        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.6;
-        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
+        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.11, t + 0.07);
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1050; bp.Q.value = 0.55;
+        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3600;
         gn.connect(bp).connect(lp).connect(sfx);
-        const vib = ac.createOscillator(); vib.frequency.value = 5.2;
-        const vg = g(1.6); vib.connect(vg); vib.start(t); vib.stop(t + 1.2);
-        [[311.1, 'sawtooth', 1], [370.0, 'sawtooth', 1], [155.6, 'square', 0.3]].forEach(([fr, type, lv]) => {
-          const o = ac.createOscillator(); o.type = type;
-          o.frequency.setValueAtTime(fr * 0.97, t); o.frequency.linearRampToValueAtTime(fr, t + 0.06);
-          vg.connect(o.frequency);
-          const og = g(lv); o.connect(og).connect(gn); o.start(t); o.stop(t + 1.2);
-        });
         // gema dari perbukitan
-        tone(370, 0.012, 0.8, { delay: 0.5, type: 'sawtooth', attack: 0.12, bus: amb });
-        duck({ amb: 0.4, music: 0.35 }, 1.2);
+        const dl = ac.createDelay(1); dl.delayTime.value = 0.42;
+        const fb = g(0.28), ef = ac.createBiquadFilter(); ef.type = 'lowpass'; ef.frequency.value = 1400;
+        const eg = g(0.35);
+        lp.connect(dl); dl.connect(ef).connect(fb).connect(dl); ef.connect(eg).connect(amb);
+        const vib = ac.createOscillator(); vib.frequency.value = 5.4; const vg = g(1.4); vib.connect(vg); vib.start(t);
+        const oscs = [];
+        [[311.1, 'sawtooth', 1], [370.0, 'sawtooth', 0.9], [466.2, 'sawtooth', 0.75], [155.6, 'square', 0.22]].forEach(([fq, type, lv]) => {
+          const o = ac.createOscillator(); o.type = type;
+          o.frequency.setValueAtTime(fq * 0.93, t); o.frequency.exponentialRampToValueAtTime(fq, t + 0.12);
+          vg.connect(o.frequency);
+          const og = g(lv); o.connect(og).connect(gn); o.start(t);
+          oscs.push([o, fq]);
+        });
+        oscs.push([vib, 0]);
+        burst(1800, 0.7, 0.05, 0.25, 'highpass', sfx);    // hembusan udara saat katup terbuka
+        duck({ amb: 0.4, music: 0.4 }, 6);
+        hornNodes = { gn, oscs, t0: t, fb };
+        hornNodes.auto = setTimeout(() => this.hornStop(), 5000);
       },
+      hornStop() {
+        if (!ac || !hornNodes) return;
+        const H = hornNodes; hornNodes = null;
+        clearTimeout(H.auto);
+        const t = Math.max(ac.currentTime, H.t0 + 0.45);
+        H.gn.gain.cancelScheduledValues(t); H.gn.gain.setTargetAtTime(0.0001, t, 0.07);
+        H.oscs.forEach(([o, fq]) => { if (fq) o.frequency.setTargetAtTime(fq * 0.96, t, 0.12); o.stop(t + 0.7); });
+        H.fb.gain.setTargetAtTime(0, t + 1.2, 0.3);
+        duck({ amb: 0.3, music: 0.3 }, Math.max(0.6, t - ac.currentTime + 0.6));
+      },
+      whistle() { this.hornStart(); setTimeout(() => this.hornStop(), 900); },
+      guardWhistle() { // peluit kondektur (semboyan 41): getar khas peluit berbola
+        if (!ac || muted) return;
+        const t = ac.currentTime + 0.02;
+        const o = ac.createOscillator(); o.frequency.value = 2850;
+        const tr = ac.createOscillator(); tr.frequency.value = 28; tr.connect(g(160)).connect(o.frequency);
+        const gn = ac.createGain(); gn.gain.setValueAtTime(0.0001, t);
+        [[0, 0.05], [0.25, 0.05], [0.35, 0.0001], [0.45, 0.06], [1.35, 0.06], [1.5, 0.0001]].forEach(([d, v]) => gn.gain.exponentialRampToValueAtTime(Math.max(0.0001, v), t + d + 0.03));
+        o.connect(gn).connect(sfx); o.start(t); tr.start(t); o.stop(t + 1.6); tr.stop(t + 1.6);
+        nz(t, 'highpass', 3000, 0.7, 0.012, 1.4, sfx, 0.04);
+      },
+      footstep(vol = 0.012) { // langkah kaki penumpang di peron (dibatasi agar tidak ramai)
+        if (!ac || muted || ac.currentTime < nextStep) return;
+        nextStep = ac.currentTime + 0.07;
+        nz(ac.currentTime + Math.random() * 0.02, 'bandpass', 1400 + Math.random() * 600, 1.2, vol, 0.05, amb, 0.002);
+      },
+      boardThump() { if (!ac || muted) return; const t = ac.currentTime + 0.01; nz(t, 'lowpass', 220, 0.8, 0.05, 0.12, door, 0.003); nz(t + 0.18, 'lowpass', 260, 0.8, 0.035, 0.1, door, 0.003); },
+      setTrack(tr) { track = tr; lastFX = null; },
       bleat() {
         if (!ac || muted) return;
         const t = ac.currentTime;
@@ -971,6 +1196,7 @@
   let W = 0, H = 0, DPR = 1, SW = 0, SH = 0;
   let mode = 'title';
   let radioTimer = 0, camLead = 0, camZoom = 1;
+  let viewMode = store.get('rn.view') === 'cab' ? 'cab' : 'side'; // 'side' (2.5D) atau 'cab' (kabin masinis)
   let rotateSkipped = false;
 
   const ui = {
@@ -1152,7 +1378,7 @@
 
   function horn() {
     if (!S || S.mode !== 'play') return;
-    Sound.whistle();
+    Sound.hornStart();
     if (ROUTE.elephants && (S.eleph.phase === 'block' || S.eleph.phase === 'cross') && !S.eleph.honked) {
       S.eleph.honked = true;
       Sound.trumpet(0.7);
@@ -1346,10 +1572,20 @@
     dw.timer += dt;
     if (dw.step === 'board') {
       const total = MIS.heavy ? 3 + st.waiting * 0.25 : 4.5;
-      const startWaiting = st.waiting;
-      const left = Math.max(0, Math.round(startWaiting * (1 - dw.timer / total)));
-      if (left < S.waiting[S.st]) { S.aboard += S.waiting[S.st] - left; S.waiting[S.st] = left; }
-      if (dw.timer >= total) {
+      const cr = crowds.get(S.st);
+      let done;
+      if (cr && cr.doors) {
+        // penumpang berjalan dan naik sendiri; batas waktu menjaga lama berhenti tetap wajar
+        if (dw.timer > total + 6 && cr.left > 0) forceBoard(cr);
+        done = cr.left === 0 && cr.doors.every((d) => d.alight === 0 && !d.busy) && dw.timer > 1.2;
+        if (done) cr.boardDone = true;
+      } else {
+        const startWaiting = st.waiting;
+        const left = Math.max(0, Math.round(startWaiting * (1 - dw.timer / total)));
+        if (left < S.waiting[S.st]) { S.aboard += S.waiting[S.st] - left; S.waiting[S.st] = left; }
+        done = dw.timer >= total;
+      }
+      if (done) {
         dw.step = 'close'; dw.timer = 0;
         toast(st.travelers ? 'Pemudik dan barang bawaannya sudah naik. Tutup pintu.' : st.traders ? 'Para pedagang sudah naik dengan keranjangnya. Tutup pintu.' : st.umbrellas ? 'Penumpang naik sambil melipat payung. Tutup pintu.' : 'Penumpang sudah naik. Tutup pintu.', 'info', 3, null, 2);
       }
@@ -1531,6 +1767,7 @@
     }
     if (S.v > 0.3) S.stoppedShortShown = false;
     if (S.phase === 'dwell') updateDwell(dt);
+    updateCrowds(dt);
 
     if (S.x >= ROUTE.bufferStop - 0.5) fail(`Kereta menabrak penahan di ujung rel ${titleCase(finalStation().name)}.`);
 
@@ -1680,6 +1917,10 @@
       (MIS.freight ? [1.6, 3.4, 8.6, 10.4] : [3.17, 5.33, 14.67, 16.83]).forEach((o) => ax.push(f + o));
     }
     Sound.setAxles(ax);
+    const turnouts = [];
+    allStations().forEach((q) => { turnouts.push(q.x - 112, q.x + 42); });
+    Sound.setTrack({ turnouts, decks: ROUTE.crossings.map((cr) => cr.x), bridge: ROUTE.bridge || null });
+    buildBend();
     idleState = makeIdle();
     textCache.clear();
   }
@@ -1714,7 +1955,8 @@
     $('rivalPanel').hidden = !ROUTE.rival;
     document.querySelectorAll('.cluster .coins').forEach((el) => { el.hidden = !!ROUTE.rival; });
     ui.rivalSep.hidden = !ROUTE.rival;
-    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1;
+    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1; camRoll = 0; sparks.length = 0; crowds.clear();
+    resetCrossings();
     const thisRun = S;
     if (ROUTE.rival) setTimeout(() => { if (S === thisRun && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
     toast(MIS.intro, 'info', 4, null, 3);
@@ -1728,7 +1970,12 @@
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('pointerleave', up);
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } });
   }
-  bindPress(ui.btnHorn, horn);
+  // klakson ditahan: berbunyi selama tombol ditekan
+  ui.btnHorn.addEventListener('pointerdown', (e) => { e.preventDefault(); Sound.init(); ui.btnHorn.classList.add('pressed'); horn(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => ui.btnHorn.addEventListener(ev, () => { ui.btnHorn.classList.remove('pressed'); Sound.hornStop(); }));
+  ui.btnHorn.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); horn(); } });
+  ui.btnHorn.addEventListener('keyup', (e) => { if (e.key === 'Enter' || e.key === ' ') Sound.hornStop(); });
+  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'h') Sound.hornStop(); });
   bindPress(ui.btnDoor, door);
   bindPress($('btnSand'), sand);
 
@@ -1775,7 +2022,8 @@
     if (k === 'arrowup' || k === 'w') { e.preventDefault(); setNotch(S.notch + 1); }
     else if (k === 'arrowdown' || k === 's') { e.preventDefault(); setNotch(S.notch - 1); }
     else if (k === ' ') { e.preventDefault(); setNotch(-5); }
-    else if (k === 'h') horn();
+    else if (k === 'h') { if (!e.repeat) horn(); }
+    else if (k === 'v') toggleView();
     else if (k === 'd' || k === 'enter') door();
     else if (k === 'a') sand();
     else if (k === 'escape' || k === 'p') pause();
@@ -1818,6 +2066,21 @@
   $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
   $('btnSoundTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
   $('btnMusic').addEventListener('click', () => { Sound.init(); Sound.toggleMusic(); syncAudioButtons(); });
+  // tombol ganti sudut pandang: samping (2.5D) atau kabin masinis
+  function syncViewButton() {
+    const b = $('btnView'), cab = viewMode === 'cab';
+    b.classList.toggle('on', cab);
+    b.setAttribute('aria-label', cab ? 'Tampilan samping' : 'Tampilan kabin masinis');
+    b.setAttribute('aria-pressed', String(cab));
+  }
+  function toggleView() {
+    viewMode = viewMode === 'cab' ? 'side' : 'cab';
+    store.set('rn.view', viewMode);
+    syncViewButton();
+    toast(viewMode === 'cab' ? 'Tampilan kabin masinis. Tekan lagi untuk tampilan samping.' : 'Tampilan samping.', 'info', 2, 'view', 1);
+  }
+  $('btnView').addEventListener('click', toggleView);
+  syncViewButton();
   $('btnMusicTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMusic(); syncAudioButtons(); });
   syncAudioButtons();
   // browser hanya mengizinkan audio setelah sentuhan pertama
@@ -1857,6 +2120,14 @@
     updateGauge(kmh, lim);
     const nl = nextLimitAhead();
     setText(ui.nextLimit, nl ? `${nl.limit} dalam ${Math.round(nl.from - S.x)} m` : S.yellowLimit ? 'Sinyal kuning · maks 40' : '');
+    {
+      const zc = zoneAt(S.x), lat = latAccel(S), gl = $('gLat');
+      gl.hidden = !(zc && zc.curve);
+      if (!gl.hidden) {
+        $('gLatFill').style.width = `${Math.round(clamp(lat / 2.2, 0, 1) * 100)}%`;
+        setClass(gl, 'warn', lat >= 1.0 && lat < 1.5); setClass(gl, 'bad', lat >= 1.5);
+      }
+    }
     const gr = gradeAt(S.x - TRAIN_LEN / 2);
     setText(ui.unit, gr ? `km/h · ${gr.permil > 0 ? '↗' : '↘'} ${Math.abs(gr.permil)}‰` : 'km/h');
 
@@ -1910,6 +2181,506 @@
   }
 
   // ---------- render dunia ----------
+  // ---------- tikungan 2.5D: rel dan rangkaian melengkung menjauh dari kamera ----------
+  // Setiap zona tikungan membelokkan arah rel sebesar BEND_TH. Posisi samping (b) tiap titik rel
+  // dihitung relatif terhadap tengah rangkaian, lalu diproyeksikan menjadi geseran vertikal dan skala.
+  const BEND_OFF = 300, BEND_TH = 50 * Math.PI / 180, BEND_D = 26, BEND_KV = 0.4;
+  const REDUCE_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  let BEND = null, camRoll = 0, swayT = 0;
+  const bendCv = document.createElement('canvas'), bctx = bendCv.getContext('2d');
+  const sparks = [];
+  function buildBend() {
+    const zones = ROUTE.zones.filter((z) => z.curve);
+    if (!zones.length) { BEND = null; return; }
+    const end = Math.max(ROUTE.bufferStop || 0, ...ROUTE.stations.map((q) => q.x)) + 600;
+    const n = Math.ceil(end + BEND_OFF);
+    const Hh = new Float32Array(n + 1), Sx = new Float32Array(n + 1), Cx = new Float32Array(n + 1);
+    const kap = (x) => {
+      for (const z of zones) {
+        if (x > z.from && x < z.to) {
+          const Lz = z.to - z.from, e = Math.min(35, Lz * 0.3);
+          return Math.min(1, (x - z.from) / e, (z.to - x) / e) * BEND_TH / (Lz - e);
+        }
+      }
+      return 0;
+    };
+    for (let i = 0; i < n; i++) {
+      Hh[i + 1] = Hh[i] + kap(i - BEND_OFF + 0.5);
+      const hm = (Hh[i] + Hh[i + 1]) / 2;
+      Sx[i + 1] = Sx[i] + Math.sin(hm); Cx[i + 1] = Cx[i] + Math.cos(hm);
+    }
+    BEND = { H: Hh, S: Sx, C: Cx, n };
+  }
+  const bAt = (arr, x) => { const f = clamp(x + BEND_OFF, 0, BEND.n - 1e-3), i = Math.floor(f); return arr[i] + (arr[i + 1] - arr[i]) * (f - i); };
+  function bendB(x, xr) {
+    const hr = bAt(BEND.H, xr);
+    return (bAt(BEND.S, x) - bAt(BEND.S, xr)) * Math.cos(hr) - (bAt(BEND.C, x) - bAt(BEND.C, xr)) * Math.sin(hr);
+  }
+  const bendDy = (b, ppm) => -BEND_KV * BEND_D * Math.tanh(b / BEND_D) * ppm;
+  const bendScale = (b) => 1 - 0.2 * Math.tanh(b / BEND_D);
+  // gaya samping (m/s²): sekitar 0,9 tepat di batas kecepatan tikungan
+  function latAccel(st) { const z = st && zoneAt(st.x); return z && z.curve ? 0.9 * Math.pow((st.v * 3.6) / z.limit, 2) : 0; }
+  function beginBend(V) {
+    if (bendCv.width !== cv.width || bendCv.height !== cv.height) { bendCv.width = cv.width; bendCv.height = cv.height; }
+    bctx.setTransform(1, 0, 0, 1, 0, 0); bctx.clearRect(0, 0, bendCv.width, bendCv.height);
+    bctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    return Object.assign({}, V, { c: bctx, bdy: () => 0 });
+  }
+  function endBend(c, B, gy, ppm) {
+    // per kolom: bagian atas (rel, kereta, objek) digeser & diskalakan; bagian bawah (sawah di depan rel)
+    // diregangkan dari kaki balas sampai tepi bawah layar agar tanah tetap menyambung
+    const yK = Math.min(H - 2, gy + 1.6 * ppm);
+    for (const [sx, dy, s] of B.cols) {
+      const w = Math.min(B.step, W - sx);
+      if (w <= 0) continue;
+      const dK = Math.min(H - 4, gy + (yK - gy) * s + dy);
+      const top = dK - yK * s;
+      c.drawImage(bendCv, sx * DPR, 0, w * DPR, yK * DPR, sx, top, w + 0.6, yK * s);
+      c.drawImage(bendCv, sx * DPR, yK * DPR, w * DPR, (H - yK) * DPR, sx, dK, w + 0.6, H - dK);
+    }
+  }
+  function drawSparks(V, dt, lat) {
+    const { c, ppm, gy, X, st } = V;
+    dt = dt || 0.016;
+    if (S && st === S && S.mode === 'play' && lat > 1.0 && st.v > 3 && !REDUCE_MOTION) {
+      const rate = (lat - 1.0) * 60 * dt;
+      let n = Math.floor(rate) + (Math.random() < rate % 1 ? 1 : 0);
+      while (n-- > 0 && sparks.length < 120) sparks.push({ x: st.x - Math.random() * TRAIN_LEN, vx: -1 - Math.random() * 2.5, vh: 1 + Math.random() * 2.5, life: 0, max: 0.25 + Math.random() * 0.25 });
+    }
+    if (!sparks.length) return;
+    c.save(); c.lineCap = 'round'; c.globalCompositeOperation = 'lighter';
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const q = sparks[i]; q.life += dt;
+      if (q.life >= q.max) { sparks.splice(i, 1); continue; }
+      const t = q.life, a = 1 - t / q.max;
+      const x = X(q.x + q.vx * t), y = gy - (0.35 + q.vh * t - 4.9 * t * t) * ppm;
+      c.strokeStyle = `rgba(255,${180 + Math.floor(60 * a)},90,${a})`; c.lineWidth = Math.max(1, 0.07 * ppm);
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x + 0.25 * ppm, y + 0.12 * ppm); c.stroke();
+    }
+    c.restore();
+  }
+
+  // ---------- tampilan kabin masinis (orang pertama) ----------
+  // Rel di depan diproyeksikan dengan perspektif dari mata masinis. Tikungan memakai data lengkung yang sama
+  // dengan tampilan samping (BEND), sehingga rel benar-benar berbelok ke kiri/kanan di depan kabin.
+  const cabRain = Array.from({ length: 70 }, (_, i) => ({ x: hash(i * 1.7), y: hash(i * 2.9 + 1), r: 0.6 + hash(i + 4) * 1.4 }));
+  function tickCrossings(st, dt) {
+    ROUTE.crossings.forEach((cr, i) => {
+      const A = crossState(i);
+      const active = st.x > cr.x - 320 && st.x - TRAIN_LEN < cr.x + 6;
+      A.gate += clamp((active ? 1 : 0) - A.gate, -dt * 0.7, dt * 0.7);
+      if (!active && A.gate < 0.15 && st.x - TRAIN_LEN > cr.x) A.released = true;
+      if (A.released) for (const v of A.veh) v.d += v.dir * dt * (v.kind === 'moto' ? 0.42 : 0.3);
+    });
+  }
+  function drawCab(c, st, dtReal, lat) {
+    const dt = Math.min(0.05, dtReal || 0.016);
+    tickCrossings(st, dt);
+    const x0 = st.x - 1.5, EH = 3.4;
+    const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
+    const p = storm ? 0.6 : night ? 0.35 : clamp(st.clock / 1500, 0, 1);
+    const T = ROUTE.tunnel, inTun = !!T && x0 > T.from && x0 < T.to;
+    const f = W * 0.8;
+    const bob = REDUCE_MOTION ? 0 : Math.sin(st.t * (2 + st.v * 0.45)) * Math.min(1.4, st.v * 0.08) + (st.shake > 0 ? (Math.random() - 0.5) * st.shake * 5 : 0);
+    // masinis duduk di sisi kiri kabin (kereta di Indonesia berjalan di jalur kiri)
+    const hy = H * 0.4 + bob, cx = W * 0.5, SEAT = 0.55;
+    // posisi rel di depan: z = jarak ke depan, lat = geser ke kanan (m)
+    const h0 = BEND ? bAt(BEND.H, x0) : 0, ch = Math.cos(h0), sh = Math.sin(h0);
+    const S0 = BEND ? bAt(BEND.S, x0) : 0, C0 = BEND ? bAt(BEND.C, x0) : 0;
+    const plan = (d) => {
+      if (!BEND) return { z: d, lat: 0, hd: 0 };
+      const x = x0 + d, dS = bAt(BEND.S, x) - S0, dC = bAt(BEND.C, x) - C0;
+      return { z: dC * ch + dS * sh, lat: -(dS * ch - dC * sh), hd: bAt(BEND.H, x) - h0 };
+    };
+    const P = (z, lat, h) => { if (z < 0.8) return null; const k = f / z; return { x: cx + (lat + SEAT) * k, y: hy + (EH - h) * k, k }; };
+    // titik dunia: jarak d sepanjang rel, geser samping o (kanan positif) tegak lurus rel, tinggi h
+    const W3 = (d, o, h) => { const q = plan(d); return P(q.z + Math.sin(q.hd) * o, q.lat + Math.cos(q.hd) * o, h); };
+    const quad = (a, b, d2, e, fill) => { if (!a || !b || !d2 || !e) return; c.fillStyle = fill; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(d2.x, d2.y); c.lineTo(e.x, e.y); c.closePath(); c.fill(); };
+    const FAR = inTun ? T.to - x0 + 2 : T && x0 < T.from && T.from - x0 < 520 ? T.from - x0 : 520;
+
+    // ---- langit & bukit jauh (bergeser saat kereta berbelok) ----
+    const Vs = { c, gy: hy, p, night, storm, camX: x0 * 0.2 + h0 * 400, ppm: 1 };
+    if (!inTun) drawSky(Vs); else { c.fillStyle = '#07090b'; c.fillRect(0, 0, W, H); }
+    const pan = h0 * f;
+    if (!inTun) {
+      const ridge = (amp, fq, col, par, ph) => {
+        c.fillStyle = col; c.beginPath(); c.moveTo(0, hy + 1);
+        for (let x = 0; x <= W + 8; x += 8) { const u = x + pan * par; c.lineTo(x, hy - amp * (0.55 + 0.3 * Math.sin(u * fq + ph) + 0.15 * Math.sin(u * fq * 2.7 + ph * 2))); }
+        c.lineTo(W, hy + 1); c.closePath(); c.fill();
+      };
+      ridge(H * 0.13, 0.004, night ? '#1b2040' : storm ? '#56626b' : mix('#6a6e9a', '#8fb0c4', p), 0.6, 1);
+      ridge(H * 0.07, 0.009, night ? '#141a2c' : storm ? '#46525a' : mix('#4f6a62', '#6f9a7c', p), 0.9, 3);
+      // tanah: sawah atau kebun sawit, garis pematang yang bergerak mendekat
+      const sawit = MIS.land === 'sawit';
+      const gg = c.createLinearGradient(0, hy, 0, H);
+      gg.addColorStop(0, night ? '#18241a' : sawit ? mix('#4a5a32', '#62773f', p) : mix('#5f8a48', '#7cab52', p));
+      gg.addColorStop(1, night ? '#0d140e' : sawit ? mix('#3a3022', '#4e3f2c', p) : mix('#2f5427', '#3f6d33', p));
+      c.fillStyle = gg; c.fillRect(0, hy, W, H - hy);
+      c.strokeStyle = night ? 'rgba(120,160,120,0.08)' : sawit ? 'rgba(120,90,60,0.18)' : 'rgba(150,200,110,0.22)';
+      c.lineWidth = 1;
+      const cell = 12;
+      for (let wd = Math.ceil((x0 + 4) / cell) * cell; wd < x0 + Math.min(FAR, 300); wd += cell) {
+        const q = P(wd - x0, 0, 0); if (!q) continue;
+        c.beginPath(); c.moveTo(0, q.y); c.lineTo(W, q.y); c.stroke();
+      }
+      for (let k = -8; k <= 8; k++) { if (!k) continue; const a = P(400, k * 14, 0), b = P(3, k * 14, 0); if (a && b) { c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); } }
+      // jalan raya sejajar rel (misi dengan bus pesaing)
+      if (ROUTE.rival) {
+        for (let d = 2; d < Math.min(FAR, 400); d += 4) quad(W3(d, 10, 0), W3(d, 17, 0), W3(d + 4, 17, 0), W3(d + 4, 10, 0), '#3a3b3e');
+      }
+      // sungai di bawah jembatan
+      const B = ROUTE.bridge;
+      if (B && B.to > x0 && B.from - x0 < FAR) {
+        const d0 = Math.max(2, B.from + 4 - x0), d1 = Math.min(FAR, B.to - 4 - x0);
+        if (d1 > d0) quad(W3(d0, -200, -3), W3(d0, 200, -3), W3(d1, 200, -3), W3(d1, -200, -3), night ? '#232a55' : mix('#5f8ea2', '#86bdd0', p));
+      }
+      // jalan perlintasan melintang
+      ROUTE.crossings.forEach((cr) => {
+        const d = cr.x - x0; if (d < -4 || d > FAR) return;
+        quad(W3(d - 3.5, -80, 0.02), W3(d - 3.5, 80, 0.02), W3(d + 3.5, 80, 0.02), W3(d + 3.5, -80, 0.02), mix('#4a4a4d', '#5a5a5e', p));
+        quad(W3(d - 0.08, -80, 0.03), W3(d - 0.08, 80, 0.03), W3(d + 0.08, 80, 0.03), W3(d + 0.08, -80, 0.03), 'rgba(240,236,224,0.7)');
+      });
+    } else {
+      // di dalam terowongan: dinding batu gelap diterangi lampu kereta
+      c.fillStyle = '#0b0d10'; c.fillRect(0, 0, W, H);
+    }
+
+    // ---- badan rel: balas, bantalan, rel ----
+    const steps = [];
+    for (let d = 1.2; d < FAR; d += Math.max(0.6, d * 0.035)) steps.push(d);
+    steps.push(FAR);
+    const onB = (d) => ROUTE.bridge && x0 + d > ROUTE.bridge.from && x0 + d < ROUTE.bridge.to;
+    for (let i = steps.length - 2; i >= 0; i--) {
+      const a = steps[i], b = steps[i + 1];
+      const deck = onB((a + b) / 2);
+      const col = inTun ? '#24221f' : deck ? (night ? '#2a3038' : '#4a535a') : mix('#8d8275', '#a59a8c', p);
+      quad(W3(a, -2.3, 0), W3(a, 2.3, 0), W3(b, 2.3, 0), W3(b, -2.3, 0), col);
+    }
+    const slp = 0.65;
+    for (let wd = Math.floor((x0 + 60) / slp) * slp; wd > x0 + 1.4; wd -= slp) {
+      const d = wd - x0;
+      quad(W3(d - 0.12, -1.2, 0.05), W3(d - 0.12, 1.2, 0.05), W3(d + 0.12, 1.2, 0.05), W3(d + 0.12, -1.2, 0.05), inTun ? '#3a3631' : mix('#6f6a63', '#8b857b', p));
+    }
+    [-0.53, 0.53].forEach((o) => {
+      for (let i = 0; i < steps.length - 1; i++) {
+        const a = W3(steps[i], o - 0.035, 0.16), b = W3(steps[i + 1], o - 0.035, 0.16), a2 = W3(steps[i], o + 0.035, 0.16), b2 = W3(steps[i + 1], o + 0.035, 0.16);
+        quad(a, b, b2, a2, inTun ? '#6d6a66' : '#b9c0c3');
+      }
+    });
+
+    // ---- objek tepi rel, digambar dari jauh ke dekat ----
+    const items = [];
+    const add = (d, fn) => { if (d > 1 && d <= FAR + 1) items.push({ d, fn }); };
+    if (!inTun) {
+      const dMax = Math.min(FAR, 420);
+      for (let wd = Math.ceil(x0 / 40) * 40; wd < x0 + dMax; wd += 40) add(wd - x0, () => {
+        const d = wd - x0, b = W3(d, 3.6, 0), t = W3(d, 3.6, 7.2), arm = W3(d, 3.6, 6.8);
+        if (!b || !t) return;
+        c.strokeStyle = '#5b4a3a'; c.lineWidth = Math.max(1, 0.22 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+        c.lineWidth = Math.max(1, 0.12 * b.k); c.beginPath(); c.moveTo(arm.x - 0.9 * b.k, arm.y); c.lineTo(arm.x + 0.9 * b.k, arm.y); c.stroke();
+      });
+      const sawit = MIS.land === 'sawit';
+      for (let i = Math.ceil(x0 / 9); i * 9 < x0 + dMax; i++) {
+        const side = hash(i * 1.3) < 0.5 ? -1 : 1, o = side * (8 + hash(i * 2.1) * 26), ht = 5 + hash(i * 3.7) * 6;
+        const wd = i * 9 + hash(i) * 5;
+        if (nearStation(wd) && side < 0 && Math.abs(o) < 22) continue;
+        if (onB(wd - x0)) continue;
+        add(wd - x0, () => {
+          const d = wd - x0, b = W3(d, o, 0), t = W3(d, o, ht); if (!b || !t) return;
+          const palm = sawit || hash(i * 5.3) < 0.35;
+          c.strokeStyle = night ? '#1c1712' : '#5a4430'; c.lineWidth = Math.max(1, 0.3 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+          const r = (palm ? 2.4 : ht * 0.32) * b.k;
+          c.fillStyle = night ? '#16261a' : palm ? mix('#3d6a34', '#4f8a40', p) : (hash(i * 7.7) < 0.5 ? mix('#2f5f36', '#3f7a4a', p) : mix('#3a6a3c', '#4c8a50', p));
+          if (palm) {
+            c.strokeStyle = c.fillStyle; c.lineWidth = Math.max(1, 0.28 * b.k); c.lineCap = 'round';
+            for (let k = 0; k < 7; k++) { const a = Math.PI + k * (Math.PI / 6); c.beginPath(); c.moveTo(t.x, t.y); c.quadraticCurveTo(t.x + Math.cos(a) * r * 0.7, t.y - r * 0.5, t.x + Math.cos(a) * r, t.y + r * 0.35); c.stroke(); }
+            c.lineCap = 'butt';
+          } else { c.beginPath(); c.arc(t.x, t.y + r * 0.5, r, 0, 7); c.arc(t.x - r * 0.6, t.y + r, r * 0.7, 0, 7); c.arc(t.x + r * 0.6, t.y + r, r * 0.7, 0, 7); c.fill(); }
+        });
+      }
+    }
+    // sinyal di kiri rel
+    for (const sig of ROUTE.signals) {
+      const d = sig.x - x0; if (d < 2 || d > FAR) continue;
+      add(d, () => {
+        const b = W3(d, -2.8, 0), t = W3(d, -2.8, 5.6); if (!b || !t) return;
+        c.strokeStyle = '#3a3a3a'; c.lineWidth = Math.max(1, 0.18 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+        const w = 0.7 * b.k, hh = 2.0 * b.k;
+        c.fillStyle = '#1b1d1f'; roundRect(c, t.x - w / 2, t.y - hh, w, hh, w * 0.3); c.fill();
+        const asp = st.sig ? st.sig[sig.id] : 'R';
+        [['R', '#ff4b3a'], ['Y', '#ffc42b'], ['G', '#3bff8a']].forEach(([a, col], k) => {
+          const on = asp === a, ly = t.y - hh + (k + 0.5) * (hh / 3);
+          c.fillStyle = on ? col : 'rgba(80,80,80,0.6)'; c.beginPath(); c.arc(t.x, ly, w * 0.3, 0, 7); c.fill();
+          if (on) { const gl = c.createRadialGradient(t.x, ly, 0, t.x, ly, w * 2.2); gl.addColorStop(0, col + 'aa'); gl.addColorStop(1, col + '00'); c.fillStyle = gl; c.beginPath(); c.arc(t.x, ly, w * 2.2, 0, 7); c.fill(); }
+        });
+      });
+    }
+    // stasiun: peron & bangunan di kiri, peron penumpang di kanan
+    allStations().forEach((s) => {
+      const pass = (ROUTE.passStations || []).includes(s);
+      const a = s.x + PLAT_FROM - x0, b = s.x + PLAT_TO - x0;
+      if (b < 1 || a > FAR) return;
+      const da = Math.max(1.2, a), db = Math.min(FAR, b);
+      add(db, () => {
+        // peron kiri (tinggi 1 m): muka atas dan sisi yang menghadap rel
+        const seg = (o0, o1, col, colSide) => {
+          for (let d = db; d > da; d -= 6) {
+            const e = Math.max(da, d - 6);
+            quad(W3(e, o0, 1), W3(e, o1, 1), W3(d, o1, 1), W3(d, o0, 1), col);
+            const edge = Math.abs(o0) < Math.abs(o1) ? o0 : o1;
+            quad(W3(e, edge, 0), W3(d, edge, 0), W3(d, edge, 1), W3(e, edge, 1), colSide);
+          }
+          const ln = Math.sign(o0) * (Math.min(Math.abs(o0), Math.abs(o1)) + 0.25);
+          for (let d = db; d > da; d -= 6) { const e = Math.max(da, d - 6); quad(W3(e, ln - 0.1, 1.01), W3(e, ln + 0.1, 1.01), W3(d, ln + 0.1, 1.01), W3(d, ln - 0.1, 1.01), '#e8c33a'); }
+        };
+        seg(-2.1, -8, mix('#b9b2a2', '#cfc8b8', p), '#8d8679');
+        if (!pass && !MIS.freight) seg(2.1, 7, mix('#c4bdad', '#ddd6c6', p), '#9d968a');
+      });
+      // bangunan stasiun & kanopi
+      const bd = s.x - 48 - x0;
+      add(bd + 12, () => {
+        const q = (d1, d2, o1, o2, h1, h2, col) => quad(W3(d1, o1, h1), W3(d2, o2, h1), W3(d2, o2, h2), W3(d1, o1, h2), col);
+        q(bd - 12, bd + 12, -12, -12, 1, 6, mix('#d9cfb9', '#efe6d2', p));
+        q(bd + 12, bd + 12, -12, -20, 1, 6, mix('#c4bba6', '#ddd3bd', p));
+        q(bd - 13, bd + 13, -11, -11, 6, 8.4, '#8f4330');
+        for (let k = 0; k < 5; k++) q(bd - 10 + k * 4.6, bd - 8.2 + k * 4.6, -11.95, -11.95, 1.2, 4.2, '#3d4a4f');
+      });
+      // papan nama stasiun
+      add(s.x + 13 - x0, () => {
+        const d = s.x + 13 - x0, l = W3(d, -5.5, 3.2), r = W3(d, -1.4, 3.2), lb = W3(d, -5.5, 2.2), pl = W3(d, -5.2, 0), pr = W3(d, -1.7, 0);
+        if (!l || !r || !lb) return;
+        c.strokeStyle = '#3a3a3a'; c.lineWidth = Math.max(1, 0.1 * l.k);
+        if (pl && pr) { c.beginPath(); c.moveTo(pl.x, pl.y); c.lineTo(pl.x, lb.y); c.moveTo(pr.x, pr.y); c.lineTo(pr.x, lb.y); c.stroke(); }
+        c.fillStyle = '#fbfaf5'; c.fillRect(l.x, l.y, r.x - l.x, lb.y - l.y);
+        c.strokeStyle = '#1d2a2b'; c.strokeRect(l.x, l.y, r.x - l.x, lb.y - l.y);
+        if (l.k > 4) {
+          c.fillStyle = '#1d2a2b'; c.textAlign = 'center'; c.textBaseline = 'middle';
+          c.font = `800 ${Math.round(0.5 * l.k)}px "Big Shoulders Display", "Arial Narrow", sans-serif`;
+          c.fillText(s.name, (l.x + r.x) / 2, l.y + (lb.y - l.y) * 0.42);
+          c.font = `700 ${Math.round(0.28 * l.k)}px "Plus Jakarta Sans", system-ui, sans-serif`;
+          c.fillText(s.elev, (l.x + r.x) / 2, l.y + (lb.y - l.y) * 0.8);
+          c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+        }
+      });
+      // marka henti
+      if (!pass) add(s.x - x0, () => {
+        const d = s.x - x0, b = W3(d, -2.4, 1), t = W3(d, -2.4, 2.8); if (!b || !t) return;
+        c.strokeStyle = '#333'; c.lineWidth = Math.max(1, 0.12 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+        const sz = 0.9 * b.k; c.fillStyle = '#f2c230'; c.fillRect(t.x - sz / 2, t.y - sz, sz, sz);
+        if (sz > 8) { c.fillStyle = '#111'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 ${Math.round(sz * 0.8)}px "Big Shoulders Display", sans-serif`; c.fillText(MIS.freight ? 'B' : String(N_COACH + 1), t.x, t.y - sz / 2); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
+      });
+      // calon penumpang di peron kanan
+      const si = ROUTE.stations.indexOf(s), cr = si >= 0 ? crowds.get(si) : null;
+      if (cr) {
+        cr.people.concat([cr.ppka]).forEach((pp) => {
+          if (pp.state === 'in' || pp.state === 'step' || pp.state === 'out') return;
+          const d = pp.x - x0; if (d < 2) return;
+          const o = 2.4 + pp.z * 4.2;
+          add(d, () => { const q = W3(d, o, 1); if (q && q.k > 1.2) paxDraw(c, q.x, q.y, q.k * 1.1, pp, cr.paddle); });
+        });
+      }
+    });
+    // perlintasan: palang & lampu di kedua sisi, kendaraan menunggu
+    ROUTE.crossings.forEach((cr, i) => {
+      const d = cr.x - x0; if (d < 1 || d > FAR) return;
+      const A = crossState(i), active = st.x > cr.x - 320 && st.x - TRAIN_LEN < cr.x + 6;
+      const blink = Math.floor(performance.now() / 450) % 2 === 0;
+      [[-1, d - 4.5], [1, d + 4.5]].forEach(([side, dd]) => add(dd, () => {
+        const o = side * 4.2, b = W3(dd, o, 0), t = W3(dd, o, 3.2); if (!b || !t) return;
+        c.strokeStyle = '#ddd'; c.lineWidth = Math.max(1, 0.15 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+        const r = Math.max(1.5, 0.2 * b.k);
+        [[-0.35, blink], [0.35, !blink]].forEach(([dx, on]) => { const q = W3(dd, o + dx, 2.6); if (!q) return; c.fillStyle = active && on ? '#ff3b2e' : '#4a1a16'; c.beginPath(); c.arc(q.x, q.y, r, 0, 7); c.fill(); });
+        // palang: turun melintang jalan (sejajar rel), naik tegak
+        const ang = lerp(Math.PI / 2 * 0.95, 0, A.gate), L = 6.5;
+        const pv = W3(dd, o, 1.1);
+        if (pv) {
+          const end = W3(dd + side * Math.cos(ang) * L * -1, o, 1.1 + Math.sin(ang) * L);
+          if (end) { c.strokeStyle = '#f4f1e8'; c.lineWidth = Math.max(1.5, 0.16 * b.k); c.setLineDash([Math.max(2, 0.5 * b.k), Math.max(2, 0.5 * b.k)]); c.beginPath(); c.moveTo(pv.x, pv.y); c.lineTo(end.x, end.y); c.stroke(); c.strokeStyle = '#d62b20'; c.lineDashOffset = Math.max(2, 0.5 * b.k); c.stroke(); c.setLineDash([]); c.lineDashOffset = 0; }
+        }
+      }));
+      if (A.gate > 0.5) [[-14, '#2e86ab'], [16, '#c0392b']].forEach(([o, col]) => add(d + (o < 0 ? -1 : 1) * 5.5, () => {
+        const dd = d + (o < 0 ? -1 : 1) * 5.5, b0 = W3(dd - 1, o, 0), b1 = W3(dd + 1, o, 1.5); if (!b0 || !b1) return;
+        c.fillStyle = col; roundRect(c, Math.min(b0.x, b1.x) - 1.1 * b0.k, b1.y, 2.2 * b0.k, b0.y - b1.y, 0.3 * b0.k); c.fill();
+        c.fillStyle = 'rgba(30,40,50,0.8)'; c.fillRect(Math.min(b0.x, b1.x) - 0.8 * b0.k, b1.y + 0.15 * b0.k, 1.6 * b0.k, 0.45 * b0.k);
+      }));
+    });
+    // jembatan busur: lengkung kiri-kanan, batang gantung, pagar
+    const Br = ROUTE.bridge;
+    if (Br && Br.to > x0 && Br.from - x0 < FAR) {
+      const Lb = Br.to - Br.from, arcH = (x) => 13 * Math.sin(Math.PI * clamp((x - Br.from) / Lb, 0, 1));
+      for (let wx = Br.to; wx >= Br.from; wx -= 4) {
+        const d = wx - x0; if (d < 1.5 || d > FAR) continue;
+        add(d, () => {
+          [-3.8, 3.8].forEach((o) => {
+            const a = W3(d, o, arcH(wx) + 1), b = W3(d - 4, o, arcH(wx - 4) + 1);
+            if (a && b) { c.strokeStyle = '#d7dcdb'; c.lineWidth = Math.max(1.5, 0.7 * a.k); c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
+            if (Math.round(wx) % 8 === 0) { const g0 = W3(d, o, 1.2); if (a && g0) { c.strokeStyle = 'rgba(210,215,215,0.8)'; c.lineWidth = Math.max(1, 0.08 * a.k); c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(g0.x, g0.y); c.stroke(); } }
+            const r0 = W3(d, o * 0.82, 1.1), r1 = W3(d - 4, o * 0.82, 1.1);
+            if (r0 && r1) { c.strokeStyle = TOS_COL; c.lineWidth = Math.max(1, 0.12 * r0.k); c.beginPath(); c.moveTo(r0.x, r0.y); c.lineTo(r1.x, r1.y); c.stroke(); }
+          });
+        });
+      }
+    }
+    // gajah & kambing di jalur
+    const E = ROUTE.elephants;
+    if (E && st.eleph && st.eleph.phase !== 'gone') {
+      const el = st.eleph, prog = el.phase === 'cross' ? el.prog : 0;
+      [[0, 1], [6.5, 1.08], [3.5, 0.6]].forEach(([off, sc]) => {
+        const d = E.x + off - x0; if (d < 2 || d > FAR) return;
+        const o = el.phase === 'idle' ? -9 - off * 0.3 : lerp(-7, 10, prog) - off * 0.2;
+        add(d, () => {
+          const b = W3(d, o, 0); if (!b) return;
+          const s2 = b.k * sc, step = el.phase === 'cross' ? Math.sin(performance.now() / 220 + off) * 0.1 * s2 : 0;
+          c.save(); c.globalAlpha = prog > 0.85 ? (1 - prog) / 0.15 : 1;
+          c.fillStyle = night ? '#3c3d46' : '#7c7a7e';
+          [-1.1, -0.4, 0.4, 1.1].forEach((dx, k) => c.fillRect(b.x + dx * s2 - 0.22 * s2, b.y - 1.4 * s2 + (k % 2 ? step : -step), 0.44 * s2, 1.4 * s2));
+          c.beginPath(); c.ellipse(b.x, b.y - 2.2 * s2, 1.7 * s2, 1.2 * s2, 0, 0, 7); c.fill();
+          c.beginPath(); c.arc(b.x + 1.5 * s2, b.y - 2.6 * s2, 0.8 * s2, 0, 7); c.fill();
+          c.fillStyle = night ? '#33343c' : '#6a686c'; c.beginPath(); c.ellipse(b.x + 1.1 * s2, b.y - 2.6 * s2, 0.55 * s2, 0.75 * s2, 0, 0, 7); c.fill();
+          c.strokeStyle = night ? '#3c3d46' : '#7c7a7e'; c.lineWidth = 0.28 * s2; c.lineCap = 'round';
+          c.beginPath(); c.moveTo(b.x + 2.0 * s2, b.y - 2.4 * s2); c.quadraticCurveTo(b.x + 2.4 * s2, b.y - 1.2 * s2, b.x + 2.1 * s2, b.y - 0.6 * s2); c.stroke(); c.lineCap = 'butt';
+          c.restore();
+        });
+      });
+    }
+    ROUTE.goats.forEach((g, i) => {
+      const gs = st.goats ? st.goats[i] : null; if (gs && gs.state === 'gone') return;
+      const t = gs && gs.state === 'flee' ? gs.t : 0, d = g.x - x0; if (d < 2 || d > FAR) return;
+      [0, 1.4].forEach((o2, k) => add(d + k, () => {
+        const b = W3(d + k, t * 2.5 + o2 - 0.5, 0); if (!b) return;
+        const s2 = b.k; c.save(); c.globalAlpha = clamp(1 - t / 2.2, 0, 1);
+        c.fillStyle = k ? '#d9cfbd' : '#ece6da'; c.beginPath(); c.ellipse(b.x, b.y - 0.6 * s2, 0.45 * s2, 0.3 * s2, 0, 0, 7); c.fill();
+        c.fillRect(b.x - 0.3 * s2, b.y - 0.4 * s2, 0.08 * s2, 0.4 * s2); c.fillRect(b.x + 0.22 * s2, b.y - 0.4 * s2, 0.08 * s2, 0.4 * s2);
+        c.beginPath(); c.arc(b.x + 0.4 * s2, b.y - 0.85 * s2, 0.18 * s2, 0, 7); c.fill();
+        c.restore();
+      }));
+    });
+    // silo muat batu bara melintang di atas rel, penahan ujung rel, bus pesaing
+    if (ROUTE.loading) {
+      const d = ROUTE.loading.silo - x0;
+      if (d > 2 && d < FAR) add(d, () => {
+        const q = (o1, o2, h1, h2, col) => quad(W3(d, o1, h1), W3(d, o2, h1), W3(d, o2, h2), W3(d, o1, h2), col);
+        q(-3.6, -3.0, 0, 9, '#5a5f63'); q(3.0, 3.6, 0, 9, '#5a5f63'); q(-4.5, 4.5, 9, 16, '#8c8f8f'); q(-1, 1, 7.2, 9, '#3b3e41');
+      });
+    }
+    if (ROUTE.bufferStop) {
+      const d = ROUTE.bufferStop - x0;
+      if (d > 1 && d < FAR) add(d, () => { const a = W3(d, -1, 0), b = W3(d, 1, 1.4); if (a && b) { c.fillStyle = '#c23b2e'; c.fillRect(a.x, b.y, b.x - a.x, a.y - b.y); c.fillStyle = '#f1e9d6'; c.fillRect(a.x, b.y + (a.y - b.y) * 0.3, b.x - a.x, (a.y - b.y) * 0.2); } });
+    }
+    if (ROUTE.rival && st.bus) {
+      const d = st.bus.x - x0;
+      if (d > 2 && d < Math.min(FAR, 400)) add(d, () => {
+        const a = W3(d - 12, 13.5, 0), b = W3(d, 13.5, 3.2); if (!a || !b) return;
+        const w = 2.5 * a.k; c.fillStyle = '#d8312a'; roundRect(c, a.x - w / 2, b.y, w, a.y - b.y, 0.3 * a.k); c.fill();
+        c.fillStyle = '#1c2a35'; c.fillRect(a.x - w * 0.4, b.y + (a.y - b.y) * 0.15, w * 0.8, (a.y - b.y) * 0.3);
+      });
+    }
+    items.sort((a, b) => b.d - a.d).forEach((it) => it.fn());
+
+    // ---- mulut terowongan ----
+    if (T) {
+      const portal = (d, outside) => {
+        if (d < 1 || d > 540) return;
+        const hole = [];
+        for (let k = 0; k <= 16; k++) { const a = Math.PI * k / 16; const q = W3(d, Math.cos(a) * 3.4, 4.6 + Math.sin(a) * 2.2); if (q) hole.push(q); }
+        const bl = W3(d, -3.4, 0), br = W3(d, 3.4, 0);
+        if (!bl || !br || hole.length < 3) return;
+        if (outside) {
+          const m = (o, h) => W3(d, o, h);
+          const pts = [m(-60, 0), m(-40, 14), m(-14, 22), m(0, 24), m(16, 21), m(42, 12), m(60, 0)].filter(Boolean);
+          c.fillStyle = night ? '#18241a' : mix('#3f5f37', '#4f7a43', p);
+          c.beginPath(); pts.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill();
+          const fr = [m(-5, 0), m(-5, 8), m(5, 8), m(5, 0)].filter(Boolean);
+          c.fillStyle = '#8a8378'; c.beginPath(); fr.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill();
+          c.fillStyle = '#050607'; c.beginPath(); c.moveTo(br.x, br.y); hole.forEach((q) => c.lineTo(q.x, q.y)); c.lineTo(bl.x, bl.y); c.closePath(); c.fill();
+          const nm = m(0, 7.2);
+          if (nm && nm.k > 5) { c.fillStyle = '#f2ead6'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.round(0.7 * nm.k)}px "Big Shoulders Display", sans-serif`; c.fillText(T.name, nm.x, nm.y); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
+        } else {
+          // dari dalam: hanya lubang keluar yang terang
+          const lg = c.createLinearGradient(0, hole[8].y, 0, br.y); lg.addColorStop(0, '#e9f0ea'); lg.addColorStop(1, '#a9c09a');
+          c.fillStyle = lg; c.beginPath(); c.moveTo(br.x, br.y); hole.forEach((q) => c.lineTo(q.x, q.y)); c.lineTo(bl.x, bl.y); c.closePath(); c.fill();
+        }
+      };
+      if (!inTun) portal(T.from - x0, true); else {
+        portal(T.to - x0, false);
+        // lampu dinding terowongan
+        for (let wd = Math.ceil(x0 / 30) * 30; wd < T.to; wd += 30) { const d = wd - x0; if (d < 8) continue; [-3.2, 3.2].forEach((o) => { const q = W3(d, o, 3.8); if (q) { c.fillStyle = 'rgba(255,190,110,0.9)'; c.beginPath(); c.arc(q.x, q.y, Math.max(1.2, 0.18 * q.k), 0, 7); c.fill(); } }); }
+      }
+    }
+
+    // ---- cuaca & cahaya ----
+    const fog = fogAt(x0 + 60);
+    if (fog > 0.02 && !inTun) {
+      const fg = c.createLinearGradient(0, hy - H * 0.2, 0, H);
+      fg.addColorStop(0, `rgba(222,228,230,${0.95 * fog})`); fg.addColorStop(0.35, `rgba(222,228,230,${0.85 * fog})`); fg.addColorStop(1, `rgba(222,228,230,${0.25 * fog})`);
+      c.fillStyle = fg; c.fillRect(0, 0, W, H);
+    }
+    if (night || inTun || storm) {
+      if (night && !inTun) { c.fillStyle = 'rgba(8,12,38,0.45)'; c.fillRect(0, 0, W, H); }
+      if (storm && !inTun) { c.fillStyle = 'rgba(30,38,46,0.18)'; c.fillRect(0, 0, W, H); }
+      // sorot lampu kereta di rel depan
+      c.save(); c.globalCompositeOperation = 'lighter';
+      const near = W3(4, 0, 0), far = W3(Math.min(FAR, 80), 0, 0);
+      if (near && far) {
+        const lg = c.createLinearGradient(0, near.y, 0, far.y);
+        lg.addColorStop(0, `rgba(255,232,170,${inTun ? 0.28 : 0.22})`); lg.addColorStop(1, 'rgba(255,232,170,0)');
+        c.fillStyle = lg; c.beginPath(); c.moveTo(near.x - 3.5 * near.k, near.y); c.lineTo(near.x + 3.5 * near.k, near.y); c.lineTo(far.x + 4 * far.k, far.y); c.lineTo(far.x - 4 * far.k, far.y); c.closePath(); c.fill();
+      }
+      c.restore();
+    }
+
+    // ---- kabin: kaca depan, pilar, dasbor ----
+    const rain = MIS.rain && !inTun;
+    if (rain) {
+      // tetes hujan di kaca, disapu wiper
+      const wp = (performance.now() / 1600) % 1, wa = Math.sin(wp * Math.PI * 2) * 0.5 + 0.5;
+      c.fillStyle = 'rgba(220,232,240,0.35)';
+      cabRain.forEach((r, k) => {
+        const age = ((performance.now() / 1000 + k * 0.37) % 1.6) / 1.6;
+        const x = r.x * W, y = r.y * H * 0.75;
+        const wiperX = lerp(W * 0.08, W * 0.46, wa) + (x > W / 2 ? W * 0.46 : 0);
+        if (Math.abs(x - wiperX) < W * 0.05) return;
+        c.globalAlpha = 0.4 + age * 0.5; c.beginPath(); c.arc(x, y, r.r * (1 + age), 0, 7); c.fill();
+      });
+      c.globalAlpha = 1;
+      c.strokeStyle = '#141619'; c.lineWidth = Math.max(2, W * 0.004); c.lineCap = 'round';
+      [[W * 0.27, H * 0.8], [W * 0.73, H * 0.8]].forEach(([px, py]) => {
+        const a = -Math.PI * (0.12 + wa * 0.76);
+        c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.cos(a) * H * 0.42, py + Math.sin(a) * H * 0.42); c.stroke();
+      });
+      c.lineCap = 'butt';
+    }
+    const frame = night ? '#0c0f13' : '#1a2026';
+    c.fillStyle = frame;
+    c.fillRect(0, 0, W, H * 0.055);
+    c.beginPath(); c.moveTo(0, 0); c.lineTo(W * 0.045, 0); c.lineTo(W * 0.02, H); c.lineTo(0, H); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(W, 0); c.lineTo(W * 0.955, 0); c.lineTo(W * 0.98, H); c.lineTo(W, H); c.closePath(); c.fill();
+    c.fillRect(W * 0.665, 0, W * 0.009, H * 0.8); // pilar tengah kaca depan (di kanan masinis)
+    // pelindung matahari & pantulan kaca
+    c.fillStyle = 'rgba(20,26,32,0.55)'; c.fillRect(W * 0.08, H * 0.055, W * 0.32, H * 0.05); c.fillRect(W * 0.6, H * 0.055, W * 0.32, H * 0.05);
+    c.fillStyle = 'rgba(255,255,255,0.035)'; c.beginPath(); c.moveTo(W * 0.1, H * 0.06); c.lineTo(W * 0.2, H * 0.06); c.lineTo(W * 0.08, H * 0.7); c.lineTo(W * 0.04, H * 0.7); c.closePath(); c.fill();
+    // dasbor
+    const dy0 = H * 0.79;
+    const dg = c.createLinearGradient(0, dy0, 0, H);
+    dg.addColorStop(0, night ? '#1d232a' : '#2e363e'); dg.addColorStop(1, night ? '#0b0e12' : '#151a1f');
+    c.fillStyle = dg; c.beginPath(); c.moveTo(0, dy0 + H * 0.03); c.quadraticCurveTo(W * 0.5, dy0 - H * 0.03, W, dy0 + H * 0.03); c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.06)'; c.fillRect(0, dy0 + H * 0.01, W, 1.5);
+    // pengukur tekanan udara (pipa utama & silinder rem) di tengah dasbor
+    const gauge = (gx, val, label) => {
+      const r = Math.min(W, H) * 0.045, gy2 = dy0 + H * 0.085;
+      c.fillStyle = '#e9e5da'; c.beginPath(); c.arc(gx, gy2, r, 0, 7); c.fill();
+      c.strokeStyle = '#2a2f33'; c.lineWidth = 2; c.stroke();
+      const a = Math.PI * (0.75 + 1.5 * clamp(val, 0, 1));
+      c.strokeStyle = '#c0392b'; c.lineWidth = Math.max(1.5, r * 0.08); c.beginPath(); c.moveTo(gx, gy2); c.lineTo(gx + Math.cos(a) * r * 0.8, gy2 + Math.sin(a) * r * 0.8); c.stroke();
+      c.fillStyle = '#2a2f33'; c.font = `700 ${Math.max(7, Math.round(r * 0.32))}px "Plus Jakarta Sans", sans-serif`; c.textAlign = 'center'; c.fillText(label, gx, gy2 + r * 0.55); c.textAlign = 'start';
+    };
+    const brk = clamp(-(st.aCmd || 0) / 1.2, 0, 1);
+    gauge(W * 0.44, 0.7 - brk * 0.3, 'BP'); gauge(W * 0.56, brk, 'BC');
+    const lamp = (lx, on, col) => { c.fillStyle = on ? col : 'rgba(120,120,120,0.35)'; c.beginPath(); c.arc(lx, dy0 + H * 0.05, Math.max(2, H * 0.008), 0, 7); c.fill(); };
+    lamp(W * 0.36, st.doors === 'open', '#f2c94c'); lamp(W * 0.64, st.notch > 0, '#5fd08a'); lamp(W * 0.67, !!st.slip, '#ef5b4c');
+  }
+  const TOS_COL = '#1f8f86';
+
   function render(dtReal) {
     const c = ctx;
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -1947,24 +2718,56 @@
     V.Xn = (sx) => W * 0.5 + (sx - W * 0.5) * 1.75; // proyeksi lapisan latar depan (lebih dekat ke kamera)
     if (tf > 0.2) { V.rimA = 0; V.sunShadow = 0; }
 
+    // tikungan: lengkung rel di layar per kolom
+    let bendCols = null;
+    V.bdy = () => 0;
+    if (BEND) {
+      const xr = st.x - TRAIN_LEN / 2, step = Math.max(3, W / 260), cols = [];
+      let mx = 0;
+      for (let sx = 0; sx < W; sx += step) {
+        const b = bendB(camX + (sx + step / 2 - shake) / ppm, xr), dy = bendDy(b, ppm);
+        cols.push([sx, dy, bendScale(b)]); mx = Math.max(mx, Math.abs(dy));
+      }
+      if (mx > 0.6) { bendCols = { cols, step }; V.bdy = (wx) => bendDy(bendB(wx, xr), ppm); }
+    }
+    // kamera miring dan bergoyang mengikuti gaya samping di tikungan
+    const lat = latAccel(st);
+    const rollT = REDUCE_MOTION || st !== S ? 0 : clamp(lat * 1.1, 0, 2.2);
+    camRoll += (rollT - camRoll) * Math.min(1, (dtReal || 0.016) * 1.5);
+    swayT += dtReal || 0.016;
+    if (camRoll > 0.02) {
+      const r = camRoll * Math.PI / 180, k = 1 + r * (W / H) + 0.01;
+      const sway = REDUCE_MOTION ? 0 : (Math.sin(swayT * 7.3) * 0.6 + Math.sin(swayT * 12.7) * 0.3) * Math.min(lat, 2) * 1.2;
+      c.translate(W / 2 + sway, H / 2); c.rotate(-r); c.scale(k, k); c.translate(-W / 2, -H / 2);
+    }
+
+    if (viewMode === 'cab' && S && st === S) { drawCab(c, st, dtReal, lat); return; }
     drawSky(V);
     drawRidges(V);
     drawPort(V);
     drawBackProps(V);
     drawTunnelHill(V);
-    drawGround(V);
-    drawTunnelInterior(V);
-    drawStations(V);
-    drawSwitch(V);
-    drawTrackside(V);
-    drawGoats(V);
-    drawSilo(V, 'back');
-    drawElephants(V, 'back');
-    drawBridge(V, 'back');
-    drawTrain(V);
-    drawSilo(V, 'front');
-    drawElephants(V, 'front');
-    drawBus(V);
+    // lapisan tanah, rel & kereta: saat di tikungan digambar ke kanvas terpisah lalu dilengkungkan.
+    // Tanah ikut melar di bawah rel sehingga rel tetap menapak di tanah, tidak melayang.
+    const LV = bendCols ? beginBend(V) : V;
+    drawGround(LV);
+    drawTunnelInterior(LV);
+    drawStations(LV);
+    drawSwitch(LV);
+    drawTrackside(LV);
+    drawCrossings(LV, 'back', dtReal);
+    drawGoats(LV);
+    drawSilo(LV, 'back');
+    drawElephants(LV, 'back');
+    drawBridge(LV, 'back');
+    drawTrain(LV);
+    drawPlatformFront(LV, dtReal);
+    drawSparks(LV, dtReal, lat);
+    drawSilo(LV, 'front');
+    drawCrossings(LV, 'front', dtReal);
+    drawElephants(LV, 'front');
+    drawBus(LV);
+    if (bendCols) endBend(c, bendCols, gy, ppm);
     drawBridge(V, 'front');
     drawTunnelPortals(V);
     drawFrontProps(V);
@@ -1989,16 +2792,16 @@
     };
     for (const s of allStations()) {
       if (X(s.x + 30) < -40 || X(s.x - 100) > W + 40) continue;
-      for (let k = 0; k <= 5; k++) lamp(X(s.x - 80 + k * 11.5), gy - 4.9 * ppm, 5 * ppm, 'rgba(255,214,140,0.35)');
+      for (let k = 0; k <= 5; k++) lamp(X(s.x - 80 + k * 11.5), gy - 4.9 * ppm + V.bdy(s.x - 80 + k * 11.5), 5 * ppm, 'rgba(255,214,140,0.35)');
     }
     for (const sig of ROUTE.signals) {
       if (sig.x < V.wx0 || sig.x > V.wx1) continue;
       const asp = st.sig ? st.sig[sig.id] : 'R';
       const i = asp === 'R' ? 0 : asp === 'Y' ? 1 : 2;
-      lamp(X(sig.x), gy - 6.2 * ppm - 2.1 * ppm + i * 0.9 * ppm, 2.4 * ppm, asp === 'R' ? 'rgba(255,75,58,0.6)' : asp === 'Y' ? 'rgba(255,196,43,0.6)' : 'rgba(59,255,138,0.55)');
+      lamp(X(sig.x), gy - 6.2 * ppm - 2.1 * ppm + i * 0.9 * ppm + V.bdy(sig.x), 2.4 * ppm, asp === 'R' ? 'rgba(255,75,58,0.6)' : asp === 'Y' ? 'rgba(255,196,43,0.6)' : 'rgba(59,255,138,0.55)');
     }
     // sorot lampu depan lokomotif
-    const lx = X(st.x + 0.3), ly = gy - 3.9 * ppm;
+    const lx = X(st.x + 0.3), ly = gy - 3.9 * ppm + V.bdy(st.x);
     const lg = c.createRadialGradient(lx, ly, 0, lx, ly, 30 * ppm);
     lg.addColorStop(0, 'rgba(255,232,160,0.4)'); lg.addColorStop(1, 'rgba(255,232,160,0)');
     c.fillStyle = lg;
@@ -2129,12 +2932,12 @@
       const F = LOCO_LEN + GAP + k * (COACH_LEN + GAP);
       for (let i = 0; i < 7; i++) {
         const a = 36 + i * 24.4;
-        const x = fx - (F + (240 - a) / 12) * ppm;
-        roundRect(c, x - 0.25 * ppm, gy - 4.6 * ppm, (21 / 12 + 0.5) * ppm, 1.9 * ppm, 0.4 * ppm); c.fill();
+        const m = F + (240 - a) / 12, x = fx - m * ppm;
+        roundRect(c, x - 0.25 * ppm, gy - 4.6 * ppm + V.bdy(st.x - m), (21 / 12 + 0.5) * ppm, 1.9 * ppm, 0.4 * ppm); c.fill();
       }
     }
     c.fillStyle = `rgba(255,215,143,${alpha * 0.35})`;
-    c.fillRect(fx - 3.6 * ppm, gy - 5.8 * ppm, 2.5 * ppm, 1.7 * ppm);
+    c.fillRect(fx - 3.6 * ppm, gy - 5.8 * ppm + V.bdy(st.x - 3), 2.5 * ppm, 1.7 * ppm);
     c.restore();
   }
 
@@ -2219,7 +3022,7 @@
     const { c, ppm, gy, X, st, tf } = V;
     c.fillStyle = `rgba(4,5,8,${0.6 * tf})`; c.fillRect(0, 0, W, H);
     c.save(); c.globalCompositeOperation = 'lighter';
-    const lx = X(st.x + 0.3), ly = gy - 3.9 * ppm;
+    const lx = X(st.x + 0.3), ly = gy - 3.9 * ppm + V.bdy(st.x);
     const lg = c.createRadialGradient(lx, ly, 0, lx, ly, 30 * ppm);
     lg.addColorStop(0, `rgba(255,232,160,${0.5 * tf})`); lg.addColorStop(1, 'rgba(255,232,160,0)');
     c.fillStyle = lg;
@@ -2497,9 +3300,13 @@
     }
   }
 
-  function drawGround(V) {
+  function drawGround(V, part = 'all') {
     const { c, ppm, gy, X, p } = V;
     const yTop = gy + 1.4 * ppm;
+    const b = ROUTE.bridge || { from: -1e6, to: -1e6 + 20 };
+    const bx0 = X(b.from + 6), bx1 = X(b.to - 6);
+    const onScreen = bx1 > -40 && bx0 < W + 40;
+    if (part !== 'bed') {
     // sawah depan: gradasi gelap ke arah kamera
     const g = c.createLinearGradient(0, gy, 0, H);
     g.addColorStop(0, mix('#5a8540', '#78a84c', p)); g.addColorStop(1, mix('#28431f', '#3d6534', p));
@@ -2556,9 +3363,6 @@
     c.restore();
 
     // sungai di bawah jembatan, tanpa pilar tengah (jembatan busur bentang penuh)
-    const b = ROUTE.bridge || { from: -1e6, to: -1e6 + 20 };
-    const bx0 = X(b.from + 6), bx1 = X(b.to - 6);
-    const onScreen = bx1 > -40 && bx0 < W + 40;
     if (onScreen) {
       const bank = [[bx0 - 4 * ppm, gy], [bx1 + 4 * ppm, gy], [V.Xn(bx1) + 3 * ppm, H], [V.Xn(bx0) - 3 * ppm, H]];
       c.fillStyle = mix('#5e4f3b', '#7b6a4e', p);
@@ -2587,6 +3391,8 @@
         c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(x, gy + 3.6 * ppm, w, 0.9 * ppm);
       }
     }
+    }
+    if (part === 'field') return;
 
     // balas: muka atas terlihat dari atas, lereng depan lebih gelap
     const yFar = gy - 0.6 * ppm;
@@ -2652,6 +3458,281 @@
       c.beginPath(); c.moveTo(x + 0.2 * s, y - 1.1 * s); c.lineTo(x + 0.2 * s, y - 2.25 * s); c.stroke();
       c.fillStyle = uc; c.beginPath(); c.arc(x + 0.2 * s, y - 2.2 * s, 0.75 * s, Math.PI, 0); c.fill();
     }
+  }
+
+  // ---------- penumpang di peron depan: menunggu, berkumpul ke pintu, antre, naik ----------
+  const crowds = new Map();
+  const PAX_SHIRT = ['#c0392b', '#2e86ab', '#e1a63b', '#6c4f9e', '#3c8d5a', '#d35f8d', '#e4d6b8', '#2bb3a3', '#e98a3c', '#6a8caf'];
+  const PAX_PANTS = ['#2c3e50', '#3b3b3b', '#5a4632', '#1f3a5f', '#4a4a55'];
+  const PAX_SKIN = ['#8d5a3b', '#a8704a', '#c48a5f', '#7a4d32'];
+  const PAX_HIJAB = ['#2f6f73', '#b04a5a', '#e2c6a0', '#3f4d7a', '#7a5a9a'];
+  const DOOR_W = 20 / 12, PAX_SCALE = 1.55; // skala orang mengikuti proporsi kereta di game
+  const PLAT_FROM = -95, PLAT_TO = 25;
+  // pintu rangkaian: jarak (m) dari moncong ke tepi kiri tiap pintu
+  function doorOffsets() {
+    const out = [];
+    for (let k = 0; k < N_COACH; k++) {
+      const F = LOCO_LEN + GAP + k * (COACH_LEN + GAP);
+      [6, 214].forEach((d0) => out.push(F + (240 - d0) / 12));
+    }
+    return out;
+  }
+  function makeCrowd(si) {
+    const s = ROUTE.stations[si];
+    const n = S.waiting[si];
+    const spacing = n > 16 ? 2.5 : 4.1;
+    const people = [];
+    for (let k = 0; k < n; k++) {
+      const seed = k + si * 13, r = hash(seed * 3.1 + 0.7);
+      const kind = r < 0.1 ? 'elder' : r < 0.28 ? 'hijab' : (s.traders || s.travelers) && hash(k + 3.3) < 0.6 ? 'trader' : r < 0.45 ? 'backpack' : 'adult';
+      people.push({
+        role: 'board', state: 'wait', kind, seed,
+        x: s.x - 72 + k * spacing + hash(k + si * 7) * 1.8, z: 0.25 + hash(seed + 5.5) * 0.6,
+        shirt: PAX_SHIRT[Math.floor(hash(seed) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1.1) * PAX_PANTS.length)],
+        skin: PAX_SKIN[Math.floor(hash(seed + 2.2) * PAX_SKIN.length)], hijab: PAX_HIJAB[Math.floor(hash(seed + 4.4) * PAX_HIJAB.length)],
+        umbrella: s.umbrellas && hash(k + 1.7) < 0.75, speed: kind === 'elder' ? 0.65 : 1.25 + hash(seed + 6.6) * 0.3,
+        delay: 0.2 + hash(seed + 8.8) * 3, ph: hash(seed + 9.9) * 6, dir: 1, alpha: 1, k: 0,
+      });
+    }
+    const ppka = { role: 'ppka', state: 'stand', kind: 'ppka', x: s.x - 40, z: 0.86, shirt: '#f4f1e8', pants: '#2a3442', skin: '#a8704a', dir: 1, alpha: 1, ph: 0 };
+    const started = S.phase === 'dwell' && S.st === si && S.dwell.step !== 'open' && S.dwell.step !== 'board';
+    return { si, s, people, ppka, doors: null, alightLeft: 0, spawnT: 0, kond: null, paddle: 0, whistled: !!started, boardDone: !!started };
+  }
+  function crowdDoors(cr) {
+    return doorOffsets().map((mL) => ({ left: S.x - mL, cx: S.x - mL + DOOR_W / 2, q: [], busy: false, alight: 0 }));
+  }
+  function walkTo(p, tx, tz, dt, speed) {
+    const dx = tx - p.x, dz = (tz - p.z) * 4, dist = Math.hypot(dx, dz);
+    if (dist < 0.05) { p.moving = false; return true; }
+    const sp = Math.min(speed * dt * (dist < 0.4 ? 0.6 : 1), dist);
+    p.x += (dx / dist) * sp; p.z += (dz / dist) * sp / 4;
+    if (Math.abs(dx) > 0.02) p.dir = Math.sign(dx);
+    const before = Math.floor(p.ph / Math.PI);
+    p.ph += sp * 3.2; p.moving = true;
+    if (Math.floor(p.ph / Math.PI) !== before && Math.random() < 0.35) Sound.footstep(0.008 + Math.random() * 0.006);
+    return false;
+  }
+  function spawnAlighter(cr, d) {
+    const s = cr.s, seed = Math.random() * 100;
+    const exitX = s.x - 48 + (Math.random() - 0.5) * 16;
+    cr.people.push({
+      role: 'alight', state: 'out', k: 0, door: d, x: d.cx, z: 0.04, kind: Math.random() < 0.25 ? 'hijab' : Math.random() < 0.3 ? 'backpack' : 'adult',
+      shirt: PAX_SHIRT[Math.floor(hash(seed) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1) * PAX_PANTS.length)],
+      skin: PAX_SKIN[Math.floor(hash(seed + 2) * PAX_SKIN.length)], hijab: PAX_HIJAB[Math.floor(hash(seed + 3) * PAX_HIJAB.length)],
+      speed: 1.3 + Math.random() * 0.3, ph: 0, dir: exitX < d.cx ? -1 : 1, alpha: 1, exitX, exitZ: 0.85 + Math.random() * 0.1,
+    });
+    Sound.boardThump();
+  }
+  function updateCrowds(dt) {
+    if (!S || MIS.freight) return;
+    // buat kerumunan untuk stasiun yang mendekat, hapus yang sudah jauh di belakang
+    ROUTE.stations.forEach((s, si) => {
+      const near = s.x - S.x < 420 && S.x - s.x < 260;
+      if (near && !crowds.has(si)) crowds.set(si, makeCrowd(si));
+      if (!near && crowds.has(si) && si !== S.st) crowds.delete(si);
+    });
+    const dwellHere = (si) => S.phase === 'dwell' && S.st === si;
+    for (const cr of crowds.values()) {
+      const s = cr.s, si = cr.si, here = dwellHere(si), step = here ? S.dwell.step : null;
+      const approaching = S.phase === 'run' && S.st + 1 === si && S.x > s.x - 170 && !s.final;
+      // pintu terbuka: tetapkan pintu nyata dan antrean
+      if (here && (step === 'board' || step === 'alight') && !cr.doors) {
+        cr.doors = crowdDoors(cr);
+        if (step === 'board') {
+          const want = S.aboard > 6 ? Math.min(cr.doors.length, 2 + Math.floor(Math.random() * 3)) : 0;
+          for (let i = 0; i < want; i++) cr.doors[Math.floor(Math.random() * cr.doors.length)].alight++;
+          const last = cr.doors.reduce((a, d) => (d.cx < a.cx ? d : a));
+          cr.kond = { role: 'kond', state: 'stand', kind: 'kond', x: last.cx + 1.1, z: 0.12, shirt: '#2b4c7e', pants: '#1e2a3a', skin: '#8d5a3b', dir: -1, alpha: 1, ph: 0, door: last };
+          cr.people.filter((p) => p.role === 'board' && p.state !== 'in')
+            .sort((a, b) => Math.abs(a.x - S.x) - Math.abs(b.x - S.x))
+            .forEach((p) => { p.door = cr.doors.reduce((a, d) => (Math.abs(d.cx - p.x) < Math.abs(a.cx - p.x) ? d : a)); p.door.q.push(p); p.state = 'go'; p.sit = false; });
+        } else {
+          cr.alightLeft = Math.min(14, Math.max(4, Math.round(S.aboard / 3)));
+        }
+      }
+      if (here && step === 'alight' && cr.alightLeft > 0) {
+        cr.spawnT -= dt;
+        if (cr.spawnT <= 0) { cr.spawnT = 0.22; cr.alightLeft--; spawnAlighter(cr, cr.doors[Math.floor(Math.random() * cr.doors.length)]); }
+      }
+      // penumpang turun didahulukan di tiap pintu
+      if (cr.doors && here && step === 'board') {
+        for (const d of cr.doors) {
+          if (d.alight > 0 && !d.busy) { d.alight--; d.busy = true; spawnAlighter(cr, d); }
+        }
+      }
+      let left = 0;
+      for (const p of cr.people) {
+        p.moving = false;
+        if (p.role === 'alight') {
+          if (p.state === 'out') {
+            p.k += dt / 0.55;
+            if (p.k >= 1) { p.state = 'leave'; p.door.busy = false; }
+          } else if (p.state === 'leave') {
+            if (walkTo(p, p.exitX, p.exitZ, dt, p.speed)) p.state = 'fade';
+          } else if (p.state === 'fade') p.alpha = Math.max(0, p.alpha - dt * 2);
+          continue;
+        }
+        if (p.state === 'in') continue;
+        left++;
+        if (p.state === 'wait' || p.state === 'gather' || p.state === 'ready') {
+          // kereta mendekat: berjalan ke perkiraan posisi pintu di dekat garis kuning
+          if (approaching && p.state === 'wait') { p.delay -= dt; if (p.delay <= 0) p.state = 'gather'; }
+          if (p.state === 'gather') {
+            if (p.tx === undefined) {
+              const offs = doorOffsets().map((mL) => s.x - mL + DOOR_W / 2);
+              const dc = offs.reduce((a, x) => (Math.abs(x - p.x) < Math.abs(a - p.x) ? x : a));
+              p.tx = dc + (hash(p.seed + 12.1) - 0.5) * 2.6; p.tz = 0.14 + hash(p.seed + 13.3) * 0.3;
+            }
+            if (walkTo(p, p.tx, p.tz, dt, p.speed)) p.state = 'ready';
+          }
+          continue;
+        }
+        if (p.state === 'go' || p.state === 'queue') {
+          const d = p.door, idx = d.q.indexOf(p), slot = idx + (d.alight > 0 || (d.busy && idx === 0 && !d.boarding) ? 1 : 0);
+          const side = p.side || (p.side = Math.sign(p.x - d.cx) || 1);
+          const tx = slot === 0 ? d.cx : d.cx + side * (0.5 + 0.55 * slot), tz = slot === 0 ? 0.04 : 0.1 + Math.min(0.3, 0.05 * slot);
+          if (walkTo(p, tx, tz, dt, p.speed)) {
+            p.state = 'queue';
+            if (idx === 0 && !d.busy && d.alight === 0) { p.state = 'step'; p.k = 0; d.busy = true; d.boarding = true; p.dir = 1; Sound.boardThump(); }
+          } else p.state = 'go';
+          continue;
+        }
+        if (p.state === 'step') {
+          p.k += dt / (p.kind === 'elder' ? 0.95 : 0.5);
+          if (p.k >= 1) {
+            p.state = 'in'; p.door.busy = false; p.door.boarding = false; p.door.q.shift();
+            if (S.waiting[si] > 0) { S.waiting[si]--; S.aboard++; }
+          }
+        }
+      }
+      cr.left = left;
+      cr.people = cr.people.filter((p) => !(p.role === 'alight' && p.state === 'fade' && p.alpha <= 0));
+      // semboyan berangkat: PPKA mengangkat tongkat hijau, kondektur meniup peluit lalu naik
+      const sendOff = here && (step === 'close' || step === 'signal') && cr.boardDone;
+      cr.paddle = clamp(cr.paddle + (sendOff ? dt : -dt) * 2.2, 0, 1);
+      if (cr.kond && sendOff) {
+        const kd = cr.kond;
+        if (!cr.whistled) { cr.whistled = true; cr.whistleT = 0; Sound.guardWhistle(); }
+        cr.whistleT += dt;
+        kd.whistle = cr.whistleT < 1.5;
+        if (cr.whistleT > 1.6 && kd.state === 'stand') { kd.state = 'step'; kd.k = 0; kd.x = kd.door.cx; Sound.boardThump(); }
+        if (kd.state === 'step') { kd.k += dt / 0.6; if (kd.k >= 1) kd.state = 'in'; }
+      }
+    }
+  }
+  // dipanggil saat waktu tunggu habis: penumpang tersisa langsung naik
+  function forceBoard(cr) {
+    cr.people.forEach((p) => { if (p.role === 'board' && p.state !== 'in') { p.state = 'in'; if (S.waiting[cr.si] > 0) { S.waiting[cr.si]--; S.aboard++; } } });
+    if (cr.doors) cr.doors.forEach((d) => { d.q.length = 0; d.busy = false; });
+    cr.left = 0;
+  }
+
+  function paxDraw(c, x, y, s, p, paddle) {
+    const h = (p.kind === 'elder' ? 1.56 : 1.66) * s;
+    const sw = p.moving ? Math.sin(p.ph) * 0.42 : 0;
+    const hipY = y - h * 0.48, shY = y - h * 0.81, headR = h * 0.075, headY = y - h * 0.9;
+    c.save(); c.globalAlpha = p.alpha; c.lineCap = 'round';
+    c.fillStyle = 'rgba(0,0,0,0.16)'; c.beginPath(); c.ellipse(x, y, h * 0.16, h * 0.035, 0, 0, 7); c.fill();
+    if (p.kind === 'hijab') {
+      c.fillStyle = '#3c4a5c';
+      const skw = sw * h * 0.05;
+      c.beginPath(); c.moveTo(x - h * 0.09, hipY - h * 0.02); c.lineTo(x + h * 0.09, hipY - h * 0.02); c.lineTo(x + h * 0.13 + skw, y - h * 0.03); c.lineTo(x - h * 0.13 + skw, y - h * 0.03); c.closePath(); c.fill();
+    } else {
+      c.strokeStyle = p.pants; c.lineWidth = h * 0.075;
+      [-1, 1].forEach((sg) => { const a = sw * sg, Lg = h * 0.47; c.beginPath(); c.moveTo(x, hipY); c.lineTo(x + Math.sin(a) * Lg, hipY + Math.cos(a) * Lg); c.stroke(); });
+    }
+    if (p.kind === 'backpack') { c.fillStyle = '#2f3f2f'; c.fillRect(x - p.dir * h * 0.17 - h * 0.06, shY + h * 0.02, h * 0.12, h * 0.24); }
+    const uni = p.kind === 'kond' || p.kind === 'ppka';
+    const tw = h * (uni ? 0.22 : 0.2);
+    c.fillStyle = p.shirt; roundRect(c, x - tw / 2, shY, tw, hipY - shY + h * 0.04, h * 0.05); c.fill();
+    if (uni) { c.fillStyle = '#d8b04a'; c.fillRect(x - tw * 0.35, shY + h * 0.06, tw * 0.15, h * 0.04); }
+    c.strokeStyle = p.skin; c.lineWidth = h * 0.06;
+    if (p.kind === 'ppka' && paddle > 0.02) {
+      c.strokeStyle = p.shirt; c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + h * 0.12 * paddle, shY - h * 0.28 * paddle); c.stroke();
+      const px = x + h * 0.14 * paddle, py = shY - h * 0.32 * paddle;
+      c.strokeStyle = '#ddd'; c.lineWidth = h * 0.02; c.beginPath(); c.moveTo(px, py); c.lineTo(px, py - h * 0.2); c.stroke();
+      c.fillStyle = '#2fa84f'; c.beginPath(); c.arc(px, py - h * 0.28, h * 0.09, 0, 7); c.fill();
+      c.strokeStyle = '#f4f1e8'; c.lineWidth = h * 0.015; c.stroke();
+    } else if (p.kind === 'elder') {
+      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + p.dir * h * 0.16, hipY); c.stroke();
+      c.strokeStyle = '#6b4a2a'; c.lineWidth = h * 0.025; c.beginPath(); c.moveTo(x + p.dir * h * 0.16, hipY); c.lineTo(x + p.dir * h * (0.2 + Math.sin(p.ph) * 0.04), y); c.stroke();
+    } else if (p.kind === 'trader') {
+      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + h * 0.04, headY - headR * 2.2); c.stroke();
+    } else if (p.kind === 'kond' && p.whistle) {
+      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + p.dir * h * 0.08, headY + headR * 0.6); c.stroke();
+    } else {
+      const armA = -sw * 0.8;
+      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + Math.sin(armA) * h * 0.3, shY + Math.cos(armA) * h * 0.3); c.stroke();
+    }
+    c.fillStyle = p.skin; c.beginPath(); c.arc(x, headY, headR, 0, 7); c.fill();
+    if (p.kind === 'hijab') {
+      c.fillStyle = p.hijab;
+      c.beginPath(); c.arc(x, headY - headR * 0.1, headR * 1.25, Math.PI * 0.95, Math.PI * 2.05); c.lineTo(x + headR * 1.5, shY + h * 0.07); c.lineTo(x - headR * 1.5, shY + h * 0.07); c.closePath(); c.fill();
+      c.fillStyle = p.skin; c.beginPath(); c.arc(x + p.dir * headR * 0.25, headY + headR * 0.1, headR * 0.62, 0, 7); c.fill();
+    } else {
+      c.fillStyle = p.kind === 'elder' ? '#d9d6cf' : '#1f1a17';
+      c.beginPath(); c.arc(x, headY - headR * 0.2, headR * 1.02, Math.PI * 1.05, Math.PI * 1.95); c.fill();
+    }
+    if (p.kind === 'ppka') { c.fillStyle = '#c8322b'; c.fillRect(x - headR * 1.15, headY - headR * 1.35, headR * 2.3, headR * 0.75); }
+    if (p.kind === 'kond') { c.fillStyle = '#1e2a3a'; c.fillRect(x - headR * 1.1, headY - headR * 1.3, headR * 2.2, headR * 0.7); c.fillStyle = '#d8b04a'; c.fillRect(x - headR * 0.3, headY - headR * 1.15, headR * 0.6, headR * 0.3); }
+    if (p.kind === 'trader') {
+      c.fillStyle = '#a77b3f'; c.beginPath(); c.ellipse(x, headY - headR * 1.6, headR * 2.0, headR * 0.75, 0, 0, 7); c.fill();
+      c.fillStyle = '#5fa04a'; c.beginPath(); c.arc(x - headR * 0.6, headY - headR * 2.1, headR * 0.6, 0, 7); c.arc(x + headR * 0.7, headY - headR * 2.0, headR * 0.55, 0, 7); c.fill();
+    }
+    if (p.umbrella && !p.moving && p.state !== 'step') {
+      const uc = ['#2b6cb0', '#c0392b', '#2f2f36', '#3c8d5a', '#e1a63b'][Math.floor(hash((p.seed || 0) + 9) * 5)];
+      c.strokeStyle = '#333'; c.lineWidth = Math.max(1, h * 0.025);
+      c.beginPath(); c.moveTo(x + h * 0.12, shY + h * 0.1); c.lineTo(x + h * 0.12, headY - h * 0.32); c.stroke();
+      c.fillStyle = uc; c.beginPath(); c.arc(x + h * 0.12, headY - h * 0.3, h * 0.42, Math.PI, 0); c.fill();
+    }
+    c.restore();
+  }
+
+  // peron sisi dekat (di antara rel dan kamera): menutupi roda kereta seperti peron tinggi
+  function drawPlatformFront(V) {
+    if (MIS.freight) return;
+    const { c, ppm, gy, X, st } = V;
+    const yb = gy - 1.12 * ppm, yf = gy + 2.3 * ppm;
+    const footY = (z) => yb + 0.35 * ppm + z * (yf - yb - 0.6 * ppm);
+    ROUTE.stations.forEach((s, si) => {
+      const a = X(s.x + PLAT_FROM), b = X(s.x + PLAT_TO);
+      if (b < -50 || a > W + 50) return;
+      const g = c.createLinearGradient(0, yb, 0, yf);
+      g.addColorStop(0, V.night ? '#7d7a86' : '#cfc8b8'); g.addColorStop(1, V.night ? '#8c8994' : '#ddd6c6');
+      c.fillStyle = g; c.fillRect(a, yb, b - a, yf - yb);
+      c.fillStyle = '#e8c33a'; c.fillRect(a, yb + 0.12 * ppm, b - a, 0.22 * ppm);
+      c.fillStyle = 'rgba(120,96,30,0.35)';
+      for (let x = a; x < b; x += Math.max(3, 0.6 * ppm)) c.fillRect(x, yb + 0.12 * ppm, Math.max(1, 0.08 * ppm), 0.22 * ppm);
+      c.fillStyle = 'rgba(0,0,0,0.05)';
+      for (let i = 1; i < 5; i++) c.fillRect(a, yb + (i / 5) * (yf - yb), b - a, 1);
+      c.fillStyle = V.night ? '#5d5a63' : '#9d968a'; c.fillRect(a, yf, b - a, 0.9 * ppm);
+      c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(a, yf + 0.9 * ppm, b - a, 0.25 * ppm);
+      c.fillStyle = 'rgba(0,0,0,0.14)'; c.fillRect(a, yb, b - a, 0.1 * ppm);
+      const cr = crowds.get(si);
+      if (!cr) return;
+      const items = [];
+      cr.people.forEach((p) => { if (p.state !== 'in' && p.state !== 'step' && p.state !== 'out') items.push(p); });
+      items.push(cr.ppka);
+      if (cr.kond && cr.kond.state === 'stand') items.push(cr.kond);
+      // yang sedang naik/turun di ambang pintu: dipotong bingkai pintu
+      const inDoor = cr.people.filter((p) => p.state === 'step' || p.state === 'out');
+      if (cr.kond && cr.kond.state === 'step') inDoor.push(cr.kond);
+      inDoor.forEach((p) => {
+        const d = p.door; if (!d) return;
+        const k = p.role === 'alight' ? 1 - p.k : p.k;
+        const y = lerp(footY(0.04), gy - 1.15 * ppm, clamp(k * 1.6, 0, 1));
+        c.save();
+        if (k > 0.35) { c.beginPath(); c.rect(X(d.left), gy - 4.55 * ppm, DOOR_W * ppm, 3.4 * ppm); c.clip(); }
+        const a2 = k > 0.55 ? clamp(1 - (k - 0.55) / 0.45, 0, 1) : 1;
+        paxDraw(c, X(d.cx), y, PAX_SCALE * ppm * (1 - k * 0.06), Object.assign({}, p, { alpha: a2 * p.alpha, moving: true, ph: k * 6, dir: p.role === 'alight' ? Math.sign(p.exitX - d.cx) || 1 : 1 }), 0);
+        c.restore();
+      });
+      items.sort((p, q) => p.z - q.z).forEach((p) => {
+        const x = X(p.x);
+        if (x < -40 || x > W + 40) return;
+        paxDraw(c, x, footY(p.z), PAX_SCALE * ppm * (1 + p.z * 0.18), p, cr.paddle);
+      });
+    });
   }
 
   function drawStations(V) {
@@ -2721,7 +3802,7 @@
       c.fillStyle = '#f2c230'; c.fillRect(mx - 0.6 * ppm, gy - 3.8 * ppm, 1.2 * ppm, 1.2 * ppm);
       c.fillStyle = '#111'; c.font = `900 ${Math.round(1.0 * ppm)}px "Big Shoulders Display", sans-serif`; c.fillText(MIS.freight ? 'B' : String(N_COACH + 1), mx, gy - 3.17 * ppm);
       // calon penumpang
-      const n = pass ? s.waiting : st.waiting ? st.waiting[i] : s.waiting;
+      const n = pass ? s.waiting : MIS.freight ? (st.waiting ? st.waiting[i] : s.waiting) : 0;
       const spacing = n > 16 ? 2.5 : 4.1;
       for (let k = 0; k < n; k++) {
         const px = X(s.x - 72 + k * spacing + hash(k + i * 7) * 1.8);
@@ -2794,34 +3875,203 @@
         c.restore();
       });
     }
-    // perlintasan sebidang
-    for (const cr of ROUTE.crossings) {
-    if (cr.x > wx0 - 20 && cr.x < wx1 + 20) {
-      const sx = X(cr.x);
-      c.fillStyle = '#55524d';
-      c.beginPath(); c.moveTo(sx - 2.2 * ppm, gy - 2.2 * ppm); c.lineTo(sx + 2.2 * ppm, gy - 2.2 * ppm); c.lineTo(sx + 5 * ppm, H); c.lineTo(sx - 5 * ppm, H); c.closePath(); c.fill();
-      c.fillStyle = '#5f5b55'; c.fillRect(sx - 3 * ppm, gy - 0.1 * ppm, 6 * ppm, 1.2 * ppm);
-      const near = st.x > cr.x - 320 && st.x - TRAIN_LEN < cr.x + 5;
-      const blink = near && Math.floor(performance.now() / 400) % 2 === 0;
-      // tiang lampu dan palang
-      const postX = sx - 4.2 * ppm, postY = gy + 3 * ppm;
-      c.fillStyle = '#ddd'; c.fillRect(postX - 0.12 * ppm, postY - 4 * ppm, 0.24 * ppm, 4 * ppm);
-      c.fillStyle = blink ? '#ff4b3a' : '#5a2320'; c.beginPath(); c.arc(postX - 0.4 * ppm, postY - 3.3 * ppm, 0.3 * ppm, 0, 7); c.fill();
-      c.fillStyle = !blink && near ? '#ff4b3a' : '#5a2320'; c.beginPath(); c.arc(postX + 0.4 * ppm, postY - 3.3 * ppm, 0.3 * ppm, 0, 7); c.fill();
-      c.save(); c.translate(postX, postY - 2.2 * ppm); c.rotate(near ? 0 : -1.3);
-      for (let k = 0; k < 6; k++) { c.fillStyle = k % 2 ? '#f4f1e8' : '#d0392b'; c.fillRect(k * 1.2 * ppm, -0.15 * ppm, 1.2 * ppm, 0.3 * ppm); }
-      c.restore();
-      // motor menunggu
-      if (near) {
-        for (let k = 0; k < 2; k++) {
-          const mx = sx - (1.4 - k * 2.6) * ppm, my = gy + (5 + k * 1.4) * ppm;
-          c.fillStyle = '#222'; c.beginPath(); c.ellipse(mx, my, 0.35 * ppm, 0.55 * ppm, 0, 0, 7); c.fill();
-          c.fillStyle = k ? '#2e86ab' : '#c0392b'; c.fillRect(mx - 0.5 * ppm, my - 1.6 * ppm, 1 * ppm, 1.1 * ppm);
-          c.fillStyle = k ? '#e7e2d6' : '#f2c230'; c.beginPath(); c.arc(mx, my - 2 * ppm, 0.38 * ppm, 0, 7); c.fill();
-        }
+  }
+
+  // ---------- perlintasan sebidang (JPL) 2.5D ----------
+  // jalan menyempit ke kejauhan di belakang rel dan melebar ke arah kamera di depan rel;
+  // palang di kedua sisi turun perlahan, lampu berkedip bergantian, antrean kendaraan
+  const crossAnim = [];
+  function crossState(i) {
+    if (!crossAnim[i]) {
+      crossAnim[i] = {
+        gate: 0, released: false,
+        // d: kedalaman di jalan (0 = bawah layar, 1 = tepi rel dekat, 2 = ujung jauh); lane: -1 kiri, 1 kanan
+        veh: [
+          { d: 0.66, lane: -0.45, kind: 'moto', col: '#c0392b', dir: 1 },
+          { d: 0.42, lane: -0.4, kind: 'car', col: '#2e6db0', dir: 1 },
+          { d: 0.18, lane: -0.5, kind: 'moto', col: '#2f2f36', dir: 1 },
+          { d: 1.45, lane: 0.45, kind: 'angkot', col: '#2f8f5a', dir: -1 },
+        ],
+      };
+    }
+    return crossAnim[i];
+  }
+  function resetCrossings() { crossAnim.length = 0; }
+  function crossGeom(V, cr) {
+    const { ppm, gy, X } = V;
+    const sx = X(cr.x);
+    const yTop = gy + 1.4 * ppm, yFarEdge = gy - 0.6 * ppm, yFar = gy - 3.2 * ppm;
+    const farX = sx + (W * 0.5 - sx) * 0.05;
+    const nearX = V.Xn(sx);
+    // titik di sumbu jalan pada kedalaman d, beserta setengah lebar jalan (px)
+    const at = (d) => {
+      if (d <= 1) { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (nearX - sx) * t, y: yTop + (H - yTop) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm }; }
+      const t = clamp(d - 1, 0, 1);
+      const te = 1 - Math.pow(1 - t, 1.8);
+      return { x: sx + (farX - sx) * te, y: lerp(yFarEdge, yFar, te), hw: lerp(3.5, 2.3, te) * ppm };
+    };
+    return { sx, yTop, yFarEdge, yFar, farX, nearX, at };
+  }
+  function drawRoadPoly(c, pts, fill) { c.fillStyle = fill; c.beginPath(); pts.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fill(); }
+  function drawVehicle(c, V, G, v) {
+    const p = G.at(v.d);
+    if (v.d < -0.3 || v.d > 2.05) return;
+    const s = p.hw / 3.5;                    // skala sesuai kedalaman
+    const x = p.x + v.lane * p.hw, y = p.y;
+    const night = V.night || V.storm;
+    if (v.kind === 'moto') {
+      c.fillStyle = '#1b1b1f'; c.beginPath(); c.ellipse(x, y - 0.3 * s, 0.28 * s, 0.4 * s, 0, 0, 7); c.fill();
+      c.fillStyle = v.col; c.fillRect(x - 0.42 * s, y - 1.55 * s, 0.84 * s, 1.0 * s);
+      c.fillStyle = '#26262b'; c.fillRect(x - 0.32 * s, y - 0.75 * s, 0.64 * s, 0.4 * s);
+      c.fillStyle = v.dir > 0 ? '#e9e2d0' : '#f2c230'; c.beginPath(); c.arc(x, y - 1.85 * s, 0.34 * s, 0, 7); c.fill();
+      c.fillStyle = night ? '#ff3b2f' : '#b3261e'; c.fillRect(x - 0.12 * s, y - 0.62 * s, 0.24 * s, 0.12 * s);
+    } else {
+      const w = (v.kind === 'angkot' ? 1.9 : 1.8) * s, h = (v.kind === 'angkot' ? 1.9 : 1.45) * s;
+      c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(x, y, w * 0.6, 0.18 * s, 0, 0, 7); c.fill();
+      c.fillStyle = v.col; roundRect(c, x - w / 2, y - h - 0.3 * s, w, h, 0.25 * s); c.fill();
+      c.fillStyle = '#1e2a33'; roundRect(c, x - w * 0.38, y - h - 0.15 * s, w * 0.76, h * 0.42, 0.15 * s); c.fill();
+      c.fillStyle = '#16181b'; c.fillRect(x - w * 0.46, y - 0.35 * s, w * 0.2, 0.35 * s); c.fillRect(x + w * 0.26, y - 0.35 * s, w * 0.2, 0.35 * s);
+      if (v.dir > 0) { // dilihat dari belakang: lampu rem
+        c.fillStyle = night ? '#ff3b2f' : '#c0392b';
+        c.fillRect(x - w * 0.47, y - 0.85 * s, w * 0.14, 0.2 * s); c.fillRect(x + w * 0.33, y - 0.85 * s, w * 0.14, 0.2 * s);
+      } else { // dilihat dari depan: lampu utama
+        c.fillStyle = '#fff2c4';
+        c.fillRect(x - w * 0.45, y - 0.85 * s, w * 0.16, 0.16 * s); c.fillRect(x + w * 0.29, y - 0.85 * s, w * 0.16, 0.16 * s);
       }
+      if (v.kind === 'angkot') { c.fillStyle = '#f2c230'; c.fillRect(x - w / 2, y - h * 0.62, w, 0.16 * s); }
     }
+  }
+  function crossingSignal(c, x, y, s, blinkA, blinkB, on) {
+    // tiang, rambu silang (X), dua lampu merah berkap, papan "AWAS KERETA API"
+    c.fillStyle = '#e9e9e4'; c.fillRect(x - 0.1 * s, y - 4.6 * s, 0.2 * s, 4.6 * s);
+    c.save(); c.translate(x, y - 4.6 * s);
+    for (const a of [0.7, -0.7]) {
+      c.save(); c.rotate(a);
+      c.fillStyle = '#c0392b'; c.fillRect(-1.0 * s, -0.17 * s, 2.0 * s, 0.34 * s);
+      c.fillStyle = '#ffffff'; c.fillRect(-0.92 * s, -0.11 * s, 1.84 * s, 0.22 * s);
+      c.restore();
     }
+    c.restore();
+    c.fillStyle = '#1a1c1e'; c.fillRect(x - 0.95 * s, y - 3.55 * s, 1.9 * s, 0.75 * s);
+    [[-0.5, blinkA], [0.5, blinkB]].forEach(([dx, lit]) => {
+      c.fillStyle = '#111'; c.beginPath(); c.arc(x + dx * s, y - 3.18 * s, 0.34 * s, 0, 7); c.fill();
+      c.fillStyle = lit && on ? '#ff3b2f' : '#4a1612'; c.beginPath(); c.arc(x + dx * s, y - 3.18 * s, 0.24 * s, 0, 7); c.fill();
+      if (lit && on) {
+        const g = c.createRadialGradient(x + dx * s, y - 3.18 * s, 0, x + dx * s, y - 3.18 * s, 1.6 * s);
+        g.addColorStop(0, 'rgba(255,70,50,0.55)'); g.addColorStop(1, 'rgba(255,70,50,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(x + dx * s, y - 3.18 * s, 1.6 * s, 0, 7); c.fill();
+      }
+    });
+    c.fillStyle = '#f4f1e8'; c.fillRect(x - 0.95 * s, y - 2.45 * s, 1.9 * s, 0.7 * s);
+    c.strokeStyle = '#c0392b'; c.lineWidth = Math.max(1, 0.08 * s); c.strokeRect(x - 0.95 * s, y - 2.45 * s, 1.9 * s, 0.7 * s);
+    c.fillStyle = '#c0392b'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = `900 ${Math.max(5, Math.round(0.3 * s))}px "Big Shoulders Display", sans-serif`;
+    c.fillText('AWAS KERETA API', x, y - 2.1 * s);
+    c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+  }
+  function gateArm(c, px, py, len, ang, s, dirX) {
+    c.save(); c.translate(px, py); c.rotate(ang * dirX); c.scale(dirX, 1);
+    const seg = len / 8;
+    for (let k = 0; k < 8; k++) { c.fillStyle = k % 2 ? '#f4f1e8' : '#d0392b'; c.fillRect(k * seg, -0.13 * s, seg, 0.26 * s); }
+    c.fillStyle = '#ffd04a'; c.beginPath(); c.arc(len * 0.5, 0, 0.1 * s, 0, 7); c.arc(len * 0.95, 0, 0.1 * s, 0, 7); c.fill();
+    c.restore();
+    c.fillStyle = '#d8d8d2'; c.fillRect(px - 0.25 * s, py - 0.3 * s, 0.5 * s, 1.4 * s);
+    c.fillStyle = '#4a4d50'; c.fillRect(px - 0.32 * s, py - 0.42 * s, 0.64 * s, 0.4 * s);
+  }
+  function drawCrossings(V, layer, dtReal) {
+    const { c, ppm, gy, X, st, wx0, wx1 } = V;
+    ROUTE.crossings.forEach((cr, i) => {
+      if (cr.x < wx0 - 60 || cr.x > wx1 + 60) return;
+      const A = crossState(i), G = crossGeom(V, cr);
+      const active = st.x > cr.x - 320 && st.x - TRAIN_LEN < cr.x + 6;
+      const blink = Math.floor(performance.now() / 450) % 2 === 0;
+      if (layer === 'back') {
+        // animasi palang & kendaraan dihitung sekali per frame di lapisan belakang
+        const dt = Math.min(0.05, dtReal || 0.016);
+        A.gate += clamp((active ? 1 : 0) - A.gate, -dt * 0.7, dt * 0.7);
+        if (!active && A.gate < 0.15 && st.x - TRAIN_LEN > cr.x) A.released = true;
+        if (A.released) for (const v of A.veh) v.d += v.dir * dt * (v.kind === 'moto' ? 0.42 : 0.3);
+        const asphalt = mix('#4a4a4d', '#5a5a5e', V.p), asphaltFar = mix('#5d5c62', '#7a7a80', V.p);
+        // tanah berumput di seberang rel tempat jalan menjauh (memudar ke samping agar menyatu dengan bukit)
+        {
+          const vx0 = G.sx - 30 * ppm, vx1 = G.sx + 30 * ppm, vTop = G.yFar - 0.9 * ppm;
+          const grass = V.night ? '#24331f' : mix('#5a8540', '#78a84c', V.p);
+          c.save();
+          c.beginPath(); c.moveTo(vx0, G.yFarEdge + 0.2 * ppm);
+          c.quadraticCurveTo(G.sx - 16 * ppm, vTop, G.sx, vTop); c.quadraticCurveTo(G.sx + 16 * ppm, vTop, vx1, G.yFarEdge + 0.2 * ppm);
+          c.closePath(); c.clip();
+          c.fillStyle = grass;
+          for (let k = 0; k < 12; k++) {
+            const a0 = vx0 + (vx1 - vx0) * (k / 12), a1 = vx0 + (vx1 - vx0) * ((k + 1) / 12), mid = (k + 0.5) / 12;
+            c.globalAlpha = clamp(Math.min(mid, 1 - mid) * 4, 0, 1);
+            c.fillRect(a0, vTop - 2, a1 - a0 + 1, G.yFarEdge - vTop + 0.6 * ppm);
+          }
+          c.restore();
+        }
+        // ruas jauh di belakang rel
+        const f0 = G.at(1), f1 = G.at(2);
+        drawRoadPoly(c, [[f1.x - f1.hw, f1.y], [f1.x + f1.hw, f1.y], [f0.x + f0.hw, f0.y], [f0.x - f0.hw, f0.y]], asphaltFar);
+        // ruas dekat di depan rel
+        const n0 = G.at(1), n1 = G.at(0);
+        drawRoadPoly(c, [[n0.x - n0.hw, G.yTop], [n0.x + n0.hw, G.yTop], [n1.x + n1.hw, H], [n1.x - n1.hw, H]], asphalt);
+        // bahu jalan, marka tepi, marka tengah putus-putus, garis henti
+        c.strokeStyle = 'rgba(240,236,224,0.75)'; c.lineWidth = 1;
+        for (const side of [-0.92, 0.92]) {
+          c.beginPath();
+          for (let d = 0; d <= 2.001; d += 0.1) { if (d > 0.999 && d < 1.001) continue; const q = G.at(d); const yy = d <= 1 ? q.y : q.y; if (d === 0) c.moveTo(q.x + side * q.hw, yy); else c.lineTo(q.x + side * q.hw, yy); }
+          c.stroke();
+        }
+        c.fillStyle = 'rgba(240,236,224,0.8)';
+        for (let d = 0.05; d < 2; d += 0.16) {
+          if (d > 0.9 && d < 1.12) continue;
+          const a = G.at(d), b = G.at(d + 0.07);
+          c.beginPath(); c.moveTo(a.x - 0.03 * a.hw, a.y); c.lineTo(a.x + 0.03 * a.hw, a.y); c.lineTo(b.x + 0.03 * b.hw, b.y); c.lineTo(b.x - 0.03 * b.hw, b.y); c.closePath(); c.fill();
+        }
+        for (const d of [0.78, 1.22]) {
+          const a = G.at(d), b = G.at(d + 0.02);
+          c.fillStyle = 'rgba(245,242,232,0.85)';
+          const l = d < 1 ? -1 : 1;
+          c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(a.x + l * 0.92 * a.hw, a.y); c.lineTo(b.x + l * 0.92 * b.hw, b.y); c.lineTo(b.x, b.y); c.closePath(); c.fill();
+        }
+        // panel karet/beton di antara rel, lalu rel digambar ulang di atasnya
+        drawRoadPoly(c, [[G.sx - 3.6 * ppm, G.yFarEdge], [G.sx + 3.6 * ppm, G.yFarEdge], [G.sx + 3.9 * ppm, gy + 0.55 * ppm], [G.sx - 3.9 * ppm, gy + 0.55 * ppm]], '#3a3b3e');
+        c.strokeStyle = 'rgba(255,255,255,0.08)'; c.lineWidth = 1; c.beginPath();
+        for (let k = -3; k <= 3; k += 1.2) { c.moveTo(G.sx + k * ppm, G.yFarEdge); c.lineTo(G.sx + k * 1.06 * ppm, gy + 0.55 * ppm); }
+        c.stroke();
+        c.fillStyle = '#7d8487'; c.fillRect(G.sx - 3.8 * ppm, gy - 0.48 * ppm, 7.6 * ppm, 0.13 * ppm);
+        c.fillStyle = '#9aa0a2'; c.fillRect(G.sx - 3.9 * ppm, gy - 0.12 * ppm, 7.8 * ppm, 0.24 * ppm);
+        // pos penjaga JPL di sisi jauh
+        const hx = G.at(1.25).x - G.at(1.25).hw - 4.5 * ppm, hy = G.yFarEdge - 0.4 * ppm;
+        c.fillStyle = '#e7e0cf'; c.fillRect(hx - 1.8 * ppm, hy - 2.6 * ppm, 3.6 * ppm, 2.6 * ppm);
+        c.fillStyle = V.night ? '#ffd78f' : '#33454f'; c.fillRect(hx - 1.2 * ppm, hy - 2.1 * ppm, 1.4 * ppm, 0.9 * ppm);
+        c.fillStyle = '#8f4330'; c.beginPath(); c.moveTo(hx - 2.2 * ppm, hy - 2.6 * ppm); c.lineTo(hx + 2.2 * ppm, hy - 2.6 * ppm); c.lineTo(hx + 1.6 * ppm, hy - 3.4 * ppm); c.lineTo(hx - 1.6 * ppm, hy - 3.4 * ppm); c.closePath(); c.fill();
+        c.fillStyle = '#1f6f6d'; c.fillRect(hx + 0.4 * ppm, hy - 2.2 * ppm, 1.2 * ppm, 0.55 * ppm);
+        c.fillStyle = '#f4f1e8'; c.font = `800 ${Math.max(5, Math.round(0.4 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText(`JPL ${12 + i * 7}`, hx + 1.0 * ppm, hy - 1.92 * ppm);
+        c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+        person(c, hx - 2.4 * ppm, hy, ppm * 0.9, 41 + i, { color: '#2e5a8a' });
+        // kendaraan di sisi jauh, lalu semak di ujung jalan agar jalan menghilang di balik vegetasi
+        A.veh.filter((v) => v.d > 1).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
+        {
+          const e = G.at(1.92), bush = V.night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', V.p);
+          c.fillStyle = bush;
+          for (let k = -3; k <= 3; k++) {
+            const bx = e.x + k * 1.1 * ppm, r = (0.9 + hash(k + i * 3.7) * 0.6) * ppm;
+            c.beginPath(); c.arc(bx, e.y - r * 0.2, r, 0, 7); c.fill();
+          }
+        }
+        const fs = 0.8 * ppm;
+        const fp = G.at(1.12);
+        crossingSignal(c, fp.x + fp.hw + 1.1 * ppm, fp.y, fs, blink, !blink, active);
+        gateArm(c, fp.x + fp.hw + 0.4 * ppm, fp.y - 1.1 * fs, fp.hw * 2 + 0.4 * ppm, lerp(-1.4, 0, A.gate), fs, -1);
+      } else {
+        // sisi dekat (di depan kereta): kendaraan antre, palang, tiang lampu
+        A.veh.filter((v) => v.d <= 1).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
+        const np = G.at(0.84), ns = np.hw / 3.5;
+        crossingSignal(c, np.x - np.hw - 1.0 * ns, np.y, ns, !blink, blink, active);
+        gateArm(c, np.x - np.hw - 0.3 * ns, np.y - 1.1 * ns, np.hw * 2 + 0.3 * ns, lerp(-1.4, 0, A.gate), ns, 1);
+      }
+    });
   }
 
   function drawGoats(V) {
@@ -3319,7 +4569,7 @@
       if (a <= 0.01) continue;
       const r = s.r * ppm * 1.35;
       c.globalAlpha = Math.min(1, a);
-      c.drawImage(s.dust ? dustSp : s.sand ? sandSp : s.white ? steamSp : s.dark ? sootSp : smokeSp, X(s.x) - r, gy - s.y * ppm - r, r * 2, r * 2);
+      c.drawImage(s.dust ? dustSp : s.sand ? sandSp : s.white ? steamSp : s.dark ? sootSp : smokeSp, X(s.x) - r, gy - s.y * ppm - r + V.bdy(s.x), r * 2, r * 2);
     }
     c.restore();
   }
@@ -3469,7 +4719,7 @@
       c.fillStyle = g; c.fillRect(0, 0, W, H);
       // sorot lampu depan
       c.save(); c.globalCompositeOperation = 'lighter';
-      const lx = X(st.x + 0.3), ly = gy - 3.9 * ppm;
+      const lx = X(st.x + 0.3), ly = gy - 3.9 * ppm + V.bdy(st.x);
       const lg = c.createRadialGradient(lx, ly, 0, lx, ly, 34 * ppm);
       lg.addColorStop(0, `rgba(255,236,170,${0.35 * f})`); lg.addColorStop(1, 'rgba(255,236,170,0)');
       c.fillStyle = lg;
@@ -3629,6 +4879,9 @@
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
       rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, night: MIS.sky === 'night',
+      curve: !!(zoneAt(st.x) && zoneAt(st.x).curve),
+      lat: latAccel(st),
+      bridgeFrac: b ? clamp((Math.min(st.x, b.to) - Math.max(st.x - TRAIN_LEN, b.from)) / TRAIN_LEN, 0, 1) : 0,
     };
   }
 

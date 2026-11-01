@@ -43,9 +43,32 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Audio sintetis (WebAudio, tanpa berkas suara):
   - Musik latar bernuansa gamelan (laras slendro: saron, bonang, kenong, kempul, gong, kendang)
   - Suasana: kicau burung, jangkrik saat fajar, angin, sungai di bawah jembatan, riuh penumpang di peron
-  - Mesin diesel: dengung mesin yang putarannya naik pelan mengikuti tuas tenaga, desing turbo,
-    gemuruh knalpot, dengung motor traksi yang naik turun mengikuti kecepatan, kompresor udara saat
-    berhenti, "jeglak-jeglek" tiap gandar di sambungan rel, klakson udara dua nada
+  - Mesin diesel: putaran bertingkat per notch P1–P4 (naik perlahan seperti governor), denyut
+    letupan silinder "dug-dug-dug", geraman saat menarik beban, desing turbo yang menyusul belakangan
+    (turbo lag), gemuruh knalpot, dengung motor traksi, kompresor udara saat berhenti
+  - Rel: "jeglak-jeglek" tiap gandar di sambungan rel (tik logam, dentum roda, dengung rel), desis rel
+    yang makin nyaring saat kencang, decit flens roda di tikungan, gemeretak wesel saat masuk/keluar
+    stasiun, dentum panel karet saat melintasi jalan perlintasan
+  - Klakson udara tiga nada dengan hembusan udara dan gema perbukitan; berbunyi selama tombol
+    (atau tombol `H`) ditahan
+- Dua sudut pandang: samping 2.5D atau kabin masinis (tombol kabin di kanan atas, atau tombol `V`).
+  Dari kabin terlihat rel di depan dengan perspektif, tikungan yang berbelok, sinyal, perlintasan,
+  stasiun dengan penumpang, jembatan busur, mulut terowongan, gajah dan kambing, wiper saat hujan,
+  serta dasbor dengan pengukur tekanan udara
+- Suasana alam: gemerisik daun, kicau burung (kutilang, prenjak), dekur perkutut, ayam jago saat
+  fajar, dan tonggeret di siang hari; makin ramai saat kereta pelan atau berhenti. Desis udara rem,
+  pintu, turbo, dan rel dibuat lebih pelan dan lembut
+- Tikungan 2.5D: rel dan rangkaian melengkung menjauh dari kamera, lokomotif masuk tikungan lebih
+  dulu lalu gerbong menyusul. Kamera miring dan bergoyang mengikuti gaya samping, indikator gaya
+  samping di speedometer (hijau, kuning, merah), percik api di roda saat terlalu kencang
+- Suara jembatan: "klang" sambungan muai di kedua ujung, dentum berongga tiap segmen gelagar,
+  dengung baja dengan denting rangka, dan gema lembah selama kereta di atas jembatan
+- Peron sisi dekat di setiap stasiun: penumpang berkumpul ke dekat pintu saat kereta datang,
+  penumpang turun didahulukan, lalu antre dan naik satu per satu (lansia lebih pelan). PPKA bertopi
+  merah mengangkat semboyan 40 dan kondektur meniup peluit semboyan 41 sebelum naik
+- Perlintasan sebidang 2.5D: jalan aspal yang menjauh ke latar dengan marka, panel karet di atas rel,
+  palang pintu dan lampu "AWAS KERETA API" di kedua sisi, pos jaga JPL, serta motor, mobil, dan
+  angkot yang antre lalu jalan kembali setelah kereta lewat
   - Pengereman: desis katup saat tuas ke B, gesekan blok rem yang mengikuti kecepatan, decit roda
     menjelang berhenti, lalu hentakan sambungan gerbong dan desis pelepasan panjang saat kereta berhenti
   - Pintu: buka = katup udara > geser > benturan; tutup = bel peringatan > katup > geser > benturan + kunci
@@ -62,7 +85,7 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 cd app
 npm run serve        # buka http://localhost:8080 (di HP: pakai IP komputer, posisi landscape)
 ```
-Keyboard: `↑/W` tenaga, `↓/S` rem, `Spasi` rem darurat, `H` klakson, `D/Enter` pintu, `A` pasir, `Esc` jeda.
+Keyboard: `↑/W` tenaga, `↓/S` rem, `Spasi` rem darurat, `H` klakson, `D/Enter` pintu, `A` pasir, `V` ganti tampilan, `Esc` jeda.
 
 ## Build aplikasi Android & iOS
 Prasyarat: Node 18+, Android Studio (Android), Xcode di macOS (iOS).

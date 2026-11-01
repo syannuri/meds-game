@@ -100,6 +100,7 @@ button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
 .round svg { width: 18px; height: 18px; }
 .round.off { color: var(--muted); }
 .round.off svg { opacity: 0.5; }
+.round.on { color: #1b1304; background: var(--saffron); border-color: transparent; }
 
 /* speedometer analog */
 .hud-gauge { grid-column: 1; grid-row: 3; align-self: end; }
@@ -125,6 +126,11 @@ button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
 .g-read .unit { font-size: 10px; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; white-space: nowrap; }
 .gauge .nextlim { font-size: 10px; font-weight: 700; color: #ffd98a; white-space: nowrap; margin-top: 2px; }
 .gauge .nextlim:empty { display: none; }
+/* gaya samping di tikungan: hijau aman, kuning kurangi kecepatan, merah bahaya anjlok */
+.glat { display: block; width: 46px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.16); overflow: hidden; margin-top: 3px; }
+.glat i { display: block; height: 100%; width: 0; border-radius: 3px; background: #5fd08a; transition: width 0.15s, background 0.2s; }
+.glat.warn i { background: #f2c94c; }
+.glat.bad i { background: #ef5b4c; }
 .limit-sign {
   position: absolute; right: -6px; top: -4px;
   width: 42px; height: 42px; border-radius: 50%;
