@@ -1,4 +1,4 @@
-# Rel Nusantara: Prototipe Babak 1
+# Rel Nusantara: Prototipe Babak 1 & 2
 
 Prototipe yang bisa dimainkan untuk Babak 1: Misi 1-4 **"Pagi Pertama Pasar Minggu"**, Misi 1-5 **"Hujan di Lengkung Watu"**, dan Misi 1-6 **"Duel Malam Takbiran"** dari
 [`docs/GAME_DESIGN.md`](../docs/GAME_DESIGN.md). Game ditulis dengan HTML5 Canvas + JavaScript
@@ -11,6 +11,8 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 | 1-5 Hujan di Lengkung Watu | Pasar Lama → Kali Jernih → Watugede (3,0 km, 15.30) | Hujan & petir (rem lebih lemah, roda selip, tombol pasir), turunan 15‰, tanjakan 20‰, Terowongan Lengkung Watu, wesel yang disabotase (Dimas memeriksa lewat radio) |
 
 | 1-6 Duel Malam Takbiran | Watugede → Pasar Lama → Sukamaju (3,45 km, 18.45) | Balapan melawan bus TransKilat Kilat 07 di jalan raya (bus tertahan palang perlintasan saat kereta lewat), kereta penuh pemudik (lebih berat), dua stasiun dilewati langsung, malam dengan kembang api, bedug, dan ketupat |
+
+| 2-1 Emas Hitam | Tambang Muara Kelam → Dermaga Tanjung Api, Sumatra (3,3 km, 07.10) | Kereta barang 4 gerbong batu bara: muat presisi gerbong demi gerbong di bawah corong silo, rangkaian berat (momentum besar, rem lebih panjang), rombongan gajah Sumatra menyeberang (berhenti dan tunggu, klakson membuat gajah panik), turunan 16‰ ke pantai, bongkar di dermaga |
 
 Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MISSIONS` dalam `game.js`.
 
