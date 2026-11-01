@@ -151,7 +151,84 @@
       },
     },
   };
-  const MISSION_ORDER = ['1-4', '1-5'];
+  MISSIONS['1-6'] = {
+    id: '1-6',
+    chapter: 'Babak 1 · Jawa',
+    title: 'Duel Malam Takbiran',
+    startClock: 18 * 3600 + 45 * 60,
+    sky: 'night',
+    rain: false,
+    heavy: true,
+    lebaran: true,
+    goal2: 'rival',
+    tags: ['Malam', 'Balapan bus', 'Pemudik', 'Lewat langsung'],
+    speaker: { who: 'Bu Wulan, kepala stasiun', initials: 'BW' },
+    brief: 'Pak Bram menantang kita, Raka. Siapa yang lebih dulu membawa pemudik dari Watugede ke Sukamaju malam ini, dialah yang dapat kontrak angkutan Lebaran. Bus Kilat 07 cepat di jalan raya, tapi bus wajib berhenti kalau palang perlintasan turun.',
+    weather: 'malam takbiran, cerah',
+    intro: 'Malam takbiran! Kereta penuh pemudik. Tutup pintu dan kalahkan bus Kilat 07.',
+    rewardWin: '<strong>Menang!</strong> Kontrak angkutan Lebaran jatuh ke Depo Sukamaju. Pak Bram pergi tanpa sepatah kata, tapi Dimas yakin urusan wesel belum selesai.',
+    rewardLose: '<strong>Bus menang kali ini.</strong> Pak Bram tersenyum puas. Coba lagi: kalau kereta tiba di perlintasan lebih dulu, bus tertahan palang.',
+    aboard: 22,
+    route: {
+      lineSpeed: 80,
+      stations: [
+        { name: 'WATUGEDE', elev: '+455 m', x: 0, sched: 0, waiting: 0 },
+        { name: 'PASAR LAMA', elev: '+371 m', x: 2250, sched: 1200, waiting: 26, travelers: true },
+        { name: 'SUKAMAJU', elev: '+386 m', x: 3450, sched: 1800, waiting: 6, final: true },
+      ],
+      passStations: [
+        { name: 'KALI JERNIH', elev: '+348 m', x: 1300, waiting: 9 },
+        { name: 'CIBENING', elev: '+412 m', x: 2950, waiting: 10 },
+      ],
+      zones: [
+        { from: -120, to: 200, limit: 40, label: 'area Stasiun Watugede' },
+        { from: 260, to: 520, limit: 50, label: 'Terowongan Lengkung Watu' },
+        { from: 1040, to: 1160, limit: 50, label: 'Jembatan Kali Jernih' },
+        { from: 1200, to: 1400, limit: 40, label: 'Stasiun Kali Jernih (langsung)' },
+        { from: 1900, to: 2020, limit: 35, label: 'Tikungan Ledok', curve: true },
+        { from: 2100, to: 2450, limit: 40, label: 'area Stasiun Pasar Lama' },
+        { from: 2850, to: 3050, limit: 40, label: 'Stasiun Cibening (langsung)' },
+        { from: 3300, to: 3560, limit: 40, label: 'area Stasiun Sukamaju' },
+      ],
+      signals: [
+        { id: 'S1', x: 60, start: 0, init: 'R' },
+        { id: 'J1', x: 1180, init: 'G' },
+        { id: 'J2', x: 2100, init: 'Y' },
+        { id: 'S2', x: 2310, start: 1, init: 'R' },
+        { id: 'J3', x: 3300, init: 'G' },
+      ],
+      scripts: [],
+      crossings: [{ x: 1520, hornFrom: 1220 }, { x: 2650, hornFrom: 2350 }],
+      goats: [],
+      fog: null,
+      bridge: { from: 1040, to: 1160 },
+      tunnel: { from: 260, to: 520, name: 'LENGKUNG WATU', year: '1912' },
+      grades: [
+        { from: 520, to: 1000, permil: -20, label: 'Turunan Watu' },
+        { from: 1560, to: 1900, permil: 15, label: 'Tanjakan Ledok' },
+      ],
+      switchX: null,
+      rival: {
+        name: 'Kilat 07', startDelay: 4, cruise: 58, finish: 3440,
+        segments: [
+          { from: -60, to: 250, v: 30 },
+          { from: 1150, to: 1450, v: 35 },
+          { from: 1950, to: 2400, v: 16, label: 'macet pasar tumpah' },
+          { from: 2850, to: 3100, v: 35 },
+          { from: 3300, to: 3600, v: 25 },
+        ],
+        stops: [{ x: 2240, dur: 20, label: 'terminal Pasar Lama' }],
+      },
+      hints: [
+        { at: 40, msg: 'Kereta penuh pemudik: lebih berat, percepatan dan pengereman lebih lambat.', kind: 'warn' },
+        { at: 1120, msg: 'Kali Jernih dilewati langsung. Jaga 40 km/h, tidak perlu berhenti.' },
+        { at: 1950, msg: 'Jalan raya macet di pasar tumpah. Kesempatan menyalip bus!' },
+        { at: 2820, msg: 'Cibening dilewati langsung. Sukamaju sudah dekat.' },
+      ],
+      bufferStop: 3550,
+    },
+  };
+  const MISSION_ORDER = ['1-4', '1-5', '1-6'];
   let MIS = MISSIONS['1-4'];
   let ROUTE = MIS.route;
   const finalStation = () => ROUTE.stations[ROUTE.stations.length - 1];
@@ -170,7 +247,7 @@
     let muted = store.get('rn.mute') === '1';
     let musicOn = store.get('rn.music') !== '0';
     const L = {};                    // lapisan bunyi kontinu
-    let nextBird = 0, nextBell = 0, nextCricket = 0, duckUntil = 0;
+    let nextBird = 0, nextBell = 0, nextCricket = 0, nextFrog = 0, nextBedug = 6, duckUntil = 0;
     let musicTimer = null, nextBeat = 0, beat = 0, musicLevel = 0.16;
     let idVoice = null;
 
@@ -330,6 +407,16 @@
       const f = 4300 + Math.random() * 500, pan = Math.random() * 1.4 - 0.7;
       for (let i = 0; i < 4; i++) tone(f, vol, 0.03, { type: 'square', delay: i * 0.045, bus: amb, pan });
     }
+    function frog(vol) { // "krok" kodok sawah
+      const pan = Math.random() * 1.2 - 0.6, f = 150 + Math.random() * 60;
+      for (let i = 0; i < 2; i++) tone(f, vol, 0.09, { type: 'square', to: f * 0.8, delay: i * 0.13, bus: amb, pan });
+    }
+    function bedug(vol) { // bedug masjid desa, ketukan makin rapat
+      [0, 0.7, 1.3, 1.8, 2.2, 2.5, 2.75, 2.95].forEach((d, i) => {
+        tone(78, vol * (i < 2 ? 1 : 0.8), 0.6, { to: 52, glide: 0.45, delay: d, bus: amb, pan: -0.3 });
+        burst(160, 0.8, vol * 0.25, 0.12, 'lowpass', amb, d);
+      });
+    }
     function crossingBell(vol) { // "teng" palang pintu perlintasan
       tone(1180, vol, 0.45, { bus: amb, pan: 0.35 });
       tone(2830, vol * 0.35, 0.25, { bus: amb, pan: 0.35 });
@@ -361,7 +448,9 @@
         if (info.fog < 0.6 && !info.rain && !info.tunnel) bird(0.02 + Math.random() * 0.025);
         nextBird = t + 0.8 + Math.random() * (info.fog > 0.3 ? 6 : 2.6);
       }
-      if (info.dawn && t >= nextCricket) { cricket(0.012); nextCricket = t + 0.35 + Math.random() * 0.5; }
+      if ((info.dawn || info.night) && !info.tunnel && t >= nextCricket) { cricket(0.012); nextCricket = t + 0.35 + Math.random() * 0.5; }
+      if (info.night && !info.tunnel && t >= nextFrog) { frog(0.05); nextFrog = t + 0.6 + Math.random() * 1.6; }
+      if (info.night && t >= nextBedug) { bedug(0.32); nextBedug = t + 16 + Math.random() * 12; }
     }
 
     // ---- pengumuman stasiun ----
@@ -456,6 +545,18 @@
         gn.gain.exponentialRampToValueAtTime(0.25, t + 0.6); gn.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
         src.connect(f).connect(gn).connect(amb); src.start(t); src.stop(t + 3.7);
       },
+      firework(delay) {
+        if (!ac || muted) return;
+        tone(900, 0.02, 0.5, { to: 2600, glide: 0.5, delay, bus: amb, attack: 0.05 });
+        burst(300, 0.6, 0.22, 0.5, 'lowpass', amb, delay + 0.5);
+        for (let i = 0; i < 6; i++) burst(4500, 1.5, 0.04, 0.05, 'highpass', amb, delay + 0.6 + i * 0.07 + Math.random() * 0.05);
+      },
+      telolet() { // klakson bus bernada
+        [[523, 0], [659, 0.15], [784, 0.3], [659, 0.45], [784, 0.6], [1047, 0.75]].forEach(([f, d]) => {
+          tone(f, 0.06, 0.16, { type: 'square', delay: d, bus: amb, pan: 0.2 });
+          tone(f * 1.5, 0.02, 0.16, { type: 'square', delay: d, bus: amb, pan: 0.2 });
+        });
+      },
       radio() {
         burst(1800, 1.2, 0.05, 0.25, 'bandpass');
         tone(1320, 0.05, 0.08, { delay: 0.22 });
@@ -494,6 +595,7 @@
       horned: ROUTE.crossings.map(() => false),
       goats: ROUTE.goats.map(() => ({ state: 'idle', t: 0 })),
       sand: SAND_USES, sandT: 0, slip: false, spin: 0, slipT: 0,
+      bus: { x: -30, v: 0, t: 0, started: false, dwell: 0, stopIdx: 0, held: false, heldShown: {}, done: false, arrive: null, lead: 0 },
       overT: 0,
       shake: 0,
       chuffPhase: 0, lastJoint: 0,
@@ -516,6 +618,7 @@
     hud: $('hud'), toast: $('toast'),
     clock: $('clock'), nextName: $('nextName'), nextSched: $('nextSched'),
     comfortBar: $('comfortBar'), comfortVal: $('comfortVal'), coins: $('coins'),
+    rivalPanel: $('rivalPanel'), rivalVal: $('rivalVal'),
     speed: $('speed'), speedo: $('speedo'), unit: $('speedUnit'), btnSand: $('btnSand'), sandLbl: $('sandLbl'), limit: $('limit'), nextLimit: $('nextLimit'),
     stopDist: $('stopDist'), stopBox: $('stopBox'),
     btnHorn: $('btnHorn'), btnDoor: $('btnDoor'), doorLbl: $('doorLbl'),
@@ -674,12 +777,60 @@
     toast(`Pasir ditabur ke rel. Cengkeraman roda pulih selama ${SAND_TIME} detik.`, 'good', 2.4, null, 2);
   }
 
-  function radio(text, dur = 6.5) {
+  function radio(text, dur = 6.5, who = 'Dimas', initials = 'DM') {
     const el = $('radio');
     $('radioText').textContent = text;
+    $('radioWho').textContent = `Radio · ${who}`;
+    $('radioAvatar').textContent = initials;
     el.hidden = false;
     radioTimer = dur;
     Sound.radio();
+  }
+
+  // bus pesaing di jalan raya sejajar rel
+  function stepBus(dt) {
+    const R = ROUTE.rival;
+    if (!R) return;
+    const B = S.bus;
+    B.t += dt;
+    if (B.done || B.t < R.startDelay) return;
+    if (!B.started) {
+      B.started = true;
+      Sound.telolet();
+      toast(`Bus ${R.name} berangkat. Balapan dimulai!`, 'warn', 3, null, 2);
+    }
+    if (B.dwell > 0) { B.dwell -= dt; if (B.dwell <= 0) B.stopIdx++; return; }
+    let vt = R.cruise / 3.6;
+    for (const sg of R.segments) if (B.x >= sg.from && B.x < sg.to) vt = Math.min(vt, sg.v / 3.6);
+    const stop = R.stops[B.stopIdx];
+    let target = stop ? Math.min(stop.x, R.finish) : R.finish;
+    B.held = false;
+    ROUTE.crossings.forEach((c, i) => {
+      const barrier = S.x > c.x - 300 && S.x - TRAIN_LEN < c.x + 5;
+      if (barrier && B.x < c.x - 6 && B.x > c.x - 140) {
+        target = Math.min(target, c.x - 8);
+        B.held = true;
+        if (B.v < 0.5 && !B.heldShown[i]) { B.heldShown[i] = true; toast(`Bus ${R.name} tertahan palang perlintasan!`, 'good', 3, null, 2); }
+      }
+    });
+    const dist = target - B.x;
+    const want = Math.min(vt, Math.sqrt(2 * 2.0 * Math.max(0, dist - 0.5)));
+    B.v = B.v < want ? Math.min(want, B.v + 1.1 * dt) : Math.max(want, B.v - 2.6 * dt);
+    B.x += B.v * dt;
+    if (dist < 1.5 && B.v < 0.6) {
+      B.v = 0;
+      if (stop && Math.abs(B.x - stop.x) < 2) B.dwell = stop.dur;
+      else if (target === R.finish) {
+        B.done = true; B.arrive = S.clock;
+        Sound.telolet();
+        if (S.st < ROUTE.stations.length - 1) toast(`Bus ${R.name} sudah tiba di ${titleCase(finalStation().name)}.`, 'bad', 3.4, null, 3);
+      }
+    }
+    // saling menyalip
+    const lead = S.x - B.x;
+    if (B.lead >= 0 && lead < -15) { B.lead = lead; Sound.telolet(); toast(`Bus ${R.name} menyalip!`, 'bad', 2.4, null, 2); }
+    else if (B.lead < 0 && lead > 15) { B.lead = lead; toast(`Kamu menyalip bus ${R.name}!`, 'good', 2.4, null, 2); }
+    else if (Math.abs(lead) > 15) B.lead = lead;
   }
 
   function runScript(sc, ss, dt) {
@@ -770,13 +921,13 @@
     const dw = S.dwell;
     dw.timer += dt;
     if (dw.step === 'board') {
-      const total = 4.5;
+      const total = MIS.heavy ? 3 + st.waiting * 0.25 : 4.5;
       const startWaiting = st.waiting;
       const left = Math.max(0, Math.round(startWaiting * (1 - dw.timer / total)));
       if (left < S.waiting[S.st]) { S.aboard += S.waiting[S.st] - left; S.waiting[S.st] = left; }
       if (dw.timer >= total) {
         dw.step = 'close'; dw.timer = 0;
-        toast(st.traders ? 'Para pedagang sudah naik dengan keranjangnya. Tutup pintu.' : st.umbrellas ? 'Penumpang naik sambil melipat payung. Tutup pintu.' : 'Penumpang sudah naik. Tutup pintu.', 'info', 3, null, 2);
+        toast(st.travelers ? 'Pemudik dan barang bawaannya sudah naik. Tutup pintu.' : st.traders ? 'Para pedagang sudah naik dengan keranjangnya. Tutup pintu.' : st.umbrellas ? 'Penumpang naik sambil melipat payung. Tutup pintu.' : 'Penumpang sudah naik. Tutup pintu.', 'info', 3, null, 2);
       }
     } else if (dw.step === 'alight') {
       if (dw.timer > 1) S.aboard = Math.max(0, S.aboard - Math.ceil(dt * 12));
@@ -804,10 +955,12 @@
     const wet = MIS.rain && !inTunnel(S.x - LOCO_LEN);
     if (S.sandT > 0) S.sandT = Math.max(0, S.sandT - dt);
     const grip = wet && S.sandT <= 0 ? 0.78 : 1; // rel basah melemahkan rem
-    if (n > 0) target = powerLocked ? 0 : n * 0.26 * Math.max(0, 1 - S.v / 26);
+    const massF = MIS.heavy ? 1 + S.aboard / 140 : 1; // kereta penuh lebih berat
+    const brakeF = 1 + (massF - 1) * 0.6;
+    if (n > 0) target = powerLocked ? 0 : (n * 0.26 * Math.max(0, 1 - S.v / 26)) / massF;
     else if (n === 0) target = 0;
-    else if (n === -5) target = -1.6 * grip;
-    else target = n * 0.25 * grip;
+    else if (n === -5) target = (-1.6 * grip) / brakeF;
+    else target = (n * 0.25 * grip) / brakeF;
     // roda selip: tenaga besar di kecepatan rendah saat rel basah
     S.slip = wet && S.sandT <= 0 && n > 0 && !powerLocked && S.v < 6 && target > 0.6;
     if (S.slip) {
@@ -866,6 +1019,7 @@
       }
     }
     ROUTE.scripts.forEach((sc, i) => runScript(sc, S.scripts[i], dt));
+    stepBus(dt);
     if (S.mode !== 'play') return;
 
     // --- perlintasan & kambing ---
@@ -951,18 +1105,20 @@
     const failed = !!S.failReason;
     const final = S.stops.find((s) => s.name === finalStation().name);
     const onTime = final ? final.clock - final.sched <= 30 : false;
+    const B = S.bus;
+    const beatBus = !!final && (!B.done || final.clock < B.arrive);
     const goodStops = S.stops.length === ROUTE.stations.length - 1 && S.stops.every((s) => s.rating.c === 'perfect' || s.rating.c === 'good');
     let stars = 0;
     if (!failed && final) {
       stars = 1;
-      if (onTime) stars++;
+      if (MIS.goal2 === 'rival' ? beatBus : onTime) stars++;
       if (S.comfort >= 80 && goodStops) stars++;
     }
     const base = failed ? 0 : 100;
     const comfortBonus = failed ? 0 : Math.round(S.comfort * 0.5);
     const penalty = S.violations.length * 20;
     const total = Math.max(0, base + S.coins + comfortBonus - penalty);
-    return { failed, stars, onTime, total, base, comfortBonus, penalty };
+    return { failed, stars, onTime, beatBus, total, base, comfortBonus, penalty };
   }
 
   const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
@@ -987,7 +1143,9 @@
       return `<tr><td>${s.name}</td><td><span class="tag ${s.rating.c}">${s.rating.r}</span> ${fmtM(Math.abs(s.offset))} m</td><td>${fmtClock(s.clock)} / ${fmtClock(s.sched)}<br>${timeCell}</td></tr>`;
     }).join('') || '<tr><td colspan="3">Belum ada pemberhentian.</td></tr>';
     const viol = S.violations.length ? `<ul class="viol">${S.violations.map((v) => `<li>${v}</li>`).join('')}</ul>` : '';
-    const reward = !r.failed && r.stars >= 1 ? `<div class="reward">${MIS.reward}</div>` : '';
+    const rewardTxt = MIS.goal2 === 'rival' ? (r.beatBus ? MIS.rewardWin : MIS.rewardLose) : MIS.reward;
+    const reward = !r.failed && r.stars >= 1 ? `<div class="reward">${rewardTxt}</div>` : '';
+    const rivalRow = ROUTE.rival && !r.failed ? `<tr><td>Bus ${ROUTE.rival.name}</td><td colspan="2">${S.bus.done ? `tiba ${fmtClock(S.bus.arrive)}` : 'belum tiba'} · ${r.beatBus ? '<span class="ontime">kamu menang</span>' : '<span class="late">bus menang</span>'}</td></tr>` : '';
     const next = MISSION_ORDER[MISSION_ORDER.indexOf(MIS.id) + 1];
     const btnNext = $('btnNext');
     btnNext.hidden = !(next && !r.failed);
@@ -996,6 +1154,7 @@
       <table class="rtable">
         <thead><tr><th>Stasiun</th><th>Berhenti</th><th>Tiba / jadwal</th></tr></thead>
         <tbody>${rows}
+          ${rivalRow}
           <tr><td>Kenyamanan</td><td colspan="2">${Math.round(S.comfort)}%${S.comfort >= 80 ? '' : ' (target 80%)'}</td></tr>
           <tr><td>Koin</td><td colspan="2"><strong>${r.total}</strong> <span style="color:var(--muted)">(misi ${r.base} + berhenti ${S.coins} + nyaman ${r.comfortBonus} − pelanggaran ${r.penalty})</span></td></tr>
         </tbody>
@@ -1043,7 +1202,7 @@
       <dt>Kereta</dt><dd>Si Gagah + 2 gerbong</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>`;
-    $('briefGoal2').textContent = `Tiba di ${titleCase(f.name)} tepat waktu`;
+    $('briefGoal2').textContent = m.goal2 === 'rival' ? `Tiba di ${titleCase(f.name)} lebih dulu dari bus ${R.rival.name}` : `Tiba di ${titleCase(f.name)} tepat waktu`;
     showScreen('brief');
   }
   function startMission() {
@@ -1053,6 +1212,9 @@
     fitStrip();
     renderLever();
     $('btnSand').hidden = !MIS.rain;
+    $('rivalPanel').hidden = !ROUTE.rival;
+    document.querySelector('.hud-top .coins').hidden = !!ROUTE.rival;
+    if (ROUTE.rival) setTimeout(() => { if (S && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
     toast(MIS.intro, 'info', 4, null, 3);
     setTimeout(() => { if (S && S.st === 0) Sound.announce(`Perhatian. Kereta lokal Si Gagah tujuan ${titleCase(finalStation().name)} di jalur satu akan segera diberangkatkan.`); }, 600);
   }
@@ -1213,6 +1375,13 @@
     const hornCue = ROUTE.crossings.some((c, i) => S.x >= c.hornFrom && S.x < c.x && !S.horned[i])
       || ROUTE.goats.some((g, i) => S.goats[i].state === 'idle' && S.x >= g.hornFrom && S.x < g.x - 25);
     setClass(ui.btnHorn, 'cue', hornCue);
+    if (ROUTE.rival) {
+      const B = S.bus, lead = S.x - B.x;
+      const txt = B.done ? 'sudah tiba' : !B.started ? 'bersiap' : `${lead >= 0 ? '+' : '−'}${Math.round(Math.abs(lead))} m`;
+      setText(ui.rivalVal, txt + (B.held ? ' · tertahan' : B.dwell > 0 ? ' · terminal' : ''));
+      setClass(ui.rivalPanel, 'ahead', B.started && !B.done && lead >= 0);
+      setClass(ui.rivalPanel, 'behind', B.done || (B.started && lead < 0));
+    }
     if (MIS.rain) {
       setText(ui.sandLbl, `Pasir (${S.sand})`);
       setClass(ui.btnSand, 'cue', S.slip && S.sand > 0 && S.sandT <= 0);
@@ -1232,12 +1401,12 @@
     const camX = st.x - (W * anchor) / ppm;
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
-    const storm = MIS.sky === 'storm';
-    const p = storm ? 0.6 : clamp(st.clock / 1500, 0, 1); // fajar -> pagi
+    const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
+    const p = storm ? 0.6 : night ? 0.35 : clamp(st.clock / 1500, 0, 1); // fajar -> pagi
     const T = ROUTE.tunnel;
     const xc = st.x - 12; // posisi kabin
     const tf = T ? smooth(T.from, T.from + 25, xc) * (1 - smooth(T.to, T.to + 25, xc)) : 0;
-    const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, tf, lit: storm || tf > 0.2 };
+    const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2 };
 
     drawSky(V);
     drawRidges(V);
@@ -1250,18 +1419,115 @@
     drawTrackside(V);
     drawGoats(V);
     drawTrain(V);
+    drawBus(V);
     drawSmoke(V);
     drawBridgeTruss(V);
     drawTunnelPortals(V);
     drawFrontProps(V);
     drawFog(V);
     drawWeather(V);
+    drawNight(V);
     drawTunnelDark(V);
   }
 
+  // ---------- malam takbiran ----------
+  function drawNight(V) {
+    if (!V.night) return;
+    const { c, ppm, gy, X, st } = V;
+    c.fillStyle = 'rgba(8,12,38,0.5)'; c.fillRect(0, 0, W, H);
+    c.save(); c.globalCompositeOperation = 'lighter';
+    // lampu peron dan lampu sinyal
+    const lamp = (x, y, r, col) => {
+      const g = c.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+    };
+    for (const s of allStations()) {
+      if (X(s.x + 30) < -40 || X(s.x - 100) > W + 40) continue;
+      for (let k = 0; k <= 5; k++) lamp(X(s.x - 80 + k * 11.5), gy - 4.9 * ppm, 5 * ppm, 'rgba(255,214,140,0.35)');
+    }
+    for (const sig of ROUTE.signals) {
+      if (sig.x < V.wx0 || sig.x > V.wx1) continue;
+      const asp = st.sig ? st.sig[sig.id] : 'R';
+      const i = asp === 'R' ? 0 : asp === 'Y' ? 1 : 2;
+      lamp(X(sig.x), gy - 6.2 * ppm - 2.1 * ppm + i * 0.9 * ppm, 2.4 * ppm, asp === 'R' ? 'rgba(255,75,58,0.6)' : asp === 'Y' ? 'rgba(255,196,43,0.6)' : 'rgba(59,255,138,0.55)');
+    }
+    // sorot lampu depan lokomotif
+    const lx = X(st.x - 1.6), ly = gy - 4.4 * ppm;
+    const lg = c.createRadialGradient(lx, ly, 0, lx, ly, 30 * ppm);
+    lg.addColorStop(0, 'rgba(255,232,160,0.4)'); lg.addColorStop(1, 'rgba(255,232,160,0)');
+    c.fillStyle = lg;
+    c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + 30 * ppm, ly - 7 * ppm); c.lineTo(lx + 30 * ppm, ly + 5 * ppm); c.closePath(); c.fill();
+    // kembang api (hanya di langit, di belakang bukit)
+    c.save(); c.beginPath(); c.rect(0, 0, W, gy * 0.72); c.clip();
+    for (const f of weather.fw) {
+      const a = clamp(1 - f.t / f.life, 0, 1);
+      for (const q of f.parts) {
+        const px = f.x + q.vx * f.t, py = f.y + q.vy * f.t + 40 * f.t * f.t;
+        c.fillStyle = `hsla(${f.hue + q.dh},95%,65%,${a})`;
+        c.fillRect(px - 1.5, py - 1.5, 3, 3);
+      }
+      if (f.t < 0.15) lamp(f.x, f.y, 60, `hsla(${f.hue},90%,70%,0.35)`);
+    }
+    c.restore();
+    c.restore();
+    drawWindowGlow(V, 0.8);
+  }
+  const allStations = () => ROUTE.stations.concat(ROUTE.passStations || []);
+
+  function drawBus(V) {
+    const R = ROUTE.rival;
+    if (!R) return;
+    const { c, ppm, gy, X } = V;
+    const B = S ? S.bus : { x: -30, v: 0 };
+    const k = 1.08, fx = X(B.x), L = 12 * ppm * k, Hh = 3.1 * ppm * k;
+    if (fx < -20 || fx - L > W + 20) return;
+    const base = gy + 7.4 * ppm;
+    // bodi
+    c.fillStyle = '#f2efe8';
+    c.beginPath(); c.roundRect ? c.roundRect(fx - L, base - Hh, L, Hh - 0.35 * ppm, 0.5 * ppm) : c.rect(fx - L, base - Hh, L, Hh - 0.35 * ppm); c.fill();
+    c.fillStyle = '#d6452f'; c.fillRect(fx - L, base - 1.25 * ppm, L, 0.45 * ppm);
+    c.fillStyle = '#f29a1f'; c.fillRect(fx - L, base - 0.8 * ppm, L, 0.25 * ppm);
+    // jendela menyala
+    for (let i = 0; i < 6; i++) {
+      c.fillStyle = V.night ? '#ffd889' : '#2b3a44';
+      c.fillRect(fx - L + (0.6 + i * 1.75) * ppm, base - Hh + 0.45 * ppm, 1.45 * ppm, 1.0 * ppm);
+    }
+    c.fillStyle = '#2b3a44'; c.fillRect(fx - 1.3 * ppm, base - Hh + 0.35 * ppm, 1.1 * ppm, 1.6 * ppm);
+    c.fillStyle = '#d6452f'; c.font = `900 italic ${Math.round(0.75 * ppm)}px "Big Shoulders Display", sans-serif`;
+    c.textAlign = 'left'; c.textBaseline = 'middle';
+    c.fillText(`TRANSKILAT · ${R.name.toUpperCase()}`, fx - L + 0.6 * ppm, base - 1.65 * ppm);
+    c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    // roda
+    [2.2, 9.6].forEach((d) => wheel(c, fx - d * ppm * k, base - 0.3 * ppm, 0.55 * ppm, B.x / 0.55, '#202224'));
+    // lampu depan
+    if (V.night) {
+      c.save(); c.globalCompositeOperation = 'lighter';
+      const g = c.createRadialGradient(fx, base - 0.9 * ppm, 0, fx, base - 0.9 * ppm, 16 * ppm);
+      g.addColorStop(0, 'rgba(255,240,200,0.35)'); g.addColorStop(1, 'rgba(255,240,200,0)');
+      c.fillStyle = g; c.beginPath(); c.moveTo(fx, base - 0.9 * ppm); c.lineTo(fx + 16 * ppm, base - 3 * ppm); c.lineTo(fx + 16 * ppm, base + 1.5 * ppm); c.closePath(); c.fill();
+      c.restore();
+    }
+    c.fillStyle = '#ffeab0'; c.fillRect(fx - 0.25 * ppm, base - 1.1 * ppm, 0.3 * ppm, 0.35 * ppm);
+    c.fillStyle = '#ff5a4a'; c.fillRect(fx - L, base - 1.1 * ppm, 0.25 * ppm, 0.35 * ppm);
+  }
+
   // ---------- cuaca: hujan & petir ----------
-  const weather = { drops: [], flash: 0, nextFlash: 7 };
+  const weather = { drops: [], flash: 0, nextFlash: 7, fw: [], nextFw: 1 };
   function updateWeather(dt, v) {
+    for (const f of weather.fw) f.t += dt;
+    weather.fw = weather.fw.filter((f) => f.t < f.life);
+    if (MIS.sky === 'night') {
+      weather.nextFw -= dt;
+      if (weather.nextFw <= 0) {
+        weather.nextFw = 0.7 + Math.random() * 2.2;
+        const n = 34 + Math.floor(Math.random() * 20), sp = 60 + Math.random() * 60;
+        const parts = [];
+        for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2; const r = sp * (0.7 + Math.random() * 0.3); parts.push({ vx: Math.cos(a) * r, vy: Math.sin(a) * r, dh: Math.random() * 30 }); }
+        weather.fw.push({ x: W * (0.1 + Math.random() * 0.8), y: H * (0.1 + Math.random() * 0.18), t: 0, life: 1.6 + Math.random() * 0.5, hue: Math.floor(Math.random() * 360), parts });
+        Sound.firework(0.05 + Math.random() * 0.4);
+      }
+    } else weather.fw.length = 0;
     if (!MIS.rain) { weather.drops.length = 0; weather.flash = 0; return; }
     const want = Math.round(clamp(W * H / 2600, 60, 260));
     while (weather.drops.length < want) weather.drops.push({ x: Math.random() * (W + 200), y: Math.random() * H, s: 0.7 + Math.random() * 0.6 });
@@ -1450,6 +1716,23 @@
 
   function drawSky(V) {
     const { c, gy, p } = V;
+    if (V.night) {
+      const sg = c.createLinearGradient(0, 0, 0, gy);
+      sg.addColorStop(0, '#070b24'); sg.addColorStop(0.7, '#18214d'); sg.addColorStop(1, '#3b3a66');
+      c.fillStyle = sg; c.fillRect(0, 0, W, gy + 4);
+      const tw = performance.now() / 600;
+      for (let i = 0; i < 110; i++) {
+        const sx = ((hash(i) * (W + 300) - V.camX * V.ppm * 0.02) % (W + 300) + W + 300) % (W + 300) - 150;
+        const sy = hash(i + 0.5) * gy * 0.75;
+        const a = 0.35 + 0.45 * Math.abs(Math.sin(tw + i));
+        c.fillStyle = `rgba(255,250,235,${a})`; c.fillRect(sx, sy, hash(i + 2) > 0.85 ? 2 : 1.2, hash(i + 2) > 0.85 ? 2 : 1.2);
+      }
+      // bulan sabit (hilal)
+      const mx = W * 0.64, my = gy * 0.32, mr = Math.max(14, gy * 0.05);
+      c.fillStyle = '#fff3c8'; c.beginPath(); c.arc(mx, my, mr, 0, 7); c.fill();
+      c.fillStyle = '#0d1433'; c.beginPath(); c.arc(mx + mr * 0.45, my - mr * 0.15, mr * 0.92, 0, 7); c.fill();
+      return;
+    }
     if (V.storm) {
       const sg = c.createLinearGradient(0, 0, 0, gy);
       sg.addColorStop(0, '#36404b'); sg.addColorStop(0.7, '#66737e'); sg.addColorStop(1, '#8a96a0');
@@ -1493,7 +1776,20 @@
       const cone = Math.min(0.92, Math.pow(vol, 1.25)) * 1.05;
       return Math.max(cone, 0.18 + 0.1 * Math.sin(u * 0.004) + 0.06 * Math.sin(u * 0.011));
     }, mix('#5b4f7e', '#86a2bd', p));
-    ridgePath(V, 0.16, gy - 4, gy * 0.26, (u) => 0.45 + 0.3 * Math.sin(u * 0.0031 + 1) + 0.18 * Math.sin(u * 0.009 + 2), mix('#3c5a52', '#5f8f6c', p));
+    const midFn = (u) => 0.45 + 0.3 * Math.sin(u * 0.0031 + 1) + 0.18 * Math.sin(u * 0.009 + 2);
+    ridgePath(V, 0.16, gy - 4, gy * 0.26, midFn, mix('#3c5a52', '#5f8f6c', p));
+    if (V.night) { // lampu rumah desa di lereng
+      const off = V.camX * V.ppm * 0.16;
+      for (let i = 0; i < 40; i++) {
+        const u0 = i * 97;
+        const sx = ((u0 - off) % 3880 + 3880) % 3880 - 40;
+        if (sx > W + 10) continue;
+        const top = gy - 4 - gy * 0.26 * midFn(sx + off);
+        const y = lerp(top, gy - 6, 0.25 + hash(i) * 0.6);
+        V.c.fillStyle = hash(i + 3) > 0.3 ? 'rgba(255,205,120,0.9)' : 'rgba(255,240,210,0.8)';
+        V.c.fillRect(sx, y, 2, 2);
+      }
+    }
     // sawah terasering
     const par = 0.42, off = V.camX * V.ppm * par;
     const fn = (u) => 0.35 + 0.28 * Math.sin(u * 0.0045 + 4) + 0.12 * Math.sin(u * 0.013);
@@ -1517,7 +1813,7 @@
   function inBridge(x) { const b = ROUTE.bridge; return !!b && x > b.from && x < b.to; }
   const nearCrossing = (x, d) => ROUTE.crossings.some((cr) => Math.abs(x - cr.x) < d);
   const nearTunnel = (x) => !!ROUTE.tunnel && x > ROUTE.tunnel.from - 75 && x < ROUTE.tunnel.to + 75;
-  function nearStation(x) { return ROUTE.stations.some((s) => x > s.x - 95 && x < s.x + 25); }
+  function nearStation(x) { return allStations().some((s) => x > s.x - 95 && x < s.x + 25); }
 
   function drawBackProps(V) {
     const { c, ppm, gy, X, wx0, wx1, p } = V;
@@ -1617,6 +1913,13 @@
     for (let sx = Math.floor(V.wx0 / step) * step; sx < V.wx1; sx += step) c.fillRect(X(sx), gy + 0.1 * ppm, 0.7 * ppm, 0.35 * ppm);
     c.fillStyle = '#9aa0a2'; c.fillRect(0, gy - 0.12 * ppm, W, 0.24 * ppm);
     c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(0, gy - 0.12 * ppm, W, 1);
+    // jalan raya sejajar rel (misi dengan bus pesaing)
+    if (ROUTE.rival) {
+      c.fillStyle = '#3a3b3e'; c.fillRect(0, gy + 4.6 * ppm, W, 3.4 * ppm);
+      c.fillStyle = 'rgba(240,235,220,0.7)';
+      const dash = 6;
+      for (let x = Math.floor(V.wx0 / dash) * dash; x < V.wx1; x += dash * 2) c.fillRect(X(x), gy + 6.2 * ppm, 3 * ppm, 0.18 * ppm);
+    }
     // ujung rel (penahan)
     const bs = X(ROUTE.bufferStop);
     if (bs > -20 && bs < W + 20) {
@@ -1652,7 +1955,8 @@
 
   function drawStations(V) {
     const { c, ppm, gy, X, st } = V;
-    ROUTE.stations.forEach((s, i) => {
+    const list = ROUTE.stations.map((s, i) => [s, i, false]).concat((ROUTE.passStations || []).map((s, i) => [s, 10 + i, true]));
+    list.forEach(([s, i, pass]) => {
       const a = X(s.x - 95), b = X(s.x + 25);
       if (b < -50 || a > W + 50) return;
       // bangunan stasiun
@@ -1676,6 +1980,21 @@
       c.fillStyle = 'rgba(70,60,50,0.9)';
       c.fillRect(X(s.x - 82), gy - 5.2 * ppm, (60) * ppm, 0.35 * ppm);
       for (let k = 0; k <= 5; k++) c.fillRect(X(s.x - 80 + k * 11.5), gy - 5 * ppm, 0.18 * ppm, 4 * ppm);
+      if (MIS.lebaran) {
+        // ketupat bergantung di kanopi dan spanduk Lebaran
+        for (let k = 0; k < 10; k++) {
+          const kx = X(s.x - 78 + k * 6), ky = gy - 4.3 * ppm + (k % 2) * 0.4 * ppm;
+          c.strokeStyle = '#6b5a3a'; c.lineWidth = 1; c.beginPath(); c.moveTo(kx, gy - 4.85 * ppm); c.lineTo(kx, ky - 0.45 * ppm); c.stroke();
+          c.fillStyle = k % 2 ? '#d9b648' : '#4f9a3a';
+          c.beginPath(); c.moveTo(kx, ky - 0.45 * ppm); c.lineTo(kx + 0.4 * ppm, ky); c.lineTo(kx, ky + 0.45 * ppm); c.lineTo(kx - 0.4 * ppm, ky); c.closePath(); c.fill();
+        }
+        const bx0 = X(s.x - 60), bw0 = 26 * ppm;
+        c.fillStyle = '#1f6b3f'; c.fillRect(bx0, gy - 7.0 * ppm, bw0, 1.4 * ppm);
+        c.fillStyle = '#f6e7b0'; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.font = `800 ${Math.round(0.8 * ppm)}px "Big Shoulders Display", sans-serif`;
+        c.fillText('SELAMAT HARI RAYA IDULFITRI', bx0 + bw0 / 2, gy - 6.3 * ppm);
+        c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      }
       // peron
       c.fillStyle = '#b8b1a2'; c.fillRect(a, gy - 1.0 * ppm, b - a, 0.8 * ppm);
       c.fillStyle = '#e8c33a'; c.fillRect(a, gy - 1.0 * ppm, b - a, 0.14 * ppm);
@@ -1690,15 +2009,17 @@
       c.font = `700 ${Math.round(0.6 * ppm)}px "Plus Jakarta Sans", system-ui, sans-serif`;
       c.fillText(s.elev, bx, btop + bht * 0.8);
       // marka henti "3" (jumlah kereta = lokomotif + 2 gerbong)
-      const mx = X(s.x);
+      const mx = pass ? -9999 : X(s.x);
       c.fillStyle = '#333'; c.fillRect(mx - 0.1 * ppm, gy - 2.6 * ppm, 0.2 * ppm, 1.8 * ppm);
       c.fillStyle = '#f2c230'; c.fillRect(mx - 0.6 * ppm, gy - 3.8 * ppm, 1.2 * ppm, 1.2 * ppm);
       c.fillStyle = '#111'; c.font = `900 ${Math.round(1.0 * ppm)}px "Big Shoulders Display", sans-serif`; c.fillText('3', mx, gy - 3.17 * ppm);
       // calon penumpang
-      const n = st.waiting ? st.waiting[i] : s.waiting;
+      const n = pass ? s.waiting : st.waiting ? st.waiting[i] : s.waiting;
+      const spacing = n > 16 ? 2.5 : 4.1;
       for (let k = 0; k < n; k++) {
-        const px = X(s.x - 72 + k * 4.1 + hash(k + i * 7) * 1.8);
-        person(c, px, gy - 1.0 * ppm, ppm, k + i * 13, { basket: s.traders && hash(k + 3.3) < 0.6, umbrella: s.umbrellas && hash(k + 1.7) < 0.75 });
+        const px = X(s.x - 72 + k * spacing + hash(k + i * 7) * 1.8);
+        const wave = pass ? Math.sin(performance.now() / 180 + k) * 0.15 * ppm : 0;
+        person(c, px, gy - 1.0 * ppm + wave, ppm, k + i * 13, { basket: (s.traders || s.travelers) && hash(k + 3.3) < 0.6, umbrella: s.umbrellas && hash(k + 1.7) < 0.75 });
       }
     });
     c.textAlign = 'start'; c.textBaseline = 'alphabetic';
@@ -2022,6 +2343,18 @@
     }
     // rel
     c.fillStyle = 'rgba(239,233,218,0.5)'; c.fillRect(0, ly - 1, w, 2);
+    // stasiun dilewati langsung
+    for (const s of ROUTE.passStations || []) {
+      const a = M(s.x - 95), b = M(s.x + 25);
+      if (b < 0 || a > w) continue;
+      c.fillStyle = 'rgba(46,107,106,0.4)'; c.fillRect(a, ly + 3, b - a, 7);
+      c.fillStyle = 'rgba(239,233,218,0.7)'; c.fillText(s.name + ' (langsung)', Math.max(2, a), ly + 17 > h - 2 ? h - 4 : ly + 17);
+    }
+    // bus pesaing
+    if (ROUTE.rival && S.bus.started) {
+      const bx = M(S.bus.x);
+      if (bx > -10 && bx < w + 10) { c.fillStyle = '#f29a1f'; c.fillRect(clamp(bx, 0, w) - 9, ly + 5, 9, 5); c.fillText('bus', clamp(bx, 0, w - 20) - 6, ly - 22); }
+    }
     // stasiun
     for (const s of ROUTE.stations) {
       const a = M(s.x - 95), b = M(s.x + 25);
@@ -2104,6 +2437,7 @@
       const people = (st.waiting ? st.waiting[i] : s.waiting) > 0 ? 1 : 0.35;
       crowd = Math.max(crowd, prox * people);
     });
+    (ROUTE.passStations || []).forEach((s) => { crowd = Math.max(crowd, clamp(1 - Math.abs(st.x - 25 - (s.x - 40)) / 170, 0, 1)); });
     if (S && S.phase === 'dwell' && (S.dwell.step === 'board' || S.dwell.step === 'alight')) crowd = 1.3;
     let bell = 0;
     for (const c of ROUTE.crossings) {
@@ -2113,7 +2447,7 @@
     return {
       scene, running, v: st.v, braking: st.aCmd < -0.3, onBridge, river, crowd, bell,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
-      rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel,
+      rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, night: MIS.sky === 'night',
     };
   }
 

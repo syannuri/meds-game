@@ -33,6 +33,10 @@
         <div class="bar"><i id="comfortBar"></i></div>
         <span class="sub" id="comfortVal">100%</span>
       </div>
+      <div class="panel rival" id="rivalPanel" hidden>
+        <span class="lbl">Bus Kilat 07</span>
+        <span class="val" id="rivalVal">bersiap</span>
+      </div>
       <div class="panel coins">
         <span class="lbl">Koin</span>
         <span class="val" id="coins">0</span>
@@ -73,8 +77,8 @@
 
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="radio" class="panel" role="status" aria-live="polite" hidden>
-    <div class="avatar sm" aria-hidden="true">DM</div>
-    <p><small>Radio · Dimas</small><span id="radioText"></span></p>
+    <div class="avatar sm" aria-hidden="true" id="radioAvatar">DM</div>
+    <p><small id="radioWho">Radio · Dimas</small><span id="radioText"></span></p>
   </div>
 
   <section class="screen" id="screenTitle">
