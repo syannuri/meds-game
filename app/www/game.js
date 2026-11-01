@@ -394,13 +394,74 @@
       bufferStop: 3400,
     },
   };
-  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '2-1'];
+  MISSIONS['1-7'] = {
+    id: '1-7',
+    chapter: 'Babak 1 · Jawa',
+    title: 'Bersilang di Krajan',
+    startClock: 16 * 3600 + 10 * 60,
+    sky: 'storm',
+    rain: true,
+    tags: ['Lintas tunggal', 'Persilangan', 'Pohon tumbang', 'Banjir'],
+    speaker: { who: 'Dimas, mekanik depo', initials: 'DM' },
+    brief: 'Hujan mulai reda, Raka, tapi lintas selatan masih berantakan. Jalur ke Kedung Banteng hanya satu rel. Di Halte Krajan kita bersilang dengan KA 112 Lintas Selatan dari arah berlawanan: masuk sepur belok pelan, berhenti sebelum patok bebas, lalu tunggu dia lewat. Angin tadi siang menumbangkan pohon di beberapa tempat, dan ada rel yang tergenang.',
+    weather: 'hujan reda, angin kencang',
+    intro: 'Tutup pintu dan berangkat. Waspadai pohon tumbang setelah Watugede.',
+    reward: '<strong>Cerita:</strong> Masinis KA 112 membunyikan klakson dua kali saat bersilang, tanda hormat untuk Si Gagah. Di Kedung Banteng, kepala stasiun menyerahkan surat tugas baru: Raka diminta ke Sumatra.',
+    aboard: 10,
+    route: {
+      lineSpeed: 70,
+      stations: [
+        { name: 'WATUGEDE', elev: '+455 m', x: 0, sched: 0, waiting: 0 },
+        { name: 'KRAJAN', elev: '+402 m', x: 1500, sched: 1140, waiting: 5, umbrellas: true },
+        { name: 'KEDUNG BANTENG', elev: '+318 m', x: 3400, sched: 2700, waiting: 6, umbrellas: true, final: true },
+      ],
+      zones: [
+        { from: -120, to: 200, limit: 40, label: 'area Stasiun Watugede' },
+        { from: 1310, to: 1335, limit: 30, label: 'wesel masuk Krajan', turnout: true },
+        { from: 1200, to: 1640, limit: 40, label: 'area Halte Krajan' },
+        { from: 1610, to: 1635, limit: 30, label: 'wesel keluar Krajan', turnout: true },
+        { from: 2290, to: 2400, limit: 10, label: 'rel tergenang', flood: true },
+        { from: 2760, to: 2880, limit: 45, label: 'Tikungan Kedung', curve: true },
+        { from: 3250, to: 3510, limit: 40, label: 'area Stasiun Kedung Banteng' },
+      ],
+      signals: [
+        { id: 'S1', x: 60, start: 0, init: 'R' },
+        { id: 'J1', x: 1250, init: 'Y' },
+        { id: 'S2', x: 1540, start: 1, init: 'R' },
+        { id: 'J2', x: 3250, init: 'G' },
+      ],
+      scripts: [],
+      crossings: [{ x: 3050, hornFrom: 2750 }],
+      goats: [],
+      fog: null,
+      bridge: null,
+      tunnel: null,
+      grades: [
+        { from: 1800, to: 2250, permil: -14, label: 'Turunan Kedung' },
+      ],
+      switchX: null,
+      // pohon tumbang di titik acak dalam zona ini; peringatan radio sekitar 400 m sebelumnya
+      tree: { from: 520, to: 1100, warn: 420 },
+      // genangan menutup rel: maksimal 10 km/h, dilarang berhenti di air
+      flood: { from: 2330, to: 2400 },
+      // persilangan: sepur belok Krajan antara dua wesel, KA 112 lewat di jalur utama (sisi depan)
+      meet: { st: 1, entry: 1310, exit: 1610, foul: 1548, name: 'KA 112', cars: 5 },
+      hints: [
+        { at: 40, msg: 'Rel masih basah: rem lebih lemah. Berangkat dengan P1–P2.', kind: 'warn' },
+        { at: 1180, msg: 'Sinyal masuk J1 kuning: Si Gagah dibelokkan ke sepur belok Krajan. Maksimal 30 km/h di wesel.', kind: 'warn' },
+        { at: 2130, msg: 'Rel tergenang di depan. Maksimal 10 km/h dan jangan berhenti di air.', kind: 'warn' },
+      ],
+      bufferStop: 3510,
+    },
+  };
+  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-1'];
   // palet khas tiap misi: warna langit (fajar → siang, atau gelap/mendung), dan gradasi warna akhir
   // (soft-light) yang diterapkan ke seluruh dunia game, ditambah kabut lembap untuk Sumatra
   const PALETTES = {
     '1-4': { sky: [['#3a3f6e', '#5d9fd3'], ['#e39a6a', '#a8d2ea'], ['#ffd48a', '#f2ecd8']], grade: ['rgba(255,170,80,0.22)', 'rgba(255,205,120,0.14)'] },
     '1-5': { storm: ['#24323d', '#4f6673', '#86a0aa'], grade: ['rgba(60,115,150,0.26)', 'rgba(40,95,105,0.2)'] },
     '1-6': { night: ['#120b2c', '#3a2366', '#8a4170'], grade: ['rgba(150,60,180,0.24)', 'rgba(255,120,60,0.12)'] },
+    '1-7': { storm: ['#34434e', '#62798a', '#a7b8bd'], grade: ['rgba(80,125,140,0.2)', 'rgba(60,100,90,0.16)'] },
     '2-1': { sky: [['#4a6a6e', '#6a9aa6'], ['#b9b08a', '#cfd9c0'], ['#ead6a4', '#f0ead2']], grade: ['rgba(200,215,170,0.2)', 'rgba(160,70,40,0.2)'], mist: true },
   };
   MISSION_ORDER.forEach((id) => { MISSIONS[id].id = id; MISSIONS[id].pal = PALETTES[id] || PALETTES['1-4']; });
@@ -1046,6 +1107,14 @@
         tone(3000, 0.03, 0.9, { at: t + 0.05, to: 2700, bus: brake, attack: 0.05 });
         duck({ amb: 0.4, music: 0.5 }, 1.6);
       },
+      // KA lain bersilang: klakson dua kali (nada lebih rendah dari Si Gagah) dan gemuruh lewat
+      farHorn() {
+        if (!ac || muted) return;
+        const t = ac.currentTime;
+        [0, 1.25].forEach((o) => [277, 349, 415].forEach((f, i) => tone(f, 0.022 - i * 0.004, 0.95, { at: t + o, bus: sfx, attack: 0.07, type: 'sawtooth', pan: 0.3 })));
+        nz(t + 0.8, 'lowpass', 240, 0.7, 0.09, 7, sfx, 1.6);
+        for (let k = 0; k < 14; k++) clack(t + 2 + k * 0.42 + (k % 2) * 0.09, 0.5);
+      },
       // rangkaian saat kereta berhenti: hentakan rem & sambungan, lalu desis pelepasan panjang
       stopSettle(force) {
         if (!ac || muted) return;
@@ -1301,6 +1370,9 @@
       hints: {},
       stoppedShortShown: false,
       failReason: null,
+      tree: ROUTE.tree ? { x: Math.round(ROUTE.tree.from + Math.random() * (ROUTE.tree.to - ROUTE.tree.from)), phase: 'idle', t: 0, gap: null, far: false } : null,
+      meet: ROUTE.meet ? { phase: 'idle', x: 0, v: 0, cleared: false, honked: false } : null,
+      wetMotor: false, floodStop: 0, splash: [],
     };
   }
 
@@ -1460,7 +1532,7 @@
     S.violations.push(text);
     S.comfort = clamp(S.comfort - comfortHit, 0, 100);
     toast(text, 'bad', 3.2, null, 3);
-    const title = key.startsWith('over') ? 'MELEBIHI BATAS KECEPATAN' : key.startsWith('crossing') ? 'LUPA KLAKSON DI PERLINTASAN' : key.startsWith('goat') ? 'HAMPIR MENABRAK KAMBING' : key === 'eleph-horn' ? 'GAJAH PANIK' : 'PELANGGARAN';
+    const title = key.startsWith('over') ? 'MELEBIHI BATAS KECEPATAN' : key.startsWith('crossing') ? 'LUPA KLAKSON DI PERLINTASAN' : key.startsWith('goat') ? 'HAMPIR MENABRAK KAMBING' : key === 'eleph-horn' ? 'GAJAH PANIK' : key === 'flood' ? 'TERLALU CEPAT DI GENANGAN' : key === 'floodstop' ? 'BERHENTI DI GENANGAN' : 'PELANGGARAN';
     S.alarm = { t: 0, title, sub: `kenyamanan −${comfortHit}` };
     S.shake = Math.max(S.shake, 0.5);
   }
@@ -1723,6 +1795,7 @@
     S.phase = 'dwell';
     S.dwell = { step: MIS.freight ? 'unload' : MIS.noDoors && st.final ? 'end' : 'open', timer: 0 };
     S.yellowLimit = false;
+    if (S.wetMotor) { S.wetMotor = false; toast('Motor traksi sudah kering. Tenaga kembali penuh.', 'good', 2.4, null, 1); }
     const where = d > 0 ? 'lewat' : 'kurang';
     const kind = rating.c === 'miss' ? 'bad' : rating.c === 'ok' ? 'info' : 'good';
     toast(`${rating.r.toUpperCase()}! ${fmtM(Math.abs(d))} m ${where} dari marka. ${MIS.freight ? 'Membongkar muatan...' : MIS.noDoors && st.final ? '' : 'Buka pintu.'}`, kind, 3.2, null, 3);
@@ -1764,6 +1837,11 @@
       if (dw.timer > 1) S.aboard = Math.max(0, S.aboard - Math.ceil(dt * 12));
       if (dw.timer >= 3.2) finish();
     } else if (dw.step === 'signal') {
+      const MT = ROUTE.meet;
+      if (MT && S.st === MT.st && !S.meet.cleared) {
+        dw.timer = Math.min(dw.timer, 0.5);
+        if (!dw.waitShown) { dw.waitShown = true; toast(`Tunggu ${MT.name} lewat. Sinyal keluar S2 tetap merah sampai ekornya melewati patok bebas.`, 'info', 3.4, null, 2); }
+      }
       if (dw.timer >= 2) {
         const sig = ROUTE.signals.find((s) => s.start === S.st);
         if (sig) S.sig[sig.id] = 'G';
@@ -1789,7 +1867,7 @@
     const grip = wet && S.sandT <= 0 ? 0.78 : 1; // rel basah melemahkan rem
     const massF = MIS.freight ? 1.35 + S.load.reduce((a, b) => a + b, 0) * 0.22 : MIS.heavy ? 1 + S.aboard / 140 : 1; // kereta penuh lebih berat
     const brakeF = 1 + (massF - 1) * 0.6;
-    if (n > 0) target = powerLocked ? 0 : (n * 0.26 * Math.max(0, 1 - S.v / 26)) / massF;
+    if (n > 0) target = powerLocked ? 0 : (n * 0.26 * Math.max(0, 1 - S.v / 26)) / massF * (S.wetMotor ? 0.6 : 1);
     else if (n === 0) target = 0;
     else if (n === -5) target = (-1.6 * grip) / brakeF;
     else target = (n * 0.25 * grip) / brakeF;
@@ -1815,7 +1893,7 @@
     if (S.v > 0 && prevV > 0) {
       const jerk = Math.abs(S.aAct - S.aPrev) / dt;
       S.jerkF = lerp(S.jerkF, jerk, 0.08);
-      if (S.jerkF > 1.05) S.comfort -= (S.jerkF - 1.05) * dt * 3;
+      if (S.jerkF > 1.05 && !(S.tree && S.tree.phase === 'warn')) S.comfort -= (S.jerkF - 1.05) * dt * 3;
     }
     S.aPrev = S.v > 0 ? S.aAct : 0;
     if (prevV > 0 && S.v === 0) Sound.stopSettle(Math.max(0.25, -S.aCmd));
@@ -1835,6 +1913,7 @@
       if (S.overT > 1.2 && kmh > lim + 5) violation('over:' + key, `Melebihi batas kecepatan di ${key}`, 6);
       const zc = zoneAt(S.x);
       if (zc && zc.curve && kmh > zc.limit * 2) fail(`Kereta anjlok di ${zc.label} karena melaju ${Math.round(kmh)} km/h di batas ${zc.limit} km/h.`);
+      if (zc && zc.turnout && kmh > 45) fail(`Kereta anjlok di ${zc.label}: melaju ${Math.round(kmh)} km/h di wesel berbatas ${zc.limit} km/h.`);
     } else {
       S.overT = Math.max(0, S.overT - dt);
     }
@@ -1922,6 +2001,10 @@
       const onTrack = el.phase === 'block' || (el.phase === 'cross' && el.prog < 0.55);
       if (onTrack && S.x >= E.x - 3) { fail('Kereta menabrak rombongan gajah Sumatra. Berhentilah lebih awal saat ada satwa di jalur.'); return; }
     }
+    stepTree(dt);
+    if (S.mode !== 'play') return;
+    stepFlood(dt, kmh);
+    stepMeet(dt);
 
     // --- tiba di stasiun ---
     if (S.phase === 'run' && ns && S.v === 0 && prevV === 0) {
@@ -1975,6 +2058,82 @@
   }
   function sandPuff(x) {
     return { x, y: 0.3, r: 0.15, grow: 0.5, vx: (Math.random() - 0.5) * 1.2, vy: 0.2, life: 0, max: 0.8, sand: true, a: 0.6 };
+  }
+
+  // ---------- kejadian lintas: pohon tumbang, genangan banjir, persilangan ----------
+  function stepTree(dt) {
+    const TR = S.tree;
+    if (!TR || TR.phase === 'clear') return;
+    const gap = TR.x - S.x;
+    if (TR.phase === 'idle' && gap < ROUTE.tree.warn) {
+      TR.phase = 'warn';
+      radio(`Si Gagah, berhenti! Pohon tumbang melintang rel, sekitar ${Math.round(gap / 10) * 10} m di depanmu!`, 7);
+      toast('Pohon tumbang di depan! Rem darurat atau B4 sekarang.', 'bad', 3.4, null, 3);
+      S.alarm = { t: 0, title: 'POHON TUMBANG', sub: `${Math.round(gap)} m di depan` };
+      Sound.signalChime();
+    }
+    if (TR.phase === 'warn' && S.v === 0) {
+      if (gap < 300) {
+        TR.phase = 'work'; TR.t = 0; TR.gap = gap;
+        toast(`Berhenti ${fmtM(gap)} m sebelum pohon. Aman!`, 'good', 3, null, 3);
+        S.moment = { kind: gap < 60 ? 'good' : 'ok', label: 'AMAN', t: 0, x: TR.x, coins: gap < 60 ? 30 : 10, sub: `berhenti ${fmtM(gap)} m sebelum pohon` };
+        S.coins += gap < 60 ? 30 : 10;
+        setTimeout(() => { if (S && S.mode === 'play') radio('Bagus, Raka. Tim jalan rel sudah di lokasi; beri kami waktu memotong batangnya.', 5); }, 1200);
+      } else if (!TR.far) { TR.far = true; toast(`Masih ${Math.round(gap)} m dari pohon. Maju pelan sampai kurang dari 300 m.`, 'warn', 2.8, null, 2); }
+    }
+    if (S.v > 0.3) TR.far = false;
+    if (TR.phase === 'work') {
+      TR.t += dt;
+      if (TR.t > 18) { TR.phase = 'clear'; radio('Jalur sudah bersih. Lanjut, Raka, tetap waspada.', 5); Sound.signalChime(); }
+    }
+    if (TR.phase !== 'clear' && gap <= 1.5) fail('Kereta menabrak pohon tumbang. Begitu ada peringatan radio, langsung rem darurat.');
+  }
+  const inFlood = (x) => { const F = ROUTE.flood; return !!F && x > F.from && x - TRAIN_LEN < F.to; };
+  function stepFlood(dt, kmh) {
+    const F = ROUTE.flood;
+    if (!F) return;
+    const inW = inFlood(S.x);
+    if (inW && kmh > 15 && !S.wetMotor) {
+      S.wetMotor = true;
+      violation('flood', 'Terlalu cepat di genangan: motor traksi kemasukan air, tenaga berkurang sampai stasiun berikutnya.', 8);
+    }
+    if (inW && S.v === 0 && S.phase === 'run') {
+      S.floodStop += dt;
+      if (S.floodStop > 1) toast('Jangan berhenti di genangan! Jalan pelan terus.', 'warn', 2, 'floodstop', 2);
+      if (S.floodStop > 4) violation('floodstop', 'Berhenti di genangan. Kereta harus terus berjalan pelan.', 5);
+    } else S.floodStop = 0;
+    // cipratan dari roda yang menerjang air
+    if (inW && S.v > 0.5 && S.splash.length < 120) {
+      const n = Math.random() < S.v * dt * 6 ? 2 : 0;
+      for (let i = 0; i < n; i++) {
+        const wx = S.x - Math.random() * TRAIN_LEN;
+        if (wx < F.from || wx > F.to) continue;
+        S.splash.push({ x: wx, y: 0.3, vx: (Math.random() - 0.3) * 1.2, vy: 1 + Math.random() * S.v * 0.6, life: 0, max: 0.6 + Math.random() * 0.4 });
+      }
+    }
+    for (const q of S.splash) { q.life += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy -= 9 * dt; }
+    S.splash = S.splash.filter((q) => q.life < q.max && q.y > -0.2);
+  }
+  const OPP_LOCO = 17, OPP_CAR = 20.5;
+  const oppLen = () => OPP_LOCO + ROUTE.meet.cars * OPP_CAR;
+  function stepMeet(dt) {
+    const MT = ROUTE.meet;
+    if (!MT) return;
+    const m = S.meet;
+    // KA 112 baru masuk setelah Si Gagah berhenti di sepur belok
+    if (m.phase === 'idle' && S.st >= MT.st) {
+      m.phase = 'run'; m.x = S.x + 230; m.v = 15;
+      radio(`${MT.name} masuk Krajan dari arah berlawanan. Tetap di sepur belok sampai sinyal S2 hijau.`, 5.5);
+    }
+    if (m.phase !== 'run') return;
+    m.v += clamp(13 - m.v, -0.6 * dt, 0.6 * dt);
+    m.x -= m.v * dt;
+    if (!m.honked && m.x < S.x + 70) { m.honked = true; Sound.farHorn(); }
+    if (!m.cleared && m.x + oppLen() < MT.foul - 4) {
+      m.cleared = true;
+      if (S.phase === 'dwell') setTimeout(() => { if (S && S.mode === 'play') radio(`${MT.name} sudah lewat. S2 hijau sebentar lagi, silakan berangkat.`, 4.5); }, 600);
+    }
+    if (m.x + oppLen() < S.x - 400) m.phase = 'gone';
   }
 
   // ---------- akhir misi ----------
@@ -2038,6 +2197,23 @@
         smoothStops('Semua berhenti Good · nyaman ≥ 95%', 95),
       ];
     }
+    if (id === '1-7') {
+      const ot = onTime('', false), sm = smoothStops('', 80);
+      const slow = () => Object.keys(S.violKeys).find((k) => k === 'flood' || k === 'over:wesel masuk Krajan' || k === 'over:wesel keluar Krajan' || k === 'over:rel tergenang');
+      return [
+        arrive(`Tiba di ${fname} dengan selamat`),
+        { label: 'Wesel ≤ 30 km/h · genangan ≤ 10 km/h', tip: 'Mulai rem sebelum sinyal J1 kuning, dan turunkan kecepatan jauh sebelum papan genangan.', eval: () => {
+          const v = slow(); if (v) return { state: 'lost', value: v === 'flood' ? 'genangan terlalu cepat' : 'wesel terlalu cepat' };
+          return { state: fin() ? 'ok' : 'pending', value: '' };
+        } },
+        { label: 'Tepat waktu · nyaman ≥ 80% · berhenti Good', tip: 'Di lintas lurus pakai P3–P4; setelah pohon disingkirkan dan KA 112 lewat, kejar waktu yang hilang.', eval: () => {
+          const a = ot.eval(), b = sm.eval();
+          if (a.state === 'lost') return a;
+          if (b.state === 'lost') return b;
+          return { state: a.state === 'ok' && b.state === 'ok' ? 'ok' : 'pending', value: a.value };
+        } },
+      ];
+    }
     const g2 = MIS.goal2 === 'rival'
       ? { label: `Tiba sebelum bus ${ROUTE.rival.name}`, tip: 'Jangan berhenti terlalu lama dan manfaatkan saat bus tertahan palang perlintasan.', eval: () => {
         const fs = fin(), B = S.bus;
@@ -2089,6 +2265,12 @@
       { target: '#btnHorn', who: 'KK', text: 'Papan 35: bunyikan klakson sampai perlintasan.', when: () => ROUTE.crossings[0] && S.x > ROUTE.crossings[0].hornFrom + 10 && !S.horned[0], done: () => S.horned[0] || S.x > ROUTE.crossings[0].x },
     ],
   };
+  TUTORIAL['1-7'] = [
+    { target: '#lever', who: 'DM', text: 'Pohon tumbang di depan! Tarik tuas ke EB, rem darurat tidak mengurangi kenyamanan sekarang.', when: () => S.tree && S.tree.phase === 'warn' && S.v > 3, done: () => S.notch <= -4 || S.v === 0 },
+    { target: '.strip-wrap', who: 'DM', text: 'J1 kuning: kita masuk sepur belok Krajan. Paling cepat 30 km/h di wesel, lalu berhenti sebelum patok bebas merah-putih.', when: () => sigAhead('J1') < 260 && sigAhead('J1') > 0, done: (t) => t > 7 },
+    { target: '.strip-wrap', who: 'DM', text: 'KA 112 lewat di jalur utama. S2 baru hijau setelah ekornya melewati patok bebas.', when: () => S.phase === 'dwell' && S.st === 1 && S.dwell.step === 'signal' && !S.meet.cleared, done: () => S.meet.cleared },
+    { target: '.strip-wrap', who: 'DM', text: 'Genangan di depan: maksimal 10 km/h dan jangan berhenti di air.', when: () => ROUTE.flood.from - S.x < 320 && ROUTE.flood.from > S.x, done: () => S.x > ROUTE.flood.to },
+  ];
   const TUT_WHO = { KK: 'Kakek', DM: 'Radio · Dimas', BW: 'Bu Wulan' };
   function updateTutorial(dt) {
     const coach = ui.coach; if (!coach) return;
@@ -2212,9 +2394,10 @@
     '1-4': { pts: [[300, 300], [338, 292], [372, 300]], col: '#e8955a' },
     '1-5': { pts: [[372, 300], [404, 314], [440, 306]], col: '#7aa6b8' },
     '1-6': { pts: [[440, 306], [404, 318], [372, 306], [336, 300], [300, 306]], col: '#b07ad8' },
+    '1-7': { pts: [[440, 306], [464, 314], [486, 318]], col: '#5f9fb0' },
     '2-1': { pts: [[176, 168], [206, 196], [236, 214], [262, 238]], col: '#6fb36a' },
   };
-  const MAP_ST = [[282, 308, 'Depo'], [319, 299, ''], [300, 300, 'Sukamaju'], [338, 292, 'Cibening'], [372, 300, 'Pasar Lama'], [404, 314, 'Kali Jernih'], [440, 306, 'Watugede'], [176, 168, 'Muara Kelam'], [262, 238, 'Tanjung Api']];
+  const MAP_ST = [[282, 308, 'Depo'], [319, 299, ''], [300, 300, 'Sukamaju'], [338, 292, 'Cibening'], [372, 300, 'Pasar Lama'], [404, 314, 'Kali Jernih'], [440, 306, 'Watugede'], [464, 314, ''], [486, 318, 'Kedung Banteng'], [176, 168, 'Muara Kelam'], [262, 238, 'Tanjung Api']];
   const ISL_SUM = [[22, 30], [60, 14], [110, 44], [160, 92], [212, 136], [262, 178], [300, 222], [306, 256], [282, 266], [240, 246], [190, 214], [134, 168], [84, 120], [40, 78], [18, 48]];
   const ISL_JAW = [[252, 266], [300, 254], [360, 260], [420, 266], [480, 272], [522, 288], [528, 330], [492, 352], [430, 348], [370, 346], [310, 342], [262, 330], [240, 298]];
   const titleMap = { tab: 'map', focus: null, t: 0 };
@@ -2863,6 +3046,18 @@
       }
     });
 
+    // jalur utama persilangan di kanan (sepur belok = jalur Si Gagah)
+    const MTc = ROUTE.meet, MO = 10;
+    if (MTc && !inTun) {
+      const a0 = Math.max(1.2, MTc.entry - x0), b0 = Math.min(FAR, MTc.exit - x0);
+      if (b0 > a0) {
+        const oo = (d) => MO * meetK(x0 + d);
+        for (let d = b0; d > a0; d -= 3) { const e = Math.max(a0, d - 3); quad(W3(e, oo(e) - 2.3, 0), W3(e, oo(e) + 2.3, 0), W3(d, oo(d) + 2.3, 0), W3(d, oo(d) - 2.3, 0), mix('#8d8275', '#a59a8c', p)); }
+        for (let wd = Math.floor((x0 + Math.min(b0, 60)) / slp) * slp; wd > x0 + a0; wd -= slp) { const d = wd - x0, o = oo(d); quad(W3(d - 0.12, o - 1.2, 0.05), W3(d - 0.12, o + 1.2, 0.05), W3(d + 0.12, o + 1.2, 0.05), W3(d + 0.12, o - 1.2, 0.05), mix('#6f6a63', '#8b857b', p)); }
+        [-0.53, 0.53].forEach((ro) => { for (let d = b0; d > a0; d -= 2) { const e = Math.max(a0, d - 2); quad(W3(e, oo(e) + ro - 0.035, 0.16), W3(d, oo(d) + ro - 0.035, 0.16), W3(d, oo(d) + ro + 0.035, 0.16), W3(e, oo(e) + ro + 0.035, 0.16), '#9aa2a6'); } });
+      }
+    }
+
     // ---- objek tepi rel, digambar dari jauh ke dekat ----
     const items = [];
     const add = (d, fn) => { if (d > 1 && d <= FAR + 1) items.push({ d, fn }); };
@@ -3096,7 +3291,62 @@
         c.fillStyle = '#1c2a35'; c.fillRect(a.x - w * 0.4, b.y + (a.y - b.y) * 0.15, w * 0.8, (a.y - b.y) * 0.3);
       });
     }
+    // patok bebas batas & KA 112 yang datang dari depan di jalur utama
+    if (MTc) {
+      const df = MTc.foul - x0;
+      if (df > 1.5 && df < FAR) add(df, () => { for (let i = 0; i < 4; i++) { const q0 = W3(df, 4.8, i * 0.25), q1 = W3(df, 5.0, (i + 1) * 0.25); if (q0 && q1) { c.fillStyle = i % 2 ? '#f4f1e8' : '#d62b20'; c.fillRect(q0.x, q1.y, Math.max(1, q1.x - q0.x), q0.y - q1.y); } } });
+      const mt = st.meet;
+      if (mt && mt.phase === 'run') {
+        let f = mt.x;
+        [16].concat(Array(MTc.cars).fill(19.5)).forEach((len, k) => {
+          const dn = f - x0, dr = f + len - x0;
+          f += len + 1;
+          if (dr < 1.5 || dn > FAR) return;
+          const da = Math.max(1.5, dn), oa = MO * meetK(x0 + da), ob = MO * meetK(x0 + dr);
+          add(da, () => {
+            // sisi kiri rangkaian (menghadap Si Gagah)
+            quad(W3(da, oa - 1.45, 1.1), W3(dr, ob - 1.45, 1.1), W3(dr, ob - 1.45, 4.0), W3(da, oa - 1.45, 4.0), '#d9dfe3');
+            quad(W3(da, oa - 1.45, 1.55), W3(dr, ob - 1.45, 1.55), W3(dr, ob - 1.45, 1.95), W3(da, oa - 1.45, 1.95), '#1f4e8c');
+            quad(W3(da, oa - 1.45, 0.4), W3(dr, ob - 1.45, 0.4), W3(dr, ob - 1.45, 1.1), W3(da, oa - 1.45, 1.1), '#24292d');
+            if (k > 0) for (let w = 0; w < 8; w++) { const d1 = dn + 2 + w * 2.2; if (d1 < da || d1 + 1.4 > dr) continue; quad(W3(d1, oa - 1.46, 2.4), W3(d1 + 1.4, oa - 1.46, 2.4), W3(d1 + 1.4, oa - 1.46, 3.3), W3(d1, oa - 1.46, 3.3), night || storm ? '#f2d58c' : '#22313b'); }
+            if (k === 0 && dn > 1.5) {
+              // muka lokomotif: kaca, lampu sorot menyilaukan
+              quad(W3(dn, oa - 1.45, 0.5), W3(dn, oa + 1.45, 0.5), W3(dn, oa + 1.45, 4.0), W3(dn, oa - 1.45, 4.0), '#e4e9ec');
+              quad(W3(dn, oa - 1.3, 2.8), W3(dn, oa + 1.3, 2.8), W3(dn, oa + 1.3, 3.7), W3(dn, oa - 1.3, 3.7), '#1b2833');
+              quad(W3(dn, oa - 1.45, 1.55), W3(dn, oa + 1.45, 1.55), W3(dn, oa + 1.45, 1.95), W3(dn, oa - 1.45, 1.95), '#1f4e8c');
+              [-0.8, 0.8].forEach((lo) => { const hp = W3(dn, oa + lo, 2.3); if (!hp) return; const r = Math.max(2, 0.25 * hp.k); const g = c.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, r * 9); g.addColorStop(0, 'rgba(255,245,210,0.95)'); g.addColorStop(1, 'rgba(255,245,210,0)'); c.fillStyle = g; c.beginPath(); c.arc(hp.x, hp.y, r * 9, 0, 7); c.fill(); });
+            }
+          });
+        });
+      }
+    }
+    // pohon tumbang melintang rel & tim jalan rel
+    const TRc = st.tree;
+    if (TRc && !(TRc.phase === 'clear')) {
+      const d = TRc.x - x0, cut = TRc.phase === 'work' && TRc.t > 13;
+      if (d > 1.5 && d < FAR && !cut) add(d, () => {
+        const bk = night ? '#2c2318' : '#4a3622';
+        quad(W3(d - 0.3, -6, 0.2), W3(d + 1.2, 6, 0.3), W3(d + 1.2, 6, 1.0), W3(d - 0.3, -6, 0.9), bk);
+        [[-7, 1.6, 1.8], [7.5, 2.0, 2.6], [5, 2.6, 2.0], [9.5, 1.2, 2.0], [2.8, 1.4, 1.4]].forEach(([o, h, r]) => { const q = W3(d + 1, o, h); if (!q) return; c.fillStyle = storm ? '#2c4f2e' : '#2f5a2f'; c.beginPath(); c.arc(q.x, q.y, r * q.k, 0, 7); c.fill(); });
+        if (TRc.phase === 'work') [-2.6, 1.8, 3.4].forEach((o, i) => { const b = W3(d - 1.5 - i * 0.6, o, 0), h = W3(d - 1.5 - i * 0.6, o, 1.75); if (!b || !h) return; c.fillStyle = '#f08a24'; c.fillRect(b.x - 0.25 * b.k, h.y + 0.3 * b.k, 0.5 * b.k, b.y - h.y - 0.3 * b.k); c.fillStyle = '#f2c230'; c.beginPath(); c.arc(b.x, h.y + 0.15 * b.k, 0.22 * b.k, 0, 7); c.fill(); });
+      });
+    }
+    // genangan menutupi rel
+    const FLc = ROUTE.flood;
+    if (FLc && !inTun) {
+      const fa = Math.max(1.3, FLc.from - x0), fb = Math.min(FAR, FLc.to - x0);
+      if (fb > fa) add(fb, () => {
+        for (let d = fb; d > fa; d -= 4) { const e = Math.max(fa, d - 4); quad(W3(e, -8, 0.25), W3(e, 8, 0.25), W3(d, 8, 0.25), W3(d, -8, 0.25), night ? 'rgba(60,72,96,0.9)' : 'rgba(118,142,150,0.9)'); }
+        c.strokeStyle = 'rgba(235,245,250,0.4)'; c.lineWidth = 1;
+        for (let i = 0; i < 10; i++) { const d = fa + ((i * 7.3 + st.t * 3) % Math.max(1, fb - fa)), o = -5 + (i * 3.7) % 10; const q0 = W3(d, o, 0.26), q1 = W3(d, o + 1.2, 0.26); if (q0 && q1) { c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } }
+      });
+    }
     items.sort((a, b) => b.d - a.d).forEach((it) => it.fn());
+    // cipratan air di depan kaca saat menerjang genangan
+    if (FLc && st.x > FLc.from && st.x < FLc.to + 4 && st.v > 0.3) {
+      c.fillStyle = 'rgba(235,245,250,0.55)';
+      for (let i = 0; i < 18; i++) { const sx = W * (0.15 + Math.random() * 0.7), sy = H * (0.5 + Math.random() * 0.18); c.beginPath(); c.arc(sx, sy, 1 + Math.random() * (2 + st.v), 0, 7); c.fill(); }
+    }
 
     // ---- mulut terowongan ----
     if (T) {
@@ -3246,7 +3496,8 @@
     const st = S || idleState;
     // zoom-out lembut saat ada satwa di jalur di depan
     const E0 = ROUTE.elephants, st0 = S || idleState;
-    const wantZoom = E0 && st0.eleph && (st0.eleph.phase === 'block' || st0.eleph.phase === 'cross') && E0.x - st0.x < 260 ? 0.7 : 1;
+    const TR0 = st0.tree, treeNear = TR0 && (TR0.phase === 'warn' || TR0.phase === 'work') && TR0.x - st0.x < 260;
+    const wantZoom = (E0 && st0.eleph && (st0.eleph.phase === 'block' || st0.eleph.phase === 'cross') && E0.x - st0.x < 260) || treeNear ? 0.7 : 1;
     camZoom += (wantZoom - camZoom) * Math.min(1, (dtReal || 0.016) * 1.2);
     const ppm = clamp(H / 44, 3.4, 13) * camZoom;
     const gy = Math.round(H * 0.64);
@@ -3258,6 +3509,10 @@
     if (E && st.eleph && (st.eleph.phase === 'block' || st.eleph.phase === 'cross') && E.x - st.x < 200) {
       const base = st.x - (W * anchor) / ppm;
       lead = clamp(E.x + 16 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
+    }
+    if (treeNear && TR0.x - st.x < 200) {
+      const base = st.x - (W * anchor) / ppm;
+      lead = clamp(TR0.x + 14 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
     }
     camLead += (lead - camLead) * Math.min(1, (dtReal || 0.016) * 1.4);
     const camX = st.x - (W * anchor) / ppm + camLead;
@@ -3352,15 +3607,20 @@
     drawTunnelInterior(LV);
     drawStations(LV);
     drawSwitch(LV);
+    drawMeetTrack(LV);
+    drawFlood(LV, 'back');
     drawTrackside(LV);
     drawBoards35(LV);
     drawCrossings(LV, 'back', dtReal);
     drawGoats(LV);
+    drawTree(LV);
     drawSilo(LV, 'back');
     drawElephants(LV, 'back');
     drawBridge(LV, 'back');
     drawTrain(LV);
     drawPlatformFront(LV, dtReal);
+    drawFlood(LV, 'front');
+    drawOppTrain(LV);
     drawSparks(LV, dtReal, lat);
     drawSilo(LV, 'front');
     drawCrossings(LV, 'front', dtReal);
@@ -4859,6 +5119,179 @@
   }
 
   // papan semboyan 35 (wajib klakson) di titik mulai membunyikan klakson sebelum perlintasan
+  // ---------- lintas tunggal: jalur utama di sisi depan, KA berlawanan, pohon tumbang, genangan ----------
+  const MEET_NEAR = 4.6; // jarak layar (× ppm) jalur utama di depan sepur belok
+  const meetK = (x) => { const M = ROUTE.meet; return M ? smooth(M.entry, M.entry + 45, x) * (1 - smooth(M.exit - 45, M.exit, x)) : 0; };
+  function drawMeetTrack(V) {
+    const MT = ROUTE.meet; if (!MT) return;
+    const { c, ppm, gy, X, wx0, wx1, p } = V;
+    const a = Math.max(MT.entry, wx0), b = Math.min(MT.exit, wx1);
+    if (b <= a) return;
+    const yAt = (x) => gy + MEET_NEAR * ppm * meetK(x);
+    // balas jalur utama: muka atas lalu lereng depan
+    const band = (t0, t1, col) => {
+      c.fillStyle = col; c.beginPath();
+      for (let x = a; x <= b + 0.01; x += 2) c.lineTo(X(x), yAt(x) + t0 * ppm);
+      for (let x = b; x >= a - 0.01; x -= 2) c.lineTo(X(x), yAt(x) + t1 * ppm);
+      c.closePath(); c.fill();
+    };
+    band(-0.62, 0.5, mix('#8d8275', '#a59a8c', p));
+    band(0.5, 1.45, mix('#5d5349', '#766a5e', p));
+    c.fillStyle = mix('#6f6a63', '#8b857b', p);
+    for (let m = Math.ceil(a / 1.2) * 1.2; m < b; m += 1.2) { const sx = X(m), y = yAt(m); c.fillRect(sx, y - 0.5 * ppm, 0.3 * ppm, 0.8 * ppm); }
+    const rail = (off, h, col) => {
+      c.strokeStyle = col; c.lineWidth = h * ppm; c.beginPath();
+      for (let x = a; x <= b + 0.01; x += 2) c.lineTo(X(x), yAt(x) + off * ppm);
+      c.stroke();
+    };
+    rail(-0.42, 0.13, '#7d8487'); rail(0, 0.24, '#9aa0a2'); rail(-0.06, 0.06, 'rgba(255,255,255,0.4)');
+    // wesel: lidah wesel & kotak penggerak di kedua ujung
+    [MT.entry, MT.exit].forEach((wx) => {
+      const sx = X(wx); if (sx < -40 || sx > W + 40) return;
+      c.fillStyle = '#3d4246'; c.fillRect(sx - 0.6 * ppm, gy + 0.9 * ppm, 1.2 * ppm, 0.55 * ppm);
+      c.fillStyle = '#f2c230'; c.fillRect(sx - 0.6 * ppm, gy + 0.9 * ppm, 1.2 * ppm, 0.12 * ppm);
+    });
+    // patok bebas batas: tiang merah-putih di antara dua jalur
+    const fx = X(MT.foul);
+    if (fx > -20 && fx < W + 20) {
+      const fy = gy + 2.5 * ppm;
+      for (let i = 0; i < 4; i++) { c.fillStyle = i % 2 ? '#f4f1e8' : '#d62b20'; c.fillRect(fx - 0.2 * ppm, fy - (i + 1) * 0.3 * ppm, 0.4 * ppm, 0.3 * ppm); }
+      c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(fx - 0.2 * ppm, fy, 0.6 * ppm, 0.12 * ppm);
+    }
+  }
+  // KA 112: rangkaian berlawanan arah di jalur utama, lebih dekat ke kamera
+  function drawOppTrain(V) {
+    const MT = ROUTE.meet, st = V.st; if (!MT || !st.meet || st.meet.phase !== 'run') return;
+    const { c, ppm, gy, X } = V;
+    const lens = [16].concat(Array(MT.cars).fill(19.5));
+    let f = st.meet.x;
+    lens.forEach((len, k) => {
+      const r = f + len, xa = X(f), xb = X(r);
+      if (xb > -20 && xa < W + 20) {
+        const ka = meetK(f), kb = meetK(r), ya = gy + MEET_NEAR * ppm * ka, yb = gy + MEET_NEAR * ppm * kb;
+        const sc = 1 + 0.1 * (ka + kb) / 2, u = ppm * sc, L = Math.hypot(xb - xa, yb - ya);
+        c.save(); c.translate(xa, ya); c.rotate(Math.atan2(yb - ya, xb - xa));
+        c.fillStyle = 'rgba(20,16,10,0.3)'; c.fillRect(0, 0.1 * u, L, 0.35 * u);
+        // bogie & roda
+        [0.17, 0.83].forEach((bc) => {
+          c.fillStyle = '#23272b'; c.fillRect(L * bc - 2.0 * u, -1.0 * u, 4.0 * u, 0.55 * u);
+          [-1.1, 1.1].forEach((o) => { c.fillStyle = '#15181b'; c.beginPath(); c.arc(L * bc + o * u, -0.46 * u, 0.46 * u, 0, 7); c.fill(); c.fillStyle = '#5b6166'; c.beginPath(); c.arc(L * bc + o * u, -0.46 * u, 0.14 * u, 0, 7); c.fill(); });
+        });
+        c.fillStyle = '#2a2f33'; c.fillRect(0.3 * u, -1.2 * u, L - 0.6 * u, 0.32 * u);
+        // badan perak dengan sabuk biru-merah
+        const loco = k === 0;
+        c.fillStyle = '#e4e9ec';
+        c.beginPath();
+        if (loco) { c.moveTo(1.4 * u, -4.05 * u); c.lineTo(L, -4.05 * u); c.lineTo(L, -1.15 * u); c.lineTo(0, -1.15 * u); c.lineTo(0, -2.6 * u); c.closePath(); }
+        else roundRect(c, 0, -4.05 * u, L, 2.9 * u, 0.35 * u);
+        c.fill();
+        c.fillStyle = '#1f4e8c'; c.fillRect(0, -2.05 * u, L, 0.42 * u);
+        c.fillStyle = '#c03a2b'; c.fillRect(0, -1.5 * u, L, 0.12 * u);
+        c.fillStyle = '#9aa3a8'; c.fillRect(loco ? 1.4 * u : 0.3 * u, -4.25 * u, L - (loco ? 1.7 : 0.6) * u, 0.22 * u);
+        const glow = V.lit ? '#f6d98c' : '#22313b';
+        if (loco) {
+          c.fillStyle = '#1b2833'; c.beginPath(); c.moveTo(1.3 * u, -3.85 * u); c.lineTo(2.9 * u, -3.85 * u); c.lineTo(2.9 * u, -2.75 * u); c.lineTo(0.45 * u, -2.75 * u); c.closePath(); c.fill();
+          c.fillStyle = 'rgba(255,255,255,0.25)'; c.fillRect(1.6 * u, -3.75 * u, 0.25 * u, 0.9 * u);
+          for (let i = 0; i < 7; i++) { c.fillStyle = '#c7cfd2'; c.fillRect(4.4 * u + i * 1.05 * u, -3.6 * u, 0.7 * u, 1.3 * u); }
+          c.fillStyle = '#1f4e8c'; c.font = `900 ${Math.round(0.8 * u)}px "Big Shoulders Display", sans-serif`; c.textBaseline = 'middle'; c.fillText('112', L - 3.4 * u, -3.0 * u); c.textBaseline = 'alphabetic';
+          // lampu sorot depan
+          const hg = c.createRadialGradient(0.2 * u, -2.3 * u, 0, 0.2 * u, -2.3 * u, 3.5 * u);
+          hg.addColorStop(0, 'rgba(255,240,190,0.9)'); hg.addColorStop(1, 'rgba(255,240,190,0)');
+          c.fillStyle = hg; c.beginPath(); c.arc(0.2 * u, -2.3 * u, 3.5 * u, 0, 7); c.fill();
+          c.fillStyle = '#fffbe8'; c.beginPath(); c.arc(0.25 * u, -2.3 * u, 0.22 * u, 0, 7); c.fill();
+        } else {
+          for (let i = 0; i < 8; i++) { const wx = L * 0.12 + i * L * 0.098; c.fillStyle = glow; c.fillRect(wx, -3.35 * u, L * 0.07, 0.95 * u); c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(wx, -3.35 * u, L * 0.07, 0.12 * u); }
+          [0.035, 0.925].forEach((dx) => { c.strokeStyle = 'rgba(40,50,60,0.55)'; c.lineWidth = 1; c.strokeRect(L * dx, -3.55 * u, 0.9 * u, 2.25 * u); });
+        }
+        c.restore();
+      }
+      f = r + 1;
+    });
+    // semburan air hujan dari roda
+    if (V.storm) { c.fillStyle = 'rgba(220,230,235,0.25)'; for (let i = 0; i < 10; i++) { const wx = st.meet.x + Math.random() * (f - st.meet.x); const sx = X(wx); if (sx < 0 || sx > W) continue; c.fillRect(sx, gy + MEET_NEAR * ppm * meetK(wx) - (0.2 + Math.random() * 0.8) * ppm, 0.6 * ppm, 0.12 * ppm); } }
+  }
+  function drawTree(V) {
+    const TR = V.st.tree; if (!TR) return;
+    const { c, ppm, gy, X, p } = V;
+    const x = X(TR.x); if (x < -30 * ppm || x > W + 30 * ppm) return;
+    const work = TR.phase === 'work' ? TR.t : TR.phase === 'clear' ? 99 : 0;
+    const bark = mix('#4a3622', '#5e4530', p), leaf = V.storm ? '#2c4f2e' : mix('#2f5a2f', '#3f7a3a', p), leaf2 = V.storm ? '#3a6339' : mix('#3f6e38', '#558e46', p);
+    // tunggul di sisi belakang rel
+    c.fillStyle = bark; c.fillRect(x - 4.4 * ppm, gy - 2.6 * ppm, 1.1 * ppm, 1.9 * ppm);
+    c.fillStyle = '#c9a77a'; c.beginPath(); c.ellipse(x - 3.85 * ppm, gy - 2.6 * ppm, 0.55 * ppm, 0.2 * ppm, 0, 0, 7); c.fill();
+    if (work < 13) {
+      // batang melintang rel dan tajuk rimbun di sisi depan
+      const cut = work > 8 ? 1 : 0;
+      c.strokeStyle = bark; c.lineCap = 'round';
+      c.lineWidth = 0.8 * ppm; c.beginPath(); c.moveTo(x - 3.9 * ppm, gy - 1.6 * ppm); c.lineTo(x - 0.4 * ppm - cut * 0.3 * ppm, gy - 0.3 * ppm); c.stroke();
+      c.beginPath(); c.moveTo(x + 0.4 * ppm + cut * 0.6 * ppm, gy + 0.1 * ppm); c.lineTo(x + 5 * ppm + cut * 0.6 * ppm, gy + 2.0 * ppm); c.stroke();
+      c.lineWidth = 0.3 * ppm; c.beginPath(); c.moveTo(x + 2.4 * ppm, gy + 0.9 * ppm); c.lineTo(x + 3.4 * ppm, gy - 1.4 * ppm); c.moveTo(x + 3.6 * ppm, gy + 1.5 * ppm); c.lineTo(x + 6.2 * ppm, gy + 0.4 * ppm); c.stroke();
+      c.lineCap = 'butt';
+      const off = cut * 0.6 * ppm;
+      [[5.6, -0.4, 2.2, leaf], [7.6, 0.8, 2.0, leaf], [4.4, -1.6, 1.6, leaf2], [7.2, -1.2, 1.7, leaf2], [9.0, 1.6, 1.5, leaf], [3.4, 0.6, 1.3, leaf2]].forEach(([dx, dy, r, col]) => {
+        c.fillStyle = col; c.beginPath(); c.arc(x + dx * ppm + off, gy + dy * ppm, r * ppm, 0, 7); c.fill();
+      });
+    } else {
+      // potongan batang disingkirkan ke tepi rel
+      c.fillStyle = bark;
+      [[2, 3.0], [5, 3.3], [8, 3.0]].forEach(([dx, dy]) => { c.fillRect(x + dx * ppm, gy + dy * ppm - 0.6 * ppm, 2.2 * ppm, 0.6 * ppm); c.fillStyle = '#c9a77a'; c.beginPath(); c.ellipse(x + dx * ppm, gy + dy * ppm - 0.3 * ppm, 0.15 * ppm, 0.3 * ppm, 0, 0, 7); c.fill(); c.fillStyle = bark; });
+      c.fillStyle = V.storm ? 'rgba(44,79,46,0.85)' : leaf; c.beginPath(); c.ellipse(x + 13 * ppm, gy + 3 * ppm, 4 * ppm, 1.1 * ppm, 0, 0, 7); c.fill();
+    }
+    // tim jalan rel memotong batang
+    if (TR.phase === 'work') {
+      const t = TR.t;
+      [[-1.2, 2.4, 3], [2.0, 2.8, 5], [6.4, 3.0, 8]].forEach(([dx, dy, sd], i) => {
+        const walk = clamp(t / 3, 0, 1);
+        const px = x + (dx - (1 - walk) * (10 + i * 3)) * ppm;
+        person(c, px, gy + dy * ppm, ppm, sd, { color: '#f08a24', helmet: true });
+      });
+      if (t > 3 && t < 12) {
+        c.fillStyle = 'rgba(230,205,160,0.8)';
+        for (let i = 0; i < 6; i++) c.fillRect(x + (0.2 + Math.random() * 0.8) * ppm, gy + (0.4 - Math.random() * 1.2) * ppm, 0.12 * ppm, 0.12 * ppm);
+      }
+    }
+  }
+  function drawFlood(V, layer) {
+    const F = ROUTE.flood; if (!F) return;
+    const { c, ppm, gy, X, st } = V;
+    const a = X(F.from), b = X(F.to);
+    if (b < -60 || a > W + 60) return;
+    const tt = performance.now() / 1000;
+    const top = V.night ? 'rgba(80,96,120,0.85)' : 'rgba(128,152,160,0.86)', deep = V.night ? 'rgba(40,52,70,0.9)' : 'rgba(78,102,108,0.92)';
+    if (layer === 'back') {
+      // genangan melebar di tanah sekitar rel
+      c.fillStyle = deep;
+      c.beginPath(); c.ellipse((a + b) / 2, gy + 3.2 * ppm, (b - a) / 2 + 9 * ppm, 2.6 * ppm, 0, 0, 7); c.fill();
+      c.beginPath(); c.ellipse((a + b) / 2, gy - 1.0 * ppm, (b - a) / 2 + 4 * ppm, 0.6 * ppm, 0, 0, 7); c.fill();
+      c.fillStyle = top; c.fillRect(a - 3 * ppm, gy + 1.0 * ppm, b - a + 6 * ppm, 0.12 * ppm);
+      return;
+    }
+    // permukaan air menutupi rel dan bagian bawah roda
+    const g = c.createLinearGradient(0, gy - 0.5 * ppm, 0, gy + 1.8 * ppm);
+    g.addColorStop(0, top); g.addColorStop(1, deep);
+    c.fillStyle = g; c.beginPath();
+    c.moveTo(a - 4 * ppm, gy + 1.8 * ppm);
+    for (let x = a - 4 * ppm; x <= b + 4 * ppm; x += 6) {
+      const e = Math.min(1, (x - a + 4 * ppm) / (5 * ppm), (b + 4 * ppm - x) / (5 * ppm));
+      c.lineTo(x, gy + 1.8 * ppm - (2.3 * ppm + Math.sin(x * 0.07 + tt * 2.4) * 0.05 * ppm) * e);
+    }
+    c.lineTo(b + 4 * ppm, gy + 1.8 * ppm); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(235,245,248,0.45)'; c.lineWidth = 1;
+    for (let i = 0; i < 9; i++) {
+      const x = a + ((i * 53 + tt * 14) % Math.max(1, b - a)), y = gy - 0.35 * ppm + (i % 3) * 0.55 * ppm;
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x + 1.6 * ppm, y); c.stroke();
+    }
+    // gelombang haluan & cipratan
+    if (st.splash) {
+      c.fillStyle = 'rgba(235,245,250,0.7)';
+      for (const q of st.splash) { const r = (0.1 + 0.12 * (1 - q.life / q.max)) * ppm; c.beginPath(); c.arc(X(q.x), gy - (0.3 + q.y) * ppm, r, 0, 7); c.fill(); }
+      if (inFlood(st.x) && st.v > 0.4 && st.x > F.from && st.x < F.to + 2) {
+        const fx = X(st.x), h = Math.min(1.4, 0.3 + st.v * 0.25) * ppm;
+        c.fillStyle = 'rgba(235,245,250,0.55)'; c.beginPath(); c.moveTo(fx - 0.5 * ppm, gy - 0.4 * ppm); c.quadraticCurveTo(fx + 1.2 * ppm, gy - 0.4 * ppm - h, fx + 2.4 * ppm, gy - 0.3 * ppm); c.closePath(); c.fill();
+      }
+    }
+  }
+
   function drawBoards35(V) {
     const { c, ppm, gy, X, wx0, wx1 } = V;
     ROUTE.crossings.forEach((cr) => {
@@ -5659,6 +6092,28 @@
     if (ROUTE.loading) {
       const lx = M(ROUTE.loading.silo);
       if (lx > -10 && lx < w + 10) { c.fillStyle = '#c9cfd3'; c.fillRect(lx - 5, ly - 16, 10, 9); c.fillRect(lx - 1.5, ly - 7, 3, 5); c.fillText('corong', lx + 8, ly - 12); }
+    }
+    // genangan, pohon tumbang (baru terlihat setelah peringatan), sepur belok & KA berlawanan
+    const FLs = ROUTE.flood;
+    if (FLs && M(FLs.to) > 0 && M(FLs.from) < w) {
+      const a = Math.max(0, M(FLs.from)), b = Math.min(w, M(FLs.to));
+      c.fillStyle = 'rgba(110,170,200,0.75)'; c.fillRect(a, ly - 4, Math.max(3, b - a), 8);
+      c.fillStyle = '#bfe0ee'; c.fillText('genangan', a + 2, ly + 17 > h - 2 ? h - 4 : ly + 17);
+    }
+    const TRs = S.tree;
+    if (TRs && TRs.phase !== 'idle' && TRs.phase !== 'clear' && M(TRs.x) > 0 && M(TRs.x) < w) {
+      const tx = M(TRs.x);
+      c.fillStyle = '#ff7a6c'; c.beginPath(); c.arc(tx, ly - 2, 5, 0, 7); c.fill(); c.fillRect(tx - 1, ly - 2, 2, 7);
+      c.fillText('pohon', tx - 14, ly - 22);
+    }
+    const MTs = ROUTE.meet;
+    if (MTs && M(MTs.exit) > 0 && M(MTs.entry) < w) {
+      c.strokeStyle = 'rgba(239,233,218,0.5)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(M(MTs.entry), ly); c.lineTo(M(MTs.entry + 40), ly + 8); c.lineTo(M(MTs.exit - 40), ly + 8); c.lineTo(M(MTs.exit), ly); c.stroke();
+      if (S.meet.phase === 'run') {
+        const ox = M(S.meet.x), oe = M(S.meet.x + oppLen());
+        if (oe > 0 && ox < w) { c.fillStyle = '#7fb0e8'; c.fillRect(clamp(ox, 0, w), ly + 5, clamp(oe, 0, w) - clamp(ox, 0, w), 6); c.beginPath(); c.moveTo(ox, ly + 2); c.lineTo(ox - 7, ly + 8); c.lineTo(ox, ly + 14); c.closePath(); c.fill(); c.fillText(MTs.name, clamp(ox, 0, w - 40), ly - 22); }
+      }
     }
     if (ROUTE.switchX && M(ROUTE.switchX) > 0 && M(ROUTE.switchX) < w) {
       const sx = M(ROUTE.switchX);
