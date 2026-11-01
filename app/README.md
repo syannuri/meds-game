@@ -65,7 +65,15 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Suasana alam: gemerisik daun, kicau burung (kutilang, prenjak), dekur perkutut, ayam jago saat
   fajar, dan tonggeret di siang hari; makin ramai saat kereta pelan atau berhenti. Desis udara rem,
   pintu, turbo, dan rel dibuat lebih pelan dan lembut
-- Tikungan 2.5D: rel dan rangkaian melengkung menjauh dari kamera, lokomotif masuk tikungan lebih
+- Kereta hidup: badan tiap gerbong naik-turun saat bogie melewati sambungan rel, sambungan antargerbong
+  merenggang saat menarik dan merapat saat mengerem, badan mendongak/menunduk, pintu geser bergerak,
+  lampu depan berkedip saat klakson, debu dan daun kering terangkat di belakang rangkaian
+- Momen penting: berhenti Perfect membuat kamera mendekat, marka berkilau, koin terbang ke penghitung,
+  dan penumpang bertepuk tangan; Good/OK/Miss punya cap sendiri; pelanggaran memunculkan tepi merah
+  berdenyut, guncangan, dan cap merah
+- Tikungan 3D: rel diproyeksikan dengan perspektif sungguhan (memendek dan menjauh, gerbong ikut
+  berputar ke kedalaman), latar jauh bergeser mengikuti arah kamera, ujung rel memudar ke kejauhan.
+  Lokomotif masuk tikungan lebih
   dulu lalu gerbong menyusul. Kamera miring dan bergoyang mengikuti gaya samping, indikator gaya
   samping di speedometer (hijau, kuning, merah), percik api di roda saat terlalu kencang
 - Suara jembatan: "klang" sambungan muai di kedua ujung, dentum berongga tiap segmen gelagar,
