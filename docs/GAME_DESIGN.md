@@ -72,7 +72,7 @@ Di peta jaringan (tampilan atas, gaya peta ilustrasi):
 
 ### Prolog — "Peluit Terakhir"
 Raka pulang ke kota kelahirannya setelah kakeknya, Pak Harjo (mantan masinis legendaris),
-wafat. Ia mewarisi **Depo Sukamaju** yang terbengkalai dan satu lokomotif diesel-elektrik tua bernama **"Si Gagah"** (RN 2001) yang dipulihkan bersama Dimas.
+wafat. Ia mewarisi **Depo Sukamaju** yang terbengkalai dan satu lokomotif diesel-elektrik tua bernama **"Cakra"** (RN 2001) yang dipulihkan bersama Dimas.
 Kepala stasiun tua, **Bu Wulan**, memberinya buku catatan kakek berisi peta jalur-jalur lama
 yang telah ditutup.
 *Tutorial: menyalakan lokomotif, jalan pelan, berhenti di peron.*
@@ -85,7 +85,7 @@ yang telah ditutup.
 - **Boss mission:** balapan reputasi — kereta Raka harus tiba lebih cepat dan lebih nyaman daripada armada bus TransKilat.
 
 ### Babak 2 — Sumatra: "Jalur Batu Bara & Hutan"
-- **Misi 2-1 "Emas Hitam" (sudah ada di prototipe):** Raka membawa Si Gagah dan empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Sari (PPKA magang) memandu lewat radio. Mekanik: muat presisi di bawah corong silo, rangkaian berat, rombongan gajah Sumatra yang harus ditunggu, turunan ke pantai. Di dermaga, Sari menunjukkan peta tua kakek Raka tentang jalur cabang yang ditutup.
+- **Misi 2-1 "Emas Hitam" (sudah ada di prototipe):** Raka membawa Cakra dan empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Sari (PPKA magang) memandu lewat radio. Mekanik: muat presisi di bawah corong silo, rangkaian berat, rombongan gajah Sumatra yang harus ditunggu, turunan ke pantai. Di dermaga, Sari menunjukkan peta tua kakek Raka tentang jalur cabang yang ditutup.
 - Kereta barang: angkut batu bara, sawit, dan hasil bumi — muatan berat, momentum tinggi, butuh pengereman lebih awal.
 - Medan tanjakan curam (mekanik **rel gigi** di dataran tinggi).
 - Raka menemukan bahwa catatan kakeknya menyimpan **peta jalur rahasia** yang dulu sengaja ditutup.
@@ -98,7 +98,7 @@ yang telah ditutup.
 
 ### Babak 4 — Final: "Kereta Nusantara"
 - Terungkap bahwa Pak Bram adalah mantan asisten kakek Raka yang dulu gagal dan dendam.
-- Misi final: perjalanan malam panjang menembus badai, dengan Si Gagah yang sudah direstorasi penuh.
+- Misi final: perjalanan malam panjang menembus badai, dengan Cakra yang sudah direstorasi penuh.
 - Akhir cerita: jaringan rel menyatukan kota-kota; Pak Bram berdamai dan bergabung membangun
   integrasi **bus–kereta** (pesan positif: kerja sama, bukan saling menjatuhkan).
 
@@ -123,7 +123,7 @@ yang telah ditutup.
 | Kelas | Contoh (fiktif, terinspirasi era nyata) | Ciri |
 |---|---|---|
 | Lokomotif uap | “Mbah Sepur” (koleksi museum, misi spesial) | Lambat, ikonik, butuh manajemen uap |
-| Diesel-elektrik CC | “Si Gagah” RN 2001 (kereta utama) | Kabin depan, kap panjang, kuat di tanjakan |
+| Diesel-elektrik CC | “Cakra” RN 2001 (kereta utama) | Kabin depan, kap panjang, kuat di tanjakan |
 | Diesel hidrolik | Seri DH-Nusa | Seimbang, kereta lokal |
 | Diesel elektrik | Seri CC-Garuda | Kuat untuk barang & antarkota |
 | KRL | Seri Komuter | Akselerasi cepat, banyak stasiun |
@@ -190,7 +190,7 @@ Kustomisasi: livery (warna/motif batik, tenun, dsb.), klakson, interior kabin.
 
 **Misi 1-4: "Pagi Pertama Pasar Minggu"**
 - **Rute:** Stasiun Sukamaju → Cibening → Pasar Lama (12 km, 3 pemberhentian)
-- **Kereta:** Si Gagah + 2 gerbong
+- **Kereta:** Cakra + 2 gerbong
 - **Waktu:** 06.00 pagi, berkabut ringan
 - **Briefing (Bu Wulan):** *"Raka, pedagang pasar sudah menunggu di Cibening. Jangan sampai sayur mereka layu!"*
 - **Alur:**
