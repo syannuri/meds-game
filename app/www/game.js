@@ -464,6 +464,17 @@
     '1-7': { storm: ['#34434e', '#62798a', '#a7b8bd'], grade: ['rgba(80,125,140,0.2)', 'rgba(60,100,90,0.16)'] },
     '2-1': { sky: [['#4a6a6e', '#6a9aa6'], ['#b9b08a', '#cfd9c0'], ['#ead6a4', '#f0ead2']], grade: ['rgba(200,215,170,0.2)', 'rgba(160,70,40,0.2)'], mist: true },
   };
+  const ROUTE_LM = {
+    '1-1': [{ id: 'menara', x: 260 }],
+    '1-2': [{ id: 'pg', x: 640 }],
+    '1-3': [{ id: 'asam', x: 1020 }],
+    '1-4': [{ id: 'candi', x: 520 }, { id: 'pg', x: 820 }, { id: 'masjid', x: 2330 }],
+    '1-5': [{ id: 'gunung', x: 700 }, { id: 'curug', x: 1950 }],
+    '1-6': [{ id: 'pasar', x: 2060 }, { id: 'masjid', x: 2420 }],
+    '1-7': [{ id: 'beringin', x: 1250 }, { id: 'waduk', x: 2650 }],
+    '2-1': [{ id: 'sawit', x: 620 }, { id: 'barisan', x: 1450 }, { id: 'panggung', x: 2050 }, { id: 'mercu', x: 3150 }],
+  };
+  MISSION_ORDER.forEach((id) => { MISSIONS[id].route.landmarks = ROUTE_LM[id] || []; });
   MISSION_ORDER.forEach((id) => { MISSIONS[id].id = id; MISSIONS[id].pal = PALETTES[id] || PALETTES['1-4']; });
   let MIS = MISSIONS['1-4'];
   let ROUTE = MIS.route;
@@ -1372,7 +1383,7 @@
       failReason: null,
       tree: ROUTE.tree ? { x: Math.round(ROUTE.tree.from + Math.random() * (ROUTE.tree.to - ROUTE.tree.from)), phase: 'idle', t: 0, gap: null, far: false } : null,
       meet: ROUTE.meet ? { phase: 'idle', x: 0, v: 0, cleared: false, honked: false } : null,
-      wetMotor: false, floodStop: 0, splash: [],
+      wetMotor: false, floodStop: 0, splash: [], lmSeen: {},
     };
   }
 
@@ -2001,6 +2012,7 @@
       const onTrack = el.phase === 'block' || (el.phase === 'cross' && el.prog < 0.55);
       if (onTrack && S.x >= E.x - 3) { fail('Kereta menabrak rombongan gajah Sumatra. Berhentilah lebih awal saat ada satwa di jalur.'); return; }
     }
+    checkLandmarks();
     stepTree(dt);
     if (S.mode !== 'play') return;
     stepFlood(dt, kmh);
@@ -2486,7 +2498,22 @@
     const done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
     c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(h * 0.045)}px "Plus Jakarta Sans", sans-serif`;
     c.fillText(`Depo Sukamaju · ${done} dari ${MISSION_ORDER.length} misi selesai · diesel-elektrik CC, livery Rel Nusantara`, w * 0.04, h * 0.22);
+    // album kartu pos landmark
+    const got = cardsGot(), n = LM_IDS.length, gap = w * 0.008, cw = (w * 0.92 - gap * (n - 1)) / n, ch = cw * 1.08, ay = h * 0.275;
+    c.fillStyle = '#c9b48a'; c.font = `800 ${Math.round(h * 0.032)}px "Plus Jakarta Sans", sans-serif`;
+    c.fillText(`ALBUM KARTU POS · ${got.length} DARI ${n}`, w * 0.04, ay - h * 0.012);
+    if (!albumCv) { albumCv = document.createElement('canvas'); albumCv.width = 80; albumCv.height = 100; }
+    const ac2 = albumCv.getContext('2d');
+    LM_IDS.forEach((id, i) => {
+      const d = LANDMARKS[id], x = w * 0.04 + i * (cw + gap), has = got.includes(id);
+      if (has) { drawCardArt(ac2, 80, 100, d, true); c.drawImage(albumCv, x, ay, cw, ch); c.strokeStyle = '#f7f1e2'; c.lineWidth = 2; c.strokeRect(x, ay, cw, ch); }
+      else {
+        c.setLineDash([3, 3]); c.strokeStyle = 'rgba(243,238,225,0.3)'; c.lineWidth = 1; c.strokeRect(x + 0.5, ay + 0.5, cw - 1, ch - 1); c.setLineDash([]);
+        c.fillStyle = 'rgba(243,238,225,0.4)'; c.textAlign = 'center'; c.font = `800 ${Math.round(cw * 0.26)}px "Big Shoulders Display", sans-serif`; c.fillText(d.mis, x + cw / 2, ay + ch * 0.58); c.textAlign = 'start';
+      }
+    });
   }
+  let albumCv = null;
 
   function renderMissionList() {
     const nextId = nextMissionId();
@@ -3291,6 +3318,19 @@
         c.fillStyle = '#1c2a35'; c.fillRect(a.x - w * 0.4, b.y + (a.y - b.y) * 0.15, w * 0.8, (a.y - b.y) * 0.3);
       });
     }
+    // tikungan: papan peringatan di kiri, chevron di sisi luar (kanan)
+    ROUTE.zones.forEach((z) => {
+      if (!z.curve) return;
+      const dw = z.from - 120 - x0;
+      if (dw > 2 && dw < FAR) add(dw, () => { const b = W3(dw, -2.8, 0); if (b) curveWarn(c, b.x, b.y, b.k, z.limit); });
+      for (let m = z.from + 6; m < z.to; m += 14) { const d = m - x0; if (d < 2 || d > FAR) continue; add(d, () => { const b = W3(d, 3.6, 0); if (b) chevronBoard(c, b.x, b.y, b.k); }); }
+    });
+    // landmark di kiri rel, jauh di samping
+    (ROUTE.landmarks || []).forEach((lm) => {
+      const d0 = LANDMARKS[lm.id]; if (!d0 || d0.far) return;
+      const d = lm.x - x0; if (d < 8 || d > FAR) return;
+      add(d + 30, () => { const b = W3(d, -42, 0); if (!b) return; drawLandmark(c, d0.kind, b.x, b.y, b.k, { t: performance.now() / 1000, night, storm, tone: (col) => col }); });
+    });
     // patok bebas batas & KA 112 yang datang dari depan di jalur utama
     if (MTc) {
       const df = MTc.foul - x0;
@@ -3490,6 +3530,14 @@
   const TOS_COL = '#1f8f86';
   const CAB_BAL = Array.from({ length: 700 }, (_, i) => [hash(i * 1.3) * 2 - 1, hash(i * 2.7), 0.4 + hash(i * 3.9) * 0.8, hash(i + 9)]);
 
+  // kamera mendekat ke pintu & peron selama penumpang naik/turun (setelah berhenti Good/Perfect)
+  function stationZoom(st) {
+    if (REDUCE_MOTION || !S || st !== S || S.phase !== 'dwell' || MIS.freight || viewMode === 'cab') return false;
+    const step = S.dwell.step;
+    if (!(step === 'open' || step === 'board' || step === 'alight' || step === 'close' || step === 'end')) return false;
+    const last = S.stops[S.stops.length - 1], here = ROUTE.stations[S.st];
+    return !!last && !!here && last.name === here.name && okRating(last);
+  }
   function render(dtReal) {
     const c = ctx;
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -3497,7 +3545,8 @@
     // zoom-out lembut saat ada satwa di jalur di depan
     const E0 = ROUTE.elephants, st0 = S || idleState;
     const TR0 = st0.tree, treeNear = TR0 && (TR0.phase === 'warn' || TR0.phase === 'work') && TR0.x - st0.x < 260;
-    const wantZoom = (E0 && st0.eleph && (st0.eleph.phase === 'block' || st0.eleph.phase === 'cross') && E0.x - st0.x < 260) || treeNear ? 0.7 : 1;
+    const stZoom = stationZoom(st0);
+    const wantZoom = (E0 && st0.eleph && (st0.eleph.phase === 'block' || st0.eleph.phase === 'cross') && E0.x - st0.x < 260) || treeNear ? 0.7 : stZoom ? 1.45 : 1;
     camZoom += (wantZoom - camZoom) * Math.min(1, (dtReal || 0.016) * 1.2);
     const ppm = clamp(H / 44, 3.4, 13) * camZoom;
     const gy = Math.round(H * 0.64);
@@ -3510,6 +3559,8 @@
       const base = st.x - (W * anchor) / ppm;
       lead = clamp(E.x + 16 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
     }
+    // zoom stasiun: titik fokus ke tengah rangkaian & peron
+    if (stZoom) lead = -TRAIN_LEN * 0.42 + (W * (anchor - 0.5)) / ppm;
     if (treeNear && TR0.x - st.x < 200) {
       const base = st.x - (W * anchor) / ppm;
       lead = clamp(TR0.x + 14 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
@@ -3592,8 +3643,10 @@
     }
     clapNow = !!(mo && st === S && mo.kind === 'perfect' && mo.t < 2.8);
     drawSky(V);
+    drawLandmarks(V, true);
     drawRidges(V);
     drawFarLand(V);
+    drawLandmarks(V);
     drawPort(V);
     drawBackProps(V);
     drawTunnelHill(V);
@@ -3621,6 +3674,7 @@
     drawPlatformFront(LV, dtReal);
     drawFlood(LV, 'front');
     drawOppTrain(LV);
+    drawChevrons(LV);
     drawSparks(LV, dtReal, lat);
     drawSilo(LV, 'front');
     drawCrossings(LV, 'front', dtReal);
@@ -4157,6 +4211,151 @@
 
   // ---------- latar tengah: kampung di kaki bukit dan dataran sawah/kebun di seberang rel ----------
   // Lapisan ini memberi tanah di antara rel dan bukit, sehingga dunia terasa dalam dan rel tidak menggantung.
+  // ---------- landmark rute: tempat khas (fiksi) di latar tengah, dikoleksi sebagai kartu pos ----------
+  const LANDMARKS = {
+    menara: { name: 'Menara Air Depo', sub: 'Sukamaju · dibangun 1921', kind: 'tower', mis: '1-1' },
+    pg: { name: 'Pabrik Gula Cibening', sub: 'cerobong bata · berdiri 1884', kind: 'factory', mis: '1-2' },
+    asam: { name: 'Asam Tua Sumberrejo', sub: 'peneduh halte sejak zaman trem', kind: 'tree', mis: '1-3' },
+    candi: { name: 'Candi Batu Cibening', sub: 'reruntuhan abad ke-9', kind: 'candi', mis: '1-4' },
+    masjid: { name: 'Masjid Agung Pasar Lama', sub: 'kubah hijau · menara 30 m', kind: 'mosque', mis: '1-4' },
+    gunung: { name: 'Gunung Sela', sub: 'gunung api yang selalu berasap', kind: 'volcano', mis: '1-5', far: true },
+    curug: { name: 'Curug Watu', sub: 'air terjun di tepi rel', kind: 'waterfall', mis: '1-5' },
+    pasar: { name: 'Pasar Malam Pasar Lama', sub: 'bianglala & lampion', kind: 'market', mis: '1-6' },
+    beringin: { name: 'Beringin Krajan', sub: 'beringin raksasa · ratusan tahun', kind: 'banyan', mis: '1-7' },
+    waduk: { name: 'Waduk Kedung Banteng', sub: 'bendungan 1978', kind: 'reservoir', mis: '1-7' },
+    sawit: { name: 'Pabrik Sawit Muara Kelam', sub: 'cerobong kembar', kind: 'mill', mis: '2-1' },
+    barisan: { name: 'Bukit Barisan', sub: 'punggung pegunungan Sumatra', kind: 'peaks', mis: '2-1', far: true },
+    panggung: { name: 'Kampung Rumah Panggung', sub: 'rumah kayu di atas tiang', kind: 'stilt', mis: '2-1' },
+    mercu: { name: 'Mercusuar Tanjung Api', sub: 'penjaga dermaga sejak 1902', kind: 'lighthouse', mis: '2-1' },
+  };
+  const LM_IDS = Object.keys(LANDMARKS);
+  const cardsGot = () => { try { const a = JSON.parse(store.get('rn.cards') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  // gambar landmark: (x, y) titik dasar di tanah, s = piksel per meter, o = { t, night, tone(col) }
+  function drawLandmark(c, kind, x, y, s, o) {
+    const T = o.tone || ((col) => col), t = o.t || 0, night = !!o.night;
+    const box = (x0, y0, w, h, col) => { c.fillStyle = T(col); c.fillRect(x + x0 * s, y - y0 * s - h * s, w * s, h * s); };
+    const poly = (pts, col) => { c.fillStyle = T(col); c.beginPath(); pts.forEach(([px, py], i) => (i ? c.lineTo(x + px * s, y - py * s) : c.moveTo(x + px * s, y - py * s))); c.closePath(); c.fill(); };
+    const blob = (px, py, r, col, ry) => { c.fillStyle = T(col); c.beginPath(); c.ellipse(x + px * s, y - py * s, r * s, (ry || r) * s, 0, 0, 7); c.fill(); };
+    const smoke = (px, py, n, sc) => { for (let i = 0; i < n; i++) { const k = ((t * 0.12 + i / n) % 1); c.fillStyle = `rgba(${night ? '120,120,140' : '228,224,214'},${0.42 * (1 - k)})`; c.beginPath(); c.arc(x + (px - k * 14 * sc) * s, y - (py + k * 16 * sc) * s, (1.2 + k * 5) * sc * s, 0, 7); c.fill(); } };
+    const win = (px, py, w, h) => box(px, py, w, h, night ? '#f2c76a' : '#3d2f28');
+    if (kind === 'tower') {
+      c.strokeStyle = T('#5b5f62'); c.lineWidth = Math.max(1, 0.45 * s);
+      [[-3, -1.8], [3, 1.8]].forEach(([a, b]) => { c.beginPath(); c.moveTo(x + a * s, y); c.lineTo(x + b * s, y - 11 * s); c.stroke(); });
+      c.lineWidth = Math.max(1, 0.22 * s); for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(x - (2.8 - i * 0.4) * s, y - i * 3.7 * s); c.lineTo(x + (2.4 - i * 0.4) * s, y - (i + 1) * 3.7 * s); c.stroke(); }
+      box(-3.2, 11, 6.4, 4.6, '#6f7a7a'); poly([[-3.6, 15.6], [0, 17.6], [3.6, 15.6]], '#4f5858');
+      box(-3.2, 12.2, 6.4, 0.4, '#a9b2b0');
+    } else if (kind === 'factory' || kind === 'mill') {
+      const mill = kind === 'mill', wall = mill ? '#8a9095' : '#9a5a3c', roof = mill ? '#5f666b' : '#7d4630', ch = mill ? '#7b8186' : '#8b4a32';
+      box(-14, 0, 26, 9, wall); poly([[-15, 9], [13, 9], [10, 12.5], [-12, 12.5]], roof);
+      for (let i = 0; i < 6; i++) win(-12 + i * 4, 2.5, 1.8, 3.6);
+      const chim = mill ? [6, 9.5] : [7];
+      chim.forEach((cx) => { poly([[cx - 1.3, 9], [cx - 0.9, 34], [cx + 0.9, 34], [cx + 1.3, 9]], ch); box(cx - 1.1, 34, 2.2, 1.2, '#4a2a20'); smoke(cx, 36, 7, 1); });
+    } else if (kind === 'tree' || kind === 'banyan') {
+      const big = kind === 'banyan' ? 1.35 : 1;
+      box(-1.2 * big, 0, 2.4 * big, 7 * big, '#4e3a28');
+      const lf = night ? '#1f3324' : '#33582f', lf2 = night ? '#284030' : '#41703a';
+      [[-6, 10, 6], [5, 10, 6.5], [0, 13, 7.5], [-9, 7, 4], [9, 7.5, 4.5]].forEach(([px, py, r], i) => blob(px * big, py * big, r * big, i % 2 ? lf2 : lf, r * big * 0.8));
+      if (kind === 'banyan') { c.strokeStyle = T('#5a4430'); c.lineWidth = Math.max(1, 0.12 * s); for (let i = 0; i < 12; i++) { const px = -11 + i * 2; c.beginPath(); c.moveTo(x + px * s, y - 6 * s); c.lineTo(x + (px + Math.sin(i) * 0.4) * s, y); c.stroke(); } }
+    } else if (kind === 'candi') {
+      [[-7, 0, 14, 3], [-5.5, 3, 11, 3.2], [-4, 6.2, 8, 3], [-2.6, 9.2, 5.2, 2.6]].forEach(([a, b, w, h], i) => { box(a, b, w, h, i % 2 ? '#7d7466' : '#8c8273'); box(a, b + h - 0.35, w, 0.35, '#a39888'); });
+      poly([[-1.6, 11.8], [0, 15.5], [1.6, 11.8]], '#7d7466'); box(-1.2, 1, 2.4, 3, '#3a332c');
+      blob(-9, 1.5, 2.4, night ? '#1f3324' : '#3f6a3a'); blob(9.5, 2, 3, night ? '#1f3324' : '#3f6a3a');
+    } else if (kind === 'mosque') {
+      box(-9, 0, 18, 7, '#ece6d6'); blob(0, 7, 5.2, '#2f8a5e', 5.6); box(-0.15, 12.5, 0.3, 1.6, '#e1b84a');
+      box(11, 0, 2, 26, '#ece6d6'); poly([[10.6, 26], [12, 30], [13.4, 26]], '#2f8a5e'); box(10.7, 18, 2.6, 0.6, '#cfc7b4');
+      for (let i = 0; i < 4; i++) { box(-7 + i * 4, 1, 2, 3.2, night ? '#f2c76a' : '#3d4a4f'); blob(-6 + i * 4, 4.2, 1, night ? '#f2c76a' : '#3d4a4f'); }
+      if (night) { for (let i = 0; i < 14; i++) { const lx = -9 + i * 1.6; c.fillStyle = i % 2 ? '#ffd27a' : '#9fe7c4'; c.beginPath(); c.arc(x + lx * s, y - (7.4 + Math.sin(i * 0.7) * 0.4) * s, Math.max(1, 0.25 * s), 0, 7); c.fill(); } }
+    } else if (kind === 'volcano' || kind === 'peaks') {
+      const k = 3.2; // jauh: dimensi diperbesar dan dipudarkan
+      if (kind === 'volcano') { poly([[-26 * k, 0], [-5 * k, 15 * k], [-2.5 * k, 16 * k], [2.5 * k, 16 * k], [5 * k, 15 * k], [26 * k, 0]], night ? '#262a44' : '#7c7f92'); poly([[-4.5 * k, 14.6 * k], [-2.5 * k, 16 * k], [2.5 * k, 16 * k], [4.5 * k, 14.6 * k], [2 * k, 13 * k], [-1.5 * k, 13.8 * k]], night ? '#3a3d5a' : '#a9a9b8'); smoke(0, 16.5 * k, 8, 5); }
+      else { poly([[-30 * k, 0], [-16 * k, 12 * k], [-10 * k, 9 * k], [-2 * k, 17 * k], [6 * k, 10 * k], [12 * k, 14 * k], [30 * k, 0]], night ? '#20283f' : '#5f7a88'); poly([[-2 * k, 17 * k], [-4 * k, 14.5 * k], [0, 15 * k], [2 * k, 14.2 * k]], '#dfe6e8'); }
+    } else if (kind === 'waterfall') {
+      poly([[-14, 0], [-12, 20], [-6, 26], [6, 25], [12, 19], [14, 0]], '#6d6457'); poly([[-12, 20], [-6, 26], [6, 25], [12, 19], [4, 22], [-4, 22.5]], night ? '#1f3324' : '#3f6a3a');
+      const fg = c.createLinearGradient(0, y - 24 * s, 0, y); fg.addColorStop(0, T('#d8eef2')); fg.addColorStop(1, T('#f4fbfc'));
+      c.fillStyle = fg; c.fillRect(x - 2.4 * s, y - 23.5 * s, 4.8 * s, 22 * s);
+      c.strokeStyle = 'rgba(160,190,200,0.6)'; c.lineWidth = Math.max(1, 0.15 * s); for (let i = 0; i < 5; i++) { const fy = ((t * 9 + i * 4.4) % 22); c.beginPath(); c.moveTo(x + (-1.8 + i * 0.9) * s, y - (23 - fy) * s); c.lineTo(x + (-1.8 + i * 0.9) * s, y - (20 - fy) * s); c.stroke(); }
+      blob(0, 0.6, 9, '#7fa8b4', 1.6); for (let i = 0; i < 6; i++) blob(-4 + i * 1.6 + Math.sin(t * 2 + i) * 0.4, 2 + (i % 2), 1.6, 'rgba(240,248,250,0.55)');
+    } else if (kind === 'market') {
+      const cols = ['#c0392b', '#2e86ab', '#e1a63b', '#3c8d5a'];
+      for (let i = 0; i < 4; i++) { box(-16 + i * 6, 0, 5, 2.6, '#5a4a3a'); poly([[-16.4 + i * 6, 2.6], [-13.5 + i * 6, 4.4], [-10.6 + i * 6, 2.6]], cols[i]); }
+      // bianglala
+      const wx = 11, wy = 9, r = 7.5, a0 = t * 0.4;
+      c.strokeStyle = T('#c9c2b3'); c.lineWidth = Math.max(1, 0.25 * s);
+      c.beginPath(); c.moveTo(x + (wx - 3) * s, y); c.lineTo(x + wx * s, y - wy * s); c.lineTo(x + (wx + 3) * s, y); c.stroke();
+      c.beginPath(); c.arc(x + wx * s, y - wy * s, r * s, 0, 7); c.stroke();
+      for (let i = 0; i < 8; i++) { const a = a0 + i * Math.PI / 4, px = wx + Math.cos(a) * r, py = wy + Math.sin(a) * r; c.beginPath(); c.moveTo(x + wx * s, y - wy * s); c.lineTo(x + px * s, y - py * s); c.stroke(); c.fillStyle = night ? cols[i % 4] : T(cols[i % 4]); c.fillRect(x + (px - 0.7) * s, y - (py - 0.2) * s, 1.4 * s, 1.2 * s); }
+      for (let i = 0; i < 16; i++) { const lx = -17 + i * 1.6, ly = 5.4 + Math.sin(i * 0.8) * 0.5; c.fillStyle = night ? (i % 3 ? '#ffcf6b' : '#ff7a5c') : T('#e9c46a'); c.beginPath(); c.arc(x + lx * s, y - ly * s, Math.max(1, 0.3 * s), 0, 7); c.fill(); }
+    } else if (kind === 'reservoir') {
+      poly([[-30, 0], [-26, 3.4], [26, 3.4], [30, 0]], '#9c9486');
+      blob(0, 3.6, 25, night ? '#2a3360' : '#7fa8b8', 1.3);
+      box(18, 3.4, 3, 6, '#b8b0a2'); poly([[17.6, 9.4], [19.5, 10.8], [21.4, 9.4]], '#8a4a3a');
+      c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 1; for (let i = 0; i < 4; i++) { const lx = -18 + ((i * 11 + t * 2) % 34); c.beginPath(); c.moveTo(x + lx * s, y - 3.8 * s); c.lineTo(x + (lx + 3) * s, y - 3.8 * s); c.stroke(); }
+    } else if (kind === 'stilt') {
+      [[-12, 1], [-1, 1.15], [10, 0.9]].forEach(([hx, k]) => {
+        for (let i = 0; i < 4; i++) box(hx - 3.6 * k + i * 2.4 * k, 0, 0.35 * k, 2.6 * k, '#4a3626');
+        box(hx - 4 * k, 2.6 * k, 8 * k, 3.4 * k, '#8a6644'); win(hx - 1 * k, 3.4 * k, 1.6 * k, 1.8 * k);
+        poly([[hx - 5 * k, 6 * k], [hx - 4.2 * k, 9.5 * k], [hx, 7.4 * k], [hx + 4.2 * k, 9.5 * k], [hx + 5 * k, 6 * k]], '#5a3a2a');
+      });
+    } else if (kind === 'lighthouse') {
+      poly([[-2.6, 0], [-1.6, 24], [1.6, 24], [2.6, 0]], '#f2efe6');
+      [4, 12, 20].forEach((b) => poly([[-2.6 + b * 0.042, b], [-2.6 + (b + 4) * 0.042, b + 4], [2.6 - (b + 4) * 0.042, b + 4], [2.6 - b * 0.042, b]], '#c0392b'));
+      box(-1.9, 24, 3.8, 2.4, '#2b3a44'); poly([[-2.2, 26.4], [0, 28.4], [2.2, 26.4]], '#c0392b');
+      const on = night || o.storm;
+      c.fillStyle = on ? '#fff2b0' : T('#f4e7a8'); c.fillRect(x - 1.4 * s, y - 26 * s, 2.8 * s, 1.6 * s);
+      if (on) { const a = t * 0.9; const g = c.createLinearGradient(x, 0, x + Math.cos(a) * 40 * s, 0); g.addColorStop(0, 'rgba(255,240,180,0.35)'); g.addColorStop(1, 'rgba(255,240,180,0)'); c.fillStyle = g; c.beginPath(); c.moveTo(x, y - 25.2 * s); c.lineTo(x + Math.cos(a) * 40 * s, y - 28 * s); c.lineTo(x + Math.cos(a) * 40 * s, y - 22 * s); c.closePath(); c.fill(); }
+    }
+  }
+  // lapisan latar tengah: landmark bergerak 0,62× kecepatan rel, berdiri di belakang emplasemen
+  const LM_PAR = 0.62;
+  function drawLandmarks(V, far = false) {
+    const L = ROUTE.landmarks; if (!L || !L.length) return;
+    const { c, ppm, gy, camX } = V;
+    const cxW = camX + W / (2 * ppm), y = gy - 3.0 * ppm, s = ppm * 0.62;
+    const hazeC = V.night ? '#1a2142' : V.storm ? '#8a96a0' : mix('#e8b98f', '#cfe0e6', V.p);
+    const dark = V.night ? 0.5 : V.storm ? 0.3 : 0;
+    const tone = (col) => { const m = mix(col, hazeC, 0.22); return dark ? mix(m, V.night ? '#0e1430' : '#5d6a74', dark) : m; };
+    const tt = performance.now() / 1000;
+    for (const lm of L) {
+      const d = LANDMARKS[lm.id]; if (!d || !!d.far !== far) continue;
+      const sx = W / 2 + (lm.x - cxW) * ppm * (d.far ? 0.25 : LM_PAR);
+      if (sx < -450 || sx > W + 450) continue;
+      c.save();
+      if (d.far) { c.globalAlpha = 0.5; drawLandmark(c, d.kind, sx, gy - 3.5 * ppm, s * 0.5, { t: tt, night: V.night, storm: V.storm, tone: (col) => mix(tone(col), hazeC, 0.3) }); }
+      else drawLandmark(c, d.kind, sx, y, s, { t: tt, night: V.night, storm: V.storm, tone });
+      c.restore();
+    }
+  }
+  // kartu pos baru saat pertama kali melewati landmark
+  function checkLandmarks() {
+    const L = ROUTE.landmarks; if (!L || !S) return;
+    for (const lm of L) {
+      if (S.lmSeen[lm.id] || S.x < lm.x) continue;
+      S.lmSeen[lm.id] = true;
+      const got = cardsGot();
+      if (got.includes(lm.id)) continue;
+      got.push(lm.id); store.set('rn.cards', JSON.stringify(got));
+      showPostcard(lm.id, got.length);
+    }
+  }
+  let pcTimer = 0;
+  function showPostcard(id, n) {
+    const d = LANDMARKS[id], el = $('postcard'); if (!d || !el) return;
+    $('pcTitle').textContent = d.name; $('pcSub').textContent = d.sub; $('pcCount').textContent = `Kartu pos ${n} dari ${LM_IDS.length}`;
+    const cv2 = $('pcArt'), c2 = cv2.getContext('2d');
+    drawCardArt(c2, cv2.width, cv2.height, d, true);
+    el.hidden = false; el.classList.remove('out'); pcTimer = 5;
+    Sound.signalChime();
+  }
+  function drawCardArt(c2, w, h, d, got) {
+    c2.setTransform(1, 0, 0, 1, 0, 0); c2.clearRect(0, 0, w, h);
+    const g = c2.createLinearGradient(0, 0, 0, h); g.addColorStop(0, got ? '#f2b27a' : '#2a3036'); g.addColorStop(0.72, got ? '#f6dcb0' : '#2a3036'); g.addColorStop(0.72, got ? '#7aa652' : '#22272c'); g.addColorStop(1, got ? '#4f7d3c' : '#22272c');
+    c2.fillStyle = g; c2.fillRect(0, 0, w, h);
+    if (!got) return;
+    const big = d.kind === 'volcano' || d.kind === 'peaks' ? 0.07 : d.kind === 'reservoir' ? 0.25 : d.kind === 'market' ? 0.34 : 0.44;
+    const s = Math.min(w, h) / 40 * big / 0.44 * 1.15;
+    drawLandmark(c2, d.kind, w * (d.kind === 'market' ? 0.55 : 0.5), h * 0.74, s, { t: performance.now() / 1000, night: false });
+  }
+
   function drawFarLand(V) {
     const { c, ppm, gy, p } = V;
     const sawit = MIS.land === 'sawit', night = V.night, storm = V.storm;
@@ -4900,6 +5099,12 @@
         c.beginPath(); c.moveTo(sx - 0.6 * ppm, gy - 3.3 * ppm); c.lineTo(sx + 0.6 * ppm, gy - 4.2 * ppm); c.stroke();
       }
     }
+    // papan peringatan tikungan (belah ketupat kuning) 120 m sebelum tikungan
+    for (const z of ROUTE.zones) {
+      if (!z.curve) continue;
+      const bx = z.from - 120;
+      if (bx > wx0 && bx < wx1) curveWarn(c, X(bx), gy, ppm, z.limit);
+    }
     // sinyal
     for (const sig of ROUTE.signals) {
       if (sig.x < wx0 || sig.x > wx1) continue;
@@ -5119,6 +5324,37 @@
   }
 
   // papan semboyan 35 (wajib klakson) di titik mulai membunyikan klakson sebelum perlintasan
+  // ---------- tikungan: papan peringatan & papan chevron (rel tetap lurus) ----------
+  function curveWarn(c, sx, gy, ppm, lim) {
+    c.fillStyle = '#444'; c.fillRect(sx - 0.1 * ppm, gy - 3.3 * ppm, 0.2 * ppm, 2.5 * ppm);
+    c.save(); c.translate(sx, gy - 4.3 * ppm); c.rotate(Math.PI / 4);
+    c.fillStyle = '#f2c230'; c.fillRect(-0.8 * ppm, -0.8 * ppm, 1.6 * ppm, 1.6 * ppm);
+    c.strokeStyle = '#111'; c.lineWidth = Math.max(1, 0.1 * ppm); c.strokeRect(-0.68 * ppm, -0.68 * ppm, 1.36 * ppm, 1.36 * ppm);
+    c.restore();
+    // panah belok
+    c.strokeStyle = '#111'; c.lineWidth = Math.max(1, 0.17 * ppm); c.lineCap = 'round';
+    c.beginPath(); c.moveTo(sx + 0.25 * ppm, gy - 3.75 * ppm); c.lineTo(sx + 0.25 * ppm, gy - 4.35 * ppm); c.quadraticCurveTo(sx + 0.25 * ppm, gy - 4.75 * ppm, sx - 0.2 * ppm, gy - 4.75 * ppm); c.stroke(); c.lineCap = 'butt';
+    c.fillStyle = '#111'; c.beginPath(); c.moveTo(sx - 0.45 * ppm, gy - 4.75 * ppm); c.lineTo(sx - 0.15 * ppm, gy - 5.0 * ppm); c.lineTo(sx - 0.15 * ppm, gy - 4.5 * ppm); c.closePath(); c.fill();
+    c.fillStyle = '#f4f1e8'; c.fillRect(sx - 0.7 * ppm, gy - 3.2 * ppm, 1.4 * ppm, 0.8 * ppm);
+    c.fillStyle = '#111'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 ${Math.round(0.65 * ppm)}px "Big Shoulders Display", sans-serif`; c.fillText(String(lim), sx, gy - 2.78 * ppm);
+    c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+  }
+  function chevronBoard(c, sx, by, k, dir = 1) { // dir 1 = panah ke kiri (arah belok), -1 = ke kanan // by = kaki tiang, k = skala piksel per meter
+    c.fillStyle = '#444'; c.fillRect(sx - 0.07 * k, by - 1.3 * k, 0.14 * k, 1.3 * k);
+    c.fillStyle = '#16191b'; c.fillRect(sx - 0.45 * k, by - 2.0 * k, 0.9 * k, 0.75 * k);
+    c.strokeStyle = '#f2c230'; c.lineWidth = Math.max(1, 0.14 * k); c.lineJoin = 'round';
+    [-0.15, 0.15].forEach((o) => { c.beginPath(); c.moveTo(sx + (o + 0.12 * dir) * k, by - 1.9 * k); c.lineTo(sx + (o - 0.12 * dir) * k, by - 1.625 * k); c.lineTo(sx + (o + 0.12 * dir) * k, by - 1.35 * k); c.stroke(); });
+    c.lineJoin = 'miter';
+  }
+  // papan chevron di sisi luar tikungan (sisi depan/kanan), digambar di depan kereta
+  function drawChevrons(V) {
+    const { c, ppm, gy, X, wx0, wx1 } = V;
+    for (const z of ROUTE.zones) {
+      if (!z.curve || z.to < wx0 || z.from > wx1) continue;
+      for (let m = z.from + 6; m < z.to; m += 14) { if (m < wx0 || m > wx1) continue; chevronBoard(c, X(m), gy + 2.9 * ppm, ppm * 1.15, -1); }
+    }
+  }
+
   // ---------- lintas tunggal: jalur utama di sisi depan, KA berlawanan, pohon tumbang, genangan ----------
   const MEET_NEAR = 4.6; // jarak layar (× ppm) jalur utama di depan sepur belok
   const meetK = (x) => { const M = ROUTE.meet; return M ? smooth(M.entry, M.entry + 45, x) * (1 - smooth(M.exit - 45, M.exit, x)) : 0; };
@@ -6214,6 +6450,7 @@
       for (const pp of idleState.smoke) { pp.life += dt; pp.x += pp.vx * dt; pp.y += pp.vy * dt; pp.r += pp.grow * dt; }
       idleState.smoke = idleState.smoke.filter((pp) => pp.life < pp.max);
     }
+    if (pcTimer > 0) { pcTimer -= dt; const pc = $('postcard'); if (pcTimer <= 0.5) pc.classList.add('out'); if (pcTimer <= 0 || mode !== 'play') { pc.hidden = true; pcTimer = 0; } }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) ui.toast.className = ''; }
     if (radioTimer > 0 && mode === 'play') { radioTimer -= dt; if (radioTimer <= 0) $('radio').hidden = true; }
     if (mode !== 'pause') updateWeather(dt, (S || idleState).v);
