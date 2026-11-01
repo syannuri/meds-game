@@ -604,3 +604,21 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 #postcard .pc-stamp { position: absolute; top: 6px; right: 6px; width: 28px; height: 32px; border: 1.5px dashed #c6563c; color: #c6563c; font: 900 9px "Big Shoulders Display", sans-serif; font-style: normal; display: grid; place-items: center; }
 @keyframes pcIn { from { opacity: 0; transform: translateX(60px) rotate(4deg); } to { opacity: 1; transform: rotate(-2deg); } }
 @media (prefers-reduced-motion: reduce) { #postcard { animation: none; } }
+/* tombol yang menunggu ditekan (mis. Sambung saat gerbong sudah menempel) */
+.attn { box-shadow: 0 0 0 3px #f2a516, 0 0 18px rgba(242,165,22,0.6) !important; animation: attnPulse 1s ease-in-out infinite; }
+@keyframes attnPulse { 50% { box-shadow: 0 0 0 5px #f2a516, 0 0 26px rgba(242,165,22,0.8); } }
+@media (prefers-reduced-motion: reduce) { .attn { animation: none; } }
+/* Rute Harian: karcis lebar penuh di atas daftar misi */
+.tickets li.daily { grid-column: 1 / -1; }
+.ticket.t-daily .stub { background: linear-gradient(180deg, #2bb3a3, #1f6f6d); color: #eafffb; }
+.ticket.t-daily .stub small { font-size: 9px; letter-spacing: 0.1em; }
+.ticket.t-daily .tbody { background: #f4efe2; color: #1f2a2b; }
+.ticket.t-daily .tbody small { color: #5d5a52; display: block !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
+.ticket.t-daily .dline { display: block; font-size: 11px; font-weight: 700; color: #1f6f6d; margin-top: 2px; }
+.ticket.t-daily .dline strong { color: #c6563c; }
+/* lencana Masinis Ahli di karcis */
+.tahli { display: inline-block; align-self: flex-start; width: auto; margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: linear-gradient(180deg, #f6d27a, #c9962c); color: #3b2a06; font: 900 10px "Big Shoulders Display", sans-serif; letter-spacing: 0.08em; vertical-align: middle; }
+#btnExpert.on { background: linear-gradient(180deg, #f6d27a, #c9962c); color: #3b2a06; border-color: #e1b84a; }
+.reward.ahli { border-color: #e1b84a; background: rgba(225,184,74,0.14); }
+/* mode Masinis Ahli: bantuan HUD disembunyikan */
+#hud.expert .strip-wrap, #hud.expert #stopBox, #hud.expert #precise, #hud.expert #nextLimit { display: none !important; }
