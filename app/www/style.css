@@ -479,3 +479,49 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- HUD ringkas: memberi ruang untuk dunia game ---------- */
+:root { --glass: rgba(10, 16, 24, 0.42); --gauge: 112px; }
+.cluster { gap: 9px; padding: 4px 12px 4px 10px; border-radius: 999px; }
+.cluster .lbl { display: none; }
+.cluster .cell { flex-direction: row; align-items: baseline; gap: 7px; }
+.cluster .val { font-size: 17px; }
+.cluster .next .val { font-size: 15px; }
+.cluster .sub { font-size: 11px; }
+.cluster .sep { height: 16px; }
+.cluster .ring { gap: 0; align-items: center; }
+.ring-wrap { width: 24px; height: 24px; }
+.ring-wrap b { font-size: 9px; }
+.ring-track, .ring-fill { stroke-width: 5; }
+.round { width: 32px; height: 32px; }
+.round svg { width: 15px; height: 15px; }
+.gauge { background: radial-gradient(circle at 50% 40%, rgba(24, 34, 44, 0.62), rgba(8, 12, 18, 0.7)); }
+.g-labels, .g-ticks { display: none; }
+.g-read { top: 34%; }
+.g-read .num { font-size: 30px; }
+.g-read .unit { font-size: 9px; }
+.gauge .nextlim { font-size: 9px; }
+.limit-sign { width: 30px; height: 30px; font-size: 13px; border-width: 3.5px; right: -8px; top: -6px; }
+.hud-bottom { align-items: flex-end; }
+.act { width: 46px; min-height: 46px; height: 46px; border-radius: 50%; }
+.act svg { width: 19px; height: 19px; }
+.act span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#strip { height: 52px; }
+.g-needle, .g-hub { display: none; }
+.stopdist { min-width: 0; padding: 4px 12px; flex-direction: row; align-items: center; gap: 8px; border-radius: 999px; }
+.stopdist .num { font-size: 18px; }
+.strip-wrap { border-radius: 14px; }
+/* strip rute dan titik henti hanya muncul saat ada yang perlu diperhatikan di depan */
+.strip-wrap, .stopdist { transition: opacity 0.35s, transform 0.35s; }
+#hud.calm .strip-wrap, #hud.calm .stopdist { opacity: 0; transform: translateY(14px); pointer-events: none; }
+.lever { width: 54px; padding: 6px 5px; border-radius: 18px; background: linear-gradient(180deg, rgba(40, 46, 52, 0.62), rgba(18, 22, 26, 0.7)); }
+.lever .lbl { display: none; }
+.rows { background: linear-gradient(90deg, rgba(20, 24, 28, 0.6), rgba(43, 49, 55, 0.6) 50%, rgba(20, 24, 28, 0.6)); }
+.rows span { font-size: 11px; padding: 0 5px; }
+.rows span::after { width: 5px; }
+.thumb { min-height: 20px; max-height: 26px; font-size: 12px; left: -2px; right: -2px; }
+#toast { top: calc(50px + env(safe-area-inset-top, 0px)); }
+.precise { top: calc(56px + env(safe-area-inset-top, 0px)); }
+/* tampilan kabin: kecepatan pindah ke dasbor */
+#hud.cab .hud-gauge { display: none; }
+@media (orientation: portrait) { :root { --gauge: 100px; } }
