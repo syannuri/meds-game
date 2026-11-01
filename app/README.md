@@ -51,6 +51,13 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
     stasiun, dentum panel karet saat melintasi jalan perlintasan
   - Klakson udara tiga nada dengan hembusan udara dan gema perbukitan; berbunyi selama tombol
     (atau tombol `H`) ditahan
+- Dua sudut pandang: samping 2.5D atau kabin masinis (tombol kabin di kanan atas, atau tombol `V`).
+  Dari kabin terlihat rel di depan dengan perspektif, tikungan yang berbelok, sinyal, perlintasan,
+  stasiun dengan penumpang, jembatan busur, mulut terowongan, gajah dan kambing, wiper saat hujan,
+  serta dasbor dengan pengukur tekanan udara
+- Suasana alam: gemerisik daun, kicau burung (kutilang, prenjak), dekur perkutut, ayam jago saat
+  fajar, dan tonggeret di siang hari; makin ramai saat kereta pelan atau berhenti. Desis udara rem,
+  pintu, turbo, dan rel dibuat lebih pelan dan lembut
 - Tikungan 2.5D: rel dan rangkaian melengkung menjauh dari kamera, lokomotif masuk tikungan lebih
   dulu lalu gerbong menyusul. Kamera miring dan bergoyang mengikuti gaya samping, indikator gaya
   samping di speedometer (hijau, kuning, merah), percik api di roda saat terlalu kencang
@@ -78,7 +85,7 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 cd app
 npm run serve        # buka http://localhost:8080 (di HP: pakai IP komputer, posisi landscape)
 ```
-Keyboard: `↑/W` tenaga, `↓/S` rem, `Spasi` rem darurat, `H` klakson, `D/Enter` pintu, `A` pasir, `Esc` jeda.
+Keyboard: `↑/W` tenaga, `↓/S` rem, `Spasi` rem darurat, `H` klakson, `D/Enter` pintu, `A` pasir, `V` ganti tampilan, `Esc` jeda.
 
 ## Build aplikasi Android & iOS
 Prasyarat: Node 18+, Android Studio (Android), Xcode di macOS (iOS).

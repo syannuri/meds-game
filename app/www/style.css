@@ -100,6 +100,7 @@ button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
 .round svg { width: 18px; height: 18px; }
 .round.off { color: var(--muted); }
 .round.off svg { opacity: 0.5; }
+.round.on { color: #1b1304; background: var(--saffron); border-color: transparent; }
 
 /* speedometer analog */
 .hud-gauge { grid-column: 1; grid-row: 3; align-self: end; }
