@@ -321,7 +321,8 @@
     let eventBusyUntil = 0;
     let musicTimer = null, nextBeat = 0, beat = 0, musicLevel = MIX.musicIdle;
     let idVoice = null;
-    let lastJoint = null, nextPump = 0, rpm = 0.22, lastUpd = 0;
+    let lastJoint = null, nextPump = 0, rpm = 0.2, turboS = 0.2, lastUpd = 0, lastFX = null;
+    let hornNodes = null, track = { turnouts: [], decks: [] };
     const meters = {};
 
     function g(v) { const n = ac.createGain(); n.gain.value = v; return n; }
@@ -422,6 +423,43 @@
         }
         L.turboAir = loop(white, 'bandpass', 2600, 1.2, engine);
         L.exhaust = loop(brown, 'lowpass', 110, 0.7, engine);    // gemuruh knalpot
+        // denyut pembakaran: noise yang dibuka-tutup sesuai frekuensi letupan silinder ("dug-dug-dug")
+        {
+          const src = ac.createBufferSource(); src.buffer = brown; src.loop = true;
+          const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 240; bp.Q.value = 1.1;
+          const am = g(0), out = g(0);
+          const mod = ac.createOscillator(); mod.type = 'sine'; mod.frequency.value = 10;
+          const sh = ac.createWaveShaper(); const curve = new Float32Array(256);
+          for (let i = 0; i < 256; i++) { const x = i / 127.5 - 1; curve[i] = Math.pow(Math.max(0, x), 3); }
+          sh.curve = curve;
+          mod.connect(sh).connect(am.gain);
+          src.connect(bp).connect(am).connect(out).connect(engine);
+          src.start(0, Math.random() * 2); mod.start();
+          L.comb = { mod, bp, g: out };
+        }
+        // geraman saat menarik beban: cabang terdistorsi lembut dari suara mesin
+        {
+          const sh = ac.createWaveShaper(); const curve = new Float32Array(512);
+          for (let i = 0; i < 512; i++) { const x = i / 255.5 - 1; curve[i] = Math.tanh(x * 4); }
+          sh.curve = curve;
+          const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400;
+          const out = g(0);
+          L.diesel.f.connect(sh).connect(lp).connect(out).connect(engine);
+          L.grit = { g: out };
+        }
+        // desis rel saat melaju ("rel bernyanyi") dan decit flens roda di tikungan
+        L.railHiss = loop(white, 'bandpass', 4200, 0.8, engine);
+        {
+          const sq2 = g(0), f2 = ac.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 3600; f2.Q.value = 5;
+          [3420, 3880].forEach((fq, i) => {
+            const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = fq;
+            const lfo = ac.createOscillator(); lfo.frequency.value = 2.3 + i * 1.7;
+            const lg = g(40); lfo.connect(lg).connect(o.frequency);
+            o.connect(f2); o.start(); lfo.start();
+          });
+          f2.connect(sq2).connect(brake);
+          L.flange = { g: sq2 };
+        }
         // dengung motor traksi listrik (naik turun mengikuti kecepatan)
         {
           const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = 100;
@@ -544,9 +582,10 @@
     }
 
     // ---- roda & udara ----
-    function clack(t, vol) { // "jeglak" roda melewati sambungan rel
-      nz(t, 'bandpass', 760, 1.4, vol, 0.05, engine, 0.004);
-      tone(118, vol * 0.7, 0.07, { at: t, to: 80, bus: engine, attack: 0.004 });
+    function clack(t, vol) { // "jeglak" roda melewati sambungan rel: tik logam + dentum + dengung rel
+      nz(t, 'highpass', 2600, 0.8, vol * 0.6, 0.025, engine, 0.002);
+      nz(t, 'bandpass', 420 + Math.random() * 80, 1.1, vol, 0.07, engine, 0.003);
+      tone(1800 + Math.random() * 250, vol * 0.1, 0.09, { at: t, bus: engine, attack: 0.002 });
     }
     function pump(t) { // pompa udara lokomotif saat berhenti
       nz(t, 'lowpass', 300, 0.7, 0.03, 0.2, engine, 0.03);
@@ -631,22 +670,42 @@
       const power = info.power || 0;
       const brakeF = info.brake || 0;
 
-      // mesin diesel: putaran naik pelan saat tuas tenaga dinaikkan, turun lebih cepat saat dilepas
+      // mesin diesel: putaran bertingkat sesuai notch, naik perlahan (governor) dan turun lebih cepat
       const dtA = lastUpd ? Math.min(0.1, t - lastUpd) : 0; lastUpd = t;
-      const rpmTarget = info.slip ? 1 : 0.22 + 0.78 * power;
-      rpm += (rpmTarget - rpm) * Math.min(1, dtA * (rpmTarget > rpm ? 0.75 : 1.3));
-      const fr = 22 + rpm * 36;
+      const notchRpm = [0.2, 0.4, 0.58, 0.78, 1][Math.round(power * 4)];
+      const rpmTarget = info.slip ? 1 : notchRpm;
+      rpm += clamp(rpmTarget - rpm, -0.4 * dtA, 0.22 * dtA);
+      turboS += (rpm - turboS) * Math.min(1, dtA * 0.5);            // turbo menyusul belakangan
+      const load = run && power > 0 ? rpm : 0;
+      const fr = 16 + rpm * 34;
       L.diesel.o1.frequency.setTargetAtTime(fr, t, 0.08);
       L.diesel.o2.frequency.setTargetAtTime(fr * 1.006, t, 0.08);
       L.diesel.o3.frequency.setTargetAtTime(fr / 2, t, 0.08);
       L.diesel.puls.frequency.setTargetAtTime(fr / 4, t, 0.08);
-      L.diesel.f.frequency.setTargetAtTime(220 + rpm * 900, t, 0.2);
-      set(L.diesel.g.gain, scene ? 0.022 + rpm * 0.08 : 0, 0.25);
-      L.turbo.o.frequency.setTargetAtTime(900 + rpm * 2200, t, 0.3);
-      set(L.turbo.g.gain, scene ? rpm * rpm * 0.008 : 0, 0.3);
-      L.turboAir.f.frequency.setTargetAtTime(1800 + rpm * 2000, t, 0.3);
-      set(L.turboAir.g.gain, scene ? rpm * rpm * 0.03 : 0, 0.3);
-      set(L.exhaust.g.gain, scene ? 0.008 + rpm * 0.05 : 0, 0.3);
+      L.diesel.f.frequency.setTargetAtTime(200 + rpm * 800 + load * 300, t, 0.2);
+      set(L.diesel.g.gain, scene ? 0.02 + rpm * 0.07 : 0, 0.25);
+      L.comb.mod.frequency.setTargetAtTime(6 + rpm * 22, t, 0.1);
+      L.comb.bp.frequency.setTargetAtTime(200 + rpm * 160, t, 0.2);
+      set(L.comb.g.gain, scene ? 0.05 + rpm * 0.05 + load * 0.04 : 0, 0.25);
+      set(L.grit.g.gain, scene ? load * 0.022 : 0, 0.3);
+      L.turbo.o.frequency.setTargetAtTime(700 + turboS * 2600, t, 0.2);
+      set(L.turbo.g.gain, scene ? turboS * turboS * 0.009 : 0, 0.3);
+      L.turboAir.f.frequency.setTargetAtTime(1600 + turboS * 2200, t, 0.3);
+      set(L.turboAir.g.gain, scene ? turboS * turboS * 0.03 : 0, 0.3);
+      set(L.exhaust.g.gain, scene ? 0.008 + rpm * 0.045 + load * 0.02 : 0, 0.3);
+      // desis rel & decit flens di tikungan
+      set(L.railHiss.g.gain, run ? Math.pow(Math.min(v, 22) / 22, 2) * 0.022 * (info.tunnel ? 1.4 : 1) : 0, 0.3);
+      L.railHiss.f.frequency.setTargetAtTime(2800 + Math.min(v, 22) * 70, t, 0.4);
+      set(L.flange.g.gain, run && info.curve && v > 4 ? clamp((v - 4) / 12, 0, 1) * 0.03 : 0, 0.25);
+      // wesel & panel perlintasan: bunyi khas tiap gandar yang melintas
+      if (run && v > 0.4 && lastFX !== null) {
+        const hit = (list, fn) => list.forEach((px) => {
+          if (lastFX < px && info.x >= px) AXLES.forEach((off, k) => { const d = off / v; if (d < 3) fn(t + d, clamp(0.02 + v * 0.003, 0.02, 0.075) * (k % 2 ? 0.8 : 1)); });
+        });
+        hit(track.turnouts, (at, vol) => { clack(at, vol * 1.2); clack(at + 0.035, vol * 0.8); clack(at + 0.075, vol * 0.9); });
+        hit(track.decks, (at, vol) => { nz(at, 'lowpass', 260, 0.8, vol * 1.3, 0.12, engine, 0.004); clack(at + 0.02, vol * 0.5); });
+      }
+      lastFX = run ? info.x : null;
       const mv = info.slip ? v + 9 : v;
       L.motor.o.frequency.setTargetAtTime(90 + mv * 34, t, 0.15);
       L.motor.o2.frequency.setTargetAtTime((90 + mv * 34) * 3, t, 0.15);
@@ -804,29 +863,47 @@
         tone(990, 0.02, 0.4, { at: t, bus: sfx, attack: 0.01 });
       },
       ding() { this.signalChime(); },
-      whistle() { // klakson udara lokomotif diesel, dua nada
-        if (!ac || muted) return;
+      // klakson udara tiga nada: berbunyi selama tombol ditahan
+      hornStart() {
+        if (!ac || muted || hornNodes) return;
         const t = ac.currentTime;
         const gn = ac.createGain();
-        gn.gain.setValueAtTime(0.0001, t);
-        gn.gain.exponentialRampToValueAtTime(0.12, t + 0.05);
-        gn.gain.setValueAtTime(0.12, t + 0.85);
-        gn.gain.exponentialRampToValueAtTime(0.0001, t + 1.12);
-        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.6;
-        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
+        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.11, t + 0.07);
+        const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1050; bp.Q.value = 0.55;
+        const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3600;
         gn.connect(bp).connect(lp).connect(sfx);
-        const vib = ac.createOscillator(); vib.frequency.value = 5.2;
-        const vg = g(1.6); vib.connect(vg); vib.start(t); vib.stop(t + 1.2);
-        [[311.1, 'sawtooth', 1], [370.0, 'sawtooth', 1], [155.6, 'square', 0.3]].forEach(([fr, type, lv]) => {
-          const o = ac.createOscillator(); o.type = type;
-          o.frequency.setValueAtTime(fr * 0.97, t); o.frequency.linearRampToValueAtTime(fr, t + 0.06);
-          vg.connect(o.frequency);
-          const og = g(lv); o.connect(og).connect(gn); o.start(t); o.stop(t + 1.2);
-        });
         // gema dari perbukitan
-        tone(370, 0.012, 0.8, { delay: 0.5, type: 'sawtooth', attack: 0.12, bus: amb });
-        duck({ amb: 0.4, music: 0.35 }, 1.2);
+        const dl = ac.createDelay(1); dl.delayTime.value = 0.42;
+        const fb = g(0.28), ef = ac.createBiquadFilter(); ef.type = 'lowpass'; ef.frequency.value = 1400;
+        const eg = g(0.35);
+        lp.connect(dl); dl.connect(ef).connect(fb).connect(dl); ef.connect(eg).connect(amb);
+        const vib = ac.createOscillator(); vib.frequency.value = 5.4; const vg = g(1.4); vib.connect(vg); vib.start(t);
+        const oscs = [];
+        [[311.1, 'sawtooth', 1], [370.0, 'sawtooth', 0.9], [466.2, 'sawtooth', 0.75], [155.6, 'square', 0.22]].forEach(([fq, type, lv]) => {
+          const o = ac.createOscillator(); o.type = type;
+          o.frequency.setValueAtTime(fq * 0.93, t); o.frequency.exponentialRampToValueAtTime(fq, t + 0.12);
+          vg.connect(o.frequency);
+          const og = g(lv); o.connect(og).connect(gn); o.start(t);
+          oscs.push([o, fq]);
+        });
+        oscs.push([vib, 0]);
+        burst(1800, 0.7, 0.05, 0.25, 'highpass', sfx);    // hembusan udara saat katup terbuka
+        duck({ amb: 0.4, music: 0.4 }, 6);
+        hornNodes = { gn, oscs, t0: t, fb };
+        hornNodes.auto = setTimeout(() => this.hornStop(), 5000);
       },
+      hornStop() {
+        if (!ac || !hornNodes) return;
+        const H = hornNodes; hornNodes = null;
+        clearTimeout(H.auto);
+        const t = Math.max(ac.currentTime, H.t0 + 0.45);
+        H.gn.gain.cancelScheduledValues(t); H.gn.gain.setTargetAtTime(0.0001, t, 0.07);
+        H.oscs.forEach(([o, fq]) => { if (fq) o.frequency.setTargetAtTime(fq * 0.96, t, 0.12); o.stop(t + 0.7); });
+        H.fb.gain.setTargetAtTime(0, t + 1.2, 0.3);
+        duck({ amb: 0.3, music: 0.3 }, Math.max(0.6, t - ac.currentTime + 0.6));
+      },
+      whistle() { this.hornStart(); setTimeout(() => this.hornStop(), 900); },
+      setTrack(tr) { track = tr; lastFX = null; },
       bleat() {
         if (!ac || muted) return;
         const t = ac.currentTime;
@@ -1152,7 +1229,7 @@
 
   function horn() {
     if (!S || S.mode !== 'play') return;
-    Sound.whistle();
+    Sound.hornStart();
     if (ROUTE.elephants && (S.eleph.phase === 'block' || S.eleph.phase === 'cross') && !S.eleph.honked) {
       S.eleph.honked = true;
       Sound.trumpet(0.7);
@@ -1680,6 +1757,9 @@
       (MIS.freight ? [1.6, 3.4, 8.6, 10.4] : [3.17, 5.33, 14.67, 16.83]).forEach((o) => ax.push(f + o));
     }
     Sound.setAxles(ax);
+    const turnouts = [];
+    allStations().forEach((q) => { turnouts.push(q.x - 112, q.x + 42); });
+    Sound.setTrack({ turnouts, decks: ROUTE.crossings.map((cr) => cr.x) });
     idleState = makeIdle();
     textCache.clear();
   }
@@ -1715,6 +1795,7 @@
     document.querySelectorAll('.cluster .coins').forEach((el) => { el.hidden = !!ROUTE.rival; });
     ui.rivalSep.hidden = !ROUTE.rival;
     $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1;
+    resetCrossings();
     const thisRun = S;
     if (ROUTE.rival) setTimeout(() => { if (S === thisRun && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
     toast(MIS.intro, 'info', 4, null, 3);
@@ -1728,7 +1809,12 @@
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('pointerleave', up);
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } });
   }
-  bindPress(ui.btnHorn, horn);
+  // klakson ditahan: berbunyi selama tombol ditekan
+  ui.btnHorn.addEventListener('pointerdown', (e) => { e.preventDefault(); Sound.init(); ui.btnHorn.classList.add('pressed'); horn(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => ui.btnHorn.addEventListener(ev, () => { ui.btnHorn.classList.remove('pressed'); Sound.hornStop(); }));
+  ui.btnHorn.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); horn(); } });
+  ui.btnHorn.addEventListener('keyup', (e) => { if (e.key === 'Enter' || e.key === ' ') Sound.hornStop(); });
+  window.addEventListener('keyup', (e) => { if (e.key.toLowerCase() === 'h') Sound.hornStop(); });
   bindPress(ui.btnDoor, door);
   bindPress($('btnSand'), sand);
 
@@ -1775,7 +1861,7 @@
     if (k === 'arrowup' || k === 'w') { e.preventDefault(); setNotch(S.notch + 1); }
     else if (k === 'arrowdown' || k === 's') { e.preventDefault(); setNotch(S.notch - 1); }
     else if (k === ' ') { e.preventDefault(); setNotch(-5); }
-    else if (k === 'h') horn();
+    else if (k === 'h') { if (!e.repeat) horn(); }
     else if (k === 'd' || k === 'enter') door();
     else if (k === 'a') sand();
     else if (k === 'escape' || k === 'p') pause();
@@ -1957,12 +2043,14 @@
     drawStations(V);
     drawSwitch(V);
     drawTrackside(V);
+    drawCrossings(V, 'back', dtReal);
     drawGoats(V);
     drawSilo(V, 'back');
     drawElephants(V, 'back');
     drawBridge(V, 'back');
     drawTrain(V);
     drawSilo(V, 'front');
+    drawCrossings(V, 'front', dtReal);
     drawElephants(V, 'front');
     drawBus(V);
     drawBridge(V, 'front');
@@ -2794,34 +2882,179 @@
         c.restore();
       });
     }
-    // perlintasan sebidang
-    for (const cr of ROUTE.crossings) {
-    if (cr.x > wx0 - 20 && cr.x < wx1 + 20) {
-      const sx = X(cr.x);
-      c.fillStyle = '#55524d';
-      c.beginPath(); c.moveTo(sx - 2.2 * ppm, gy - 2.2 * ppm); c.lineTo(sx + 2.2 * ppm, gy - 2.2 * ppm); c.lineTo(sx + 5 * ppm, H); c.lineTo(sx - 5 * ppm, H); c.closePath(); c.fill();
-      c.fillStyle = '#5f5b55'; c.fillRect(sx - 3 * ppm, gy - 0.1 * ppm, 6 * ppm, 1.2 * ppm);
-      const near = st.x > cr.x - 320 && st.x - TRAIN_LEN < cr.x + 5;
-      const blink = near && Math.floor(performance.now() / 400) % 2 === 0;
-      // tiang lampu dan palang
-      const postX = sx - 4.2 * ppm, postY = gy + 3 * ppm;
-      c.fillStyle = '#ddd'; c.fillRect(postX - 0.12 * ppm, postY - 4 * ppm, 0.24 * ppm, 4 * ppm);
-      c.fillStyle = blink ? '#ff4b3a' : '#5a2320'; c.beginPath(); c.arc(postX - 0.4 * ppm, postY - 3.3 * ppm, 0.3 * ppm, 0, 7); c.fill();
-      c.fillStyle = !blink && near ? '#ff4b3a' : '#5a2320'; c.beginPath(); c.arc(postX + 0.4 * ppm, postY - 3.3 * ppm, 0.3 * ppm, 0, 7); c.fill();
-      c.save(); c.translate(postX, postY - 2.2 * ppm); c.rotate(near ? 0 : -1.3);
-      for (let k = 0; k < 6; k++) { c.fillStyle = k % 2 ? '#f4f1e8' : '#d0392b'; c.fillRect(k * 1.2 * ppm, -0.15 * ppm, 1.2 * ppm, 0.3 * ppm); }
-      c.restore();
-      // motor menunggu
-      if (near) {
-        for (let k = 0; k < 2; k++) {
-          const mx = sx - (1.4 - k * 2.6) * ppm, my = gy + (5 + k * 1.4) * ppm;
-          c.fillStyle = '#222'; c.beginPath(); c.ellipse(mx, my, 0.35 * ppm, 0.55 * ppm, 0, 0, 7); c.fill();
-          c.fillStyle = k ? '#2e86ab' : '#c0392b'; c.fillRect(mx - 0.5 * ppm, my - 1.6 * ppm, 1 * ppm, 1.1 * ppm);
-          c.fillStyle = k ? '#e7e2d6' : '#f2c230'; c.beginPath(); c.arc(mx, my - 2 * ppm, 0.38 * ppm, 0, 7); c.fill();
-        }
+  }
+
+  // ---------- perlintasan sebidang (JPL) 2.5D ----------
+  // jalan menyempit ke kejauhan di belakang rel dan melebar ke arah kamera di depan rel;
+  // palang di kedua sisi turun perlahan, lampu berkedip bergantian, antrean kendaraan
+  const crossAnim = [];
+  function crossState(i) {
+    if (!crossAnim[i]) {
+      crossAnim[i] = {
+        gate: 0, released: false,
+        // d: kedalaman di jalan (0 = bawah layar, 1 = tepi rel dekat, 2 = ujung jauh); lane: -1 kiri, 1 kanan
+        veh: [
+          { d: 0.66, lane: -0.45, kind: 'moto', col: '#c0392b', dir: 1 },
+          { d: 0.42, lane: -0.4, kind: 'car', col: '#2e6db0', dir: 1 },
+          { d: 0.18, lane: -0.5, kind: 'moto', col: '#2f2f36', dir: 1 },
+          { d: 1.45, lane: 0.45, kind: 'angkot', col: '#2f8f5a', dir: -1 },
+        ],
+      };
+    }
+    return crossAnim[i];
+  }
+  function resetCrossings() { crossAnim.length = 0; }
+  function crossGeom(V, cr) {
+    const { ppm, gy, X } = V;
+    const sx = X(cr.x);
+    const yTop = gy + 1.4 * ppm, yFarEdge = gy - 0.6 * ppm, yFar = gy - 9 * ppm;
+    const farX = sx + (W * 0.5 - sx) * 0.16;
+    const nearX = V.Xn(sx);
+    // titik di sumbu jalan pada kedalaman d, beserta setengah lebar jalan (px)
+    const at = (d) => {
+      if (d <= 1) { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (nearX - sx) * t, y: yTop + (H - yTop) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm }; }
+      const t = clamp(d - 1, 0, 1);
+      const te = 1 - Math.pow(1 - t, 1.8);
+      return { x: sx + (farX - sx) * te, y: lerp(yFarEdge, yFar, te), hw: lerp(3.5, 0.9, te) * ppm };
+    };
+    return { sx, yTop, yFarEdge, yFar, farX, nearX, at };
+  }
+  function drawRoadPoly(c, pts, fill) { c.fillStyle = fill; c.beginPath(); pts.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fill(); }
+  function drawVehicle(c, V, G, v) {
+    const p = G.at(v.d);
+    if (v.d < -0.3 || v.d > 2.05) return;
+    const s = p.hw / 3.5;                    // skala sesuai kedalaman
+    const x = p.x + v.lane * p.hw, y = p.y;
+    const night = V.night || V.storm;
+    if (v.kind === 'moto') {
+      c.fillStyle = '#1b1b1f'; c.beginPath(); c.ellipse(x, y - 0.3 * s, 0.28 * s, 0.4 * s, 0, 0, 7); c.fill();
+      c.fillStyle = v.col; c.fillRect(x - 0.42 * s, y - 1.55 * s, 0.84 * s, 1.0 * s);
+      c.fillStyle = '#26262b'; c.fillRect(x - 0.32 * s, y - 0.75 * s, 0.64 * s, 0.4 * s);
+      c.fillStyle = v.dir > 0 ? '#e9e2d0' : '#f2c230'; c.beginPath(); c.arc(x, y - 1.85 * s, 0.34 * s, 0, 7); c.fill();
+      c.fillStyle = night ? '#ff3b2f' : '#b3261e'; c.fillRect(x - 0.12 * s, y - 0.62 * s, 0.24 * s, 0.12 * s);
+    } else {
+      const w = (v.kind === 'angkot' ? 1.9 : 1.8) * s, h = (v.kind === 'angkot' ? 1.9 : 1.45) * s;
+      c.fillStyle = 'rgba(0,0,0,0.3)'; c.beginPath(); c.ellipse(x, y, w * 0.6, 0.18 * s, 0, 0, 7); c.fill();
+      c.fillStyle = v.col; roundRect(c, x - w / 2, y - h - 0.3 * s, w, h, 0.25 * s); c.fill();
+      c.fillStyle = '#1e2a33'; roundRect(c, x - w * 0.38, y - h - 0.15 * s, w * 0.76, h * 0.42, 0.15 * s); c.fill();
+      c.fillStyle = '#16181b'; c.fillRect(x - w * 0.46, y - 0.35 * s, w * 0.2, 0.35 * s); c.fillRect(x + w * 0.26, y - 0.35 * s, w * 0.2, 0.35 * s);
+      if (v.dir > 0) { // dilihat dari belakang: lampu rem
+        c.fillStyle = night ? '#ff3b2f' : '#c0392b';
+        c.fillRect(x - w * 0.47, y - 0.85 * s, w * 0.14, 0.2 * s); c.fillRect(x + w * 0.33, y - 0.85 * s, w * 0.14, 0.2 * s);
+      } else { // dilihat dari depan: lampu utama
+        c.fillStyle = '#fff2c4';
+        c.fillRect(x - w * 0.45, y - 0.85 * s, w * 0.16, 0.16 * s); c.fillRect(x + w * 0.29, y - 0.85 * s, w * 0.16, 0.16 * s);
       }
+      if (v.kind === 'angkot') { c.fillStyle = '#f2c230'; c.fillRect(x - w / 2, y - h * 0.62, w, 0.16 * s); }
     }
+  }
+  function crossingSignal(c, x, y, s, blinkA, blinkB, on) {
+    // tiang, rambu silang (X), dua lampu merah berkap, papan "AWAS KERETA API"
+    c.fillStyle = '#e9e9e4'; c.fillRect(x - 0.1 * s, y - 4.6 * s, 0.2 * s, 4.6 * s);
+    c.save(); c.translate(x, y - 4.6 * s);
+    for (const a of [0.7, -0.7]) {
+      c.save(); c.rotate(a);
+      c.fillStyle = '#c0392b'; c.fillRect(-1.0 * s, -0.17 * s, 2.0 * s, 0.34 * s);
+      c.fillStyle = '#ffffff'; c.fillRect(-0.92 * s, -0.11 * s, 1.84 * s, 0.22 * s);
+      c.restore();
     }
+    c.restore();
+    c.fillStyle = '#1a1c1e'; c.fillRect(x - 0.95 * s, y - 3.55 * s, 1.9 * s, 0.75 * s);
+    [[-0.5, blinkA], [0.5, blinkB]].forEach(([dx, lit]) => {
+      c.fillStyle = '#111'; c.beginPath(); c.arc(x + dx * s, y - 3.18 * s, 0.34 * s, 0, 7); c.fill();
+      c.fillStyle = lit && on ? '#ff3b2f' : '#4a1612'; c.beginPath(); c.arc(x + dx * s, y - 3.18 * s, 0.24 * s, 0, 7); c.fill();
+      if (lit && on) {
+        const g = c.createRadialGradient(x + dx * s, y - 3.18 * s, 0, x + dx * s, y - 3.18 * s, 1.6 * s);
+        g.addColorStop(0, 'rgba(255,70,50,0.55)'); g.addColorStop(1, 'rgba(255,70,50,0)');
+        c.fillStyle = g; c.beginPath(); c.arc(x + dx * s, y - 3.18 * s, 1.6 * s, 0, 7); c.fill();
+      }
+    });
+    c.fillStyle = '#f4f1e8'; c.fillRect(x - 0.95 * s, y - 2.45 * s, 1.9 * s, 0.7 * s);
+    c.strokeStyle = '#c0392b'; c.lineWidth = Math.max(1, 0.08 * s); c.strokeRect(x - 0.95 * s, y - 2.45 * s, 1.9 * s, 0.7 * s);
+    c.fillStyle = '#c0392b'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = `900 ${Math.max(5, Math.round(0.3 * s))}px "Big Shoulders Display", sans-serif`;
+    c.fillText('AWAS KERETA API', x, y - 2.1 * s);
+    c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+  }
+  function gateArm(c, px, py, len, ang, s, dirX) {
+    c.save(); c.translate(px, py); c.rotate(ang * dirX); c.scale(dirX, 1);
+    const seg = len / 8;
+    for (let k = 0; k < 8; k++) { c.fillStyle = k % 2 ? '#f4f1e8' : '#d0392b'; c.fillRect(k * seg, -0.13 * s, seg, 0.26 * s); }
+    c.fillStyle = '#ffd04a'; c.beginPath(); c.arc(len * 0.5, 0, 0.1 * s, 0, 7); c.arc(len * 0.95, 0, 0.1 * s, 0, 7); c.fill();
+    c.restore();
+    c.fillStyle = '#d8d8d2'; c.fillRect(px - 0.25 * s, py - 0.3 * s, 0.5 * s, 1.4 * s);
+    c.fillStyle = '#4a4d50'; c.fillRect(px - 0.32 * s, py - 0.42 * s, 0.64 * s, 0.4 * s);
+  }
+  function drawCrossings(V, layer, dtReal) {
+    const { c, ppm, gy, X, st, wx0, wx1 } = V;
+    ROUTE.crossings.forEach((cr, i) => {
+      if (cr.x < wx0 - 60 || cr.x > wx1 + 60) return;
+      const A = crossState(i), G = crossGeom(V, cr);
+      const active = st.x > cr.x - 320 && st.x - TRAIN_LEN < cr.x + 6;
+      const blink = Math.floor(performance.now() / 450) % 2 === 0;
+      if (layer === 'back') {
+        // animasi palang & kendaraan dihitung sekali per frame di lapisan belakang
+        const dt = Math.min(0.05, dtReal || 0.016);
+        A.gate += clamp((active ? 1 : 0) - A.gate, -dt * 0.7, dt * 0.7);
+        if (!active && A.gate < 0.15 && st.x - TRAIN_LEN > cr.x) A.released = true;
+        if (A.released) for (const v of A.veh) v.d += v.dir * dt * (v.kind === 'moto' ? 0.42 : 0.3);
+        const asphalt = mix('#4a4a4d', '#5a5a5e', V.p), asphaltFar = mix('#5d5c62', '#7a7a80', V.p);
+        // ruas jauh di belakang rel
+        const f0 = G.at(1), f1 = G.at(2);
+        drawRoadPoly(c, [[f1.x - f1.hw, f1.y], [f1.x + f1.hw, f1.y], [f0.x + f0.hw, f0.y], [f0.x - f0.hw, f0.y]], asphaltFar);
+        // ruas dekat di depan rel
+        const n0 = G.at(1), n1 = G.at(0);
+        drawRoadPoly(c, [[n0.x - n0.hw, G.yTop], [n0.x + n0.hw, G.yTop], [n1.x + n1.hw, H], [n1.x - n1.hw, H]], asphalt);
+        // bahu jalan, marka tepi, marka tengah putus-putus, garis henti
+        c.strokeStyle = 'rgba(240,236,224,0.75)'; c.lineWidth = 1;
+        for (const side of [-0.92, 0.92]) {
+          c.beginPath();
+          for (let d = 0; d <= 2.001; d += 0.1) { if (d > 0.999 && d < 1.001) continue; const q = G.at(d); const yy = d <= 1 ? q.y : q.y; if (d === 0) c.moveTo(q.x + side * q.hw, yy); else c.lineTo(q.x + side * q.hw, yy); }
+          c.stroke();
+        }
+        c.fillStyle = 'rgba(240,236,224,0.8)';
+        for (let d = 0.05; d < 2; d += 0.16) {
+          if (d > 0.9 && d < 1.12) continue;
+          const a = G.at(d), b = G.at(d + 0.07);
+          c.beginPath(); c.moveTo(a.x - 0.03 * a.hw, a.y); c.lineTo(a.x + 0.03 * a.hw, a.y); c.lineTo(b.x + 0.03 * b.hw, b.y); c.lineTo(b.x - 0.03 * b.hw, b.y); c.closePath(); c.fill();
+        }
+        for (const d of [0.78, 1.22]) {
+          const a = G.at(d), b = G.at(d + 0.02);
+          c.fillStyle = 'rgba(245,242,232,0.85)';
+          const l = d < 1 ? -1 : 1;
+          c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(a.x + l * 0.92 * a.hw, a.y); c.lineTo(b.x + l * 0.92 * b.hw, b.y); c.lineTo(b.x, b.y); c.closePath(); c.fill();
+        }
+        // panel karet/beton di antara rel, lalu rel digambar ulang di atasnya
+        drawRoadPoly(c, [[G.sx - 3.6 * ppm, G.yFarEdge], [G.sx + 3.6 * ppm, G.yFarEdge], [G.sx + 3.9 * ppm, gy + 0.55 * ppm], [G.sx - 3.9 * ppm, gy + 0.55 * ppm]], '#3a3b3e');
+        c.strokeStyle = 'rgba(255,255,255,0.08)'; c.lineWidth = 1; c.beginPath();
+        for (let k = -3; k <= 3; k += 1.2) { c.moveTo(G.sx + k * ppm, G.yFarEdge); c.lineTo(G.sx + k * 1.06 * ppm, gy + 0.55 * ppm); }
+        c.stroke();
+        c.fillStyle = '#7d8487'; c.fillRect(G.sx - 3.8 * ppm, gy - 0.48 * ppm, 7.6 * ppm, 0.13 * ppm);
+        c.fillStyle = '#9aa0a2'; c.fillRect(G.sx - 3.9 * ppm, gy - 0.12 * ppm, 7.8 * ppm, 0.24 * ppm);
+        // pos penjaga JPL di sisi jauh
+        const hx = G.at(1.25).x - G.at(1.25).hw - 4.5 * ppm, hy = G.yFarEdge - 0.4 * ppm;
+        c.fillStyle = '#e7e0cf'; c.fillRect(hx - 1.8 * ppm, hy - 2.6 * ppm, 3.6 * ppm, 2.6 * ppm);
+        c.fillStyle = V.night ? '#ffd78f' : '#33454f'; c.fillRect(hx - 1.2 * ppm, hy - 2.1 * ppm, 1.4 * ppm, 0.9 * ppm);
+        c.fillStyle = '#8f4330'; c.beginPath(); c.moveTo(hx - 2.2 * ppm, hy - 2.6 * ppm); c.lineTo(hx + 2.2 * ppm, hy - 2.6 * ppm); c.lineTo(hx + 1.6 * ppm, hy - 3.4 * ppm); c.lineTo(hx - 1.6 * ppm, hy - 3.4 * ppm); c.closePath(); c.fill();
+        c.fillStyle = '#1f6f6d'; c.fillRect(hx + 0.4 * ppm, hy - 2.2 * ppm, 1.2 * ppm, 0.55 * ppm);
+        c.fillStyle = '#f4f1e8'; c.font = `800 ${Math.max(5, Math.round(0.4 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillText(`JPL ${12 + i * 7}`, hx + 1.0 * ppm, hy - 1.92 * ppm);
+        c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+        person(c, hx - 2.4 * ppm, hy, ppm * 0.9, 41 + i, { color: '#2e5a8a' });
+        // kendaraan di sisi jauh, palang & lampu sisi jauh
+        A.veh.filter((v) => v.d > 1).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
+        const fs = 0.8 * ppm;
+        const fp = G.at(1.12);
+        crossingSignal(c, fp.x + fp.hw + 1.1 * ppm, fp.y, fs, blink, !blink, active);
+        gateArm(c, fp.x + fp.hw + 0.4 * ppm, fp.y - 1.1 * fs, fp.hw * 2 + 0.4 * ppm, lerp(-1.4, 0, A.gate), fs, -1);
+      } else {
+        // sisi dekat (di depan kereta): kendaraan antre, palang, tiang lampu
+        A.veh.filter((v) => v.d <= 1).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
+        const np = G.at(0.84), ns = np.hw / 3.5;
+        crossingSignal(c, np.x - np.hw - 1.0 * ns, np.y, ns, !blink, blink, active);
+        gateArm(c, np.x - np.hw - 0.3 * ns, np.y - 1.1 * ns, np.hw * 2 + 0.3 * ns, lerp(-1.4, 0, A.gate), ns, 1);
+      }
+    });
   }
 
   function drawGoats(V) {
@@ -3629,6 +3862,7 @@
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
       rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, night: MIS.sky === 'night',
+      curve: !!(zoneAt(st.x) && zoneAt(st.x).curve),
     };
   }
 
