@@ -239,17 +239,28 @@
   const notchLabel = (n) => NOTCHES[4 - n];
 
   // ---------- audio (WebAudio sintetis, tanpa berkas) ----------
-  // Tiga jalur: efek (sfx), suasana (amb), musik. Semua bunyi dibuat dari osilator & noise.
+  // Mixer: setiap kelompok bunyi punya jalur sendiri (mesin, rem, pintu, efek, suasana, musik).
+  // Semua jalur masuk ke master -> peredam frekuensi tinggi -> kompresor lembut, dengan gema
+  // ringan yang menguat di terowongan. Bunyi penting (pintu, rem berhenti, pengumuman) menurunkan
+  // suasana & musik sesaat (ducking) supaya tidak bertabrakan, lalu naik kembali perlahan.
   const Sound = (() => {
     const AC = window.AudioContext || window.webkitAudioContext;
-    let ac = null, master = null, sfx = null, amb = null, music = null;
+    const MIX = { master: 0.85, engine: 0.9, brake: 0.8, door: 0.85, sfx: 0.75, amb: 0.7, musicIdle: 0.15, musicPlay: 0.08 };
+    let ac = null, master = null;
+    let engine = null, brake = null, door = null, sfx = null, amb = null, music = null;
+    let engineSend = null, brakeSend = null, revOut = null;
+    const duckNode = {}, duckEnd = { amb: 0, music: 0, engine: 0 }, duckDepth = { amb: 0, music: 0, engine: 0 };
     let white = null, brown = null, panOk = false;
     let muted = store.get('rn.mute') === '1';
     let musicOn = store.get('rn.music') !== '0';
     const L = {};                    // lapisan bunyi kontinu
-    let nextBird = 0, nextBell = 0, nextCricket = 0, nextFrog = 0, nextBedug = 6, duckUntil = 0;
-    let musicTimer = null, nextBeat = 0, beat = 0, musicLevel = 0.16;
+    const tails = [];                // ekor desis yang boleh dipotong halus
+    let nextBird = 0, nextBell = 0, nextCricket = 0, nextFrog = 0, nextBedug = 6;
+    let eventBusyUntil = 0;
+    let musicTimer = null, nextBeat = 0, beat = 0, musicLevel = MIX.musicIdle;
     let idVoice = null;
+    let nextChuff = 0, chuffIdx = 0, lastJoint = null, nextPump = 0;
+    const meters = {};
 
     function g(v) { const n = ac.createGain(); n.gain.value = v; return n; }
     function set(param, v, tc = 0.15) { param.setTargetAtTime(v, ac.currentTime, tc); }
@@ -261,6 +272,16 @@
       for (let i = 0; i < len; i++) {
         const w = Math.random() * 2 - 1;
         if (isBrown) { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w;
+      }
+      return b;
+    }
+    function makeIR(sec, decay) {
+      const len = Math.floor(ac.sampleRate * sec);
+      const b = ac.createBuffer(2, len, ac.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = b.getChannelData(ch);
+        let lp = 0;
+        for (let i = 0; i < len; i++) { lp = lp * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = lp * Math.pow(1 - i / len, decay); }
       }
       return b;
     }
@@ -276,6 +297,15 @@
       if (!panOk) return null;
       const n = ac.createStereoPanner(); n.pan.value = p; return n;
     }
+    function mkBus(name, level, send, revIn, duckable) {
+      const b = g(level);
+      let tail = b;
+      if (duckable) { duckNode[name] = g(1); b.connect(duckNode[name]); tail = duckNode[name]; }
+      tail.connect(master);
+      const s = g(send); tail.connect(s); s.connect(revIn);
+      if (window.__rnAudioDebug) { const an = ac.createAnalyser(); an.fftSize = 2048; tail.connect(an); meters[name] = an; }
+      return { in: b, send: s };
+    }
 
     function init() {
       if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
@@ -284,25 +314,51 @@
         ac = new AC();
         panOk = typeof ac.createStereoPanner === 'function';
         const comp = ac.createDynamicsCompressor();
-        comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = 0.01; comp.release.value = 0.25;
-        master = g(muted ? 0 : 0.8); master.connect(comp).connect(ac.destination);
-        sfx = g(1); sfx.connect(master);
-        amb = g(1); amb.connect(master);
-        music = g(musicOn ? musicLevel : 0); music.connect(master);
-        white = makeNoise(2.2, false); brown = makeNoise(3.1, true);
+        comp.threshold.value = -18; comp.knee.value = 10; comp.ratio.value = 3; comp.attack.value = 0.006; comp.release.value = 0.3;
+        const lowcut = ac.createBiquadFilter(); lowcut.type = 'highpass'; lowcut.frequency.value = 28;
+        const soft = ac.createBiquadFilter(); soft.type = 'highshelf'; soft.frequency.value = 6500; soft.gain.value = -4;
+        master = g(muted ? 0 : MIX.master);
+        master.connect(lowcut).connect(soft).connect(comp).connect(ac.destination);
+        if (window.__rnAudioDebug) { const an = ac.createAnalyser(); an.fftSize = 2048; comp.connect(an); meters.out = an; }
+        // gema ringan bersama
+        const revIn = g(1), conv = ac.createConvolver();
+        conv.buffer = makeIR(1.6, 3);
+        revOut = g(0.2);
+        revIn.connect(conv).connect(revOut).connect(master);
 
-        L.rumble = loop(brown, 'lowpass', 140, 0.7, sfx);      // gemuruh roda
-        L.hiss = loop(white, 'highpass', 4200, 0.5, sfx);       // desis uap saat diam
-        L.squeal = loop(white, 'bandpass', 3300, 28, sfx);      // decit rem
-        L.wind = loop(brown, 'bandpass', 520, 0.6, amb);        // angin
-        L.river = loop(white, 'bandpass', 900, 0.6, amb);       // sungai di bawah jembatan
-        L.crowd = loop(brown, 'bandpass', 520, 1.3, amb);       // riuh penumpang di peron
-        L.rain = loop(white, 'bandpass', 2400, 0.35, amb);      // hujan
-        L.rainLow = loop(brown, 'lowpass', 500, 0.5, amb);      // gemuruh hujan di atap
-        // embusan angin pelan
+        white = makeNoise(2.2, false); brown = makeNoise(3.1, true);
+        const E = mkBus('engine', MIX.engine, 0.12, revIn, true); engine = E.in; engineSend = E.send;
+        const B = mkBus('brake', MIX.brake, 0.15, revIn, false); brake = B.in; brakeSend = B.send;
+        door = mkBus('door', MIX.door, 0.1, revIn, false).in;
+        sfx = mkBus('sfx', MIX.sfx, 0.1, revIn, false).in;
+        amb = mkBus('amb', MIX.amb, 0.05, revIn, true).in;
+        music = mkBus('music', musicOn ? musicLevel : 0, 0.15, revIn, true).in;
+
+        // lapisan kontinu mesin & roda
+        L.rumble = loop(brown, 'lowpass', 140, 0.7, engine);    // gemuruh roda di rel
+        L.firebox = loop(brown, 'lowpass', 90, 0.6, engine);    // dengung api ketel
+        L.roar = loop(white, 'bandpass', 700, 0.7, engine);     // uap menyatu saat cepat
+        L.hiss = loop(white, 'highpass', 4200, 0.5, engine);    // desis uap saat diam
+        // rem: gesekan blok rem dan decit roda
+        L.grind = loop(white, 'bandpass', 1400, 0.9, brake);
+        const sq = g(0), sqf = ac.createBiquadFilter();
+        sqf.type = 'bandpass'; sqf.frequency.value = 3000; sqf.Q.value = 3;
+        [2850, 3170].forEach((f, i) => {
+          const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+          const lfo = ac.createOscillator(); lfo.frequency.value = 4.1 + i * 1.3;
+          const lg = g(16); lfo.connect(lg).connect(o.frequency);
+          o.connect(sqf); o.start(); lfo.start();
+        });
+        sqf.connect(sq).connect(brake);
+        L.squeal = { g: sq };
+        // suasana
+        L.wind = loop(brown, 'bandpass', 520, 0.6, amb);
+        L.river = loop(white, 'bandpass', 900, 0.6, amb);
+        L.crowd = loop(brown, 'bandpass', 520, 1.3, amb);
+        L.rain = loop(white, 'bandpass', 2400, 0.35, amb);
+        L.rainLow = loop(brown, 'lowpass', 500, 0.5, amb);
         const lfo = ac.createOscillator(); lfo.frequency.value = 0.11;
         const lg = g(0.025); lfo.connect(lg).connect(L.wind.g.gain); lfo.start();
-        // gumam kerumunan: modulasi seperti suku kata
         const mod = ac.createOscillator(); mod.frequency.value = 3.3;
         const mg = g(0.03); mod.connect(mg).connect(L.crowd.g.gain); mod.start();
 
@@ -321,22 +377,47 @@
       try { window.speechSynthesis.addEventListener('voiceschanged', pick); } catch (e) { /* old webview */ }
     }
 
+    // ---- pengatur prioritas: ducking & antrean peristiwa ----
+    function duck(amounts, dur) {
+      if (!ac) return;
+      const t = ac.currentTime;
+      for (const k of Object.keys(amounts)) {
+        const node = duckNode[k];
+        if (!node) continue;
+        const active = t < duckEnd[k];
+        const depth = active ? Math.max(duckDepth[k], amounts[k]) : amounts[k];
+        const end = Math.max(duckEnd[k], t + dur);
+        duckDepth[k] = depth; duckEnd[k] = end;
+        const p = node.gain;
+        p.cancelScheduledValues(t);
+        p.setTargetAtTime(1 - depth, t, 0.08);
+        p.setTargetAtTime(1, end, 0.45);
+      }
+    }
+    function busyFor(dur) { if (ac) eventBusyUntil = Math.max(eventBusyUntil, ac.currentTime + dur); }
+    function fadeTails(t) {
+      while (tails.length) { const n = tails.pop(); try { n.gain.cancelScheduledValues(t); n.gain.setTargetAtTime(0.0001, t, 0.06); } catch (e) { /* done */ } }
+    }
+
     // ---- bunyi sesaat ----
-    function burst(freq, q, vol, dur, type, bus, delay = 0) {
-      if (!ac || muted) return;
-      const t = ac.currentTime + delay;
+    function nz(t, type, freq, q, vol, dur, bus, attack = 0.012) {
       const src = ac.createBufferSource(); src.buffer = white;
       const f = ac.createBiquadFilter(); f.type = type || 'bandpass'; f.frequency.value = freq; f.Q.value = q;
       const gn = ac.createGain();
       gn.gain.setValueAtTime(0.0001, t);
-      gn.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+      gn.gain.exponentialRampToValueAtTime(vol, t + attack);
       gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       src.connect(f).connect(gn).connect(bus || sfx);
       src.start(t, Math.random() * 1.5); src.stop(t + dur + 0.05);
+      return gn;
+    }
+    function burst(freq, q, vol, dur, type, bus, delay = 0) {
+      if (!ac || muted) return;
+      nz(ac.currentTime + delay, type, freq, q, vol, dur, bus);
     }
     function tone(freq, vol, dur, opts = {}) {
       if (!ac || muted) return;
-      const t = ac.currentTime + (opts.delay || 0);
+      const t = opts.at !== undefined ? opts.at : ac.currentTime + (opts.delay || 0);
       const o = ac.createOscillator(); o.type = opts.type || 'sine';
       o.frequency.setValueAtTime(freq, t);
       if (opts.to) o.frequency.exponentialRampToValueAtTime(opts.to, t + (opts.glide || dur));
@@ -350,6 +431,19 @@
       out.connect(opts.bus || sfx);
       o.start(t); o.stop(t + dur + 0.05);
     }
+    // desis udara dengan filter bergeser (katup rem, pintu pneumatik)
+    function hiss(t, dur, vol, f0, f1, bus) {
+      const src = ac.createBufferSource(); src.buffer = white;
+      const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.7;
+      f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      const gn = ac.createGain();
+      gn.gain.setValueAtTime(0.0001, t);
+      gn.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.08, dur * 0.2));
+      gn.gain.setTargetAtTime(0.0001, t + dur * 0.4, dur * 0.22);
+      src.connect(f).connect(gn).connect(bus);
+      src.start(t, Math.random() * 1.2); src.stop(t + dur * 1.6 + 0.05);
+      return gn;
+    }
     // logam berbilah (saron/bonang/bel): nada dasar + parsial tak harmonis + "ombak" (detak)
     function metal(freq, vol, dur, bus, delay = 0) {
       tone(freq, vol, dur, { bus, delay });
@@ -357,6 +451,32 @@
       tone(freq * 2.76, vol * 0.18, dur * 0.35, { bus, delay });
       tone(freq * 4.1, vol * 0.06, dur * 0.18, { bus, delay });
     }
+
+    // ---- mesin uap ----
+    function chuff(t, vol, v, power, tau) {
+      const src = ac.createBufferSource(); src.buffer = white;
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.8;
+      bp.frequency.value = 260 + power * 260 + Math.min(v, 20) * 10;
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1700 + power * 1300;
+      const gn = ac.createGain();
+      gn.gain.setValueAtTime(0.0001, t);
+      gn.gain.linearRampToValueAtTime(vol, t + 0.008);
+      gn.gain.setTargetAtTime(0.0001, t + 0.012, tau);
+      src.connect(bp).connect(lp).connect(gn).connect(engine);
+      src.start(t, Math.random() * 1.5); src.stop(t + 0.02 + tau * 6);
+      if (v < 9 && vol > 0.04) tone(72, vol * 0.7 * (1 - v / 9), 0.17, { at: t, to: 46, bus: engine, attack: 0.006 });
+    }
+    function clack(t, vol) { // "jeglak" roda melewati sambungan rel
+      nz(t, 'bandpass', 760, 1.4, vol, 0.05, engine, 0.004);
+      tone(118, vol * 0.7, 0.07, { at: t, to: 80, bus: engine, attack: 0.004 });
+    }
+    function pump(t) { // pompa udara lokomotif saat berhenti
+      nz(t, 'lowpass', 300, 0.7, 0.03, 0.2, engine, 0.03);
+      tone(95, 0.025, 0.16, { at: t, to: 80, bus: engine, attack: 0.02 });
+      nz(t + 0.55, 'lowpass', 280, 0.7, 0.02, 0.18, engine, 0.03);
+    }
+    // posisi gandar (m di belakang moncong): lokomotif + dua gerbong
+    const AXLES = [3, 6, 8, 10, 17.2, 19.2, 30.6, 32.6, 36.4, 38.4, 49.8, 51.8];
 
     // ---- musik latar bernuansa gamelan (laras slendro, buatan sendiri) ----
     const SL = { 1: 1, 2: 1.147, 3: 1.318, 5: 1.512, 6: 1.737, 7: 2 }; // 7 = 1 tinggi
@@ -387,7 +507,6 @@
         tone(63.3, 0.3, 6, { bus: music, delay: d, attack: 0.03 });
         tone(130, 0.08, 3, { bus: music, delay: d, attack: 0.03 });
       }
-      // kendang: "dhung" dan "tak" sederhana
       if (pos % 2 === 0) tone(110, 0.16, 0.22, { bus: music, delay: d, to: 70, glide: 0.18 });
       if (pos % 4 === 1) burst(2200, 1.5, 0.05, 0.06, 'bandpass', music, d + BEAT * 0.5);
     }
@@ -395,10 +514,10 @@
     // ---- satwa & suasana ----
     function bird(vol) {
       const pan = Math.random() * 1.6 - 0.8;
-      if (Math.random() < 0.5) { // cuitan cepat
+      if (Math.random() < 0.5) {
         const k = 2 + Math.floor(Math.random() * 3), f0 = 2600 + Math.random() * 1400;
         for (let i = 0; i < k; i++) tone(f0, vol, 0.08, { to: f0 * 1.45, glide: 0.06, delay: i * 0.12, bus: amb, pan });
-      } else { // siulan tiga nada ala kutilang
+      } else {
         const f0 = 1700 + Math.random() * 500;
         [[1, 0], [1.33, 0.16], [1.18, 0.3]].forEach(([m, dl]) => tone(f0 * m, vol, 0.16, { to: f0 * m * 1.06, delay: dl, bus: amb, pan }));
       }
@@ -407,17 +526,17 @@
       const f = 4300 + Math.random() * 500, pan = Math.random() * 1.4 - 0.7;
       for (let i = 0; i < 4; i++) tone(f, vol, 0.03, { type: 'square', delay: i * 0.045, bus: amb, pan });
     }
-    function frog(vol) { // "krok" kodok sawah
+    function frog(vol) {
       const pan = Math.random() * 1.2 - 0.6, f = 150 + Math.random() * 60;
       for (let i = 0; i < 2; i++) tone(f, vol, 0.09, { type: 'square', to: f * 0.8, delay: i * 0.13, bus: amb, pan });
     }
-    function bedug(vol) { // bedug masjid desa, ketukan makin rapat
+    function bedug(vol) {
       [0, 0.7, 1.3, 1.8, 2.2, 2.5, 2.75, 2.95].forEach((d, i) => {
         tone(78, vol * (i < 2 ? 1 : 0.8), 0.6, { to: 52, glide: 0.45, delay: d, bus: amb, pan: -0.3 });
         burst(160, 0.8, vol * 0.25, 0.12, 'lowpass', amb, d);
       });
     }
-    function crossingBell(vol) { // "teng" palang pintu perlintasan
+    function crossingBell(vol) {
       tone(1180, vol, 0.45, { bus: amb, pan: 0.35 });
       tone(2830, vol * 0.35, 0.25, { bus: amb, pan: 0.35 });
       burst(5000, 2, vol * 0.25, 0.03, 'highpass', amb);
@@ -429,72 +548,188 @@
       const t = ac.currentTime;
       const live = !muted;
       const run = live && info.running;
+      const scene = live && info.scene;
       const v = info.v || 0;
-      set(L.rumble.g.gain, run ? Math.min(0.6, v * 0.032) * (info.onBridge ? 1.7 : 1) * (info.tunnel ? 1.9 : 1) : 0, 0.2);
+      const power = info.power || 0;
+      const brakeF = info.brake || 0;
+
+      // hentakan uap: dijadwalkan di jam audio supaya ritmenya rata
+      let rate = (v / (2 * Math.PI * 0.85)) * 4;
+      if (run && info.slip) rate = 16;
+      if (run && rate > 0.25) {
+        if (nextChuff < t) nextChuff = t + 0.02;
+        const tau = clamp(0.5 / rate, 0.045, 0.2);
+        const base = info.slip ? 0.13 : 0.03 + 0.2 * power;
+        const merge = rate > 9 ? Math.sqrt(9 / rate) : 1;
+        while (nextChuff < t + 0.12) {
+          const accent = [1, 0.72, 0.88, 0.64][chuffIdx++ % 4];
+          chuff(nextChuff, base * merge * accent, v, power, tau);
+          nextChuff += (1 / rate) * (0.97 + Math.random() * 0.06);
+        }
+      } else nextChuff = 0;
+      set(L.roar.g.gain, run ? power * clamp((rate - 6) / 10, 0, 1) * 0.05 : 0, 0.3);
+      L.roar.f.frequency.setTargetAtTime(500 + Math.min(v, 22) * 18, t, 0.3);
+      set(L.firebox.g.gain, scene ? 0.02 + power * 0.06 : 0, 0.4);
+      set(L.rumble.g.gain, run ? Math.min(0.32, v * 0.018) * (info.onBridge ? 1.6 : 1) * (info.tunnel ? 1.5 : 1) : 0, 0.25);
       L.rumble.f.frequency.setTargetAtTime(100 + v * 9 + (info.onBridge ? 70 : 0) + (info.tunnel ? 90 : 0), t, 0.25);
-      set(L.rain.g.gain, live && info.scene ? (info.rain || 0) * 0.09 : 0, 0.6);
-      set(L.rainLow.g.gain, live && info.scene ? (info.rain || 0) * 0.12 : 0, 0.6);
-      set(L.hiss.g.gain, live && info.scene ? (v < 0.4 ? 0.022 : 0.006) : 0, 0.3);
-      set(L.squeal.g.gain, run && info.braking && v > 0.25 && v < 5 ? 0.05 * (1.1 - v / 5) : 0, 0.08);
-      set(L.wind.g.gain, live && info.scene && !info.tunnel ? 0.045 + v * 0.004 + info.fog * 0.03 + (info.rain || 0) * 0.03 : 0, 0.5);
-      set(L.river.g.gain, live && info.scene ? info.river * 0.13 : 0, 0.4);
-      set(L.crowd.g.gain, live && info.scene ? info.crowd * 0.08 : 0, 0.5);
-      // musik turun saat bermain, makin turun saat pengumuman
-      const want = !musicOn || muted ? 0 : t < duckUntil ? 0.04 : info.running ? 0.09 : 0.16;
+      set(L.hiss.g.gain, scene ? (v < 0.4 ? 0.016 : 0.004) : 0, 0.4);
+      // sambungan rel: setiap gandar berbunyi sesuai jaraknya
+      if (run && v > 0.5) {
+        const j = Math.floor(info.x / 25);
+        if (lastJoint === null) lastJoint = j;
+        if (j !== lastJoint) {
+          lastJoint = j;
+          const vol = clamp(0.015 + v * 0.0028, 0.015, 0.07);
+          AXLES.forEach((off, i) => { const d = off / v; if (d < 2.6) clack(t + d, vol * (i % 2 ? 0.75 : 1)); });
+        }
+      } else if (!run) lastJoint = null;
+      // rem: gesekan saat cepat, decit saat hampir berhenti
+      set(L.grind.g.gain, run ? clamp(brakeF, 0, 1.6) * clamp(v / 8, 0, 1) * 0.08 : 0, 0.15);
+      L.grind.f.frequency.setTargetAtTime(900 + Math.min(v, 22) * 40, t, 0.3);
+      const sq = run && brakeF > 0.18 && v > 0.25 && v < 6.5 ? 0.03 * clamp(brakeF, 0, 1.2) * (1 - v / 6.5) + 0.006 : 0;
+      set(L.squeal.g.gain, sq, 0.12);
+      // pompa udara terdengar saat lokomotif diam
+      if (scene && v < 0.3 && t >= nextPump) { pump(t + 0.02); nextPump = t + 1.8 + Math.random() * 0.5; }
+      // gema terowongan
+      set(engineSend.gain, info.tunnel ? 0.45 : 0.12, 0.4);
+      set(brakeSend.gain, info.tunnel ? 0.5 : 0.15, 0.4);
+      set(revOut.gain, info.tunnel ? 0.35 : 0.2, 0.5);
+
+      // suasana
+      set(L.rain.g.gain, scene ? (info.rain || 0) * 0.08 : 0, 0.6);
+      set(L.rainLow.g.gain, scene ? (info.rain || 0) * 0.1 : 0, 0.6);
+      set(L.wind.g.gain, scene && !info.tunnel ? 0.04 + v * 0.0035 + info.fog * 0.03 + (info.rain || 0) * 0.03 : 0, 0.5);
+      set(L.river.g.gain, scene ? info.river * 0.11 : 0, 0.4);
+      set(L.crowd.g.gain, scene ? info.crowd * 0.07 : 0, 0.5);
+      const want = !musicOn || muted ? 0 : info.running ? MIX.musicPlay : MIX.musicIdle;
       if (Math.abs(want - musicLevel) > 0.001) { musicLevel = want; set(music.gain, want, 0.6); }
-      if (!live || !info.scene) return;
-      if (info.bell > 0 && t >= nextBell) { crossingBell(0.05 + info.bell * 0.12); nextBell = t + 0.55; }
+      if (!scene) return;
+      if (info.bell > 0 && t >= nextBell) { crossingBell(0.04 + info.bell * 0.1); nextBell = t + 0.55; }
+      const quiet = t < duckEnd.amb; // jangan tambah bunyi satwa saat ada peristiwa penting
       if (t >= nextBird) {
-        if (info.fog < 0.6 && !info.rain && !info.tunnel) bird(0.02 + Math.random() * 0.025);
+        if (!quiet && info.fog < 0.6 && !info.rain && !info.tunnel && !info.night) bird(0.018 + Math.random() * 0.02);
         nextBird = t + 0.8 + Math.random() * (info.fog > 0.3 ? 6 : 2.6);
       }
-      if ((info.dawn || info.night) && !info.tunnel && t >= nextCricket) { cricket(0.012); nextCricket = t + 0.35 + Math.random() * 0.5; }
-      if (info.night && !info.tunnel && t >= nextFrog) { frog(0.05); nextFrog = t + 0.6 + Math.random() * 1.6; }
-      if (info.night && t >= nextBedug) { bedug(0.32); nextBedug = t + 16 + Math.random() * 12; }
+      if (!quiet && (info.dawn || info.night) && !info.tunnel && t >= nextCricket) { cricket(0.01); nextCricket = t + 0.35 + Math.random() * 0.5; }
+      if (!quiet && info.night && !info.tunnel && t >= nextFrog) { frog(0.04); nextFrog = t + 0.6 + Math.random() * 1.6; }
+      if (!quiet && info.night && t >= nextBedug) { bedug(0.28); nextBedug = t + 16 + Math.random() * 12; }
     }
 
-    // ---- pengumuman stasiun ----
-    function chime() { [784, 659, 523, 659].forEach((f, i) => metal(f, 0.13, 1.1, sfx, i * 0.42)); }
+    // ---- pengumuman stasiun: menunggu pintu/rem selesai ----
+    function chime(at) { [784, 659, 523, 659].forEach((f, i) => metal(f, 0.09, 1.1, sfx, at + i * 0.42)); }
     function announce(text) {
       if (!ac || muted) return;
-      chime();
-      duckUntil = ac.currentTime + 2 + text.length * 0.07;
-      if (!idVoice || !('speechSynthesis' in window)) return;
+      const wait = Math.max(0, eventBusyUntil - ac.currentTime);
+      const dur = 2 + text.length * 0.07;
       setTimeout(() => {
-        try {
-          const u = new SpeechSynthesisUtterance(text);
-          u.voice = idVoice; u.lang = idVoice.lang; u.rate = 0.95; u.pitch = 1.05; u.volume = 0.9;
-          window.speechSynthesis.cancel();
-          window.speechSynthesis.speak(u);
-        } catch (e) { /* speech not available */ }
-      }, 1700);
+        if (!ac || muted) return;
+        duck({ amb: 0.55, music: 0.75, engine: 0.3 }, dur);
+        chime(0);
+        busyFor(dur);
+        if (!idVoice || !('speechSynthesis' in window)) return;
+        setTimeout(() => {
+          try {
+            const u = new SpeechSynthesisUtterance(text);
+            u.voice = idVoice; u.lang = idVoice.lang; u.rate = 0.95; u.pitch = 1.05; u.volume = 0.9;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(u);
+          } catch (e) { /* speech not available */ }
+        }, 1700);
+      }, wait * 1000);
     }
 
     return {
       init, update, announce,
-      chuff(vol) { burst(380 + Math.random() * 140, 0.9, vol, 0.2); },
-      click(vol) { burst(2600, 2.5, vol, 0.05, 'highpass'); },
-      squeal(vol) { burst(3400, 18, vol, 0.35); },
-      tick() { burst(3200, 3, 0.05, 0.03, 'bandpass'); tone(140, 0.08, 0.06); },
-      airApply() { burst(2400, 0.7, 0.05, 0.25, 'highpass'); },
-      airRelease(vol = 0.11) { burst(1800, 0.6, vol, 0.8, 'highpass'); },
-      doorSlide(open) {
+      tick() { // detent tuas
         if (!ac || muted) return;
         const t = ac.currentTime;
-        const src = ac.createBufferSource(); src.buffer = white;
-        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 2;
-        f.frequency.setValueAtTime(open ? 500 : 1300, t); f.frequency.linearRampToValueAtTime(open ? 1300 : 500, t + 0.55);
-        const gn = g(0); gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.06, t + 0.05); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
-        src.connect(f).connect(gn).connect(sfx); src.start(t); src.stop(t + 0.65);
-        tone(90, 0.18, 0.12, { delay: 0.58 });
+        nz(t, 'bandpass', 2400, 3, 0.022, 0.03, sfx, 0.003);
+        tone(160, 0.035, 0.05, { at: t, bus: sfx, attack: 0.003 });
       },
+      brakeApply(step = 1) {
+        if (!ac || muted) return;
+        hiss(ac.currentTime, 0.32, 0.03 + 0.012 * Math.min(step, 4), 2400, 1700, brake);
+      },
+      brakeRelease(amount = 0.08) {
+        if (!ac || muted) return;
+        tails.push(hiss(ac.currentTime, 0.8, amount, 2800, 1300, brake));
+      },
+      emergency() {
+        if (!ac || muted) return;
+        const t = ac.currentTime;
+        tails.push(hiss(t, 1.4, 0.12, 3200, 900, brake));
+        tone(3000, 0.03, 0.9, { at: t + 0.05, to: 2700, bus: brake, attack: 0.05 });
+        duck({ amb: 0.4, music: 0.5 }, 1.6);
+      },
+      // rangkaian saat kereta berhenti: hentakan rem & sambungan, lalu desis pelepasan panjang
+      stopSettle(force) {
+        if (!ac || muted) return;
+        const t = ac.currentTime, s = clamp(force, 0.25, 1.6);
+        tone(82, 0.16 * s, 0.26, { at: t, to: 55, bus: brake, attack: 0.006 });
+        nz(t, 'lowpass', 380, 0.7, 0.09 * s, 0.2, brake, 0.006);
+        nz(t + 0.11, 'lowpass', 320, 0.7, 0.05 * s, 0.17, brake, 0.006);
+        nz(t + 0.2, 'lowpass', 300, 0.7, 0.035 * s, 0.15, brake, 0.006);
+        tails.push(hiss(t + 0.45, 1.5, 0.1, 3200, 900, brake));
+        busyFor(2.1);
+        duck({ amb: 0.35, music: 0.4 }, 1.9);
+      },
+      // pintu: buka = katup udara > geser > benturan; tutup = bel peringatan > katup > geser > benturan + kunci
+      door(open) {
+        if (!ac || muted) return;
+        const t = ac.currentTime;
+        fadeTails(t);
+        const slide = (at, dur, f0, f1, vol) => {
+          const src = ac.createBufferSource(); src.buffer = white;
+          const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.6;
+          f.frequency.setValueAtTime(f0, at); f.frequency.linearRampToValueAtTime(f1, at + dur);
+          const gn = g(0);
+          gn.gain.setValueAtTime(0.0001, at); gn.gain.exponentialRampToValueAtTime(vol, at + 0.07);
+          gn.gain.setValueAtTime(vol, at + dur - 0.15); gn.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+          src.connect(f).connect(gn).connect(door); src.start(at, Math.random()); src.stop(at + dur + 0.05);
+          const rb = ac.createBufferSource(); rb.buffer = brown;
+          const rf = ac.createBiquadFilter(); rf.type = 'lowpass'; rf.frequency.value = 260;
+          const rg = g(0);
+          rg.gain.setValueAtTime(0.0001, at); rg.gain.exponentialRampToValueAtTime(vol * 0.9, at + 0.07);
+          rg.gain.setValueAtTime(vol * 0.9, at + dur - 0.15); rg.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+          rb.connect(rf).connect(rg).connect(door); rb.start(at, Math.random()); rb.stop(at + dur + 0.05);
+        };
+        const thud = (at, s) => {
+          tone(96, 0.2 * s, 0.18, { at, to: 70, bus: door, attack: 0.004 });
+          nz(at, 'lowpass', 520, 0.8, 0.05 * s, 0.09, door, 0.004);
+        };
+        if (open) {
+          hiss(t, 0.3, 0.05, 2600, 1800, door);
+          slide(t + 0.16, 0.62, 420, 950, 0.075);
+          thud(t + 0.78, 0.9);
+          busyFor(1.2);
+          duck({ amb: 0.35, music: 0.4, engine: 0.3 }, 1.2);
+        } else {
+          [[988, 0], [784, 0.32]].forEach(([fr, d]) => {
+            tone(fr, 0.075, 0.75, { at: t + d, bus: door, attack: 0.012 });
+            tone(fr * 2, 0.012, 0.3, { at: t + d, bus: door, attack: 0.012 });
+          });
+          hiss(t + 0.75, 0.28, 0.045, 2600, 1800, door);
+          slide(t + 0.88, 0.62, 950, 420, 0.075);
+          thud(t + 1.5, 1.1);
+          nz(t + 1.58, 'bandpass', 2200, 4, 0.025, 0.04, door, 0.003); // kunci pintu
+          busyFor(1.8);
+          duck({ amb: 0.35, music: 0.45, engine: 0.3 }, 1.8);
+        }
+      },
+      signalChime() { // "tong" lembut saat sinyal berangkat hijau
+        if (!ac || muted) return;
+        const t = ac.currentTime;
+        tone(660, 0.05, 0.6, { at: t, bus: sfx, attack: 0.01 });
+        tone(990, 0.02, 0.4, { at: t, bus: sfx, attack: 0.01 });
+      },
+      ding() { this.signalChime(); },
       whistle() {
         if (!ac || muted) return;
         const t = ac.currentTime;
         const gn = ac.createGain();
         gn.gain.setValueAtTime(0.0001, t);
-        gn.gain.exponentialRampToValueAtTime(0.16, t + 0.07);
-        gn.gain.setValueAtTime(0.16, t + 0.8);
+        gn.gain.exponentialRampToValueAtTime(0.14, t + 0.07);
+        gn.gain.setValueAtTime(0.14, t + 0.8);
         gn.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
         gn.connect(lp).connect(sfx);
@@ -503,12 +738,9 @@
           o.frequency.setValueAtTime(fr * 0.96, t); o.frequency.linearRampToValueAtTime(fr, t + 0.1);
           o.connect(gn); o.start(t); o.stop(t + 1.1);
         });
-        burst(1700, 1.2, 0.04, 0.6);
-        // gema dari bukit
-        tone(587.33, 0.025, 0.7, { delay: 0.45, type: 'triangle', attack: 0.1, bus: amb });
-      },
-      ding() {
-        [[988, 0], [784, 0.28]].forEach(([fr, dt]) => tone(fr, 0.15, 0.6, { delay: dt }));
+        burst(1700, 1.2, 0.035, 0.6);
+        tone(587.33, 0.02, 0.7, { delay: 0.45, type: 'triangle', attack: 0.1, bus: amb });
+        duck({ amb: 0.4, music: 0.35 }, 1.1);
       },
       bleat() {
         if (!ac || muted) return;
@@ -519,21 +751,25 @@
         const vg = g(28); vib.connect(vg).connect(o.frequency);
         const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1100; f.Q.value = 2.5;
         const gn = g(0);
-        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.12, t + 0.04);
-        gn.gain.setValueAtTime(0.1, t + 0.4); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.1, t + 0.04);
+        gn.gain.setValueAtTime(0.085, t + 0.4); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
         const pn = panner(0.4);
         let out = o.connect(f).connect(gn); if (pn) out = out.connect(pn); out.connect(amb);
         o.start(t); vib.start(t); o.stop(t + 0.7); vib.stop(t + 0.7);
       },
       crash() {
-        burst(180, 0.5, 0.5, 1.4, 'lowpass');
-        burst(900, 4, 0.2, 0.9, 'bandpass', sfx, 0.05);
-        metal(310, 0.2, 1.6, sfx, 0.02);
+        if (!ac || muted) return;
+        fadeTails(ac.currentTime);
+        burst(180, 0.5, 0.45, 1.4, 'lowpass', brake);
+        burst(900, 4, 0.18, 0.9, 'bandpass', brake, 0.05);
+        metal(310, 0.18, 1.6, sfx, 0.02);
+        duck({ amb: 0.6, music: 0.8, engine: 0.6 }, 2.5);
       },
       stars(n) {
         const notes = [523.25, 659.25, 783.99];
-        for (let i = 0; i < n; i++) metal(notes[i] * 2, 0.16, 1.4, sfx, 0.35 + i * 0.3);
-        if (n === 3) metal(1046.5 * 2, 0.12, 2, sfx, 1.4);
+        for (let i = 0; i < n; i++) metal(notes[i] * 2, 0.14, 1.4, sfx, 0.35 + i * 0.3);
+        if (n === 3) metal(1046.5 * 2, 0.1, 2, sfx, 1.4);
+        duck({ music: 0.6 }, 2.4);
       },
       thunder(delay) {
         if (!ac || muted) return;
@@ -541,35 +777,45 @@
         const src = ac.createBufferSource(); src.buffer = brown;
         const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(120, t + 2.5);
         const gn = g(0);
-        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.7, t + 0.06);
-        gn.gain.exponentialRampToValueAtTime(0.25, t + 0.6); gn.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
+        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.55, t + 0.06);
+        gn.gain.exponentialRampToValueAtTime(0.2, t + 0.6); gn.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
         src.connect(f).connect(gn).connect(amb); src.start(t); src.stop(t + 3.7);
       },
       firework(delay) {
         if (!ac || muted) return;
-        tone(900, 0.02, 0.5, { to: 2600, glide: 0.5, delay, bus: amb, attack: 0.05 });
-        burst(300, 0.6, 0.22, 0.5, 'lowpass', amb, delay + 0.5);
-        for (let i = 0; i < 6; i++) burst(4500, 1.5, 0.04, 0.05, 'highpass', amb, delay + 0.6 + i * 0.07 + Math.random() * 0.05);
+        tone(900, 0.016, 0.5, { to: 2600, glide: 0.5, delay, bus: amb, attack: 0.05 });
+        burst(300, 0.6, 0.18, 0.5, 'lowpass', amb, delay + 0.5);
+        for (let i = 0; i < 6; i++) burst(4500, 1.5, 0.03, 0.05, 'highpass', amb, delay + 0.6 + i * 0.07 + Math.random() * 0.05);
       },
-      telolet() { // klakson bus bernada
+      telolet() {
         [[523, 0], [659, 0.15], [784, 0.3], [659, 0.45], [784, 0.6], [1047, 0.75]].forEach(([f, d]) => {
-          tone(f, 0.06, 0.16, { type: 'square', delay: d, bus: amb, pan: 0.2 });
-          tone(f * 1.5, 0.02, 0.16, { type: 'square', delay: d, bus: amb, pan: 0.2 });
+          tone(f, 0.05, 0.16, { type: 'square', delay: d, bus: amb, pan: 0.2 });
+          tone(f * 1.5, 0.016, 0.16, { type: 'square', delay: d, bus: amb, pan: 0.2 });
         });
       },
       radio() {
-        burst(1800, 1.2, 0.05, 0.25, 'bandpass');
-        tone(1320, 0.05, 0.08, { delay: 0.22 });
+        burst(1800, 1.2, 0.04, 0.25, 'bandpass');
+        tone(1320, 0.04, 0.08, { delay: 0.22 });
+        duck({ amb: 0.3, music: 0.4 }, 4);
       },
-      sand() { burst(700, 0.8, 0.12, 0.9, 'bandpass'); burst(4000, 0.7, 0.04, 0.6, 'highpass'); },
-      failSting() { [392, 311, 233].forEach((f, i) => tone(f, 0.12, 0.7, { type: 'triangle', delay: i * 0.3 })); },
+      sand() { burst(700, 0.8, 0.1, 0.9, 'bandpass', brake); burst(4000, 0.7, 0.03, 0.6, 'highpass', brake); },
+      failSting() { [392, 311, 233].forEach((f, i) => tone(f, 0.1, 0.7, { type: 'triangle', delay: i * 0.3 })); },
       toggleMute() {
         muted = !muted; store.set('rn.mute', muted ? '1' : '0');
-        if (master) set(master.gain, muted ? 0 : 0.8, 0.05);
+        if (master) set(master.gain, muted ? 0 : MIX.master, 0.05);
         if (muted && 'speechSynthesis' in window) { try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } }
         return muted;
       },
       toggleMusic() { musicOn = !musicOn; store.set('rn.music', musicOn ? '1' : '0'); return musicOn; },
+      meter() { // hanya untuk pengujian: tingkat RMS & puncak per jalur
+        const r = {};
+        for (const [k, an] of Object.entries(meters)) {
+          const d = new Float32Array(an.fftSize); an.getFloatTimeDomainData(d);
+          let s = 0, pk = 0; for (const x of d) { s += x * x; pk = Math.max(pk, Math.abs(x)); }
+          r[k] = { rms: Math.sqrt(s / d.length), peak: pk };
+        }
+        return r;
+      },
       get muted() { return muted; },
       get musicOn() { return musicOn; },
     };
@@ -594,11 +840,10 @@
       yellowLimit: false,
       horned: ROUTE.crossings.map(() => false),
       goats: ROUTE.goats.map(() => ({ state: 'idle', t: 0 })),
-      sand: SAND_USES, sandT: 0, slip: false, spin: 0, slipT: 0,
+      sand: SAND_USES, sandT: 0, slip: false, spin: 0,
       bus: { x: -30, v: 0, t: 0, started: false, dwell: 0, stopIdx: 0, held: false, heldShown: {}, done: false, arrive: null, lead: 0 },
       overT: 0,
       shake: 0,
-      chuffPhase: 0, lastJoint: 0,
       smoke: [],
       hints: {},
       stoppedShortShown: false,
@@ -735,12 +980,12 @@
     const prev = S.notch;
     S.notch = n;
     Sound.tick();
-    if (prev < 0 && n > prev) Sound.airRelease(n >= 0 ? 0.11 : 0.05);
-    else if (n < 0 && n < prev) Sound.airApply();
+    if (prev < 0 && n > prev && n > -5) Sound.brakeRelease(n >= 0 ? 0.075 : 0.035);
+    else if (n < 0 && n < prev && n > -5) Sound.brakeApply(prev - n);
     if (n === -5 && prev !== -5 && S.v > 1) {
       S.comfort = clamp(S.comfort - 10, 0, 100);
       S.shake = 0.8;
-      Sound.squeal(0.1);
+      Sound.emergency();
       toast('Rem darurat! Penumpang terguncang.', 'bad', 2.6, 'eb', 3);
     }
     if (n > 0 && S.doors === 'open') toast('Tutup pintu dulu sebelum menambah tenaga.', 'warn', 2.4, 'doorpower', 2);
@@ -853,7 +1098,7 @@
         else if (!ss.farShown) { ss.farShown = true; toast(`Terlalu jauh dari sinyal ${sc.sig}. Maju pelan ${Math.round(gap - sc.near + 20)} m lagi.`, 'warn', 2.8, null, 2); }
       } else if (ss.phase === 'work') {
         ss.t += dt;
-        if (ss.t > sc.dur) { ss.phase = 'yellow'; ss.t = 0; S.sig[sc.sig] = 'Y'; radio(sc.radioDone, 7); Sound.ding(); }
+        if (ss.t > sc.dur) { ss.phase = 'yellow'; ss.t = 0; S.sig[sc.sig] = 'Y'; radio(sc.radioDone, 7); Sound.signalChime(); }
       } else if (ss.phase === 'yellow') {
         ss.t += dt;
         if (ss.t > 6 && S.x < sig.x) { ss.phase = 'done'; S.sig[sc.sig] = 'G'; }
@@ -867,13 +1112,13 @@
     if (S.phase === 'dwell') {
       const step = S.dwell.step;
       if (step === 'open') {
-        S.doors = 'open'; Sound.ding(); Sound.doorSlide(true);
+        S.doors = 'open'; Sound.door(true);
         S.dwell.step = ROUTE.stations[S.st].final ? 'alight' : 'board';
         S.dwell.timer = 0;
         return;
       }
       if (step === 'close') {
-        S.doors = 'closed'; Sound.ding(); Sound.doorSlide(false);
+        S.doors = 'closed'; Sound.door(false);
         S.dwell.step = 'signal'; S.dwell.timer = 0;
         toast('Pintu tertutup. Tunggu sinyal berangkat hijau.', 'info', 2.4, null, 2);
         return;
@@ -938,7 +1183,7 @@
         if (sig) S.sig[sig.id] = 'G';
         S.phase = 'run';
         S.stoppedShortShown = false;
-        Sound.ding();
+        Sound.signalChime();
         toast(S.st === 0 ? 'Sinyal hijau! Dorong tuas ke P untuk berangkat.' : 'Sinyal berangkat hijau. Lanjutkan perjalanan.', 'good', 3, null, 3);
       }
     }
@@ -967,8 +1212,6 @@
       target = 0.08;
       S.spin += dt * 14;
       S.comfort -= dt * 1.5;
-      S.slipT += dt;
-      if (S.slipT > 0.07) { S.slipT = 0; Sound.chuff(0.13); }
       toast('Roda selip! Turunkan ke P1–P2 atau tabur pasir.', 'warn', 2.4, 'slip', 3);
     }
     const rate = n === -5 ? 3.2 : 0.9;
@@ -988,6 +1231,7 @@
       if (S.jerkF > 1.05) S.comfort -= (S.jerkF - 1.05) * dt * 3;
     }
     S.aPrev = S.v > 0 ? S.aAct : 0;
+    if (prevV > 0 && S.v === 0) Sound.stopSettle(Math.max(0.25, -S.aCmd));
     if (prevV > 0 && S.v === 0 && S.aCmd < -0.5 && S.notch !== -5) {
       const hit = (-S.aCmd - 0.45) * 9;
       S.comfort -= hit;
@@ -1058,18 +1302,6 @@
     if (S.x >= ROUTE.bufferStop - 0.5) fail(`Kereta menabrak penahan di ujung rel ${titleCase(finalStation().name)}.`);
 
     S.comfort = clamp(S.comfort, 0, 100);
-
-    // --- suara roda & uap ---
-    if (S.v > 0.15) {
-      S.chuffPhase += (S.v / (2 * Math.PI * 0.85)) * 4 * dt;
-      if (S.chuffPhase >= 1) {
-        S.chuffPhase -= 1;
-        const pw = S.notch > 0 && !powerLocked ? S.notch / 4 : 0.1;
-        Sound.chuff(0.03 + 0.12 * pw);
-      }
-      const joint = Math.floor(S.x / 25);
-      if (joint !== S.lastJoint) { S.lastJoint = joint; Sound.click(0.05); setTimeout(() => Sound.click(0.04), 120); }
-    }
 
     // --- asap ---
     const power = S.notch > 0 && !powerLocked ? S.notch / 4 : 0;
@@ -2445,7 +2677,9 @@
     }
     const tunnel = inTunnel(st.x - 12);
     return {
-      scene, running, v: st.v, braking: st.aCmd < -0.3, onBridge, river, crowd, bell,
+      scene, running, v: st.v, x: st.x, onBridge, river, crowd, bell,
+      power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0,
+      brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
       rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, night: MIS.sky === 'night',
     };
@@ -2501,6 +2735,7 @@
     get S() { return S; },
     get mode() { return mode; },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
+    audioMeter: () => Sound.meter(),
     select: (id) => selectMission(id),
   };
 

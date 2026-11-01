@@ -26,8 +26,15 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Audio sintetis (WebAudio, tanpa berkas suara):
   - Musik latar bernuansa gamelan (laras slendro: saron, bonang, kenong, kempul, gong, kendang)
   - Suasana: kicau burung, jangkrik saat fajar, angin, sungai di bawah jembatan, riuh penumpang di peron
-  - Kereta: hentakan uap, gemuruh roda (lebih bergema di jembatan), "jeglak-jeglek" sambungan rel,
-    desis uap saat diam, rem angin, decit rem, peluit dengan gema
+  - Mesin uap: hentakan uap dijadwalkan di jam audio sehingga ritmenya rata dan menyatu menjadi desis
+    kontinu saat cepat, dengung api ketel, dentum silinder saat berangkat, pompa udara saat berhenti,
+    "jeglak-jeglek" tiap gandar di sambungan rel, gemuruh roda (bergema di jembatan & terowongan)
+  - Pengereman: desis katup saat tuas ke B, gesekan blok rem yang mengikuti kecepatan, decit roda
+    menjelang berhenti, lalu hentakan sambungan gerbong dan desis pelepasan panjang saat kereta berhenti
+  - Pintu: buka = katup udara > geser > benturan; tutup = bel peringatan > katup > geser > benturan + kunci
+  - Mixer: jalur terpisah (mesin, rem, pintu, efek, suasana, musik), gema ringan, peredam nada tinggi,
+    kompresor lembut; pintu, rem berhenti, dan pengumuman menurunkan suasana & musik sesaat, dan
+    pengumuman stasiun menunggu sampai bunyi pintu/rem selesai
   - Bel perlintasan "teng-teng", embik kambing, pintu geser, bel pintu, tabrakan
   - Pengumuman stasiun dengan nada "ting-tung"; jika perangkat punya suara Bahasa Indonesia, pengumuman dibacakan
   - Jingle bintang di layar hasil; tombol terpisah untuk musik dan semua suara
