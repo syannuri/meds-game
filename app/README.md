@@ -152,6 +152,15 @@ npm run serve        # buka http://localhost:8080 (di HP: pakai IP komputer, pos
 ```
 Keyboard: `↑/W` tenaga, `↓/S` rem, `Spasi` rem darurat, `H` klakson, `D/Enter` pintu, `A` pasir, `V` ganti tampilan, `Esc` jeda.
 
+## Main di iPhone/Android tanpa build (GitHub Pages)
+Workflow `.github/workflows/pages.yml` menerbitkan `app/www` ke **https://syannuri.github.io/meds-game/**
+setiap ada perubahan di `main`. Aktifkan sekali di *Settings → Pages → Build and deployment → Source:
+GitHub Actions*.
+
+Di iPhone: buka alamat itu di **Safari** → tombol Bagikan → **Tambah ke Layar Utama**, lalu buka dari
+ikon Rel Nusantara (layar penuh, posisi mendatar). Suara menyala setelah layar disentuh pertama kali.
+Di Android: buka di Chrome → menu ⋮ → **Instal aplikasi** / Tambahkan ke layar utama.
+
 ## Build aplikasi Android & iOS
 Prasyarat: Node 18+, Android Studio (Android), Xcode di macOS (iOS).
 ```bash
