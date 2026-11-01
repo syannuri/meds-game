@@ -59,8 +59,15 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Masinis Ahli: tombol di layar briefing untuk misi yang sudah pernah selesai. Peta jalur, panduan
   titik henti, petunjuk batas, dan petunjuk pertama kali disembunyikan; koin ×1,5; tiga bintang
   memberi lencana emas AHLI di karcis (`rn.ahli`)
-- Si Gagah: badan merah tua dengan hidung miring dan kaca depan miring, kap tinggi berujung membulat,
-  pita ornamen emas (motif kawung; `drawOrnament` juga punya parang dan mega mendung) dengan garis krem
+- Si Gagah: lokomotif diesel modern berbadan lebar (full-width carbody) dengan moncong aerodinamis,
+  kaca depan lebar bertopeng hitam, kisi radiator, panel isap udara, kipas & cerobong knalpot di atap,
+  lampu LED. Livery merah dengan pita ukiran Dayak (sulur spiral berkait emas, mata merah, pinggiran
+  gigi putih di dasar hitam) dan panel ukiran besar di sisi ruang mesin; `drawOrnament` juga punya
+  kawung, parang, dan mega mendung (`LOCO_ORN`)
+- Bogie CC: rangka samping berperut ikan, pegas primer gulung, pegas sekunder, peredam, blok & silinder
+  rem, motor traksi, pipa pasir; roda monoblok (`locoWheel`) dengan flens, ban baja, dan tanda cat berputar
+- Masjid: kubah bawang di atas tabuh berjendela dengan mustaka bulan sabit (`onionDome`), dua kubah
+  kecil, menara dua balkon; masjid desa latar juga berkubah bawang
 - Menyambung gerbong (`route.couple`): kereta bisa mundur (`S.rev`) hanya saat langkah `couple`;
   tombol pintu menjadi "Sambung"; panjang rangkaian (`TRAIN_LEN`) bertambah setelah tersambung
 - Kejadian lintas (data di rute misi): `meet` (persilangan di sepur belok dengan jalur utama di sisi
