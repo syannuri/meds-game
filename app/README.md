@@ -51,6 +51,14 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
     stasiun, dentum panel karet saat melintasi jalan perlintasan
   - Klakson udara tiga nada dengan hembusan udara dan gema perbukitan; berbunyi selama tombol
     (atau tombol `H`) ditahan
+- Tikungan 2.5D: rel dan rangkaian melengkung menjauh dari kamera, lokomotif masuk tikungan lebih
+  dulu lalu gerbong menyusul. Kamera miring dan bergoyang mengikuti gaya samping, indikator gaya
+  samping di speedometer (hijau, kuning, merah), percik api di roda saat terlalu kencang
+- Suara jembatan: "klang" sambungan muai di kedua ujung, dentum berongga tiap segmen gelagar,
+  dengung baja dengan denting rangka, dan gema lembah selama kereta di atas jembatan
+- Peron sisi dekat di setiap stasiun: penumpang berkumpul ke dekat pintu saat kereta datang,
+  penumpang turun didahulukan, lalu antre dan naik satu per satu (lansia lebih pelan). PPKA bertopi
+  merah mengangkat semboyan 40 dan kondektur meniup peluit semboyan 41 sebelum naik
 - Perlintasan sebidang 2.5D: jalan aspal yang menjauh ke latar dengan marka, panel karet di atas rel,
   palang pintu dan lampu "AWAS KERETA API" di kedua sisi, pos jaga JPL, serta motor, mobil, dan
   angkot yang antre lalu jalan kembali setelah kereta lewat
