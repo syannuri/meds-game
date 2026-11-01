@@ -15,6 +15,8 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 | 1-6 Duel Malam Takbiran | Watugede → Pasar Lama → Sukamaju (3,45 km, 18.45) | Balapan melawan bus TransKilat Kilat 07 di jalan raya (bus tertahan palang perlintasan saat kereta lewat), kereta penuh pemudik (lebih berat), dua stasiun dilewati langsung, malam dengan kembang api, bedug, dan ketupat |
 | 1-7 Bersilang di Krajan | Watugede → Halte Krajan → Kedung Banteng (3,4 km, 16.10) | Lintas tunggal: masuk sepur belok Krajan lewat wesel (maks 30 km/h, anjlok di atas 45), berhenti sebelum patok bebas, tunggu KA 112 dari arah berlawanan lewat di jalur utama, baru berangkat saat S2 hijau. Pohon tumbang di titik acak dengan peringatan radio (rem darurat tanpa potongan kenyamanan, tim jalan rel memotong batang), rel tergenang 70 m (maks 10 km/h, dilarang berhenti di air, motor traksi kemasukan air kalau terlalu cepat) |
 | 2-1 Emas Hitam | Tambang Muara Kelam → Dermaga Tanjung Api, Sumatra (3,3 km, 07.10) | Kereta barang 4 gerbong batu bara: muat presisi gerbong demi gerbong di bawah corong silo, rangkaian berat (momentum besar, rem lebih panjang), rombongan gajah Sumatra menyeberang (berhenti dan tunggu, klakson membuat gajah panik), turunan 16‰ ke pantai, bongkar di dermaga |
+| 2-2 Jalur yang Ditutup | Muara Kelam → Halte Lubuk Tua → Simpang Barisan (3,2 km, 19.40) | Kereta inspeksi satu gerbong di jalur cabang tua, malam gelap (hanya lampu sorot) dan kabut lembah, sinyal mekanik semafor (lengan mendatar = berhenti, terangkat 45° = aman), jembatan kayu maks 15 km/h (berderit di atasnya, gagal di atas 25 km/h), rumput di antara rel melemahkan rem |
+| 2-3 Kereta Rakyat | Simpang Barisan → Pasar Kopi Liwa → Muara Kelam (3,5 km, 06.20) | Hari pasar: setelah pintu ditutup di Pasar Kopi Liwa, warga mendorong gerbong kopi ke rel; mundur pelan, sentuh ≤ 3 km/h (3–5 sentakan, > 5 karung jatuh), tekan Sambung; rangkaian jadi lima kendaraan dan lebih berat (marka "5"), kambing dan perlintasan |
 
 Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MISSIONS` dalam `game.js`.
 
@@ -50,6 +52,17 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Zoom stasiun: setelah berhenti Good/Perfect, kamera mendekat 1,45× ke rangkaian dan peron selama
   pintu terbuka dan penumpang naik/turun, lalu menjauh saat pintu ditutup (tidak dipakai di kabin
   dan saat reduced motion)
+- Rute Harian: karcis lebar di atas daftar misi. Tanggal menentukan misi (1-4, 1-5, 1-6, 1-7, 2-2)
+  dan 2–3 kondisi acak (hujan, kabut, pohon tumbang, kambing, jadwal ketat −3%), sama untuk semua
+  pemain pada hari itu. Skor harian = koin + 150 per bintang + bonus waktu; skor terbaik per hari dan
+  hari beruntun disimpan di `rn.daily`
+- Masinis Ahli: tombol di layar briefing untuk misi yang sudah pernah selesai. Peta jalur, panduan
+  titik henti, petunjuk batas, dan petunjuk pertama kali disembunyikan; koin ×1,5; tiga bintang
+  memberi lencana emas AHLI di karcis (`rn.ahli`)
+- Si Gagah: badan merah tua dengan hidung miring dan kaca depan miring, kap tinggi berujung membulat,
+  pita ornamen emas (motif kawung; `drawOrnament` juga punya parang dan mega mendung) dengan garis krem
+- Menyambung gerbong (`route.couple`): kereta bisa mundur (`S.rev`) hanya saat langkah `couple`;
+  tombol pintu menjadi "Sambung"; panjang rangkaian (`TRAIN_LEN`) bertambah setelah tersambung
 - Kejadian lintas (data di rute misi): `meet` (persilangan di sepur belok dengan jalur utama di sisi
   depan, patok bebas, KA berlawanan yang lewat di tampilan samping dan kabin), `tree` (pohon tumbang
   di titik acak dalam zona, peringatan radio, kamera melirik ke depan) dan `flood` (genangan menutupi
