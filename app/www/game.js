@@ -2086,7 +2086,7 @@
   // ---------- tikungan 2.5D: rel dan rangkaian melengkung menjauh dari kamera ----------
   // Setiap zona tikungan membelokkan arah rel sebesar BEND_TH. Posisi samping (b) tiap titik rel
   // dihitung relatif terhadap tengah rangkaian, lalu diproyeksikan menjadi geseran vertikal dan skala.
-  const BEND_OFF = 300, BEND_TH = 50 * Math.PI / 180, BEND_D = 34, BEND_KV = 0.42;
+  const BEND_OFF = 300, BEND_TH = 50 * Math.PI / 180, BEND_D = 26, BEND_KV = 0.4;
   const REDUCE_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   let BEND = null, camRoll = 0, swayT = 0;
   const bendCv = document.createElement('canvas'), bctx = bendCv.getContext('2d');
@@ -2128,11 +2128,17 @@
     bctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     return Object.assign({}, V, { c: bctx, bdy: () => 0 });
   }
-  function endBend(c, B, gy) {
+  function endBend(c, B, gy, ppm) {
+    // per kolom: bagian atas (rel, kereta, objek) digeser & diskalakan; bagian bawah (sawah di depan rel)
+    // diregangkan dari kaki balas sampai tepi bawah layar agar tanah tetap menyambung
+    const yK = Math.min(H - 2, gy + 1.6 * ppm);
     for (const [sx, dy, s] of B.cols) {
       const w = Math.min(B.step, W - sx);
       if (w <= 0) continue;
-      c.drawImage(bendCv, sx * DPR, 0, w * DPR, bendCv.height, sx, gy - gy * s + dy, w + 0.6, H * s);
+      const dK = Math.min(H - 4, gy + (yK - gy) * s + dy);
+      const top = dK - yK * s;
+      c.drawImage(bendCv, sx * DPR, 0, w * DPR, yK * DPR, sx, top, w + 0.6, yK * s);
+      c.drawImage(bendCv, sx * DPR, yK * DPR, w * DPR, (H - yK) * DPR, sx, dK, w + 0.6, H - dK);
     }
   }
   function drawSparks(V, dt, lat) {
@@ -2221,10 +2227,10 @@
     drawPort(V);
     drawBackProps(V);
     drawTunnelHill(V);
-    drawGround(V, bendCols ? 'field' : 'all');
-    // lapisan rel & kereta: digambar ke kanvas terpisah lalu dilengkungkan saat di tikungan
+    // lapisan tanah, rel & kereta: saat di tikungan digambar ke kanvas terpisah lalu dilengkungkan.
+    // Tanah ikut melar di bawah rel sehingga rel tetap menapak di tanah, tidak melayang.
     const LV = bendCols ? beginBend(V) : V;
-    if (bendCols) drawGround(LV, 'bed');
+    drawGround(LV);
     drawTunnelInterior(LV);
     drawStations(LV);
     drawSwitch(LV);
@@ -2240,8 +2246,8 @@
     drawSilo(LV, 'front');
     drawCrossings(LV, 'front', dtReal);
     drawElephants(LV, 'front');
-    if (bendCols) endBend(c, bendCols, gy);
-    drawBus(V);
+    drawBus(LV);
+    if (bendCols) endBend(c, bendCols, gy, ppm);
     drawBridge(V, 'front');
     drawTunnelPortals(V);
     drawFrontProps(V);
@@ -3374,15 +3380,15 @@
   function crossGeom(V, cr) {
     const { ppm, gy, X } = V;
     const sx = X(cr.x);
-    const yTop = gy + 1.4 * ppm, yFarEdge = gy - 0.6 * ppm, yFar = gy - 9 * ppm;
-    const farX = sx + (W * 0.5 - sx) * 0.16;
+    const yTop = gy + 1.4 * ppm, yFarEdge = gy - 0.6 * ppm, yFar = gy - 3.2 * ppm;
+    const farX = sx + (W * 0.5 - sx) * 0.05;
     const nearX = V.Xn(sx);
     // titik di sumbu jalan pada kedalaman d, beserta setengah lebar jalan (px)
     const at = (d) => {
       if (d <= 1) { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (nearX - sx) * t, y: yTop + (H - yTop) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm }; }
       const t = clamp(d - 1, 0, 1);
       const te = 1 - Math.pow(1 - t, 1.8);
-      return { x: sx + (farX - sx) * te, y: lerp(yFarEdge, yFar, te), hw: lerp(3.5, 0.9, te) * ppm };
+      return { x: sx + (farX - sx) * te, y: lerp(yFarEdge, yFar, te), hw: lerp(3.5, 2.3, te) * ppm };
     };
     return { sx, yTop, yFarEdge, yFar, farX, nearX, at };
   }
@@ -3466,6 +3472,22 @@
         if (!active && A.gate < 0.15 && st.x - TRAIN_LEN > cr.x) A.released = true;
         if (A.released) for (const v of A.veh) v.d += v.dir * dt * (v.kind === 'moto' ? 0.42 : 0.3);
         const asphalt = mix('#4a4a4d', '#5a5a5e', V.p), asphaltFar = mix('#5d5c62', '#7a7a80', V.p);
+        // tanah berumput di seberang rel tempat jalan menjauh (memudar ke samping agar menyatu dengan bukit)
+        {
+          const vx0 = G.sx - 30 * ppm, vx1 = G.sx + 30 * ppm, vTop = G.yFar - 0.9 * ppm;
+          const grass = V.night ? '#24331f' : mix('#5a8540', '#78a84c', V.p);
+          c.save();
+          c.beginPath(); c.moveTo(vx0, G.yFarEdge + 0.2 * ppm);
+          c.quadraticCurveTo(G.sx - 16 * ppm, vTop, G.sx, vTop); c.quadraticCurveTo(G.sx + 16 * ppm, vTop, vx1, G.yFarEdge + 0.2 * ppm);
+          c.closePath(); c.clip();
+          c.fillStyle = grass;
+          for (let k = 0; k < 12; k++) {
+            const a0 = vx0 + (vx1 - vx0) * (k / 12), a1 = vx0 + (vx1 - vx0) * ((k + 1) / 12), mid = (k + 0.5) / 12;
+            c.globalAlpha = clamp(Math.min(mid, 1 - mid) * 4, 0, 1);
+            c.fillRect(a0, vTop - 2, a1 - a0 + 1, G.yFarEdge - vTop + 0.6 * ppm);
+          }
+          c.restore();
+        }
         // ruas jauh di belakang rel
         const f0 = G.at(1), f1 = G.at(2);
         drawRoadPoly(c, [[f1.x - f1.hw, f1.y], [f1.x + f1.hw, f1.y], [f0.x + f0.hw, f0.y], [f0.x - f0.hw, f0.y]], asphaltFar);
@@ -3508,8 +3530,16 @@
         c.fillText(`JPL ${12 + i * 7}`, hx + 1.0 * ppm, hy - 1.92 * ppm);
         c.textAlign = 'start'; c.textBaseline = 'alphabetic';
         person(c, hx - 2.4 * ppm, hy, ppm * 0.9, 41 + i, { color: '#2e5a8a' });
-        // kendaraan di sisi jauh, palang & lampu sisi jauh
+        // kendaraan di sisi jauh, lalu semak di ujung jalan agar jalan menghilang di balik vegetasi
         A.veh.filter((v) => v.d > 1).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
+        {
+          const e = G.at(1.92), bush = V.night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', V.p);
+          c.fillStyle = bush;
+          for (let k = -3; k <= 3; k++) {
+            const bx = e.x + k * 1.1 * ppm, r = (0.9 + hash(k + i * 3.7) * 0.6) * ppm;
+            c.beginPath(); c.arc(bx, e.y - r * 0.2, r, 0, 7); c.fill();
+          }
+        }
         const fs = 0.8 * ppm;
         const fp = G.at(1.12);
         crossingSignal(c, fp.x + fp.hw + 1.1 * ppm, fp.y, fs, blink, !blink, active);
