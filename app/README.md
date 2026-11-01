@@ -7,6 +7,9 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 ## Misi
 | Misi | Rute | Tantangan |
 |---|---|---|
+| 1-1 Langkah Pertama di Depo | Depo Sukamaju → Sukamaju (0,6 km, 05.30) | Misi pembuka: tuas, meluncur di N, rem, berhenti di marka (batas 25 km/h) |
+| 1-2 Membaca Sinyal | Sukamaju → Cibening (1,2 km, 05.50) | Misi pembuka: papan batas 40, sinyal kuning J1, sinyal merah S2 yang hijau setelah berhenti |
+| 1-3 Penumpang Pertama | Sukamaju → Halte Sumberrejo → Cibening (1,8 km, 06.20) | Misi pembuka: pintu, penumpang naik, kenyamanan, klakson di papan 35 sebelum perlintasan |
 | 1-4 Pagi Pertama Pasar Minggu | Sukamaju → Cibening → Pasar Lama (2,6 km, 06.00) | Tikungan 30 km/h, perlintasan, kambing, kabut, sinyal blok merah |
 | 1-5 Hujan di Lengkung Watu | Pasar Lama → Kali Jernih → Watugede (3,0 km, 15.30) | Hujan & petir (rem lebih lemah, roda selip, tombol pasir), turunan 15‰, tanjakan 20‰, Terowongan Lengkung Watu, wesel yang disabotase (Dimas memeriksa lewat radio) |
 
@@ -58,6 +61,13 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Kabin lebih kaya: tekstur batu balas, kilap rel, patok hektometer, papan semboyan 35 sebelum
   perlintasan, speedometer jarum, serta tuas notch dan tuas rem yang ikut bergerak
 - Tikungan menurunkan resolusinya sendiri bila perangkat terlalu lambat (saat `BEND_3D` aktif)
+- Misi pembuka 1-1 sampai 1-3 dengan petunjuk: layar meredup, kontrol yang perlu dipakai disorot, dan
+  satu kalimat dari Kakek, Dimas, atau Bu Wulan; petunjuk tertutup sendiri begitu pemain melakukannya.
+  Tombol "Petunjuk" di layar briefing mematikan semua petunjuk. Pemain yang sudah memainkan misi 1-4
+  ke atas tidak diarahkan kembali ke misi pembuka
+- Sasaran bintang terlihat saat bermain: tiga chip di bawah panel atas (abu-abu menunggu, hijau
+  tercapai, merah gagal). Layar hasil menampilkan tiap sasaran dengan nilai terukur dan satu tips
+- Papan semboyan 35 di titik mulai wajib klakson sebelum perlintasan (tampilan samping dan kabin)
 - HUD ringkas: panel atas satu baris, speedometer kecil tembus pandang, tuas ramping, tombol bulat;
   strip rute dan titik henti hanya muncul saat mendekati stasiun, sinyal, perlintasan, satwa, atau
   perubahan batas kecepatan. Di tampilan kabin, kecepatan pindah ke panel dasbor

@@ -42,6 +42,7 @@
       <button id="btnMute" class="glass round" aria-label="Matikan semua suara"></button>
     </div>
 
+    <ul class="goalchips" id="goalChips" aria-label="Sasaran bintang"></ul>
     <div class="hud-gauge">
       <div class="gauge" id="speedo">
         <svg viewBox="0 0 196 196" aria-hidden="true">
@@ -91,6 +92,10 @@
     </div>
   </div>
 
+  <div id="coach" hidden>
+    <div id="coachSpot"></div>
+    <div id="coachBubble" role="status" aria-live="polite"><span class="av" id="coachAv">KK</span><span><b id="coachWho">Kakek</b><span id="coachText"></span></span></div>
+  </div>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="radio" class="panel" role="status" aria-live="polite" hidden>
     <div class="avatar sm" aria-hidden="true" id="radioAvatar">DM</div>
@@ -156,15 +161,12 @@
         <div class="btn-row">
           <button class="btn primary" id="btnGo">Berangkat</button>
           <button class="btn" id="btnBack">Kembali</button>
+          <button class="btn sm" id="btnTutSkip" aria-pressed="true" hidden>Petunjuk: nyala</button>
         </div>
       </div>
       <div class="card">
         <dl class="facts" id="briefFacts"></dl>
-        <ul class="goals">
-          <li><span class="star">★</span>Tiba dengan selamat</li>
-          <li><span class="star">★</span><span id="briefGoal2">Tiba tepat waktu</span></li>
-          <li><span class="star">★</span><span id="briefGoal3">Kenyamanan minimal 80% dan semua pemberhentian Good atau Perfect</span></li>
-        </ul>
+        <ul class="goals" id="briefGoals"></ul>
       </div>
     </div>
   </section>

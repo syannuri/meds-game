@@ -552,3 +552,42 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
   .ticket .tbody { padding: 4px 8px; }
   .ticket .tbody b { font-size: 13px; }
 }
+
+/* ---------- sasaran bintang langsung di HUD ---------- */
+.goalchips { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); top: calc(54px + env(safe-area-inset-top, 0px)); margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; pointer-events: none; max-width: min(240px, 30vw); }
+.gchip { display: flex; align-items: center; gap: 5px; padding: 2px 9px 2px 7px; border-radius: 999px; background: rgba(10, 16, 24, 0.5); border: 1px solid rgba(255, 255, 255, 0.12); font-size: 10.5px; font-weight: 700; color: #e9e4d6; width: max-content; max-width: 100%; }
+.gchip .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.gchip .s { color: var(--saffron); }
+.gchip .m { font-weight: 900; }
+.gchip.ok { border-color: rgba(69, 212, 131, 0.55); }
+.gchip.ok .m { color: var(--sig-green); }
+.gchip.lost { opacity: 0.6; }
+.gchip.lost .s { color: var(--muted); }
+.gchip.lost .m { color: #ff7a6c; }
+.gchip.flash { animation: gflash 0.8s ease-out 1; }
+@keyframes gflash { 0% { transform: scale(1.12); box-shadow: 0 0 0 4px rgba(242, 165, 22, 0.45); } 100% { transform: none; box-shadow: none; } }
+#hud.cab .goalchips { top: calc(54px + env(safe-area-inset-top, 0px)); }
+/* ---------- petunjuk misi pembuka ---------- */
+#coach { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+#coachSpot { position: fixed; border-radius: 16px; box-shadow: 0 0 0 200vmax rgba(5, 8, 11, 0.55); outline: 2px solid var(--saffron); outline-offset: 2px; transition: left 0.2s, top 0.2s, width 0.2s, height 0.2s; }
+#coachBubble { position: fixed; display: flex; gap: 8px; align-items: flex-start; max-width: min(300px, 46vw); padding: 8px 11px; border-radius: 12px; background: #f3ead0; color: #1f2a22; font-size: 13px; line-height: 1.35; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4); }
+#coachBubble .av { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: #2e6b6a; color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 11px; }
+#coachBubble b { display: block; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a5a10; }
+/* ---------- hasil: daftar sasaran ---------- */
+.rgoals { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.rgoals li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); font-size: 13px; }
+.rgoals i { font-style: normal; color: var(--saffron); font-size: 16px; }
+.rgoals li.miss i { color: rgba(170, 180, 174, 0.4); }
+.rgoals small { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rgoals li.miss small { color: #ff9a8c; }
+.rtip { margin: 0 0 10px; font-size: 12.5px; color: var(--muted); }
+/* ---------- karcis: misi pembuka lebih kecil, tiga sebaris ---------- */
+.tickets { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.tickets li { grid-column: span 3; }
+.tickets li.tut { grid-column: span 2; }
+.ticket.t-tut .stub { width: 40px; flex-basis: 40px; }
+.ticket.t-tut .stub b { font-size: 17px; }
+.ticket.t-tut .stub small { display: none; }
+.ticket.t-tut .tbody b { font-size: 12.5px; }
+.ticket.t-tut .tnew { display: none; }
+.ticket.t-tut .tstars { font-size: 10px; }
