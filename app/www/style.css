@@ -84,6 +84,9 @@ button:focus-visible { outline: 2px solid var(--saffron); outline-offset: 2px; }
 .hud-top .sub { font-size: 11px; color: var(--muted); white-space: nowrap; }
 .hud-top .next { flex: 1 1 auto; }
 .hud-top .comfort { width: 128px; }
+.hud-top .rival { min-width: 112px; }
+.hud-top .rival.ahead .val { color: var(--sig-green); }
+.hud-top .rival.behind .val { color: var(--sig-red); }
 .bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
 .bar i { display: block; height: 100%; width: 100%; background: var(--sig-green); transition: width 0.2s, background-color 0.3s; }
 .icon-btn.off { color: var(--muted); text-decoration: line-through; }

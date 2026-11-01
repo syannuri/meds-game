@@ -1,6 +1,6 @@
 # Rel Nusantara: Prototipe Babak 1
 
-Prototipe yang bisa dimainkan untuk Misi 1-4 **"Pagi Pertama Pasar Minggu"** dan Misi 1-5 **"Hujan di Lengkung Watu"** dari
+Prototipe yang bisa dimainkan untuk Babak 1: Misi 1-4 **"Pagi Pertama Pasar Minggu"**, Misi 1-5 **"Hujan di Lengkung Watu"**, dan Misi 1-6 **"Duel Malam Takbiran"** dari
 [`docs/GAME_DESIGN.md`](../docs/GAME_DESIGN.md). Game ditulis dengan HTML5 Canvas + JavaScript
 murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai aplikasi native iOS dan Android.
 
@@ -9,6 +9,8 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 |---|---|---|
 | 1-4 Pagi Pertama Pasar Minggu | Sukamaju → Cibening → Pasar Lama (2,6 km, 06.00) | Tikungan 30 km/h, perlintasan, kambing, kabut, sinyal blok merah |
 | 1-5 Hujan di Lengkung Watu | Pasar Lama → Kali Jernih → Watugede (3,0 km, 15.30) | Hujan & petir (rem lebih lemah, roda selip, tombol pasir), turunan 15‰, tanjakan 20‰, Terowongan Lengkung Watu, wesel yang disabotase (Dimas memeriksa lewat radio) |
+
+| 1-6 Duel Malam Takbiran | Watugede → Pasar Lama → Sukamaju (3,45 km, 18.45) | Balapan melawan bus TransKilat Kilat 07 di jalan raya (bus tertahan palang perlintasan saat kereta lewat), kereta penuh pemudik (lebih berat), dua stasiun dilewati langsung, malam dengan kembang api, bedug, dan ketupat |
 
 Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MISSIONS` dalam `game.js`.
 
@@ -24,8 +26,15 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Audio sintetis (WebAudio, tanpa berkas suara):
   - Musik latar bernuansa gamelan (laras slendro: saron, bonang, kenong, kempul, gong, kendang)
   - Suasana: kicau burung, jangkrik saat fajar, angin, sungai di bawah jembatan, riuh penumpang di peron
-  - Kereta: hentakan uap, gemuruh roda (lebih bergema di jembatan), "jeglak-jeglek" sambungan rel,
-    desis uap saat diam, rem angin, decit rem, peluit dengan gema
+  - Mesin uap: hentakan uap dijadwalkan di jam audio sehingga ritmenya rata dan menyatu menjadi desis
+    kontinu saat cepat, dengung api ketel, dentum silinder saat berangkat, pompa udara saat berhenti,
+    "jeglak-jeglek" tiap gandar di sambungan rel, gemuruh roda (bergema di jembatan & terowongan)
+  - Pengereman: desis katup saat tuas ke B, gesekan blok rem yang mengikuti kecepatan, decit roda
+    menjelang berhenti, lalu hentakan sambungan gerbong dan desis pelepasan panjang saat kereta berhenti
+  - Pintu: buka = katup udara > geser > benturan; tutup = bel peringatan > katup > geser > benturan + kunci
+  - Mixer: jalur terpisah (mesin, rem, pintu, efek, suasana, musik), gema ringan, peredam nada tinggi,
+    kompresor lembut; pintu, rem berhenti, dan pengumuman menurunkan suasana & musik sesaat, dan
+    pengumuman stasiun menunggu sampai bunyi pintu/rem selesai
   - Bel perlintasan "teng-teng", embik kambing, pintu geser, bel pintu, tabrakan
   - Pengumuman stasiun dengan nada "ting-tung"; jika perangkat punya suara Bahasa Indonesia, pengumuman dibacakan
   - Jingle bintang di layar hasil; tombol terpisah untuk musik dan semua suara
