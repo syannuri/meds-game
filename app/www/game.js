@@ -25,9 +25,11 @@
 
   // ---------- data misi & rute ----------
   const TIME_SCALE = 5;            // 1 detik nyata = 5 detik jam game
-  const LOCO_LEN = 16, COACH_LEN = 20, GAP = 1.2;
-  const N_COACH = 3;
-  const TRAIN_LEN = LOCO_LEN + N_COACH * (COACH_LEN + GAP);
+  const LOCO_LEN = 16, COACH_LEN = 20, WAGON_LEN = 12, GAP = 1.2;
+  // susunan rangkaian berubah per misi: 3 gerbong penumpang atau N gerbong batu bara
+  let N_COACH = 3, CAR_LEN = COACH_LEN;
+  let TRAIN_LEN = LOCO_LEN + N_COACH * (CAR_LEN + GAP);
+  const carFront = (k) => LOCO_LEN + GAP + k * (CAR_LEN + GAP);   // jarak muka gerbong ke-k dari moncong
   const WINDOW_BEFORE = 40, WINDOW_AFTER = 55; // jendela berhenti di peron (m)
   const SAND_USES = 3, SAND_TIME = 8;
 
@@ -229,7 +231,66 @@
       bufferStop: 3550,
     },
   };
-  const MISSION_ORDER = ['1-4', '1-5', '1-6'];
+  MISSIONS['2-1'] = {
+    id: '2-1',
+    chapter: 'Babak 2 · Sumatra',
+    title: 'Emas Hitam',
+    startClock: 7 * 3600 + 10 * 60,
+    sky: 'dawn',
+    rain: false,
+    freight: true,
+    wagons: 4,
+    land: 'sawit',
+    ticket: 'jungle',
+    tags: ['Kereta barang', 'Muat presisi', 'Gajah', 'Turunan panjang'],
+    speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
+    brief: 'Selamat datang di Sumatra, Raka! Hari ini Si Gagah menarik empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Muat satu per satu tepat di bawah corong. Rangkaian penuh itu berat, jadi mulai mengerem jauh lebih awal, apalagi di turunan menuju pantai.',
+    weather: 'pagi berkabut tipis',
+    intro: 'Maju pelan ke corong muat. Hentikan gerbong 1 tepat di bawah corong.',
+    reward: '<strong>Cerita:</strong> Di dermaga, Sari menunjukkan peta tua milik kakek Raka: ada jalur cabang yang dulu ditutup menuju pedalaman Bukit Barisan. Babak 2 baru dimulai.',
+    aboard: 0,
+    route: {
+      lineSpeed: 60,
+      startX: 150,
+      loading: { silo: 160 },
+      stations: [
+        { name: 'TAMBANG MUARA KELAM', elev: '+212 m', x: 0, sched: 0, waiting: 0, depot: true },
+        { name: 'DERMAGA TANJUNG API', elev: '+4 m', x: 3300, sched: 2100, waiting: 0, final: true, port: true },
+      ],
+      zones: [
+        { from: -150, to: 255, limit: 15, label: 'area muat tambang' },
+        { from: 255, to: 430, limit: 30, label: 'emplasemen tambang' },
+        { from: 1150, to: 1300, limit: 35, label: 'Tikungan Bukit Barisan', curve: true },
+        { from: 2450, to: 2600, limit: 40, label: 'Tikungan Pantai', curve: true },
+        { from: 2700, to: 2830, limit: 50, label: 'Jembatan Way Sekampung' },
+        { from: 3050, to: 3400, limit: 30, label: 'area dermaga' },
+      ],
+      signals: [
+        { id: 'S1', x: 265, start: 0, init: 'R' },
+        { id: 'B1', x: 1420, init: 'G' },
+        { id: 'J1', x: 3050, init: 'Y' },
+      ],
+      scripts: [],
+      crossings: [{ x: 2950, hornFrom: 2650 }],
+      goats: [],
+      elephants: { x: 1700, trigger: 1180, cross: 12 },
+      fog: { from: 380, to: 1000 },
+      bridge: { from: 2700, to: 2830 },
+      tunnel: null,
+      grades: [
+        { from: 600, to: 1100, permil: 12, label: 'Tanjakan Muara' },
+        { from: 1900, to: 2450, permil: -16, label: 'Turunan Pantai' },
+      ],
+      switchX: null,
+      hints: [
+        { at: 280, msg: 'Rangkaian penuh sangat berat: percepatan lambat, jarak pengereman jauh lebih panjang.', kind: 'warn' },
+        { at: 1880, msg: 'Turunan panjang 16‰ ke pantai. Tahan rem dari sekarang, jangan biarkan kereta kebablasan.', kind: 'warn' },
+        { at: 2900, msg: 'Dermaga di depan. Berhenti tepat di marka bongkar.' },
+      ],
+      bufferStop: 3400,
+    },
+  };
+  const MISSION_ORDER = ['1-4', '1-5', '1-6', '2-1'];
   let MIS = MISSIONS['1-4'];
   let ROUTE = MIS.route;
   const finalStation = () => ROUTE.stations[ROUTE.stations.length - 1];
@@ -493,7 +554,7 @@
       nz(t + 0.55, 'lowpass', 280, 0.7, 0.02, 0.18, engine, 0.03);
     }
     // posisi gandar (m di belakang moncong): lokomotif + dua gerbong
-    const AXLES = [1.8, 3.5, 5.2, 10.45, 12.15, 13.85, 20.4, 22.5, 31.9, 34.0, 41.6, 43.7, 53.1, 55.2, 62.8, 64.9, 74.3, 76.4];
+    let AXLES = [1.8, 3.5, 5.2, 10.45, 12.15, 13.85, 20.4, 22.5, 31.9, 34.0, 41.6, 43.7, 53.1, 55.2, 62.8, 64.9, 74.3, 76.4];
 
     // ---- musik latar bernuansa gamelan (laras slendro, buatan sendiri) ----
     const SL = { 1: 1, 2: 1.147, 3: 1.318, 5: 1.512, 6: 1.737, 7: 2 }; // 7 = 1 tinggi
@@ -823,6 +884,33 @@
         duck({ amb: 0.3, music: 0.4 }, 4);
       },
       sand() { burst(700, 0.8, 0.1, 0.9, 'bandpass', brake); burst(4000, 0.7, 0.03, 0.6, 'highpass', brake); },
+      setAxles(a) { AXLES = a; },
+      coal(dur = 3) { // gemuruh batu bara jatuh ke gerbong
+        if (!ac || muted) return;
+        const t = ac.currentTime;
+        const src = ac.createBufferSource(); src.buffer = brown; src.loop = true;
+        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 380; f.Q.value = 0.6;
+        const gn = g(0);
+        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.32, t + 0.3);
+        gn.gain.setValueAtTime(0.32, t + dur - 0.5); gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        src.connect(f).connect(gn).connect(sfx); src.start(t); src.stop(t + dur + 0.05);
+        for (let i = 0; i < dur * 9; i++) burst(1600 + Math.random() * 1600, 2, 0.025, 0.05, 'bandpass', sfx, 0.2 + Math.random() * (dur - 0.4));
+        duck({ amb: 0.3, music: 0.35 }, dur);
+      },
+      trumpet(vol = 0.5) { // lengkingan gajah di kejauhan
+        if (!ac || muted) return;
+        const t = ac.currentTime;
+        const o = ac.createOscillator(); o.type = 'sawtooth';
+        o.frequency.setValueAtTime(380, t); o.frequency.exponentialRampToValueAtTime(820, t + 0.35); o.frequency.exponentialRampToValueAtTime(520, t + 1.1);
+        const vib = ac.createOscillator(); vib.frequency.value = 11; const vg = g(30); vib.connect(vg).connect(o.frequency);
+        const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1300; f.Q.value = 1.8;
+        const gn = g(0);
+        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.1 * vol, t + 0.12);
+        gn.gain.setValueAtTime(0.09 * vol, t + 0.9); gn.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
+        const pn = panner(0.3);
+        let out = o.connect(f).connect(gn); if (pn) out = out.connect(pn); out.connect(amb);
+        o.start(t); vib.start(t); o.stop(t + 1.35); vib.stop(t + 1.35);
+      },
       failSting() { [392, 311, 233].forEach((f, i) => tone(f, 0.1, 0.7, { type: 'triangle', delay: i * 0.3 })); },
       toggleMute() {
         muted = !muted; store.set('rn.mute', muted ? '1' : '0');
@@ -850,12 +938,14 @@
   function newState() {
     return {
       mode: 'play',
-      x: 0, v: 0, aCmd: -0.5, aAct: 0, aPrev: 0, jerkF: 0,
+      x: ROUTE.startX || 0, v: 0, aCmd: -0.5, aAct: 0, aPrev: 0, jerkF: 0,
       notch: -2,
       t: 0, clock: 0,
       comfort: 100, coins: 0,
       violations: [], violKeys: {}, stops: [],
-      phase: 'dwell', st: 0, doors: 'open',
+      phase: MIS.freight ? 'load' : 'dwell', st: 0, doors: MIS.freight ? 'closed' : 'open',
+      load: MIS.freight ? Array(MIS.wagons).fill(0) : [], loadIdx: 0, loadT: 0, loads: [],
+      eleph: { phase: 'idle', t: 0, prog: 0, honked: false },
       dwell: { step: 'close', timer: 0 },
       waiting: ROUTE.stations.map((s) => s.waiting),
       aboard: MIS.aboard,
@@ -880,7 +970,7 @@
   const sv = $('strip'), sctx = sv.getContext('2d');
   let W = 0, H = 0, DPR = 1, SW = 0, SH = 0;
   let mode = 'title';
-  let radioTimer = 0;
+  let radioTimer = 0, camLead = 0, camZoom = 1;
   let rotateSkipped = false;
 
   const ui = {
@@ -1063,6 +1153,11 @@
   function horn() {
     if (!S || S.mode !== 'play') return;
     Sound.whistle();
+    if (ROUTE.elephants && (S.eleph.phase === 'block' || S.eleph.phase === 'cross') && !S.eleph.honked) {
+      S.eleph.honked = true;
+      Sound.trumpet(0.7);
+      violation('eleph-horn', 'Membunyikan klakson ke gajah: rombongan panik dan berhenti di rel', 6);
+    }
     ROUTE.crossings.forEach((c, i) => {
       if (S.x >= c.hornFrom && S.x < c.x && !S.horned[i]) {
         S.horned[i] = true;
@@ -1174,7 +1269,7 @@
   }
 
   function door() {
-    if (!S || S.mode !== 'play') return;
+    if (!S || S.mode !== 'play' || MIS.freight) return;
     if (S.phase === 'dwell') {
       const step = S.dwell.step;
       if (step === 'open') {
@@ -1203,6 +1298,23 @@
     }
   }
 
+  // muka kereta saat gerbong ke-i tepat di bawah corong silo
+  const loadTarget = (i) => ROUTE.loading.silo + carFront(i) + CAR_LEN / 2;
+  function rateLoad(d) {
+    const a = Math.abs(d);
+    if (a <= 0.5) return { r: 'Perfect', c: 'perfect', coins: 40 };
+    if (a <= 2) return { r: 'Good', c: 'good', coins: 25 };
+    if (a <= 5) return { r: 'OK', c: 'ok', coins: 10 };
+    return { r: 'Miss', c: 'miss', coins: 0 };
+  }
+  // titik henti aktif: corong muat saat memuat, atau stasiun berikutnya
+  function stopTarget() {
+    if (!S) return null;
+    if (S.phase === 'load' && S.loadIdx < N_COACH) return { x: loadTarget(S.loadIdx), load: true };
+    if (S.phase === 'run') { const ns = nextStation(); return ns ? { x: ns.x, load: false } : null; }
+    return null;
+  }
+
   function rateStop(d) {
     const a = Math.abs(d);
     if (a <= 1) return { r: 'Perfect', c: 'perfect', coins: 50 };
@@ -1219,11 +1331,12 @@
     S.coins += rating.coins;
     S.st = stIdx;
     S.phase = 'dwell';
-    S.dwell = { step: 'open', timer: 0 };
+    S.dwell = { step: MIS.freight ? 'unload' : 'open', timer: 0 };
     S.yellowLimit = false;
     const where = d > 0 ? 'lewat' : 'kurang';
     const kind = rating.c === 'miss' ? 'bad' : rating.c === 'ok' ? 'info' : 'good';
-    toast(`${rating.r.toUpperCase()}! ${fmtM(Math.abs(d))} m ${where} dari marka. Buka pintu.`, kind, 3.2, null, 3);
+    toast(`${rating.r.toUpperCase()}! ${fmtM(Math.abs(d))} m ${where} dari marka. ${MIS.freight ? 'Membongkar muatan...' : 'Buka pintu.'}`, kind, 3.2, null, 3);
+    if (MIS.freight) { Sound.coal(4.5); return; }
     if (st.final) setTimeout(() => Sound.announce(`Kereta telah tiba di Stasiun ${titleCase(st.name)}, stasiun akhir. Terima kasih telah bepergian bersama Si Gagah.`), 900);
   }
 
@@ -1240,6 +1353,11 @@
         dw.step = 'close'; dw.timer = 0;
         toast(st.travelers ? 'Pemudik dan barang bawaannya sudah naik. Tutup pintu.' : st.traders ? 'Para pedagang sudah naik dengan keranjangnya. Tutup pintu.' : st.umbrellas ? 'Penumpang naik sambil melipat payung. Tutup pintu.' : 'Penumpang sudah naik. Tutup pintu.', 'info', 3, null, 2);
       }
+    } else if (dw.step === 'unload') {
+      // bongkar: muatan tiap gerbong turun bergiliran ke hopper dermaga
+      for (let k = 0; k < N_COACH; k++) S.load[k] = Math.max(0, Math.min(S.load[k], 1 - (dw.timer - k * 0.6) / 2.4));
+      if (Math.random() < 0.5) S.smoke.push({ x: S.x - carFront(Math.floor(Math.random() * N_COACH)) - CAR_LEN / 2, y: 0.4, r: 0.4, grow: 1.2, vx: (Math.random() - 0.5), vy: 0.6, life: 0, max: 1.4, dust: true, a: 0.45 });
+      if (dw.timer >= 5) finish();
     } else if (dw.step === 'alight') {
       if (dw.timer > 1) S.aboard = Math.max(0, S.aboard - Math.ceil(dt * 12));
       if (dw.timer >= 3.2) finish();
@@ -1251,6 +1369,7 @@
         S.stoppedShortShown = false;
         Sound.signalChime();
         toast(S.st === 0 ? 'Sinyal hijau! Dorong tuas ke P untuk berangkat.' : 'Sinyal berangkat hijau. Lanjutkan perjalanan.', 'good', 3, null, 3);
+        if (MIS.freight && S.st === 0) setTimeout(() => { if (S && S.mode === 'play') radio('Muara Kelam ke Si Gagah: jalur aman sampai Tanjung Api. Hati-hati, rombongan gajah sering melintas pagi begini.', 6.5, 'Sari', 'SR'); }, 1500);
       }
     }
   }
@@ -1262,11 +1381,11 @@
     // --- dinamika kereta ---
     const n = S.notch;
     let target;
-    const powerLocked = S.doors === 'open' || S.phase === 'dwell';
+    const powerLocked = S.doors === 'open' || S.phase === 'dwell' || S.loadT > 0;
     const wet = MIS.rain && !inTunnel(S.x - LOCO_LEN);
     if (S.sandT > 0) S.sandT = Math.max(0, S.sandT - dt);
     const grip = wet && S.sandT <= 0 ? 0.78 : 1; // rel basah melemahkan rem
-    const massF = MIS.heavy ? 1 + S.aboard / 140 : 1; // kereta penuh lebih berat
+    const massF = MIS.freight ? 1.35 + S.load.reduce((a, b) => a + b, 0) * 0.22 : MIS.heavy ? 1 + S.aboard / 140 : 1; // kereta penuh lebih berat
     const brakeF = 1 + (massF - 1) * 0.6;
     if (n > 0) target = powerLocked ? 0 : (n * 0.26 * Math.max(0, 1 - S.v / 26)) / massF;
     else if (n === 0) target = 0;
@@ -1347,11 +1466,59 @@
     // --- petunjuk ---
     ROUTE.hints.forEach((h, i) => { if (S.x > h.at) hintOnce('h' + i, h.msg, h.kind || 'info'); });
     const ns = nextStation();
-    if (ns && S.phase === 'run' && ns.x - S.x < 420 && ns.x - S.x > 0 && !S.hints['ann' + S.st]) {
+    if (!MIS.freight && ns && S.phase === 'run' && ns.x - S.x < 420 && ns.x - S.x > 0 && !S.hints['ann' + S.st]) {
       S.hints['ann' + S.st] = true;
       Sound.announce(`Sesaat lagi kereta akan tiba di Stasiun ${titleCase(ns.name)}. Periksa kembali barang bawaan Anda.`);
     }
-    if (ns && S.phase === 'run' && ns.x - S.x < 260 && ns.x - S.x > 0) hintOnce('stop' + S.st, `Stasiun ${ns.name}: berhenti tepat di marka kuning "${N_COACH + 1}".`);
+    if (ns && S.phase === 'run' && ns.x - S.x < 260 && ns.x - S.x > 0) hintOnce('stop' + S.st, MIS.freight ? `${ns.name}: berhenti tepat di marka bongkar.` : `Stasiun ${ns.name}: berhenti tepat di marka kuning "${N_COACH + 1}".`);
+
+    // --- pemuatan batu bara gerbong demi gerbong ---
+    if (S.phase === 'load') {
+      const i = S.loadIdx, d = S.x - loadTarget(i);
+      if (S.loadT > 0) {
+        S.loadT -= dt;
+        S.load[i] = Math.min(1, S.load[i] + dt / 2.1);
+        if (Math.random() < 0.6) S.smoke.push({ x: ROUTE.loading.silo + (Math.random() - 0.5) * 2, y: 4.4, r: 0.35, grow: 1, vx: (Math.random() - 0.5) * 0.6, vy: 0.5, life: 0, max: 1.2, dust: true, a: 0.35 });
+        if (S.loadT <= 0) {
+          S.load[i] = 1; S.loadIdx++;
+          if (S.loadIdx >= N_COACH) {
+            S.phase = 'dwell'; S.dwell = { step: 'signal', timer: 0 };
+            toast('Keempat gerbong penuh. Tunggu sinyal berangkat S1.', 'good', 3, null, 3);
+          } else toast(`Gerbong ${i + 1} penuh. Maju pelan, hentikan gerbong ${i + 2} di bawah corong.`, 'info', 3, null, 2);
+        }
+      } else if (S.v === 0 && prevV === 0 && d > -6 && d < 9) {
+        const rating = rateLoad(d);
+        S.loads.push({ i, offset: d, rating });
+        S.coins += rating.coins;
+        if (rating.c === 'miss') { S.comfort -= 8; toast(`Gerbong ${i + 1} lewat ${fmtM(d)} m. Batu bara tumpah ke rel!`, 'bad', 3, null, 3); }
+        else toast(`${rating.r.toUpperCase()}! Gerbong ${i + 1} ${fmtM(Math.abs(d))} m dari corong. Memuat...`, rating.c === 'ok' ? 'info' : 'good', 2.6, null, 3);
+        S.loadT = 2.3; Sound.coal(2.3);
+      } else if (S.v === 0 && prevV === 0 && d <= -6 && d > -60 && !S.stoppedShortShown) {
+        S.stoppedShortShown = true;
+        toast(`Belum di bawah corong. Maju ${fmtM(-d)} m lagi.`, 'warn', 2.4, null, 2);
+      }
+    }
+
+    // --- rombongan gajah Sumatra melintas ---
+    const E = ROUTE.elephants;
+    if (E) {
+      const el = S.eleph;
+      if (el.phase === 'idle' && S.x > E.trigger) {
+        el.phase = 'block'; el.t = 0;
+        radio(`Si Gagah, hati-hati! Rombongan gajah melintas di depan, sekitar ${Math.round(E.x - S.x)} m. Berhenti dan tunggu, jangan dibunyikan klakson.`, 7, 'Sari', 'SR');
+        Sound.trumpet(0.4);
+      }
+      if (el.phase === 'block') {
+        el.t += dt;
+        if ((S.v === 0 && E.x - S.x < 320) || el.t > 30) { el.phase = 'cross'; el.t = 0; }
+      } else if (el.phase === 'cross') {
+        el.t += dt;
+        el.prog = Math.min(1, el.t / (E.cross + (el.honked ? 5 : 0)));
+        if (el.prog >= 1) { el.phase = 'gone'; toast('Rombongan gajah sudah menyeberang. Jalur aman.', 'good', 2.6, null, 2); }
+      }
+      const onTrack = el.phase === 'block' || (el.phase === 'cross' && el.prog < 0.55);
+      if (onTrack && S.x >= E.x - 3) { fail('Kereta menabrak rombongan gajah Sumatra. Berhentilah lebih awal saat ada satwa di jalur.'); return; }
+    }
 
     // --- tiba di stasiun ---
     if (S.phase === 'run' && ns && S.v === 0 && prevV === 0) {
@@ -1417,7 +1584,8 @@
     const onTime = final ? final.clock - final.sched <= 30 : false;
     const B = S.bus;
     const beatBus = !!final && (!B.done || final.clock < B.arrive);
-    const goodStops = S.stops.length === ROUTE.stations.length - 1 && S.stops.every((s) => s.rating.c === 'perfect' || s.rating.c === 'good');
+    const okR = (x) => x.rating.c === 'perfect' || x.rating.c === 'good';
+    const goodStops = S.stops.length === ROUTE.stations.length - 1 && S.stops.every(okR) && (!MIS.freight || (S.loads.length === N_COACH && S.loads.every(okR)));
     let stars = 0;
     if (!failed && final) {
       stars = 1;
@@ -1452,6 +1620,7 @@
       const timeCell = late > 30 ? `<span class="late">terlambat ${fmtDur(late)}</span>` : `<span class="ontime">tepat waktu</span>`;
       return `<tr><td>${s.name}</td><td><span class="tag ${s.rating.c}">${s.rating.r}</span> ${fmtM(Math.abs(s.offset))} m</td><td>${fmtClock(s.clock)} / ${fmtClock(s.sched)}<br>${timeCell}</td></tr>`;
     }).join('') || '<tr><td colspan="3">Belum ada pemberhentian.</td></tr>';
+    const loadRows = S.loads.map((l) => `<tr><td>Muat gerbong ${l.i + 1}</td><td colspan="2"><span class="tag ${l.rating.c}">${l.rating.r}</span> ${fmtM(Math.abs(l.offset))} m dari corong</td></tr>`).join('');
     const viol = S.violations.length ? `<ul class="viol">${S.violations.map((v) => `<li>${v}</li>`).join('')}</ul>` : '';
     const rewardTxt = MIS.goal2 === 'rival' ? (r.beatBus ? MIS.rewardWin : MIS.rewardLose) : MIS.reward;
     const reward = !r.failed && r.stars >= 1 ? `<div class="reward">${rewardTxt}</div>` : '';
@@ -1463,9 +1632,9 @@
     $('resCard').innerHTML = `
       <table class="rtable">
         <thead><tr><th>Stasiun</th><th>Berhenti</th><th>Tiba / jadwal</th></tr></thead>
-        <tbody>${rows}
+        <tbody>${loadRows}${rows}
           ${rivalRow}
-          <tr><td>Kenyamanan</td><td colspan="2">${Math.round(S.comfort)}%${S.comfort >= 80 ? '' : ' (target 80%)'}</td></tr>
+          <tr><td>${MIS.freight ? 'Muatan utuh' : 'Kenyamanan'}</td><td colspan="2">${Math.round(S.comfort)}%${S.comfort >= 80 ? '' : ' (target 80%)'}</td></tr>
           <tr><td>Koin</td><td colspan="2"><strong>${r.total}</strong> <span style="color:var(--muted)">(misi ${r.base} + berhenti ${S.coins} + nyaman ${r.comfortBonus} − pelanggaran ${r.penalty})</span></td></tr>
         </tbody>
       </table>${viol}${reward}`;
@@ -1492,7 +1661,7 @@
       const m = MISSIONS[id], b = bestOf(id), st = m.route.stations;
       const route = `${titleCase(st[0].name)} → ${titleCase(st[st.length - 1].name)} · ${clockOf(m.startClock)} · ${m.weather}`;
       const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BELUM DIMAINKAN</span>';
-      return `<li><button class="ticket t-${m.sky}${id === nextId ? ' next' : ''}" data-id="${id}">
+      return `<li><button class="ticket t-${m.ticket || m.sky}${id === nextId ? ' next' : ''}" data-id="${id}">
         <span class="stub"><small>MISI</small><b>${id}</b></span>
         <span class="tbody"><b>${m.title}</b><small>${route}</small>${stars}</span>
       </button></li>`;
@@ -1502,6 +1671,15 @@
   }
   function selectMission(id) {
     MIS = MISSIONS[id]; ROUTE = MIS.route;
+    N_COACH = MIS.freight ? MIS.wagons : 3;
+    CAR_LEN = MIS.freight ? WAGON_LEN : COACH_LEN;
+    TRAIN_LEN = LOCO_LEN + N_COACH * (CAR_LEN + GAP);
+    const ax = [1.8, 3.5, 5.2, 10.45, 12.15, 13.85];
+    for (let k = 0; k < N_COACH; k++) {
+      const f = carFront(k);
+      (MIS.freight ? [1.6, 3.4, 8.6, 10.4] : [3.17, 5.33, 14.67, 16.83]).forEach((o) => ax.push(f + o));
+    }
+    Sound.setAxles(ax);
     idleState = makeIdle();
     textCache.clear();
   }
@@ -1515,10 +1693,11 @@
     const stops = R.stations.slice(1);
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
-      <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${stops.length} pemberhentian</dd>
-      <dt>Kereta</dt><dd>Si Gagah + 2 gerbong</dd>
+      <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
+      <dt>Kereta</dt><dd>${m.freight ? `Si Gagah + ${m.wagons} gerbong batu bara` : 'Si Gagah + 3 gerbong penumpang'}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>`;
+    $('briefGoal3').textContent = m.freight ? 'Muatan utuh minimal 80% dan semua pemuatan serta pembongkaran Good atau Perfect' : 'Kenyamanan minimal 80% dan semua pemberhentian Good atau Perfect';
     $('briefGoal2').textContent = m.goal2 === 'rival' ? `Tiba di ${titleCase(f.name)} lebih dulu dari bus ${R.rival.name}` : `Tiba di ${titleCase(f.name)} tepat waktu`;
     showScreen('brief');
   }
@@ -1529,14 +1708,17 @@
     fitStrip();
     renderLever();
     $('btnSand').hidden = !MIS.rain;
+    ui.btnDoor.hidden = !!MIS.freight;
+    document.querySelector('.cluster .ring .lbl').textContent = MIS.freight ? 'Muatan' : 'Kenyamanan';
+    document.querySelector('.cluster .next .lbl').textContent = MIS.freight ? 'Tujuan' : 'Stasiun berikutnya';
     $('rivalPanel').hidden = !ROUTE.rival;
     document.querySelectorAll('.cluster .coins').forEach((el) => { el.hidden = !!ROUTE.rival; });
     ui.rivalSep.hidden = !ROUTE.rival;
-    $('radio').hidden = true; radioTimer = 0;
+    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1;
     const thisRun = S;
     if (ROUTE.rival) setTimeout(() => { if (S === thisRun && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
     toast(MIS.intro, 'info', 4, null, 3);
-    setTimeout(() => { if (S && S.st === 0) Sound.announce(`Perhatian. Kereta lokal Si Gagah tujuan ${titleCase(finalStation().name)} di jalur satu akan segera diberangkatkan.`); }, 600);
+    if (!MIS.freight) setTimeout(() => { if (S && S.st === 0) Sound.announce(`Perhatian. Kereta lokal Si Gagah tujuan ${titleCase(finalStation().name)} di jalur satu akan segera diberangkatkan.`); }, 600);
   }
 
   // ---------- input ----------
@@ -1649,7 +1831,10 @@
   function updateHud() {
     setText(ui.clock, fmtClock(S.clock));
     const ns = S.phase === 'dwell' ? ROUTE.stations[S.st] : nextStation();
-    if (ns) {
+    if (S.phase === 'load') {
+      setText(ui.nextName, 'CORONG MUAT');
+      setText(ui.nextSched, S.loadT > 0 ? `memuat gerbong ${S.loadIdx + 1}...` : `gerbong ${Math.min(S.loadIdx + 1, N_COACH)} dari ${N_COACH}`);
+    } else if (ns) {
       setText(ui.nextName, ns.name);
       if (S.phase === 'dwell' && S.st === 0) setText(ui.nextSched, `berangkat ${fmtClock(0)}`);
       else if (S.phase === 'dwell') setText(ui.nextSched, 'berhenti di peron');
@@ -1675,11 +1860,11 @@
     const gr = gradeAt(S.x - TRAIN_LEN / 2);
     setText(ui.unit, gr ? `km/h · ${gr.permil > 0 ? '↗' : '↘'} ${Math.abs(gr.permil)}‰` : 'km/h');
 
-    // titik henti
+    // titik henti (stasiun atau corong muat)
     let stopTxt = '—', near = false, over = false;
-    const tgt = S.phase === 'run' ? nextStation() : null;
-    if (tgt) {
-      const d = tgt.x - S.x;
+    const tg = stopTarget();
+    if (tg) {
+      const d = tg.x - S.x;
       if (d < 700) {
         if (d >= 0) { stopTxt = `${fmtM(d)} m`; near = d < 60; }
         else { stopTxt = `+${fmtM(-d)} m`; over = true; }
@@ -1691,14 +1876,15 @@
     setText(ui.stopDist, stopTxt);
     setClass(ui.stopBox, 'near', near); setClass(ui.stopBox, 'over', over);
 
-    // pemandu titik henti: muncul saat moncong mendekati marka
-    const pd = tgt ? tgt.x - S.x : null;
-    const showP = pd !== null && pd < 32 && pd > -12;
+    // pemandu titik henti: muncul saat moncong mendekati marka atau corong
+    const pd = tg && !(S.loadT > 0) ? tg.x - S.x : null;
+    const showP = pd !== null && pd < (tg.load ? 14 : 32) && pd > -12;
     ui.precise.hidden = !showP;
     if (showP) {
       setText(ui.precTxt, pd >= 0 ? `${fmtM(pd)} m` : `+${fmtM(-pd)} m`);
-      setText(ui.precSub, pd >= 0 ? `lagi ke marka "${N_COACH + 1}"` : 'melewati marka');
-      const px = 150 + clamp(-pd, -10, 10) * 14;
+      setText(ui.precSub, tg.load ? (pd >= 0 ? `gerbong ${S.loadIdx + 1} ke corong` : 'melewati corong') : pd >= 0 ? (MIS.freight ? 'lagi ke marka bongkar' : `lagi ke marka "${N_COACH + 1}"`) : 'melewati marka');
+      const scale = tg.load ? 28 : 14;
+      const px = 150 + clamp(-pd * scale, -140, 140);
       ui.precPtr.setAttribute('transform', `translate(${px.toFixed(1)},0)`);
     }
 
@@ -1728,11 +1914,23 @@
     const c = ctx;
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
     const st = S || idleState;
-    const ppm = clamp(H / 52, 3.4, 12);
+    // zoom-out lembut saat ada satwa di jalur di depan
+    const E0 = ROUTE.elephants, st0 = S || idleState;
+    const wantZoom = E0 && st0.eleph && (st0.eleph.phase === 'block' || st0.eleph.phase === 'cross') && E0.x - st0.x < 260 ? 0.7 : 1;
+    camZoom += (wantZoom - camZoom) * Math.min(1, (dtReal || 0.016) * 1.2);
+    const ppm = clamp(H / 52, 3.4, 12) * camZoom;
     const gy = Math.round(H * 0.64);
     const shake = st.shake > 0 ? (Math.random() - 0.5) * st.shake * 7 : 0;
     const anchor = mode === 'play' || mode === 'pause' ? 0.6 : 0.78;
-    const camX = st.x - (W * anchor) / ppm;
+    // kamera melirik ke depan saat ada satwa di jalur, supaya pemain bisa melihatnya
+    let lead = 0;
+    const E = ROUTE.elephants;
+    if (E && st.eleph && (st.eleph.phase === 'block' || st.eleph.phase === 'cross') && E.x - st.x < 200) {
+      const base = st.x - (W * anchor) / ppm;
+      lead = clamp(E.x + 16 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
+    }
+    camLead += (lead - camLead) * Math.min(1, (dtReal || 0.016) * 1.4);
+    const camX = st.x - (W * anchor) / ppm + camLead;
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
@@ -1751,6 +1949,7 @@
 
     drawSky(V);
     drawRidges(V);
+    drawPort(V);
     drawBackProps(V);
     drawTunnelHill(V);
     drawGround(V);
@@ -1759,8 +1958,12 @@
     drawSwitch(V);
     drawTrackside(V);
     drawGoats(V);
+    drawSilo(V, 'back');
+    drawElephants(V, 'back');
     drawBridge(V, 'back');
     drawTrain(V);
+    drawSilo(V, 'front');
+    drawElephants(V, 'front');
     drawBus(V);
     drawBridge(V, 'front');
     drawTunnelPortals(V);
@@ -2152,6 +2355,16 @@
         V.c.fillRect(sx, y, 2, 2);
       }
     }
+    if (MIS.land === 'sawit') {
+      // tajuk hutan hujan bergelombang di kaki Bukit Barisan
+      const parJ = 0.42, offJ = V.camX * V.ppm * parJ;
+      const jf = (u) => 0.32 + 0.12 * Math.sin(u * 0.004 + 1) + 0.07 * Math.abs(Math.sin(u * 0.045)) + 0.05 * Math.abs(Math.sin(u * 0.11 + 2));
+      ridgePath(V, parJ, gy, gy * 0.2, jf, (() => { const jg = V.c.createLinearGradient(0, gy * 0.8, 0, gy); jg.addColorStop(0, mix('#355a36', '#4f7f45', p)); jg.addColorStop(1, mix('#1f3a24', '#2f5a33', p)); return jg; })());
+      const c2 = V.c; c2.save(); c2.globalAlpha = 0.25; c2.fillStyle = mix('#5d8a4a', '#86b866', p);
+      for (let sx = 0; sx < W; sx += 14) { const top = gy - gy * 0.2 * jf(sx + offJ); c2.beginPath(); c2.arc(sx, top + 4, 6, Math.PI, 0); c2.fill(); }
+      c2.restore();
+      return;
+    }
     // sawah terasering
     const par = 0.42, off = V.camX * V.ppm * par;
     const fn = (u) => 0.35 + 0.28 * Math.sin(u * 0.0045 + 4) + 0.12 * Math.sin(u * 0.013);
@@ -2222,6 +2435,28 @@
       const sx = X(tx), base = gy - 1.2 * ppm - hash(i + 0.9) * 1.2 * ppm;
       const kind = hash(i + 0.11);
       const col = mix('#24402c', '#335c35', p), col2 = mix('#2f5235', '#3f7040', p);
+      if (MIS.land === 'sawit') {
+        if (V.sunShadow > 0.01) { c.fillStyle = `rgba(0,0,0,${0.2 * V.sunShadow})`; c.beginPath(); c.ellipse(sx - 1.2 * ppm, base + 0.2 * ppm, 2.4 * ppm, 0.35 * ppm, 0, 0, 7); c.fill(); }
+        if (kind < 0.7) { // pohon sawit: batang pendek kasar, tajuk lebat
+          const ht = (4.5 + hash(i + 2) * 2.5) * ppm;
+          c.fillStyle = mix('#3e3022', '#55422e', p); c.fillRect(sx - 0.35 * ppm, base - ht, 0.7 * ppm, ht);
+          c.strokeStyle = col2; c.lineWidth = 0.36 * ppm; c.lineCap = 'round';
+          for (let f = 0; f < 11; f++) {
+            const a = -Math.PI / 2 + (f - 5) * 0.32, len = 3.6 * ppm;
+            c.beginPath(); c.moveTo(sx, base - ht);
+            c.quadraticCurveTo(sx + Math.cos(a) * len * 0.6, base - ht - 1.2 * ppm + Math.abs(f - 5) * 0.15 * ppm, sx + Math.cos(a) * len, base - ht + Math.sin(a) * len * 0.45 + 1.5 * ppm);
+            c.stroke();
+          }
+          c.lineCap = 'butt';
+        } else { // pohon hutan besar bertajuk lebar
+          const ht = (11 + hash(i + 2) * 6) * ppm;
+          c.fillStyle = mix('#4a3a2c', '#5e4a36', p); c.fillRect(sx - 0.3 * ppm, base - ht * 0.7, 0.6 * ppm, ht * 0.7);
+          c.fillStyle = col;
+          [[0, 0, 4.2], [-2.6, 0.9, 2.8], [2.8, 0.8, 3]].forEach(([dx, dy, r]) => { c.beginPath(); c.ellipse(sx + dx * ppm, base - ht + dy * ppm, r * ppm, r * 0.62 * ppm, 0, 0, 7); c.fill(); });
+          if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.1 * ppm); c.beginPath(); c.ellipse(sx, base - ht, 4.2 * ppm, 2.6 * ppm, 0, Math.PI * 1.2, Math.PI * 1.9); c.stroke(); c.restore(); }
+        }
+        continue;
+      }
       if (V.sunShadow > 0.01) { c.fillStyle = `rgba(0,0,0,${0.2 * V.sunShadow})`; c.beginPath(); c.ellipse(sx - 1.2 * ppm, base + 0.2 * ppm, 2.2 * ppm, 0.35 * ppm, 0, 0, 7); c.fill(); }
       if (kind < 0.45) { // kelapa
         const ht = (8 + hash(i + 2) * 5) * ppm, lean = (hash(i + 3) - 0.5) * 2 * ppm;
@@ -2277,7 +2512,29 @@
     const i0 = Math.floor((V.wx0 - 120) / cell), i1 = Math.ceil((V.wx1 + 120) / cell);
     c.save();
     c.fillStyle = V.water;
-    for (let i = i0; i < i1; i++) {
+    const sawit = MIS.land === 'sawit';
+    if (sawit) {
+      // tanah kebun kemerahan di antara barisan sawit
+      c.globalAlpha = 0.35; c.fillStyle = mix('#7a4a2c', '#9a6440', p); c.fillRect(0, yTop, W, H - yTop); c.globalAlpha = 1;
+      // barisan sawit muda berperspektif: makin dekat makin besar
+      for (let r = rows - 1; r >= 0; r--) {
+        const t = (r + 0.5) / rows, y = rowY(t), sc = (0.7 + Math.pow(t, 1.55) * 1.6) * ppm;
+        for (let i = i0; i < i1; i++) {
+          const x = at(X((i + 0.5) * cell), t);
+          if (x < -3 * sc || x > W + 3 * sc) continue;
+          c.fillStyle = mix('#3c2a1a', '#4e3824', p); c.fillRect(x - 0.18 * sc, y - 1.1 * sc, 0.36 * sc, 1.1 * sc);
+          c.strokeStyle = mix('#24452a', '#356a36', p); c.lineWidth = Math.max(1, 0.22 * sc); c.lineCap = 'round';
+          for (let f = 0; f < 8; f++) {
+            const a = -Math.PI / 2 + (f - 3.5) * 0.42;
+            c.beginPath(); c.moveTo(x, y - 1.1 * sc);
+            c.quadraticCurveTo(x + Math.cos(a) * 1.1 * sc, y - 1.1 * sc + Math.sin(a) * 0.9 * sc - 0.4 * sc, x + Math.cos(a) * 1.9 * sc, y - 1.1 * sc + Math.sin(a) * 0.7 * sc + 0.4 * sc);
+            c.stroke();
+          }
+          c.lineCap = 'butt';
+        }
+      }
+    }
+    for (let i = sawit ? i1 : i0; i < i1; i++) {
       const xa = X(i * cell), xb = X((i + 1) * cell);
       for (let r = 0; r < rows; r++) {
         if (hash(i * 7.31 + r * 1.93) > 0.45) continue;
@@ -2288,7 +2545,7 @@
         c.beginPath(); q.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fill();
       }
     }
-    c.globalAlpha = 0.5; c.strokeStyle = mix('#6b9446', '#93c05e', p);
+    c.globalAlpha = sawit ? 0.3 : 0.5; c.strokeStyle = sawit ? mix('#8a6a48', '#b08a60', p) : mix('#6b9446', '#93c05e', p);
     for (let r = 1; r < rows; r++) {
       const y = rowY(r / rows);
       c.lineWidth = 1 + r * 0.45; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
@@ -2462,7 +2719,7 @@
       const mx = pass ? -9999 : X(s.x);
       c.fillStyle = '#333'; c.fillRect(mx - 0.1 * ppm, gy - 2.6 * ppm, 0.2 * ppm, 1.8 * ppm);
       c.fillStyle = '#f2c230'; c.fillRect(mx - 0.6 * ppm, gy - 3.8 * ppm, 1.2 * ppm, 1.2 * ppm);
-      c.fillStyle = '#111'; c.font = `900 ${Math.round(1.0 * ppm)}px "Big Shoulders Display", sans-serif`; c.fillText(String(N_COACH + 1), mx, gy - 3.17 * ppm);
+      c.fillStyle = '#111'; c.font = `900 ${Math.round(1.0 * ppm)}px "Big Shoulders Display", sans-serif`; c.fillText(MIS.freight ? 'B' : String(N_COACH + 1), mx, gy - 3.17 * ppm);
       // calon penumpang
       const n = pass ? s.waiting : st.waiting ? st.waiting[i] : s.waiting;
       const spacing = n > 16 ? 2.5 : 4.1;
@@ -2663,7 +2920,8 @@
     const glass = vgrad(4.35, 2.95, [[0, '#3b5263'], [0.5, '#1d2b36'], [1, '#121b23']]);
     const roofTop = vgrad(6.55, 6.05, [[0, '#f1f4f5'], [1, '#c7cfd3']]);
     const roofSide = vgrad(6.1, 4.8, [[0, '#cdd4d8'], [1, '#8f999f']]);
-    for (let k = 0; k < N_COACH; k++) {
+    if (MIS.freight) drawWagons(V, L, Y, box, poly, line, vgrad, ang);
+    for (let k = 0; k < (MIS.freight ? 0 : N_COACH); k++) {
       const F = LOCO_LEN + GAP + k * (COACH_LEN + GAP);
       const u = (px) => F + (240 - px) / 12; // koordinat desain 0..240 px (12 px = 1 m)
       if (L(F + COACH_LEN) > W + 30 || L(F) < -60) continue;
@@ -2874,6 +3132,163 @@
     c.textAlign = 'start'; c.textBaseline = 'alphabetic';
   }
 
+  // gerbong batu bara terbuka (gondola) dengan tumpukan muatan
+  function drawWagons(V, L, Y, box, poly, line, vgrad, ang) {
+    const { c, ppm, st } = V;
+    const body = vgrad(3.7, 1.0, [[0, '#9a4a35'], [0.5, '#7a3526'], [1, '#55241a']]);
+    for (let k = 0; k < N_COACH; k++) {
+      const F = carFront(k);
+      if (L(F + WAGON_LEN) > W + 30 || L(F) < -40) continue;
+      box(F - GAP, F, 1.25, 1.55, '#1b1e21');                              // kopling
+      box(F + 0.5, F + WAGON_LEN - 0.5, 0.62, 1.0, '#1a1d20');
+      for (const [a, b] of [[F + 0.8, F + 4.2], [F + 7.8, F + 11.2]]) {
+        c.fillStyle = '#272b2f'; roundRect(c, L(b), Y(0.98), (b - a) * ppm, 0.55 * ppm, 0.15 * ppm); c.fill();
+      }
+      [1.6, 3.4, 8.6, 10.4].forEach((o) => trainWheel(c, L(F + o), Y(0.48), 0.46 * ppm, ang * 1.17));
+      // muatan batu bara di atas bibir gerbong
+      const ld = st.load ? st.load[k] || 0 : 0;
+      if (ld > 0.02) {
+        const top = 3.7 + 0.95 * ld;
+        c.fillStyle = '#16181b'; c.beginPath();
+        c.moveTo(L(F + WAGON_LEN - 0.3), Y(3.6));
+        c.quadraticCurveTo(L(F + WAGON_LEN * 0.75), Y(top + 0.15), L(F + WAGON_LEN / 2), Y(top));
+        c.quadraticCurveTo(L(F + WAGON_LEN * 0.25), Y(top + 0.15), L(F + 0.3), Y(3.6));
+        c.closePath(); c.fill();
+        c.fillStyle = 'rgba(160,170,180,0.35)';
+        for (let q = 0; q < 14; q++) {
+          const m = F + 1 + hash(q + k * 3.1) * (WAGON_LEN - 2), h = 3.7 + hash(q * 2.7 + k) * (top - 3.75) * 0.9;
+          c.fillRect(L(m), Y(h), Math.max(1, 0.12 * ppm), Math.max(1, 0.12 * ppm));
+        }
+      }
+      // badan gondola berusuk
+      c.fillStyle = body; c.fillRect(L(F + WAGON_LEN), Y(3.7), WAGON_LEN * ppm, 2.7 * ppm);
+      box(F, F + WAGON_LEN, 3.55, 3.75, '#b25c43');
+      c.strokeStyle = 'rgba(30,12,8,0.45)'; c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath();
+      for (let m = F + 0.6; m < F + WAGON_LEN; m += 1.35) { c.moveTo(L(m), Y(3.55)); c.lineTo(L(m), Y(1.05)); }
+      c.stroke();
+      c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(L(F + WAGON_LEN), Y(1.5), WAGON_LEN * ppm, 0.5 * ppm);
+      c.fillStyle = '#f2e6c8'; c.font = `800 ${Math.max(6, Math.round(0.5 * ppm))}px "Big Shoulders Display", sans-serif`;
+      c.textAlign = 'left'; c.textBaseline = 'middle';
+      c.fillText(`GD · 0${k + 1}`, L(F + WAGON_LEN - 0.9), Y(2.3));
+      if (V.rimA > 0.02) { c.save(); c.globalAlpha = V.rimA; line([[F + WAGON_LEN, 3.76], [F, 3.76]], V.rim, Math.max(1, 0.09 * ppm)); c.restore(); }
+    }
+  }
+
+  // silo muat tambang: kaki & bak di belakang kereta, corong & curahan di depan
+  function drawSilo(V, layer) {
+    const Ld = ROUTE.loading;
+    if (!Ld) return;
+    const { c, ppm, gy, X, st } = V;
+    const sx = X(Ld.silo);
+    if (sx < -20 * ppm || sx > W + 20 * ppm) return;
+    if (layer === 'back') {
+      // tumpukan batu bara & konveyor ke bukit
+      c.fillStyle = '#1c1d20';
+      c.beginPath(); c.moveTo(sx - 26 * ppm, gy - 1.2 * ppm); c.quadraticCurveTo(sx - 18 * ppm, gy - 10 * ppm, sx - 9 * ppm, gy - 1.2 * ppm); c.closePath(); c.fill();
+      c.strokeStyle = '#5a5f63'; c.lineWidth = Math.max(2, 0.35 * ppm);
+      c.beginPath(); c.moveTo(sx + 2 * ppm, gy - 15.5 * ppm); c.lineTo(sx + 30 * ppm, gy - 4 * ppm); c.stroke();
+      c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath();
+      for (let q = 0; q < 8; q++) { const x = sx + (4 + q * 3.4) * ppm, y = gy - (14.7 - q * 1.4) * ppm; c.moveTo(x, y); c.lineTo(x, gy - 1.2 * ppm); }
+      c.stroke();
+      // kaki baja
+      c.fillStyle = '#4b5156';
+      [-5.2, 4.6].forEach((o) => c.fillRect(sx + o * ppm, gy - 13 * ppm, 0.6 * ppm, 12.4 * ppm));
+      c.strokeStyle = '#4b5156'; c.lineWidth = Math.max(1, 0.15 * ppm); c.beginPath();
+      c.moveTo(sx - 4.9 * ppm, gy - 12 * ppm); c.lineTo(sx + 4.9 * ppm, gy - 7.5 * ppm);
+      c.moveTo(sx + 4.9 * ppm, gy - 12 * ppm); c.lineTo(sx - 4.9 * ppm, gy - 7.5 * ppm); c.stroke();
+      // bak silo
+      const g = c.createLinearGradient(sx - 6 * ppm, 0, sx + 6 * ppm, 0);
+      g.addColorStop(0, '#7b8086'); g.addColorStop(0.5, '#a3a9ae'); g.addColorStop(1, '#6a6f74');
+      c.fillStyle = g;
+      c.fillRect(sx - 6 * ppm, gy - 19 * ppm, 12 * ppm, 6 * ppm);
+      c.beginPath(); c.moveTo(sx - 6 * ppm, gy - 13 * ppm); c.lineTo(sx + 6 * ppm, gy - 13 * ppm); c.lineTo(sx + 1 * ppm, gy - 9.5 * ppm); c.lineTo(sx - 1 * ppm, gy - 9.5 * ppm); c.closePath(); c.fill();
+      c.fillStyle = '#f2c230'; c.fillRect(sx - 6 * ppm, gy - 17.4 * ppm, 12 * ppm, 0.8 * ppm);
+      c.fillStyle = '#1d2a2b'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = `800 ${Math.max(7, Math.round(0.65 * ppm))}px "Big Shoulders Display", sans-serif`;
+      c.fillText('SILO MUAT 1', sx, gy - 17 * ppm);
+      c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    } else {
+      // pipa corong + curahan batu bara saat memuat
+      c.fillStyle = '#3a3f44'; c.fillRect(sx - 0.7 * ppm, gy - 9.6 * ppm, 1.4 * ppm, 3.6 * ppm);
+      c.fillStyle = '#2a2e32'; c.fillRect(sx - 1 * ppm, gy - 6.2 * ppm, 2 * ppm, 0.5 * ppm);
+      if (st.loadT > 0) {
+        c.fillStyle = '#121315';
+        const wob = Math.sin(performance.now() / 60) * 0.1 * ppm;
+        c.fillRect(sx - 0.55 * ppm + wob, gy - 5.8 * ppm, 1.1 * ppm, 1.6 * ppm);
+        for (let q = 0; q < 10; q++) c.fillRect(sx + (hash(q + Math.floor(performance.now() / 70)) - 0.5) * 1.4 * ppm, gy - (4.3 + hash(q * 3.3) * 1.6) * ppm, 2, 2);
+      }
+    }
+  }
+
+  // rombongan gajah Sumatra: dua induk dan seekor anak menyeberang dari sisi jauh ke dekat
+  function drawElephants(V, layer) {
+    const E = ROUTE.elephants;
+    if (!E) return;
+    const { c, ppm, gy, X, st } = V;
+    const el = st.eleph || { phase: 'idle', prog: 0 };
+    if (el.phase === 'gone') return;
+    const prog = el.phase === 'cross' ? el.prog : 0;
+    const front = prog > 0.3;  // setelah lewat rel, gajah berada di depan kereta
+    if ((layer === 'front') !== front) return;
+    const herd = [[0, 1], [6.5, 1.08], [3.5, 0.6]];
+    for (const [off, sc] of herd) {
+      const ex = X(E.x + off + prog * 4);
+      if (ex < -60 || ex > W + 60) continue;
+      const s2 = ppm * sc * (1 + prog * 0.35);
+      const ey = gy + (el.phase === 'idle' ? -1.2 * ppm : prog * 7.5 * ppm) + Math.sin(performance.now() / 300 + off) * 0.05 * ppm;
+      c.save(); c.globalAlpha = prog > 0.85 ? (1 - prog) / 0.15 : 1;
+      if (V.sunShadow > 0.01) { c.fillStyle = `rgba(0,0,0,${0.22 * V.sunShadow})`; c.beginPath(); c.ellipse(ex - 1.2 * s2, ey + 0.1 * s2, 2.6 * s2, 0.35 * s2, 0, 0, 7); c.fill(); }
+      const bg = c.createLinearGradient(0, ey - 3.4 * s2, 0, ey);
+      bg.addColorStop(0, V.night ? '#4d4e5a' : '#8c8a8e'); bg.addColorStop(1, V.night ? '#2c2d36' : '#57565b');
+      c.fillStyle = bg;
+      // kaki
+      [[-1.3, 0], [-0.6, 0.1], [0.7, 0], [1.3, 0.1]].forEach(([dx, dy], i) => {
+        const step = el.phase === 'cross' ? Math.sin(performance.now() / 220 + i * 1.6) * 0.12 * s2 : 0;
+        c.fillRect(ex + dx * s2 - 0.28 * s2, ey - 1.3 * s2 + dy * s2, 0.56 * s2, 1.3 * s2 + step);
+      });
+      // badan, kepala, telinga, belalai
+      c.beginPath(); c.ellipse(ex, ey - 2.1 * s2, 2.0 * s2, 1.25 * s2, 0, 0, 7); c.fill();
+      c.beginPath(); c.ellipse(ex + 2.0 * s2, ey - 2.5 * s2, 0.85 * s2, 0.8 * s2, 0, 0, 7); c.fill();
+      c.fillStyle = V.night ? '#3e3f4a' : '#76747a';
+      c.beginPath(); c.ellipse(ex + 1.65 * s2, ey - 2.4 * s2, 0.55 * s2, 0.75 * s2, -0.2, 0, 7); c.fill();
+      c.strokeStyle = V.night ? '#3a3b46' : '#605f64'; c.lineWidth = 0.42 * s2; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(ex + 2.65 * s2, ey - 2.3 * s2); c.quadraticCurveTo(ex + 3.0 * s2, ey - 1.2 * s2, ex + 2.7 * s2, ey - 0.6 * s2); c.stroke();
+      c.lineCap = 'butt';
+      c.fillStyle = '#111'; c.beginPath(); c.arc(ex + 2.35 * s2, ey - 2.75 * s2, 0.08 * s2, 0, 7); c.fill();
+      if (V.rimA > 0.05) { c.globalAlpha *= V.rimA * 0.7; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.08 * s2); c.beginPath(); c.ellipse(ex, ey - 2.12 * s2, 1.98 * s2, 1.23 * s2, 0, Math.PI * 1.15, Math.PI * 1.85); c.stroke(); }
+      c.restore();
+    }
+  }
+
+  // dermaga batu bara di tepi laut: laut, kapal tongkang, derek, dan timbunan
+  function drawPort(V) {
+    const st = ROUTE.stations.find((q) => q.port);
+    if (!st) return;
+    const { c, ppm, gy, X, p } = V;
+    const fade = clamp((V.camX + W / ppm - (st.x - 420)) / 160, 0, 1);
+    if (fade <= 0) return;
+    c.save(); c.globalAlpha = fade;
+    const sy = gy - 9 * ppm;
+    const x0 = Math.max(0, X(st.x - 430));
+    const sg = c.createLinearGradient(0, sy, 0, gy);
+    sg.addColorStop(0, mix('#6f8fb0', '#7fb2cf', p)); sg.addColorStop(1, mix('#3d6a86', '#4f8aa6', p));
+    c.fillStyle = sg; c.fillRect(x0, sy, W - x0, gy - sy);
+    c.fillStyle = 'rgba(255,240,210,0.35)'; c.fillRect(x0, sy, W - x0, 1);
+    // tongkang dengan muatan & kapal tunda
+    const bx = X(st.x + 40);
+    c.fillStyle = '#2b2f36'; c.beginPath(); c.moveTo(bx - 14 * ppm, sy + 2.2 * ppm); c.lineTo(bx + 16 * ppm, sy + 2.2 * ppm); c.lineTo(bx + 14 * ppm, sy + 3.6 * ppm); c.lineTo(bx - 13 * ppm, sy + 3.6 * ppm); c.closePath(); c.fill();
+    c.fillStyle = '#16181b'; c.beginPath(); c.moveTo(bx - 12 * ppm, sy + 2.2 * ppm); c.quadraticCurveTo(bx, sy - 1.4 * ppm, bx + 13 * ppm, sy + 2.2 * ppm); c.closePath(); c.fill();
+    c.fillStyle = '#c0392b'; c.fillRect(bx + 18 * ppm, sy + 1.6 * ppm, 5 * ppm, 1.6 * ppm);
+    c.fillStyle = '#eef2f4'; c.fillRect(bx + 19.5 * ppm, sy + 0.4 * ppm, 2.2 * ppm, 1.2 * ppm);
+    // derek pemuat kapal
+    const cx = X(st.x + 18);
+    c.strokeStyle = '#d9a13a'; c.lineWidth = Math.max(2, 0.35 * ppm); c.beginPath();
+    c.moveTo(cx, gy - 0.5 * ppm); c.lineTo(cx, gy - 16 * ppm); c.lineTo(cx + 18 * ppm, gy - 12 * ppm);
+    c.moveTo(cx + 3 * ppm, gy - 0.5 * ppm); c.lineTo(cx + 3 * ppm, gy - 15 * ppm); c.stroke();
+    c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath(); c.moveTo(cx + 14 * ppm, gy - 12.9 * ppm); c.lineTo(cx + 14 * ppm, gy - 8 * ppm); c.stroke();
+    c.restore();
+  }
+
   // gumpalan asap lembut: sprite gradasi radial yang dibuat sekali per warna
   const puffSprites = {};
   function puffSprite(rgb) {
@@ -2895,6 +3310,7 @@
     else { const k = Math.round(lerp(92, 128, p)); dark = `${k},${k - 4},${k - 2}`; }
     const smokeSp = puffSprite(dark), steamSp = puffSprite('246,246,246'), sandSp = puffSprite('176,138,85');
     const sootSp = puffSprite(V.night ? '72,76,94' : '58,58,62');
+    const dustSp = puffSprite('70,64,58');
     c.save();
     for (const s of st.smoke || []) {
       const t = s.life / s.max;
@@ -2903,7 +3319,7 @@
       if (a <= 0.01) continue;
       const r = s.r * ppm * 1.35;
       c.globalAlpha = Math.min(1, a);
-      c.drawImage(s.sand ? sandSp : s.white ? steamSp : s.dark ? sootSp : smokeSp, X(s.x) - r, gy - s.y * ppm - r, r * 2, r * 2);
+      c.drawImage(s.dust ? dustSp : s.sand ? sandSp : s.white ? steamSp : s.dark ? sootSp : smokeSp, X(s.x) - r, gy - s.y * ppm - r, r * 2, r * 2);
     }
     c.restore();
   }
@@ -3141,6 +3557,18 @@
         c.fillStyle = '#ece6da'; c.beginPath(); c.arc(M(gt.x), ly, 4, 0, 7); c.fill(); c.fillText('kambing', M(gt.x) - 18, ly - 22);
       }
     });
+    if (ROUTE.elephants && S.eleph.phase !== 'gone') {
+      const ex = M(ROUTE.elephants.x);
+      if (ex > 0 && ex < w && visible(ROUTE.elephants.x)) {
+        c.fillStyle = S.eleph.phase === 'idle' ? '#b9b5ad' : '#ff7a6c';
+        c.beginPath(); c.ellipse(ex, ly - 1, 7, 4.5, 0, 0, 7); c.fill();
+        c.fillText('gajah', ex - 13, ly - 22);
+      }
+    }
+    if (ROUTE.loading) {
+      const lx = M(ROUTE.loading.silo);
+      if (lx > -10 && lx < w + 10) { c.fillStyle = '#c9cfd3'; c.fillRect(lx - 5, ly - 16, 10, 9); c.fillRect(lx - 1.5, ly - 7, 3, 5); c.fillText('corong', lx + 8, ly - 12); }
+    }
     if (ROUTE.switchX && M(ROUTE.switchX) > 0 && M(ROUTE.switchX) < w) {
       const sx = M(ROUTE.switchX);
       c.strokeStyle = '#efe9da'; c.lineWidth = 2;
@@ -3255,6 +3683,7 @@
     get mode() { return mode; },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
     audioMeter: () => Sound.meter(),
+    loadTarget: (i) => loadTarget(i),
     select: (id) => selectMission(id),
   };
 

@@ -85,6 +85,7 @@ yang telah ditutup.
 - **Boss mission:** balapan reputasi — kereta Raka harus tiba lebih cepat dan lebih nyaman daripada armada bus TransKilat.
 
 ### Babak 2 — Sumatra: "Jalur Batu Bara & Hutan"
+- **Misi 2-1 "Emas Hitam" (sudah ada di prototipe):** Raka membawa Si Gagah dan empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Sari (PPKA magang) memandu lewat radio. Mekanik: muat presisi di bawah corong silo, rangkaian berat, rombongan gajah Sumatra yang harus ditunggu, turunan ke pantai. Di dermaga, Sari menunjukkan peta tua kakek Raka tentang jalur cabang yang ditutup.
 - Kereta barang: angkut batu bara, sawit, dan hasil bumi — muatan berat, momentum tinggi, butuh pengereman lebih awal.
 - Medan tanjakan curam (mekanik **rel gigi** di dataran tinggi).
 - Raka menemukan bahwa catatan kakeknya menyimpan **peta jalur rahasia** yang dulu sengaja ditutup.
