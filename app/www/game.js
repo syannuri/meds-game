@@ -2400,6 +2400,10 @@
   }
   // proyeksi perspektif: kamera berjarak PD meter dari rel, tegak lurus arah rangkaian di tengahnya.
   // a = jarak sepanjang arah kamera, b = jarak menjauh dari kamera (negatif = mendekat)
+  // BEND_3D: tikungan perspektif penuh (dimatikan sementara; masih dipertimbangkan)
+  const BEND_3D = false;
+  const bendDy25 = (b, ppm) => -BEND_KV * BEND_D * Math.tanh(b / BEND_D) * ppm;
+  const bendScale25 = (b) => 1 - 0.2 * Math.tanh(b / BEND_D);
   const PD = 40, PKV = 0.32;
   function bendPlan(x, xr) {
     const hr = bAt(BEND.H, xr), ch = Math.cos(hr), sh = Math.sin(hr);
@@ -3006,7 +3010,17 @@
     // tikungan: lengkung rel di layar per kolom
     let bendCols = null;
     V.bdy = () => 0; V.bx = X; V.pan = 0;
-    if (BEND) {
+    if (BEND && !BEND_3D) {
+      // tikungan 2.5D: tiap kolom layar hanya digeser naik/turun dan diskalakan (tanpa pemendekan)
+      const xr = st.x - TRAIN_LEN / 2, step = Math.max(3, W / 260), cols = [];
+      let mx = 0;
+      for (let sx = 0; sx < W; sx += step) {
+        const b = bendB(camX + (sx + step / 2 - shake) / ppm, xr), dy = bendDy25(b, ppm);
+        cols.push({ sx, w: step, dx: sx, dw: step, dy, s: bendScale25(b), b });
+        mx = Math.max(mx, Math.abs(dy));
+      }
+      if (mx > 0.6) { bendCols = { cols, E: 0, ER: 0 }; V.bdy = (wx) => bendDy25(bendB(wx, xr), ppm); }
+    } else if (BEND) {
       const xr = st.x - TRAIN_LEN / 2, Xr = X(xr);
       V.pan = bAt(BEND.H, xr) * ppm * PD; // latar jauh bergeser saat kamera ikut berputar
       // ke depan rel memendek paling banyak, jadi lapisan diperluas lebih jauh ke kanan

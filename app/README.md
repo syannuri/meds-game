@@ -57,7 +57,7 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
   Sumatra lembap dengan kabut (2-1), lewat warna langit dan gradasi warna akhir di seluruh dunia
 - Kabin lebih kaya: tekstur batu balas, kilap rel, patok hektometer, papan semboyan 35 sebelum
   perlintasan, speedometer jarum, serta tuas notch dan tuas rem yang ikut bergerak
-- Tikungan 3D menurunkan resolusinya sendiri bila perangkat terlalu lambat
+- Tikungan menurunkan resolusinya sendiri bila perangkat terlalu lambat (saat `BEND_3D` aktif)
 - HUD ringkas: panel atas satu baris, speedometer kecil tembus pandang, tuas ramping, tombol bulat;
   strip rute dan titik henti hanya muncul saat mendekati stasiun, sinyal, perlintasan, satwa, atau
   perubahan batas kecepatan. Di tampilan kabin, kecepatan pindah ke panel dasbor
@@ -78,10 +78,8 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Momen penting: berhenti Perfect membuat kamera mendekat, marka berkilau, koin terbang ke penghitung,
   dan penumpang bertepuk tangan; Good/OK/Miss punya cap sendiri; pelanggaran memunculkan tepi merah
   berdenyut, guncangan, dan cap merah
-- Tikungan 3D: rel diproyeksikan dengan perspektif sungguhan (memendek dan menjauh, gerbong ikut
-  berputar ke kedalaman), latar jauh bergeser mengikuti arah kamera, ujung rel memudar ke kejauhan.
-  Lokomotif masuk tikungan lebih
-  dulu lalu gerbong menyusul. Kamera miring dan bergoyang mengikuti gaya samping, indikator gaya
+- Tikungan 3D (perspektif penuh) sementara dimatikan lewat saklar `BEND_3D` di `game.js`; tikungan
+  memakai versi 2.5D di bawah ini. Lokomotif masuk tikungan lebih dulu lalu gerbong menyusul. Kamera miring dan bergoyang mengikuti gaya samping, indikator gaya
   samping di speedometer (hijau, kuning, merah), percik api di roda saat terlalu kencang
 - Suara jembatan: "klang" sambungan muai di kedua ujung, dentum berongga tiap segmen gelagar,
   dengung baja dengan denting rangka, dan gema lembah selama kereta di atas jembatan
