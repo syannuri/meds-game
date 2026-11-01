@@ -36,6 +36,108 @@
   const SAND_USES = 3, SAND_TIME = 8;
 
   const MISSIONS = {
+    // ---------- misi pembuka: tiap misi mengajarkan satu keterampilan ----------
+    '1-1': {
+      id: '1-1',
+      chapter: 'Babak 1 · Jawa',
+      title: 'Langkah Pertama di Depo',
+      startClock: 5 * 3600 + 30 * 60,
+      sky: 'dawn',
+      rain: false,
+      tutorial: true, startClosed: true, noDoors: true,
+      tags: ['Tuas', 'Berhenti'],
+      speaker: { who: 'Kakek, pensiunan masinis', initials: 'KK' },
+      brief: 'Raka, sebelum membawa penumpang, kenali dulu Si Gagah. Bawa ia pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka. Kakek duduk di sebelahmu.',
+      weather: 'cerah',
+      intro: 'Sinyal depo sebentar lagi hijau. Tunggu aba-aba Kakek.',
+      reward: '<strong>Kakek:</strong> Bagus, Raka! Besok kita belajar membaca sinyal.',
+      aboard: 0,
+      route: {
+        lineSpeed: 40,
+        stations: [
+          { name: 'DEPO SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0 },
+          { name: 'SUKAMAJU', elev: '+386 m', x: 600, sched: 600, waiting: 0, final: true },
+        ],
+        zones: [{ from: -120, to: 700, limit: 25, label: 'area depo' }],
+        signals: [{ id: 'S1', x: 40, start: 0, init: 'R' }],
+        scripts: [], crossings: [], goats: [], fog: null, bridge: null, tunnel: null, grades: [], switchX: null, hints: [],
+        bufferStop: 700,
+      },
+    },
+    '1-2': {
+      id: '1-2',
+      chapter: 'Babak 1 · Jawa',
+      title: 'Membaca Sinyal',
+      startClock: 5 * 3600 + 50 * 60,
+      sky: 'dawn',
+      rain: false,
+      tutorial: true, startClosed: true, noDoors: true,
+      tags: ['Sinyal', 'Batas kecepatan'],
+      speaker: { who: 'Dimas, pengatur perjalanan', initials: 'DM' },
+      brief: 'Pagi, Raka. Bawa Si Gagah kosong ke Cibening. Di jalan ada papan batas kecepatan, sinyal kuning, dan sinyal merah. Baca warnanya; aku pandu lewat radio.',
+      weather: 'cerah',
+      intro: 'Tunggu sinyal S1 hijau, lalu berangkat.',
+      reward: '<strong>Dimas:</strong> Sinyal sudah kamu kuasai. Berikutnya, penumpang pertamamu.',
+      aboard: 0,
+      route: {
+        lineSpeed: 60,
+        stations: [
+          { name: 'SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0 },
+          { name: 'CIBENING', elev: '+412 m', x: 1200, sched: 900, waiting: 0, final: true },
+        ],
+        zones: [
+          { from: -120, to: 200, limit: 40, label: 'area Stasiun Sukamaju' },
+          { from: 480, to: 780, limit: 40, label: 'petak Kali Kecil' },
+          { from: 1000, to: 1350, limit: 40, label: 'area Stasiun Cibening' },
+        ],
+        signals: [
+          { id: 'S1', x: 60, start: 0, init: 'R' },
+          { id: 'J1', x: 860, init: 'Y' },
+          { id: 'S2', x: 1080, init: 'R' },
+        ],
+        scripts: [{ type: 'hold', sig: 'S2', at: 600, near: 90, wait: 6, radio: 'Jalur aman, S2 hijau. Silakan jalan, Raka.' }],
+        crossings: [], goats: [], fog: null, bridge: null, tunnel: null, grades: [], switchX: null, hints: [],
+        bufferStop: 1300,
+      },
+    },
+    '1-3': {
+      id: '1-3',
+      chapter: 'Babak 1 · Jawa',
+      title: 'Penumpang Pertama',
+      startClock: 6 * 3600 + 20 * 60,
+      sky: 'dawn',
+      rain: false,
+      tutorial: true,
+      tags: ['Pintu', 'Kenyamanan', 'Klakson'],
+      speaker: { who: 'Bu Wulan, kepala stasiun', initials: 'BW' },
+      brief: 'Raka, ini perjalanan pertamamu dengan penumpang. Berhenti di Halte Sumberrejo, buka pintu, tunggu semua naik, lalu antar ke Cibening. Jaga tarikan dan rem tetap halus.',
+      weather: 'cerah berawan',
+      intro: 'Penumpang sudah naik. Tutup pintu untuk bersiap berangkat.',
+      reward: '<strong>Bu Wulan:</strong> Penumpang senang. Kamu siap untuk pagi pertama di Pasar Minggu.',
+      aboard: 4,
+      route: {
+        lineSpeed: 60,
+        stations: [
+          { name: 'SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0 },
+          { name: 'SUMBERREJO', elev: '+398 m', x: 700, sched: 560, waiting: 6 },
+          { name: 'CIBENING', elev: '+412 m', x: 1800, sched: 1260, waiting: 0, final: true },
+        ],
+        zones: [
+          { from: -120, to: 200, limit: 40, label: 'area Stasiun Sukamaju' },
+          { from: 560, to: 820, limit: 40, label: 'area Halte Sumberrejo' },
+          { from: 1600, to: 1950, limit: 40, label: 'area Stasiun Cibening' },
+        ],
+        signals: [
+          { id: 'S1', x: 60, start: 0, init: 'R' },
+          { id: 'S2', x: 760, start: 1, init: 'R' },
+          { id: 'J1', x: 1500, init: 'G' },
+        ],
+        scripts: [],
+        crossings: [{ x: 1250, hornFrom: 950 }],
+        goats: [], fog: null, bridge: null, tunnel: null, grades: [], switchX: null, hints: [],
+        bufferStop: 1950,
+      },
+    },
     '1-4': {
       id: '1-4',
       chapter: 'Babak 1 · Jawa',
@@ -292,7 +394,7 @@
       bufferStop: 3400,
     },
   };
-  const MISSION_ORDER = ['1-4', '1-5', '1-6', '2-1'];
+  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '2-1'];
   // palet khas tiap misi: warna langit (fajar → siang, atau gelap/mendung), dan gradasi warna akhir
   // (soft-light) yang diterapkan ke seluruh dunia game, ditambah kabut lembap untuk Sumatra
   const PALETTES = {
@@ -301,7 +403,7 @@
     '1-6': { night: ['#120b2c', '#3a2366', '#8a4170'], grade: ['rgba(150,60,180,0.24)', 'rgba(255,120,60,0.12)'] },
     '2-1': { sky: [['#4a6a6e', '#6a9aa6'], ['#b9b08a', '#cfd9c0'], ['#ead6a4', '#f0ead2']], grade: ['rgba(200,215,170,0.2)', 'rgba(160,70,40,0.2)'], mist: true },
   };
-  MISSION_ORDER.forEach((id) => { MISSIONS[id].id = id; MISSIONS[id].pal = PALETTES[id]; });
+  MISSION_ORDER.forEach((id) => { MISSIONS[id].id = id; MISSIONS[id].pal = PALETTES[id] || PALETTES['1-4']; });
   let MIS = MISSIONS['1-4'];
   let ROUTE = MIS.route;
   const finalStation = () => ROUTE.stations[ROUTE.stations.length - 1];
@@ -1179,10 +1281,11 @@
       t: 0, clock: 0,
       comfort: 100, coins: 0,
       violations: [], violKeys: {}, stops: [],
-      phase: MIS.freight ? 'load' : 'dwell', st: 0, doors: MIS.freight ? 'closed' : 'open',
+      phase: MIS.freight ? 'load' : 'dwell', st: 0, doors: MIS.freight || MIS.startClosed ? 'closed' : 'open',
       load: MIS.freight ? Array(MIS.wagons).fill(0) : [], loadIdx: 0, loadT: 0, loads: [],
       eleph: { phase: 'idle', t: 0, prog: 0, honked: false },
-      dwell: { step: 'close', timer: 0 },
+      dwell: { step: MIS.startClosed ? 'signal' : 'close', timer: MIS.startClosed ? -1.5 : 0 },
+      tut: { shown: {}, active: null, t: 0 },
       waiting: ROUTE.stations.map((s) => s.waiting),
       aboard: MIS.aboard,
       sig: Object.fromEntries(ROUTE.signals.map((q) => [q.id, q.init])),
@@ -1218,7 +1321,7 @@
     precise: $('precise'), precTxt: $('precTxt'), precSub: $('precSub'), precPtr: $('precPtr'),
     rivalPanel: $('rivalPanel'), rivalVal: $('rivalVal'),
     speed: $('speed'), speedo: $('speedo'), unit: $('speedUnit'), btnSand: $('btnSand'), sandLbl: $('sandLbl'), limit: $('limit'), nextLimit: $('nextLimit'),
-    stopDist: $('stopDist'), stopBox: $('stopBox'), hud: $('hud'),
+    stopDist: $('stopDist'), stopBox: $('stopBox'), hud: $('hud'), goalChips: $('goalChips'), coach: $('coach'),
     btnHorn: $('btnHorn'), btnDoor: $('btnDoor'), doorLbl: $('doorLbl'),
     lever: $('lever'), leverRows: $('leverRows'), thumb: $('leverThumb'),
     screens: { title: $('screenTitle'), howto: $('screenHowto'), brief: $('screenBrief'), pause: $('screenPause'), result: $('screenResult') },
@@ -1490,6 +1593,14 @@
         if (ss.phase === 'red' && ss.t > sc.red && S.x < sig.x) { ss.phase = 'yellow'; S.sig[sc.sig] = 'Y'; toast(sc.yellowMsg, 'warn', 2.6, null, 2); }
         if (ss.phase === 'yellow' && ss.t > sc.red + sc.yellow && S.x < sig.x) { ss.phase = 'done'; S.sig[sc.sig] = 'G'; }
       }
+    } else if (sc.type === 'hold') {
+      const gap = sig.x - S.x;
+      if (ss.phase === 'idle' && S.x > sc.at) { ss.phase = 'red'; ss.t = 0; S.sig[sc.sig] = 'R'; }
+      else if (ss.phase === 'red' && S.v === 0 && gap > 0) {
+        if (gap < sc.near) { ss.t += dt; if (ss.t > sc.wait) { ss.phase = 'done'; S.sig[sc.sig] = 'G'; radio(sc.radio, 5); Sound.signalChime(); } }
+        else if (!ss.farShown) { ss.farShown = true; toast(`Terlalu jauh dari sinyal ${sc.sig}. Maju pelan ${Math.round(gap - sc.near + 20)} m lagi.`, 'warn', 2.8, null, 2); }
+      }
+      if (S.v > 0.3) ss.farShown = false;
     } else if (sc.type === 'inspect') {
       const gap = sig.x - S.x;
       if (ss.phase === 'idle' && S.x > sc.at) {
@@ -1610,11 +1721,11 @@
     S.moment = { kind: rating.c, label: rating.r, t: 0, x: st.x, coins: rating.coins, sub: `${fmtM(Math.abs(d))} m ${d > 0 ? 'lewat' : 'kurang'} dari marka${rating.coins ? ` · +${rating.coins} koin` : ''}` };
     S.st = stIdx;
     S.phase = 'dwell';
-    S.dwell = { step: MIS.freight ? 'unload' : 'open', timer: 0 };
+    S.dwell = { step: MIS.freight ? 'unload' : MIS.noDoors && st.final ? 'end' : 'open', timer: 0 };
     S.yellowLimit = false;
     const where = d > 0 ? 'lewat' : 'kurang';
     const kind = rating.c === 'miss' ? 'bad' : rating.c === 'ok' ? 'info' : 'good';
-    toast(`${rating.r.toUpperCase()}! ${fmtM(Math.abs(d))} m ${where} dari marka. ${MIS.freight ? 'Membongkar muatan...' : 'Buka pintu.'}`, kind, 3.2, null, 3);
+    toast(`${rating.r.toUpperCase()}! ${fmtM(Math.abs(d))} m ${where} dari marka. ${MIS.freight ? 'Membongkar muatan...' : MIS.noDoors && st.final ? '' : 'Buka pintu.'}`, kind, 3.2, null, 3);
     if (MIS.freight) { Sound.coal(4.5); return; }
     if (st.final) setTimeout(() => Sound.announce(`Kereta telah tiba di Stasiun ${titleCase(st.name)}, stasiun akhir. Terima kasih telah bepergian bersama Si Gagah.`), 900);
   }
@@ -1647,6 +1758,8 @@
       for (let k = 0; k < N_COACH; k++) S.load[k] = Math.max(0, Math.min(S.load[k], 1 - (dw.timer - k * 0.6) / 2.4));
       if (Math.random() < 0.5) S.smoke.push({ x: S.x - carFront(Math.floor(Math.random() * N_COACH)) - CAR_LEN / 2, y: 0.4, r: 0.4, grow: 1.2, vx: (Math.random() - 0.5), vy: 0.6, life: 0, max: 1.4, dust: true, a: 0.45 });
       if (dw.timer >= 5) finish();
+    } else if (dw.step === 'end') {
+      if (dw.timer >= 2.6) finish();
     } else if (dw.step === 'alight') {
       if (dw.timer > 1) S.aboard = Math.max(0, S.aboard - Math.ceil(dt * 12));
       if (dw.timer >= 3.2) finish();
@@ -1870,6 +1983,147 @@
     showResult();
   }
 
+  // ---------- target bintang: tiga sasaran per misi, dinilai langsung saat bermain ----------
+  const okRating = (x) => x.rating.c === 'perfect' || x.rating.c === 'good';
+  const finalStop = () => S.stops.find((s) => s.name === finalStation().name);
+  // tiap sasaran: label (dipakai di briefing), lalu eval() → { state: pending | ok | lost, value }
+  function goalDefs() {
+    const f = finalStation(), fname = titleCase(f.name);
+    const fin = () => (S ? finalStop() : null), failed = () => !!(S && S.failReason);
+    const arrive = (label) => ({ label, tip: '', eval: () => ({ state: failed() ? 'lost' : fin() ? 'ok' : 'pending', value: fin() ? 'selesai' : '' }) });
+    const onTime = (label, needGood) => ({
+      label, tip: needGood ? 'Kejar waktu di lintas lurus, lalu mulai rem B1 sekitar 250 m sebelum marka.' : 'Di lintas lurus pakai P3–P4 sampai batas kecepatan, lalu meluncur di N.',
+      eval: () => {
+        const fs = fin(), late = fs ? fs.clock - f.sched : S.clock - f.sched;
+        if (fs) return { state: late <= 30 && (!needGood || okRating(fs)) ? 'ok' : 'lost', value: `${fmtClock(fs.clock)} / ${fmtClock(f.sched)}${needGood ? ` · ${fs.rating.r}` : ''}` };
+        return { state: late > 30 ? 'lost' : 'pending', value: late > 30 ? `terlambat ${fmtDur(late)}` : `sisa ${fmtDur(-late)}` };
+      },
+    });
+    const worstStop = () => S.stops.concat(S.loads.map((l) => ({ name: `Muat gerbong ${l.i + 1}`, offset: l.offset, rating: l.rating }))).find((s) => !okRating(s));
+    const smoothStops = (label, minComfort) => ({
+      label, tip: 'Mulai rem B1 lebih awal dan naikkan rem satu tingkat demi satu tingkat; hentakan menurunkan kenyamanan.',
+      eval: () => {
+        const bad = worstStop(), cf = Math.round(S.comfort);
+        const all = !!fin() && S.stops.length === ROUTE.stations.length - 1 && (!MIS.freight || S.loads.length === N_COACH);
+        const value = bad ? `${titleCase(bad.name)}: ${bad.rating.r}, ${fmtM(Math.abs(bad.offset))} m` : `${cf}%`;
+        return { state: S.comfort < minComfort || bad ? 'lost' : all ? 'ok' : 'pending', value };
+      },
+    });
+    const id = MIS.id;
+    if (id === '1-1') {
+      const off = () => { const fs = fin(); return fs ? Math.abs(fs.offset) : null; };
+      return [
+        arrive('Berhenti di Peron 1'),
+        { label: 'Paling jauh 4 m dari marka', tip: 'Kembalikan tuas ke N lebih awal, lalu rem B1–B2 mengikuti panduan titik henti.', eval: () => (off() === null ? { state: 'pending', value: '' } : { state: off() <= 4 ? 'ok' : 'lost', value: `${fmtM(off())} m` }) },
+        { label: 'Paling jauh 1 m · nyaman ≥ 90%', tip: 'Rem bertahap: B1 dulu, B2 hanya bila perlu, lalu lepas sedikit sebelum berhenti.', eval: () => { const o = off(); if (S.comfort < 90) return { state: 'lost', value: `nyaman ${Math.round(S.comfort)}%` }; return o === null ? { state: 'pending', value: '' } : { state: o <= 1 ? 'ok' : 'lost', value: `${fmtM(o)} m` }; } },
+      ];
+    }
+    if (id === '1-2') {
+      const over = () => Object.keys(S.violKeys).some((k) => k.startsWith('over:'));
+      return [
+        arrive('Tidak melewati sinyal merah'),
+        { label: 'Tidak melebihi batas lebih dari 5 km/h', tip: 'Turunkan kecepatan sebelum papan batas, bukan sesudahnya.', eval: () => ({ state: over() ? 'lost' : fin() ? 'ok' : 'pending', value: over() ? 'melebihi batas' : '' }) },
+        onTime('Tepat waktu · berhenti Good', true),
+      ];
+    }
+    if (id === '1-3') {
+      const noHorn = () => Object.keys(S.violKeys).some((k) => k.startsWith('crossing'));
+      return [
+        arrive('Semua penumpang diantar'),
+        { label: 'Nyaman ≥ 85% · klakson di perlintasan', tip: 'Bunyikan klakson sejak papan 35 sampai perlintasan, dan tarik serta rem perlahan.', eval: () => {
+          const cf = Math.round(S.comfort);
+          if (noHorn()) return { state: 'lost', value: 'lupa klakson' };
+          return { state: S.comfort < 85 ? 'lost' : fin() ? 'ok' : 'pending', value: `${cf}%` };
+        } },
+        smoothStops('Semua berhenti Good · nyaman ≥ 95%', 95),
+      ];
+    }
+    const g2 = MIS.goal2 === 'rival'
+      ? { label: `Tiba sebelum bus ${ROUTE.rival.name}`, tip: 'Jangan berhenti terlalu lama dan manfaatkan saat bus tertahan palang perlintasan.', eval: () => {
+        const fs = fin(), B = S.bus;
+        if (fs) return { state: !B.done || fs.clock < B.arrive ? 'ok' : 'lost', value: B.done ? `bus tiba ${fmtClock(B.arrive)}` : 'bus belum tiba' };
+        return { state: B.done ? 'lost' : 'pending', value: B.done ? 'bus menang' : `${Math.round(Math.abs(B.x - S.x))} m` };
+      } }
+      : onTime(`Tiba di ${fname} tepat waktu`, false);
+    return [
+      arrive(`Tiba di ${fname}`),
+      g2,
+      smoothStops(MIS.freight ? 'Muatan ≥ 80% · muat & bongkar Good' : 'Nyaman ≥ 80% · semua berhenti Good', 80),
+    ];
+  }
+  // sorotan kecil di HUD: tiga chip sasaran yang diperbarui langsung
+  let goalSig = '';
+  function updateGoalChips() {
+    const el = ui.goalChips; if (!el || !S) return;
+    const gs = goalDefs().map((g) => ({ ...g, ...g.eval() }));
+    const sig = gs.map((g) => g.state).join('|');
+    if (sig !== goalSig) {
+      const changed = goalSig ? goalSig.split('|') : [];
+      el.innerHTML = gs.map((g, i) => `<li class="gchip ${g.state}${changed.length && changed[i] !== g.state ? ' flash' : ''}"><span class="s">★</span><span class="t">${g.label}</span><span class="m">${g.state === 'ok' ? '✓' : g.state === 'lost' ? '✕' : ''}</span></li>`).join('');
+      goalSig = sig;
+    }
+  }
+
+  // ---------- petunjuk misi pembuka: layar meredup, kontrol disorot, satu kalimat dari Kakek/Dimas ----------
+  const stopAhead = () => { const ns = S.phase === 'run' ? nextStation() : null; return ns ? ns.x - S.x : Infinity; };
+  const sigAhead = (id) => { const q = ROUTE.signals.find((g) => g.id === id); return q ? q.x - S.x : Infinity; };
+  const TUTORIAL = {
+    '1-1': [
+      { target: '#lever', who: 'KK', text: 'Geser tuas ke P1. Si Gagah mulai bergerak pelan.', when: () => S.phase === 'run' && S.v < 0.2 && S.notch <= 0, done: () => S.notch > 0 },
+      { target: '#speedo', who: 'KK', text: 'Lihat jarum. Batas di depo 25 km/h; tahan di bawahnya.', when: () => S.v * 3.6 > 15, done: (t) => t > 4.5 },
+      { target: '#lever', who: 'KK', text: 'Kembalikan tuas ke N. Kereta meluncur sendiri.', when: () => stopAhead() < 170, done: () => S.notch <= 0 },
+      { target: '#stopBox', who: 'KK', text: 'Rem B1, lalu B2 bila perlu. Jarak ke marka ada di sini.', when: () => stopAhead() < 95, done: (t) => S.notch < 0 && t > 2.5 },
+      { target: '#precise', who: 'KK', text: 'Panduan titik henti: hentikan saat penunjuk di garis hijau.', when: () => stopAhead() < 30, done: () => S.v < 0.05 },
+    ],
+    '1-2': [
+      { target: '.strip-wrap', who: 'DM', text: 'Papan 40 di depan: batas kecepatan berlaku mulai papan itu.', when: () => S.phase === 'run' && S.x > 230, done: (t) => t > 5 },
+      { target: '.strip-wrap', who: 'DM', text: 'Sinyal J1 kuning. Siap berhenti di sinyal berikutnya; maksimum 40 km/h.', when: () => sigAhead('J1') < 300, done: () => sigAhead('J1') < 0 },
+      { target: '.strip-wrap', who: 'DM', text: 'Sinyal S2 merah. Berhenti sebelum tiangnya; aku hijaukan setelah jalur aman.', when: () => sigAhead('S2') < 220 && S.sig.S2 === 'R', done: () => S.v === 0 || S.sig.S2 === 'G' },
+      { target: '#lever', who: 'DM', text: 'S2 hijau. Silakan jalan lagi ke Cibening.', when: () => S.sig.S2 === 'G' && sigAhead('S2') > 0, done: () => S.notch > 0 },
+    ],
+    '1-3': [
+      { target: '#btnDoor', who: 'BW', text: 'Tutup pintu dulu sebelum berangkat.', when: () => S.phase === 'dwell' && S.st === 0 && S.dwell.step === 'close', done: () => S.dwell.step !== 'close' },
+      { target: '.cluster .ring', who: 'BW', text: 'Tarik dan rem perlahan. Hentakan menurunkan kenyamanan penumpang.', when: () => S.comfort < 99.6, done: (t) => t > 5 },
+      { target: '#btnDoor', who: 'BW', text: 'Sudah berhenti di halte. Buka pintu, penumpang naik.', when: () => S.phase === 'dwell' && S.st === 1 && S.dwell.step === 'open', done: () => S.dwell.step !== 'open' },
+      { target: '#btnDoor', who: 'BW', text: 'Semua sudah naik. Tutup pintu sebelum berangkat.', when: () => S.phase === 'dwell' && S.st === 1 && S.dwell.step === 'close', done: () => S.dwell.step !== 'close' },
+      { target: '#btnHorn', who: 'KK', text: 'Papan 35: bunyikan klakson sampai perlintasan.', when: () => ROUTE.crossings[0] && S.x > ROUTE.crossings[0].hornFrom + 10 && !S.horned[0], done: () => S.horned[0] || S.x > ROUTE.crossings[0].x },
+    ],
+  };
+  const TUT_WHO = { KK: 'Kakek', DM: 'Radio · Dimas', BW: 'Bu Wulan' };
+  function updateTutorial(dt) {
+    const coach = ui.coach; if (!coach) return;
+    const beats = TUTORIAL[MIS.id];
+    if (!beats || !S || S.mode !== 'play' || store.get('rn.tutSkip') === '1') { coach.hidden = true; return; }
+    const T = S.tut;
+    if (T.active !== null) {
+      T.t += dt;
+      const b = beats[T.active];
+      if (b.done(T.t) || T.t > 14) { T.active = null; coach.hidden = true; }
+    }
+    if (T.active === null) {
+      // ambil petunjuk terakhir yang sudah waktunya; petunjuk lebih awal yang terlewat tidak ditampilkan lagi
+      let i = -1;
+      beats.forEach((b, k) => { if (!T.shown[k] && b.when()) i = k; });
+      if (i < 0) return;
+      for (let k = 0; k <= i; k++) T.shown[k] = true;
+      T.active = i; T.t = 0;
+      const b = beats[i];
+      $('coachWho').textContent = TUT_WHO[b.who]; $('coachAv').textContent = b.who; $('coachText').textContent = b.text;
+      coach.hidden = false;
+    }
+    // ikuti posisi kontrol yang disorot (layout bisa berubah)
+    const b = beats[T.active], tg = document.querySelector(b.target);
+    if (!tg || !tg.getBoundingClientRect().width) { $('coachSpot').hidden = true; return; }
+    const r = tg.getBoundingClientRect(), pad = 6, sp = $('coachSpot');
+    sp.hidden = false;
+    Object.assign(sp.style, { left: `${r.left - pad}px`, top: `${r.top - pad}px`, width: `${r.width + pad * 2}px`, height: `${r.height + pad * 2}px` });
+    const bub = $('coachBubble'), bw = bub.offsetWidth, bh = bub.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+    let x = r.left + r.width / 2 - bw / 2, y = r.top - bh - 16;
+    if (y < 8) y = r.bottom + 16;
+    if (r.left > vw * 0.7) { x = r.left - bw - 18; y = Math.min(Math.max(8, r.top + r.height / 2 - bh / 2), vh - bh - 8); }
+    bub.style.left = `${clamp(x, 8, vw - bw - 8)}px`; bub.style.top = `${clamp(y, 8, vh - bh - 8)}px`;
+  }
+
   function computeResult() {
     const failed = !!S.failReason;
     const final = S.stops.find((s) => s.name === finalStation().name);
@@ -1878,17 +2132,14 @@
     const beatBus = !!final && (!B.done || final.clock < B.arrive);
     const okR = (x) => x.rating.c === 'perfect' || x.rating.c === 'good';
     const goodStops = S.stops.length === ROUTE.stations.length - 1 && S.stops.every(okR) && (!MIS.freight || (S.loads.length === N_COACH && S.loads.every(okR)));
-    let stars = 0;
-    if (!failed && final) {
-      stars = 1;
-      if (MIS.goal2 === 'rival' ? beatBus : onTime) stars++;
-      if (S.comfort >= 80 && goodStops) stars++;
-    }
+    void goodStops;
+    const goals = goalDefs().map((g) => ({ ...g, ...g.eval() }));
+    const stars = failed || !final ? 0 : goals.filter((g) => g.state === 'ok').length;
     const base = failed ? 0 : 100;
     const comfortBonus = failed ? 0 : Math.round(S.comfort * 0.5);
     const penalty = S.violations.length * 20;
     const total = Math.max(0, base + S.coins + comfortBonus - penalty);
-    return { failed, stars, onTime, beatBus, total, base, comfortBonus, penalty };
+    return { failed, stars, onTime, beatBus, total, base, comfortBonus, penalty, goals };
   }
 
   const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
@@ -1921,7 +2172,9 @@
     const btnNext = $('btnNext');
     btnNext.hidden = !(next && !r.failed);
     if (next) btnNext.textContent = `Lanjut ke Misi ${next}`;
-    $('resCard').innerHTML = `
+    const missed = r.goals.find((g) => g.state !== 'ok' && g.tip);
+    const goalList = `<ul class="rgoals">${r.goals.map((g) => `<li class="${g.state === 'ok' ? 'ok' : 'miss'}"><i>★</i><span>${g.label}</span><small>${g.value || (g.state === 'ok' ? 'tercapai' : 'belum')}</small></li>`).join('')}</ul>${!r.failed && missed ? `<p class="rtip">Tips: ${missed.tip}</p>` : ''}`;
+    $('resCard').innerHTML = `${goalList}
       <table class="rtable">
         <thead><tr><th>Stasiun</th><th>Berhenti</th><th>Tiba / jadwal</th></tr></thead>
         <tbody>${loadRows}${rows}
@@ -1946,16 +2199,22 @@
   const starStr = (b) => '★'.repeat(b) + '☆'.repeat(3 - b);
   const clockOf = (sec) => `${String(Math.floor(sec / 3600)).padStart(2, '0')}.${String(Math.floor(sec / 60) % 60).padStart(2, '0')}`;
   // misi berikutnya: yang pertama belum diselesaikan, atau misi terakhir
-  const nextMissionId = () => MISSION_ORDER.find((id) => bestOf(id) === 0) || MISSION_ORDER[MISSION_ORDER.length - 1];
+  const nextMissionId = () => {
+    const veteran = MISSION_ORDER.some((id) => !MISSIONS[id].tutorial && bestOf(id) > 0);
+    return MISSION_ORDER.find((id) => bestOf(id) === 0 && !(veteran && MISSIONS[id].tutorial)) || MISSION_ORDER[MISSION_ORDER.length - 1];
+  };
   // ---------- layar judul: peta misi Jawa–Sumatra dan garasi Si Gagah ----------
   // koordinat peta dalam bidang 540 x 390; diskalakan ke ukuran kanvas
   const MAP_ROUTES = {
+    '1-1': { pts: [[282, 308], [300, 300]], col: '#f2c94c' },
+    '1-2': { pts: [[300, 300], [338, 292]], col: '#e0b07a' },
+    '1-3': { pts: [[300, 300], [319, 299], [338, 292]], col: '#d8a06a' },
     '1-4': { pts: [[300, 300], [338, 292], [372, 300]], col: '#e8955a' },
     '1-5': { pts: [[372, 300], [404, 314], [440, 306]], col: '#7aa6b8' },
     '1-6': { pts: [[440, 306], [404, 318], [372, 306], [336, 300], [300, 306]], col: '#b07ad8' },
     '2-1': { pts: [[176, 168], [206, 196], [236, 214], [262, 238]], col: '#6fb36a' },
   };
-  const MAP_ST = [[300, 300, 'Sukamaju'], [338, 292, 'Cibening'], [372, 300, 'Pasar Lama'], [404, 314, 'Kali Jernih'], [440, 306, 'Watugede'], [176, 168, 'Muara Kelam'], [262, 238, 'Tanjung Api']];
+  const MAP_ST = [[282, 308, 'Depo'], [319, 299, ''], [300, 300, 'Sukamaju'], [338, 292, 'Cibening'], [372, 300, 'Pasar Lama'], [404, 314, 'Kali Jernih'], [440, 306, 'Watugede'], [176, 168, 'Muara Kelam'], [262, 238, 'Tanjung Api']];
   const ISL_SUM = [[22, 30], [60, 14], [110, 44], [160, 92], [212, 136], [262, 178], [300, 222], [306, 256], [282, 266], [240, 246], [190, 214], [134, 168], [84, 120], [40, 78], [18, 48]];
   const ISL_JAW = [[252, 266], [300, 254], [360, 260], [420, 266], [480, 272], [522, 288], [528, 330], [492, 352], [430, 348], [370, 346], [310, 342], [262, 330], [240, 298]];
   const titleMap = { tab: 'map', focus: null, t: 0 };
@@ -2052,7 +2311,7 @@
       const m = MISSIONS[id], b = bestOf(id), st = m.route.stations;
       const route = `${titleCase(st[0].name)} → ${titleCase(st[st.length - 1].name)} · ${clockOf(m.startClock)} · ${m.weather}`;
       const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BELUM DIMAINKAN</span>';
-      return `<li><button class="ticket t-${m.ticket || m.sky}${id === nextId ? ' next' : ''}" data-id="${id}">
+      return `<li${m.tutorial ? ' class="tut"' : ''}><button class="ticket t-${m.ticket || m.sky}${m.tutorial ? ' t-tut' : ''}${id === nextId ? ' next' : ''}" data-id="${id}">
         <span class="stub"><small>MISI</small><b>${id}</b></span>
         <span class="tbody"><b>${m.title}</b><small>${route}</small>${stars}</span>
       </button></li>`;
@@ -2092,8 +2351,10 @@
       <dt>Kereta</dt><dd>${m.freight ? `Si Gagah + ${m.wagons} gerbong batu bara` : 'Si Gagah + 3 gerbong penumpang'}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>`;
-    $('briefGoal3').textContent = m.freight ? 'Muatan utuh minimal 80% dan semua pemuatan serta pembongkaran Good atau Perfect' : 'Kenyamanan minimal 80% dan semua pemberhentian Good atau Perfect';
-    $('briefGoal2').textContent = m.goal2 === 'rival' ? `Tiba di ${titleCase(f.name)} lebih dulu dari bus ${R.rival.name}` : `Tiba di ${titleCase(f.name)} tepat waktu`;
+    $('briefGoals').innerHTML = goalDefs().map((g) => `<li><span class="star">★</span>${g.label}</li>`).join('');
+    const tb = $('btnTutSkip');
+    tb.hidden = !TUTORIAL[m.id];
+    syncTutSkip();
     showScreen('brief');
   }
   function startMission() {
@@ -2109,7 +2370,7 @@
     $('rivalPanel').hidden = !ROUTE.rival;
     document.querySelectorAll('.cluster .coins').forEach((el) => { el.hidden = !!ROUTE.rival; });
     ui.rivalSep.hidden = !ROUTE.rival;
-    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1; camRoll = 0; sparks.length = 0; crowds.clear();
+    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1; camRoll = 0; sparks.length = 0; crowds.clear(); goalSig = '';
     resetCrossings();
     const thisRun = S;
     if (ROUTE.rival) setTimeout(() => { if (S === thisRun && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
@@ -2251,6 +2512,7 @@
     toast(viewMode === 'cab' ? 'Tampilan kabin masinis. Tekan lagi untuk tampilan samping.' : 'Tampilan samping.', 'info', 2, 'view', 1);
   }
   $('btnView').addEventListener('click', toggleView);
+  $('btnTutSkip').addEventListener('click', () => { store.set('rn.tutSkip', store.get('rn.tutSkip') === '1' ? '0' : '1'); syncTutSkip(); });
   syncViewButton();
   $('btnMusicTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMusic(); syncAudioButtons(); });
   syncAudioButtons();
@@ -2262,6 +2524,11 @@
   window.addEventListener('resize', resize);
 
   // ---------- HUD ----------
+  function syncTutSkip() {
+    const skip = store.get('rn.tutSkip') === '1', tb = $('btnTutSkip');
+    tb.textContent = skip ? 'Petunjuk: mati' : 'Petunjuk: nyala';
+    tb.setAttribute('aria-pressed', String(!skip));
+  }
   function updateHud() {
     setText(ui.clock, fmtClock(S.clock));
     const ns = S.phase === 'dwell' ? ROUTE.stations[S.st] : nextStation();
@@ -2330,7 +2597,8 @@
         || ROUTE.goats.some((g, i) => S.goats[i].state === 'idle' && g.x > S.x && g.x - S.x < 500)
         || (!!ROUTE.elephants && S.eleph.phase !== 'gone' && ROUTE.elephants.x - S.x < 700 && ROUTE.elephants.x > S.x - 20);
       const attention = S.phase !== 'run' || S.v < 0.5 || dStop < 800 || sigAhead || hazard || (nl && nl.from - S.x < 450) || kmh > lim + 2 || S.yellowLimit;
-      setClass(ui.hud, 'calm', !attention);
+      const tutStrip = S.tut && S.tut.active !== null && TUTORIAL[MIS.id] && TUTORIAL[MIS.id][S.tut.active].target === '.strip-wrap';
+      setClass(ui.hud, 'calm', !attention && !tutStrip);
       setClass(ui.hud, 'cab', viewMode === 'cab');
     }
     if (showP) {
@@ -3085,6 +3353,7 @@
     drawStations(LV);
     drawSwitch(LV);
     drawTrackside(LV);
+    drawBoards35(LV);
     drawCrossings(LV, 'back', dtReal);
     drawGoats(LV);
     drawSilo(LV, 'back');
@@ -4589,6 +4858,21 @@
     });
   }
 
+  // papan semboyan 35 (wajib klakson) di titik mulai membunyikan klakson sebelum perlintasan
+  function drawBoards35(V) {
+    const { c, ppm, gy, X, wx0, wx1 } = V;
+    ROUTE.crossings.forEach((cr) => {
+      const bx = cr.hornFrom + 40; if (bx < wx0 - 5 || bx > wx1 + 5) return;
+      const x = X(bx), base = gy - 0.7 * ppm, top = base - 2.8 * ppm, w = 1.1 * ppm, h = 0.75 * ppm;
+      c.fillStyle = 'rgba(0,0,0,0.18)'; c.beginPath(); c.ellipse(x - 0.4 * ppm, base, 0.7 * ppm, 0.12 * ppm, 0, 0, 7); c.fill();
+      c.fillStyle = '#3a3a3a'; c.fillRect(x - 0.06 * ppm, top, 0.12 * ppm, base - top);
+      c.fillStyle = '#f4f1e8'; c.fillRect(x - w / 2, top - h, w, h);
+      c.strokeStyle = '#1b1b1b'; c.lineWidth = Math.max(1, 0.07 * ppm); c.strokeRect(x - w / 2, top - h, w, h);
+      c.fillStyle = '#1b1b1b'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = `900 ${Math.round(h * 0.78)}px "Big Shoulders Display", sans-serif`; c.fillText('35', x, top - h * 0.48);
+      c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    });
+  }
   function drawGoats(V) {
     ROUTE.goats.forEach((g, i) => drawGoat(V, g, V.st.goats ? V.st.goats[i] : null));
   }
@@ -5481,7 +5765,8 @@
     if (W && H) render(dt);
     if (mode === 'title') drawTitleMap(dt);
     Sound.update(audioInfo());
-    if (S && (mode === 'play' || mode === 'pause')) { updateHud(); renderStrip(); }
+    if (S && (mode === 'play' || mode === 'pause')) { updateHud(); updateGoalChips(); renderStrip(); }
+    if (S && mode === 'play') updateTutorial(dt); else if (ui.coach) ui.coach.hidden = true;
     requestAnimationFrame(frame);
   }
 
