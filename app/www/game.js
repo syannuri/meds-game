@@ -47,7 +47,7 @@
       tutorial: true, startClosed: true, noDoors: true,
       tags: ['Tuas', 'Berhenti'],
       speaker: { who: 'Kakek, pensiunan masinis', initials: 'KK' },
-      brief: 'Raka, sebelum membawa penumpang, kenali dulu Si Gagah. Bawa ia pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka. Kakek duduk di sebelahmu.',
+      brief: 'Raka, sebelum membawa penumpang, kenali dulu Cakra. Bawa ia pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka. Kakek duduk di sebelahmu.',
       weather: 'cerah',
       intro: 'Sinyal depo sebentar lagi hijau. Tunggu aba-aba Kakek.',
       reward: '<strong>Kakek:</strong> Bagus, Raka! Besok kita belajar membaca sinyal.',
@@ -74,7 +74,7 @@
       tutorial: true, startClosed: true, noDoors: true,
       tags: ['Sinyal', 'Batas kecepatan'],
       speaker: { who: 'Dimas, pengatur perjalanan', initials: 'DM' },
-      brief: 'Pagi, Raka. Bawa Si Gagah kosong ke Cibening. Di jalan ada papan batas kecepatan, sinyal kuning, dan sinyal merah. Baca warnanya; aku pandu lewat radio.',
+      brief: 'Pagi, Raka. Bawa Cakra kosong ke Cibening. Di jalan ada papan batas kecepatan, sinyal kuning, dan sinyal merah. Baca warnanya; aku pandu lewat radio.',
       weather: 'cerah',
       intro: 'Tunggu sinyal S1 hijau, lalu berangkat.',
       reward: '<strong>Dimas:</strong> Sinyal sudah kamu kuasai. Berikutnya, penumpang pertamamu.',
@@ -348,7 +348,7 @@
     ticket: 'jungle',
     tags: ['Kereta barang', 'Muat presisi', 'Gajah', 'Turunan panjang'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
-    brief: 'Selamat datang di Sumatra, Raka! Hari ini Si Gagah menarik empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Muat satu per satu tepat di bawah corong. Rangkaian penuh itu berat, jadi mulai mengerem jauh lebih awal, apalagi di turunan menuju pantai.',
+    brief: 'Selamat datang di Sumatra, Raka! Hari ini Cakra menarik empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Muat satu per satu tepat di bawah corong. Rangkaian penuh itu berat, jadi mulai mengerem jauh lebih awal, apalagi di turunan menuju pantai.',
     weather: 'pagi berkabut tipis',
     intro: 'Maju pelan ke corong muat. Hentikan gerbong 1 tepat di bawah corong.',
     reward: '<strong>Cerita:</strong> Di dermaga, Sari menunjukkan peta tua milik kakek Raka: ada jalur cabang yang dulu ditutup menuju pedalaman Bukit Barisan. Babak 2 baru dimulai.',
@@ -406,7 +406,7 @@
     brief: 'Hujan mulai reda, Raka, tapi lintas selatan masih berantakan. Jalur ke Kedung Banteng hanya satu rel. Di Halte Krajan kita bersilang dengan KA 112 Lintas Selatan dari arah berlawanan: masuk sepur belok pelan, berhenti sebelum patok bebas, lalu tunggu dia lewat. Angin tadi siang menumbangkan pohon di beberapa tempat, dan ada rel yang tergenang.',
     weather: 'hujan reda, angin kencang',
     intro: 'Tutup pintu dan berangkat. Waspadai pohon tumbang setelah Watugede.',
-    reward: '<strong>Cerita:</strong> Masinis KA 112 membunyikan klakson dua kali saat bersilang, tanda hormat untuk Si Gagah. Di Kedung Banteng, kepala stasiun menyerahkan surat tugas baru: Raka diminta ke Sumatra.',
+    reward: '<strong>Cerita:</strong> Masinis KA 112 membunyikan klakson dua kali saat bersilang, tanda hormat untuk Cakra. Di Kedung Banteng, kepala stasiun menyerahkan surat tugas baru: Raka diminta ke Sumatra.',
     aboard: 10,
     route: {
       lineSpeed: 70,
@@ -448,7 +448,7 @@
       meet: { st: 1, entry: 1310, exit: 1610, foul: 1548, name: 'KA 112', cars: 5 },
       hints: [
         { at: 40, msg: 'Rel masih basah: rem lebih lemah. Berangkat dengan P1–P2.', kind: 'warn' },
-        { at: 1180, msg: 'Sinyal masuk J1 kuning: Si Gagah dibelokkan ke sepur belok Krajan. Maksimal 30 km/h di wesel.', kind: 'warn' },
+        { at: 1180, msg: 'Sinyal masuk J1 kuning: Cakra dibelokkan ke sepur belok Krajan. Maksimal 30 km/h di wesel.', kind: 'warn' },
         { at: 2130, msg: 'Rel tergenang di depan. Maksimal 10 km/h dan jangan berhenti di air.', kind: 'warn' },
       ],
       bufferStop: 3510,
@@ -1247,7 +1247,7 @@
         nz(t, 'lowpass', 320, 0.7, 0.12 * v, 0.25, sfx, 0.004);
         nz(t + 0.12, 'lowpass', 260, 0.7, 0.06 * v, 0.2, sfx, 0.004);
       },
-      // KA lain bersilang: klakson dua kali (nada lebih rendah dari Si Gagah) dan gemuruh lewat
+      // KA lain bersilang: klakson dua kali (nada lebih rendah dari Cakra) dan gemuruh lewat
       farHorn() {
         if (!ac || muted) return;
         const t = ac.currentTime;
@@ -1945,7 +1945,7 @@
     const kind = rating.c === 'miss' ? 'bad' : rating.c === 'ok' ? 'info' : 'good';
     toast(`${rating.r.toUpperCase()}! ${fmtM(Math.abs(d))} m ${where} dari marka. ${MIS.freight ? 'Membongkar muatan...' : MIS.noDoors && st.final ? '' : 'Buka pintu.'}`, kind, 3.2, null, 3);
     if (MIS.freight) { Sound.coal(4.5); return; }
-    if (st.final) setTimeout(() => Sound.announce(`Kereta telah tiba di Stasiun ${titleCase(st.name)}, stasiun akhir. Terima kasih telah bepergian bersama Si Gagah.`), 900);
+    if (st.final) setTimeout(() => Sound.announce(`Kereta telah tiba di Stasiun ${titleCase(st.name)}, stasiun akhir. Terima kasih telah bepergian bersama Cakra.`), 900);
   }
 
   function updateDwell(dt) {
@@ -1994,7 +1994,7 @@
         S.stoppedShortShown = false;
         Sound.signalChime();
         toast(S.st === 0 ? 'Sinyal hijau! Dorong tuas ke P untuk berangkat.' : 'Sinyal berangkat hijau. Lanjutkan perjalanan.', 'good', 3, null, 3);
-        if (MIS.freight && S.st === 0) setTimeout(() => { if (S && S.mode === 'play') radio('Muara Kelam ke Si Gagah: jalur aman sampai Tanjung Api. Hati-hati, rombongan gajah sering melintas pagi begini.', 6.5, 'Sari', 'SR'); }, 1500);
+        if (MIS.freight && S.st === 0) setTimeout(() => { if (S && S.mode === 'play') radio('Muara Kelam ke Cakra: jalur aman sampai Tanjung Api. Hati-hati, rombongan gajah sering melintas pagi begini.', 6.5, 'Sari', 'SR'); }, 1500);
       }
     }
   }
@@ -2135,7 +2135,7 @@
       const el = S.eleph;
       if (el.phase === 'idle' && S.x > E.trigger) {
         el.phase = 'block'; el.t = 0;
-        radio(`Si Gagah, hati-hati! Rombongan gajah melintas di depan, sekitar ${Math.round(E.x - S.x)} m. Berhenti dan tunggu, jangan dibunyikan klakson.`, 7, 'Sari', 'SR');
+        radio(`Cakra, hati-hati! Rombongan gajah melintas di depan, sekitar ${Math.round(E.x - S.x)} m. Berhenti dan tunggu, jangan dibunyikan klakson.`, 7, 'Sari', 'SR');
         Sound.trumpet(0.4);
       }
       if (el.phase === 'block') {
@@ -2216,7 +2216,7 @@
     const gap = TR.x - S.x;
     if (TR.phase === 'idle' && gap < ROUTE.tree.warn) {
       TR.phase = 'warn';
-      radio(`Si Gagah, berhenti! Pohon tumbang melintang rel, sekitar ${Math.round(gap / 10) * 10} m di depanmu!`, 7);
+      radio(`Cakra, berhenti! Pohon tumbang melintang rel, sekitar ${Math.round(gap / 10) * 10} m di depanmu!`, 7);
       toast('Pohon tumbang di depan! Rem darurat atau B4 sekarang.', 'bad', 3.4, null, 3);
       S.alarm = { t: 0, title: 'POHON TUMBANG', sub: `${Math.round(gap)} m di depan` };
       Sound.signalChime();
@@ -2269,7 +2269,7 @@
     const MT = ROUTE.meet;
     if (!MT) return;
     const m = S.meet;
-    // KA 112 baru masuk setelah Si Gagah berhenti di sepur belok
+    // KA 112 baru masuk setelah Cakra berhenti di sepur belok
     if (m.phase === 'idle' && S.st >= MT.st) {
       m.phase = 'run'; m.x = S.x + 230; m.v = 15;
       radio(`${MT.name} masuk Krajan dari arah berlawanan. Tetap di sepur belok sampai sinyal S2 hijau.`, 5.5);
@@ -2457,7 +2457,7 @@
   const sigAhead = (id) => { const q = ROUTE.signals.find((g) => g.id === id); return q ? q.x - S.x : Infinity; };
   const TUTORIAL = {
     '1-1': [
-      { target: '#lever', who: 'KK', text: 'Geser tuas ke P1. Si Gagah mulai bergerak pelan.', when: () => S.phase === 'run' && S.v < 0.2 && S.notch <= 0, done: () => S.notch > 0 },
+      { target: '#lever', who: 'KK', text: 'Geser tuas ke P1. Cakra mulai bergerak pelan.', when: () => S.phase === 'run' && S.v < 0.2 && S.notch <= 0, done: () => S.notch > 0 },
       { target: '#speedo', who: 'KK', text: 'Lihat jarum. Batas di depo 25 km/h; tahan di bawahnya.', when: () => S.v * 3.6 > 15, done: (t) => t > 4.5 },
       { target: '#lever', who: 'KK', text: 'Kembalikan tuas ke N. Kereta meluncur sendiri.', when: () => stopAhead() < 170, done: () => S.notch <= 0 },
       { target: '#stopBox', who: 'KK', text: 'Rem B1, lalu B2 bila perlu. Jarak ke marka ada di sini.', when: () => stopAhead() < 95, done: (t) => S.notch < 0 && t > 2.5 },
@@ -2617,7 +2617,7 @@
     const veteran = MISSION_ORDER.some((id) => !MISSIONS[id].tutorial && bestOf(id) > 0);
     return MISSION_ORDER.find((id) => bestOf(id) === 0 && !(veteran && MISSIONS[id].tutorial)) || MISSION_ORDER[MISSION_ORDER.length - 1];
   };
-  // ---------- layar judul: peta misi Jawa–Sumatra dan garasi Si Gagah ----------
+  // ---------- layar judul: peta misi Jawa–Sumatra dan garasi Cakra ----------
   // koordinat peta dalam bidang 540 x 390; diskalakan ke ukuran kanvas
   const MAP_ROUTES = {
     '1-1': { pts: [[282, 308], [300, 300]], col: '#f2c94c' },
@@ -2711,12 +2711,12 @@
     const gy = h * 0.78, ppm = w / 24;
     c.fillStyle = '#2a2f33'; c.beginPath(); c.ellipse(w / 2, gy + 6, w * 0.46, h * 0.1, 0, 0, 7); c.fill();
     c.fillStyle = '#7d8487'; c.fillRect(w * 0.06, gy - 2, w * 0.88, 2); c.fillStyle = '#a3a9ab'; c.fillRect(w * 0.06, gy + 2, w * 0.88, 2);
-    // Si Gagah dari samping, digambar dengan fungsi kereta di game
+    // Cakra dari samping, digambar dengan fungsi kereta di game
     const V = { c, ppm, gy, X: (wx) => w / 2 + (wx - 9) * ppm, st: { x: 18, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0, rimA: 0.35, rim: '#ffcf8a', refl: 0.15, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
     const keep = [N_COACH]; N_COACH = 0;
     try { drawTrain(V); } finally { N_COACH = keep[0]; }
     for (let i = 0; i < 30; i++) { const x = ((hash(i) * w + t * 5 * (hash(i + 2) - 0.5)) % w + w) % w, y = (hash(i + 5) * h * 0.7 + t * 3) % (h * 0.7) + h * 0.08; c.fillStyle = 'rgba(255,230,190,0.3)'; c.fillRect(x, y, 1.5, 1.5); }
-    c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(h * 0.09)}px "Big Shoulders Display", sans-serif`; c.fillText('SI GAGAH · RN 2001', w * 0.04, h * 0.14);
+    c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(h * 0.09)}px "Big Shoulders Display", sans-serif`; c.fillText('CAKRA · RN 2001', w * 0.04, h * 0.14);
     const done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
     c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(h * 0.045)}px "Plus Jakarta Sans", sans-serif`;
     c.fillText(`Depo Sukamaju · ${done} dari ${MISSION_ORDER.length} misi selesai · diesel-elektrik CC, livery Rel Nusantara`, w * 0.04, h * 0.22);
@@ -2826,7 +2826,7 @@
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
-      <dt>Kereta</dt><dd>${m.freight ? `Si Gagah + ${m.wagons} gerbong batu bara` : `Si Gagah + ${N_COACH} gerbong penumpang${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
+      <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `Cakra + ${N_COACH} gerbong penumpang${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     $('briefGoals').innerHTML = goalDefs().map((g) => `<li><span class="star">★</span>${g.label}</li>`).join('');
@@ -2857,7 +2857,7 @@
     const thisRun = S;
     if (ROUTE.rival) setTimeout(() => { if (S === thisRun && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
     toast(MIS.intro, 'info', 4, null, 3);
-    if (!MIS.freight) setTimeout(() => { if (S && S.st === 0) Sound.announce(`Perhatian. Kereta lokal Si Gagah tujuan ${titleCase(finalStation().name)} di jalur satu akan segera diberangkatkan.`); }, 600);
+    if (!MIS.freight) setTimeout(() => { if (S && S.st === 0) Sound.announce(`Perhatian. Kereta lokal Cakra tujuan ${titleCase(finalStation().name)} di jalur satu akan segera diberangkatkan.`); }, 600);
   }
 
   // ---------- input ----------
@@ -3359,7 +3359,7 @@
       }
     });
 
-    // jalur utama persilangan di kanan (sepur belok = jalur Si Gagah)
+    // jalur utama persilangan di kanan (sepur belok = jalur Cakra)
     const MTc = ROUTE.meet, MO = 10;
     if (MTc && !inTun) {
       const a0 = Math.max(1.2, MTc.entry - x0), b0 = Math.min(FAR, MTc.exit - x0);
@@ -3639,7 +3639,7 @@
           if (dr < 1.5 || dn > FAR) return;
           const da = Math.max(1.5, dn), oa = MO * meetK(x0 + da), ob = MO * meetK(x0 + dr);
           add(da, () => {
-            // sisi kiri rangkaian (menghadap Si Gagah)
+            // sisi kiri rangkaian (menghadap Cakra)
             quad(W3(da, oa - 1.45, 1.1), W3(dr, ob - 1.45, 1.1), W3(dr, ob - 1.45, 4.0), W3(da, oa - 1.45, 4.0), '#d9dfe3');
             quad(W3(da, oa - 1.45, 1.55), W3(dr, ob - 1.45, 1.55), W3(dr, ob - 1.45, 1.95), W3(da, oa - 1.45, 1.95), '#1f4e8c');
             quad(W3(da, oa - 1.45, 0.4), W3(dr, ob - 1.45, 0.4), W3(dr, ob - 1.45, 1.1), W3(da, oa - 1.45, 1.1), '#24292d');
@@ -5984,7 +5984,7 @@
     c.beginPath(); c.arc(x + Math.cos(ang) * r * 0.58, y + Math.sin(ang) * r * 0.58, r * 0.13, 0, 7); c.fill();
   }
 
-  // ornamen livery Si Gagah (pita emas di sisi lokomotif): kawung, parang, atau mega mendung
+  // ornamen livery Cakra (pita emas di sisi lokomotif): kawung, parang, atau mega mendung
 
   // ukiran Dayak: sulur spiral berkait (satu satuan), dir = 1 atau -1 untuk dicerminkan
   // (cx, cy) pusat spiral, u = ukuran satuan (piksel)
@@ -6072,7 +6072,7 @@
     c.restore();
   }
 
-  // lokomotif diesel-elektrik CC "Si Gagah" + tiga gerbong stainless, digambar 2.5D:
+  // lokomotif diesel-elektrik CC "Cakra" + tiga gerbong stainless, digambar 2.5D:
   // sisi kereta menghadap kamera, atap dan muka depan sedikit terlihat dari atas-kanan.
   // skala nyata: badan kereta dirancang setinggi 6,75 m; digambar ulang dengan tinggi diskalakan dari lantai
   // rangka (1,05 m) sehingga atap sekitar 4,1 m. Roda, bogie, dan rangka bawah tetap dalam ukuran aslinya.
@@ -6390,7 +6390,7 @@
     c.strokeStyle = gold; c.lineWidth = Math.max(1, 0.05 * ppm); roundRect(c, L(4.0), Y(4.42), 2.55 * ppm, 0.52 * ppm, 0.1 * ppm); c.stroke();
     c.fillStyle = gold; c.textAlign = 'center'; c.textBaseline = 'middle';
     c.font = `800 ${Math.max(6, Math.round(0.4 * ppm))}px "Big Shoulders Display", sans-serif`;
-    c.fillText('SI GAGAH', L(2.72), Y(4.16));
+    c.fillText('CAKRA', L(2.72), Y(4.16));
     c.fillStyle = cream; c.textAlign = 'left';
     c.font = `800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`;
     c.fillText('RN 2001', L(15.2), Y(2.09));

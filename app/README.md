@@ -21,7 +21,7 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MISSIONS` dalam `game.js`.
 
 ## Tampilan (Visual 2.0)
-- Kereta: lokomotif diesel-elektrik CC "Si Gagah" RN 2001 (kabin depan dengan muka 3/4, kap panjang
+- Kereta: lokomotif diesel-elektrik CC "Cakra" RN 2001 (kabin depan dengan muka 3/4, kap panjang
   berkisi radiator dan kipas atap, bogie berpegas, tangki bahan bakar, pelindung depan) dan tiga gerbong
   stainless berjendela berbingkai dengan AC atap. Marka henti di peron bernomor 4 (lokomotif + 3 gerbong). Livery orisinal putih-safron-toska, tanpa logo operator mana pun.
 - Kedalaman 2.5D: petak sawah berperspektif menuju titik hilang, lapisan latar depan yang bergerak lebih
@@ -59,7 +59,7 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Masinis Ahli: tombol di layar briefing untuk misi yang sudah pernah selesai. Peta jalur, panduan
   titik henti, petunjuk batas, dan petunjuk pertama kali disembunyikan; koin ×1,5; tiga bintang
   memberi lencana emas AHLI di karcis (`rn.ahli`)
-- Si Gagah: lokomotif diesel modern berbadan lebar (full-width carbody) dengan moncong aerodinamis,
+- Cakra: lokomotif diesel modern berbadan lebar (full-width carbody) dengan moncong aerodinamis,
   kaca depan lebar bertopeng hitam, kisi radiator, panel isap udara, kipas & cerobong knalpot di atap,
   lampu LED. Livery merah dengan pita ukiran Dayak (sulur spiral berkait emas, mata merah, pinggiran
   gigi putih di dasar hitam) dan panel ukiran besar di sisi ruang mesin; `drawOrnament` juga punya
@@ -89,7 +89,7 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
   - Klakson udara tiga nada dengan hembusan udara dan gema perbukitan; berbunyi selama tombol
     (atau tombol `H`) ditahan
 - Layar judul: peta perjalanan Jawa–Sumatra dengan rute tiap misi (sentuh karcis untuk menyorot,
-  ketuk rute dua kali untuk memilih) dan tab Garasi yang menampilkan Si Gagah di meja putar depo
+  ketuk rute dua kali untuk memilih) dan tab Garasi yang menampilkan Cakra di meja putar depo
 - Palet khas tiap misi: fajar keemasan (1-4), hujan biru-abu (1-5), takbiran ungu-oranye (1-6), hujan reda biru-hijau (1-7),
   Sumatra lembap dengan kabut (2-1), lewat warna langit dan gradasi warna akhir di seluruh dunia
 - Kabin lebih kaya: tekstur batu balas, kilap rel, patok hektometer, papan semboyan 35 sebelum
