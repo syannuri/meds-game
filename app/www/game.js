@@ -5963,6 +5963,18 @@
     c.lineTo(x + rr, y + h); c.quadraticCurveTo(x, y + h, x, y + h - rr);
     c.lineTo(x, y + rr); c.quadraticCurveTo(x, y, x + rr, y); c.closePath();
   }
+  // roda monoblok lokomotif: flens, ban baja berkilap, bidang roda cekung, tanda cat yang ikut berputar
+  function locoWheel(c, x, y, r, ang) {
+    c.fillStyle = '#15181b'; c.beginPath(); c.arc(x, y, r * 1.07, 0, 7); c.fill();                       // flens
+    const tg = c.createLinearGradient(x - r, y - r, x + r, y + r); tg.addColorStop(0, '#9ea6ab'); tg.addColorStop(0.5, '#5b6369'); tg.addColorStop(1, '#3a4045');
+    c.fillStyle = tg; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();                                     // ban baja
+    const wg = c.createRadialGradient(x - r * 0.25, y - r * 0.25, r * 0.1, x, y, r * 0.84); wg.addColorStop(0, '#454c52'); wg.addColorStop(1, '#1f2327');
+    c.fillStyle = wg; c.beginPath(); c.arc(x, y, r * 0.84, 0, 7); c.fill();                              // bidang roda
+    c.strokeStyle = 'rgba(200,208,214,0.35)'; c.lineWidth = Math.max(1, r * 0.05); c.beginPath(); c.arc(x, y, r * 0.62, 0, 7); c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = Math.max(1, r * 0.06); c.beginPath(); c.arc(x, y, r * 0.93, Math.PI * 1.05, Math.PI * 1.6); c.stroke();
+    c.strokeStyle = '#e8e2d0'; c.lineWidth = Math.max(1, r * 0.09); c.beginPath(); c.moveTo(x + Math.cos(ang) * r * 0.86, y + Math.sin(ang) * r * 0.86); c.lineTo(x + Math.cos(ang) * r * 0.99, y + Math.sin(ang) * r * 0.99); c.stroke();
+    c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.arc(x + Math.cos(ang + 2.1) * r * 0.45, y + Math.sin(ang + 2.1) * r * 0.45, r * 0.07, 0, 7); c.fill();
+  }
   // roda cakram dengan tanda putar kecil supaya gerakannya terlihat
   function trainWheel(c, x, y, r, ang) {
     c.fillStyle = '#2b2f32'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
@@ -6180,22 +6192,65 @@
     // rangka utama & sill
         c.fillStyle = steelDark; c.fillRect(L(15.85), Y(1.85), 15.7 * ppm, 0.7 * ppm);
     line([[15.85, 1.84], [0.15, 1.84]], 'rgba(255,255,255,0.22)', 1);
-    // bogie CC: rangka berbentuk, pegas, kotak gandar, silinder rem
+    // bogie CC modern: rangka samping las berperut ikan, pegas primer ganda di kotak gandar,
+    // motor traksi di belakang roda, blok rem & silinder, peredam, kotak & pipa pasir
+    const frameG = vgrad(1.36, 0.62, [[0, '#8a949b'], [0.3, '#646d74'], [1, '#353c42']]);
     for (const [a, b, axles] of [[9.3, 15.0, [13.85, 12.15, 10.45]], [0.7, 6.4, [5.2, 3.5, 1.8]]]) {
-      poly([[b, 1.15], [b - 0.3, 0.5], [a + 0.3, 0.5], [a, 1.15]], '#262a2e');
-      line([[b - 0.2, 0.82], [a + 0.2, 0.82]], 'rgba(255,255,255,0.12)', 1);
+      // motor traksi & roda gigi (gelap, di belakang roda)
+      for (const m of axles) { c.fillStyle = '#1a1d20'; roundRect(c, L(m + 0.7), Y(1.02), 1.1 * ppm, 0.5 * ppm, 0.15 * ppm); c.fill(); }
+      // roda monoblok
+      for (const m of axles) locoWheel(c, L(m), Y(0.52), 0.54 * ppm, ang);
+      // blok rem di tapak roda + silinder rem
       for (const m of axles) {
-        box(m - 0.28, m + 0.28, 0.98, 1.38, '#1b1f22');
-        c.strokeStyle = '#6d757b'; c.lineWidth = 1; c.beginPath();
-        for (let q = 1.02; q < 1.36; q += 0.09) { c.moveTo(L(m + 0.25), Y(q)); c.lineTo(L(m - 0.25), Y(q + 0.04)); }
-        c.stroke();
+        poly([[m + 0.62, 0.78], [m + 0.5, 0.25], [m + 0.6, 0.22], [m + 0.74, 0.76]], '#2a2e31');
+        c.fillStyle = '#3a4146'; roundRect(c, L(m + 0.95), Y(0.98), 0.32 * ppm, 0.22 * ppm, 0.06 * ppm); c.fill();
       }
-      [ (axles[0] + axles[1]) / 2, (axles[1] + axles[2]) / 2 ].forEach((m) => box(m - 0.3, m + 0.3, 0.55, 0.85, '#30363b'));
+      // kotak gandar dengan tutup berbaut (tidak berputar)
+      for (const m of axles) {
+        c.fillStyle = vgrad(0.84, 0.24, [[0, '#4f575d'], [1, '#2a2f33']]); roundRect(c, L(m + 0.34), Y(0.84), 0.68 * ppm, 0.6 * ppm, 0.12 * ppm); c.fill();
+        c.fillStyle = '#d9a52a'; c.beginPath(); c.arc(L(m), Y(0.52), 0.17 * ppm, 0, 7); c.fill();
+        c.fillStyle = '#8a6a1a'; for (let k = 0; k < 4; k++) { const t = k * Math.PI / 2 + Math.PI / 4; c.beginPath(); c.arc(L(m) + Math.cos(t) * 0.11 * ppm, Y(0.52) + Math.sin(t) * 0.11 * ppm, Math.max(0.6, 0.025 * ppm), 0, 7); c.fill(); }
+      }
+      // pegas primer ganda di atas kotak gandar
+      for (const m of axles) for (const o of [-0.24, 0.24]) {
+        c.fillStyle = '#1c2023'; c.fillRect(L(m + o + 0.1), Y(1.03), 0.2 * ppm, 0.19 * ppm);
+        for (let q = 0; q < 4; q++) {
+          const hh = 0.865 + q * 0.045;
+          c.strokeStyle = q % 2 ? '#c3cacf' : '#8f989e'; c.lineWidth = Math.max(1, 0.035 * ppm);
+          c.beginPath(); c.ellipse(L(m + o), Y(hh), 0.1 * ppm, 0.022 * ppm, -0.15, 0, 7); c.stroke();
+        }
+      }
+      // rangka samping berperut ikan: datar di atas gandar, melengkung turun di antara roda
+      c.fillStyle = frameG; c.beginPath();
+      c.moveTo(L(b), Y(1.0)); c.lineTo(L(b - 0.15), Y(1.36)); c.lineTo(L(a + 0.15), Y(1.36)); c.lineTo(L(a), Y(1.0));
+      const segs = axles.slice().sort((p, q) => p - q);
+      let cur = a;
+      segs.forEach((m, i) => {
+        c.lineTo(L(m - 0.42), Y(1.02)); c.lineTo(L(m + 0.42), Y(1.02));
+        const nx = segs[i + 1];
+        if (nx !== undefined) { const mid = (m + nx) / 2; c.quadraticCurveTo(L(mid), Y(0.62), L(nx - 0.42), Y(1.02)); }
+        cur = m;
+      });
+      c.lineTo(L(b), Y(1.05)); c.closePath(); c.fill();
+      line([[b - 0.15, 1.35], [a + 0.15, 1.35]], 'rgba(255,255,255,0.55)', lw(0.03));
+      c.strokeStyle = 'rgba(20,24,28,0.6)'; c.lineWidth = Math.max(1, 0.03 * ppm); c.stroke();
+      // baut & lubang peringan di rangka
+      c.fillStyle = 'rgba(255,255,255,0.18)';
+      for (let m = a + 0.3; m < b - 0.2; m += 0.55) { c.beginPath(); c.arc(L(m), Y(1.25), Math.max(0.7, 0.03 * ppm), 0, 7); c.fill(); }
+      segs.slice(0, -1).forEach((m, i) => { const mid = (m + segs[i + 1]) / 2; c.fillStyle = '#16191b'; roundRect(c, L(mid + 0.22), Y(1.2), 0.44 * ppm, 0.24 * ppm, 0.1 * ppm); c.fill(); });
+      // peredam vertikal & peredam lateral di ujung bogie
+      for (const m of [a + 0.25, b - 0.25]) {
+        c.fillStyle = '#2b3034'; roundRect(c, L(m + 0.09), Y(1.75), 0.18 * ppm, 0.45 * ppm, 0.06 * ppm); c.fill();
+        line([[m, 1.3], [m, 1.42]], '#b9c1c6', lw(0.05));
+      }
+      // kotak pasir & pipa pasir ke rel di depan roda pertama tiap arah
+      [[segs[0] - 0.75, -1], [segs[2] + 0.75, 1]].forEach(([m]) => {
+        c.fillStyle = '#3a4146'; roundRect(c, L(m + 0.18), Y(1.32), 0.36 * ppm, 0.3 * ppm, 0.05 * ppm); c.fill();
+        line([[m, 1.02], [m, 0.12]], '#c9a43a', lw(0.035));
+      });
+      // pegas sekunder (flexicoil) antara bogie & badan
+      for (const m of [segs[0] + 0.85, segs[2] - 0.85]) for (let q = 0; q < 3; q++) { c.strokeStyle = q % 2 ? '#aab2b8' : '#7d868c'; c.lineWidth = Math.max(1, 0.04 * ppm); c.beginPath(); c.ellipse(L(m), Y(1.4 + q * 0.05), 0.14 * ppm, 0.025 * ppm, -0.15, 0, 7); c.stroke(); }
     }
-    [13.85, 12.15, 10.45, 5.2, 3.5, 1.8].forEach((m) => {
-      trainWheel(c, L(m), Y(0.52), 0.54 * ppm, ang);
-      c.fillStyle = '#f2c230'; c.beginPath(); c.arc(L(m), Y(0.52), 0.13 * ppm, 0, 7); c.fill();
-    });
     // tangki bahan bakar
     c.fillStyle = vgrad(1.25, 0.55, [[0, '#454c52'], [0.35, '#2d3338'], [1, '#1a1e21']]);
     roundRect(c, L(9.05), Y(1.25), 3.4 * ppm, 0.72 * ppm, 0.3 * ppm); c.fill();
@@ -6290,10 +6345,10 @@
     c.moveTo(L(4.85), Y(1.85)); c.lineTo(L(4.85), Y(0.55)); c.moveTo(L(4.25), Y(1.85)); c.lineTo(L(4.25), Y(0.55));
     for (let q = 0.7; q < 1.8; q += 0.38) { c.moveTo(L(4.85), Y(q)); c.lineTo(L(4.25), Y(q)); }
     c.stroke();
-    poly([[0.45, 1.15], [-1.1, 0.28], [1.6, 0.28], [1.9, 1.15]], '#3c4246');
+    poly([[1.12, 1.15], [-0.35, 1.15], [-1.1, 0.3], [1.0, 0.3]], '#3c4246');
     poly([[-1.1, 0.28], [-0.55, 1.15], [-0.3, 1.15], [-0.75, 0.28]], gold);
     c.fillStyle = 'rgba(0,0,0,0.35)';
-    for (let q = 0; q < 3; q++) c.fillRect(L(1.25 - q * 0.45), Y(0.95), 0.22 * ppm, 0.5 * ppm);
+    for (let q = 0; q < 3; q++) c.fillRect(L(0.85 - q * 0.42), Y(0.95), 0.2 * ppm, 0.5 * ppm);
     box(-1.1, 0.15, 1.15, 1.45, '#2a2f33');
     line([[-0.55, 1.1], [-0.7, 0.7]], '#d0392b', lw(0.06));
     line([[-0.25, 1.1], [-0.35, 0.7]], '#f2c230', lw(0.06));
@@ -6959,6 +7014,7 @@
     audioMeter: () => Sound.meter(),
     loadTarget: (i) => loadTarget(i),
     setOrn: (k) => { LOCO_ORN = k; },
+    drawGarage: (c, w, h) => { const kw = W, kh = H; W = w; H = h; try { drawGarage(c, w, h, 0); } finally { W = kw; H = kh; } },
     drawLandmark: (c, kind, x, y, sc, o) => drawLandmark(c, kind, x, y, sc, o || {}),
     select: (id) => selectMission(id),
   };
