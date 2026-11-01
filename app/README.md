@@ -12,9 +12,8 @@ murni (tanpa dependensi), lalu dibungkus **Capacitor** supaya jalan sebagai apli
 | 1-3 Penumpang Pertama | Sukamaju → Halte Sumberrejo → Cibening (1,8 km, 06.20) | Misi pembuka: pintu, penumpang naik, kenyamanan, klakson di papan 35 sebelum perlintasan |
 | 1-4 Pagi Pertama Pasar Minggu | Sukamaju → Cibening → Pasar Lama (2,6 km, 06.00) | Tikungan 30 km/h, perlintasan, kambing, kabut, sinyal blok merah |
 | 1-5 Hujan di Lengkung Watu | Pasar Lama → Kali Jernih → Watugede (3,0 km, 15.30) | Hujan & petir (rem lebih lemah, roda selip, tombol pasir), turunan 15‰, tanjakan 20‰, Terowongan Lengkung Watu, wesel yang disabotase (Dimas memeriksa lewat radio) |
-
 | 1-6 Duel Malam Takbiran | Watugede → Pasar Lama → Sukamaju (3,45 km, 18.45) | Balapan melawan bus TransKilat Kilat 07 di jalan raya (bus tertahan palang perlintasan saat kereta lewat), kereta penuh pemudik (lebih berat), dua stasiun dilewati langsung, malam dengan kembang api, bedug, dan ketupat |
-
+| 1-7 Bersilang di Krajan | Watugede → Halte Krajan → Kedung Banteng (3,4 km, 16.10) | Lintas tunggal: masuk sepur belok Krajan lewat wesel (maks 30 km/h, anjlok di atas 45), berhenti sebelum patok bebas, tunggu KA 112 dari arah berlawanan lewat di jalur utama, baru berangkat saat S2 hijau. Pohon tumbang di titik acak dengan peringatan radio (rem darurat tanpa potongan kenyamanan, tim jalan rel memotong batang), rel tergenang 70 m (maks 10 km/h, dilarang berhenti di air, motor traksi kemasukan air kalau terlalu cepat) |
 | 2-1 Emas Hitam | Tambang Muara Kelam → Dermaga Tanjung Api, Sumatra (3,3 km, 07.10) | Kereta barang 4 gerbong batu bara: muat presisi gerbong demi gerbong di bawah corong silo, rangkaian berat (momentum besar, rem lebih panjang), rombongan gajah Sumatra menyeberang (berhenti dan tunggu, klakson membuat gajah panik), turunan 16‰ ke pantai, bongkar di dermaga |
 
 Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MISSIONS` dalam `game.js`.
@@ -40,6 +39,10 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Sinyal 3 aspek (merah/kuning/hijau), sinyal blok yang berubah (kereta barang di petak depan)
 - Batas kecepatan per zona (tikungan, jembatan, area stasiun); anjlok jika terlalu cepat di tikungan
 - Perlintasan sebidang (wajib klakson) dan kambing di rel
+- Kejadian lintas (data di rute misi): `meet` (persilangan di sepur belok dengan jalur utama di sisi
+  depan, patok bebas, KA berlawanan yang lewat di tampilan samping dan kabin), `tree` (pohon tumbang
+  di titik acak dalam zona, peringatan radio, kamera melirik ke depan) dan `flood` (genangan menutupi
+  rel, cipratan roda, tenaga berkurang bila terlalu cepat)
 - Kabut yang menyembunyikan sinyal jauh dari peta jalur
 - Berhenti presisi di marka "3" (Perfect / Good / OK / Miss), buka-tutup pintu, penumpang naik
 - Jadwal dan jam game, kenyamanan penumpang, koin, 3 bintang, layar hasil, rekor tersimpan
@@ -56,7 +59,7 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
     (atau tombol `H`) ditahan
 - Layar judul: peta perjalanan Jawa–Sumatra dengan rute tiap misi (sentuh karcis untuk menyorot,
   ketuk rute dua kali untuk memilih) dan tab Garasi yang menampilkan Si Gagah di meja putar depo
-- Palet khas tiap misi: fajar keemasan (1-4), hujan biru-abu (1-5), takbiran ungu-oranye (1-6),
+- Palet khas tiap misi: fajar keemasan (1-4), hujan biru-abu (1-5), takbiran ungu-oranye (1-6), hujan reda biru-hijau (1-7),
   Sumatra lembap dengan kabut (2-1), lewat warna langit dan gradasi warna akhir di seluruh dunia
 - Kabin lebih kaya: tekstur batu balas, kilap rel, patok hektometer, papan semboyan 35 sebelum
   perlintasan, speedometer jarum, serta tuas notch dan tuas rem yang ikut bergerak
