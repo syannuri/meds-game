@@ -293,6 +293,15 @@
     },
   };
   const MISSION_ORDER = ['1-4', '1-5', '1-6', '2-1'];
+  // palet khas tiap misi: warna langit (fajar → siang, atau gelap/mendung), dan gradasi warna akhir
+  // (soft-light) yang diterapkan ke seluruh dunia game, ditambah kabut lembap untuk Sumatra
+  const PALETTES = {
+    '1-4': { sky: [['#3a3f6e', '#5d9fd3'], ['#e39a6a', '#a8d2ea'], ['#ffd48a', '#f2ecd8']], grade: ['rgba(255,170,80,0.22)', 'rgba(255,205,120,0.14)'] },
+    '1-5': { storm: ['#24323d', '#4f6673', '#86a0aa'], grade: ['rgba(60,115,150,0.26)', 'rgba(40,95,105,0.2)'] },
+    '1-6': { night: ['#120b2c', '#3a2366', '#8a4170'], grade: ['rgba(150,60,180,0.24)', 'rgba(255,120,60,0.12)'] },
+    '2-1': { sky: [['#4a6a6e', '#6a9aa6'], ['#b9b08a', '#cfd9c0'], ['#ead6a4', '#f0ead2']], grade: ['rgba(200,215,170,0.2)', 'rgba(160,70,40,0.2)'], mist: true },
+  };
+  MISSION_ORDER.forEach((id) => { MISSIONS[id].id = id; MISSIONS[id].pal = PALETTES[id]; });
   let MIS = MISSIONS['1-4'];
   let ROUTE = MIS.route;
   const finalStation = () => ROUTE.stations[ROUTE.stations.length - 1];
@@ -1938,6 +1947,105 @@
   const clockOf = (sec) => `${String(Math.floor(sec / 3600)).padStart(2, '0')}.${String(Math.floor(sec / 60) % 60).padStart(2, '0')}`;
   // misi berikutnya: yang pertama belum diselesaikan, atau misi terakhir
   const nextMissionId = () => MISSION_ORDER.find((id) => bestOf(id) === 0) || MISSION_ORDER[MISSION_ORDER.length - 1];
+  // ---------- layar judul: peta misi Jawa–Sumatra dan garasi Si Gagah ----------
+  // koordinat peta dalam bidang 540 x 390; diskalakan ke ukuran kanvas
+  const MAP_ROUTES = {
+    '1-4': { pts: [[300, 300], [338, 292], [372, 300]], col: '#e8955a' },
+    '1-5': { pts: [[372, 300], [404, 314], [440, 306]], col: '#7aa6b8' },
+    '1-6': { pts: [[440, 306], [404, 318], [372, 306], [336, 300], [300, 306]], col: '#b07ad8' },
+    '2-1': { pts: [[176, 168], [206, 196], [236, 214], [262, 238]], col: '#6fb36a' },
+  };
+  const MAP_ST = [[300, 300, 'Sukamaju'], [338, 292, 'Cibening'], [372, 300, 'Pasar Lama'], [404, 314, 'Kali Jernih'], [440, 306, 'Watugede'], [176, 168, 'Muara Kelam'], [262, 238, 'Tanjung Api']];
+  const ISL_SUM = [[22, 30], [60, 14], [110, 44], [160, 92], [212, 136], [262, 178], [300, 222], [306, 256], [282, 266], [240, 246], [190, 214], [134, 168], [84, 120], [40, 78], [18, 48]];
+  const ISL_JAW = [[252, 266], [300, 254], [360, 260], [420, 266], [480, 272], [522, 288], [528, 330], [492, 352], [430, 348], [370, 346], [310, 342], [262, 330], [240, 298]];
+  const titleMap = { tab: 'map', focus: null, t: 0 };
+  function islandPath(c, pts) {
+    const n = pts.length, mid = (i) => [(pts[i][0] + pts[(i + 1) % n][0]) / 2, (pts[i][1] + pts[(i + 1) % n][1]) / 2];
+    c.beginPath(); const m0 = mid(n - 1); c.moveTo(m0[0], m0[1]);
+    for (let i = 0; i < n; i++) { const m = mid(i); c.quadraticCurveTo(pts[i][0], pts[i][1], m[0], m[1]); }
+    c.closePath();
+  }
+  function routeAt(pts, u) {
+    let L = 0; const seg = [];
+    for (let i = 0; i < pts.length - 1; i++) { const d = Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]); seg.push(d); L += d; }
+    let d = u * L;
+    for (let i = 0; i < seg.length; i++) { if (d <= seg[i]) { const k = d / seg[i]; return [lerp(pts[i][0], pts[i + 1][0], k), lerp(pts[i][1], pts[i + 1][1], k), Math.atan2(pts[i + 1][1] - pts[i][1], pts[i + 1][0] - pts[i][0])]; } d -= seg[i]; }
+    return [pts[pts.length - 1][0], pts[pts.length - 1][1], 0];
+  }
+  function drawTitleMap(dt) {
+    const cvm = $('mapCv'); if (!cvm || cvm.offsetParent === null) return;
+    titleMap.t += dt;
+    const r = cvm.getBoundingClientRect(), w = Math.round(r.width * DPR), h = Math.round(r.height * DPR);
+    if (!w || !h) return;
+    if (cvm.width !== w || cvm.height !== h) { cvm.width = w; cvm.height = h; }
+    const c = cvm.getContext('2d'), t = titleMap.t;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, w, h);
+    if (titleMap.tab === 'garage') { c.setTransform(DPR, 0, 0, DPR, 0, 0); drawGarage(c, w / DPR, h / DPR, t); return; }
+    // peta 540x390 dipotong tengah agar mengisi kanvas
+    const sea = c.createLinearGradient(0, 0, 0, h); sea.addColorStop(0, '#1e5668'); sea.addColorStop(1, '#14404f');
+    c.fillStyle = sea; c.fillRect(0, 0, w, h);
+    const k = Math.min(w / 540, h / 370), ox = (w - 540 * k) / 2, oy = (h - 370 * k) / 2 - 8 * k;
+    c.setTransform(k, 0, 0, k, ox, oy);
+    c.strokeStyle = 'rgba(200,235,240,0.12)'; c.lineWidth = 1;
+    for (let i = 0; i < 40; i++) { const x = (hash(i) * 560 + t * 4) % 560 - 10, y = hash(i + 7) * 390; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 5, y - 3, x + 10, y); c.stroke(); }
+    [[ISL_SUM, 'SUMATRA', 104, 108], [ISL_JAW, 'JAWA', 486, 338]].forEach(([pts, name, lx, ly]) => {
+      c.save(); islandPath(c, pts); c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = 14; c.fillStyle = '#e9dcb8'; c.fill(); c.restore();
+      c.save(); islandPath(c, pts); c.clip();
+      const g = c.createLinearGradient(0, 0, 0, 390); g.addColorStop(0, '#b9cf8a'); g.addColorStop(1, '#8fb070'); c.fillStyle = g; c.fillRect(0, 0, 540, 390);
+      c.fillStyle = 'rgba(70,110,60,0.25)';
+      for (let i = 0; i < 120; i++) { c.beginPath(); c.arc(hash(i * 3.1 + lx) * 540, hash(i * 1.7 + ly) * 390, 1.6, 0, 7); c.fill(); }
+      c.restore();
+      islandPath(c, pts); c.strokeStyle = '#f3ead0'; c.lineWidth = 3; c.stroke();
+      c.fillStyle = 'rgba(40,60,40,0.55)'; c.font = '800 15px "Big Shoulders Display", sans-serif'; c.textAlign = 'center'; c.fillText(name, lx, ly); c.textAlign = 'start';
+    });
+    [[96, 70], [150, 118], [352, 274], [478, 296]].forEach(([x, y], i) => {
+      c.fillStyle = '#7c6a5a'; c.beginPath(); c.moveTo(x - 12, y + 6); c.lineTo(x - 2, y - 10); c.lineTo(x + 2, y - 10); c.lineTo(x + 12, y + 6); c.closePath(); c.fill();
+      for (let q = 0; q < 4; q++) { const u = (t * 0.08 + q / 4 + i * 0.2) % 1; c.fillStyle = `rgba(240,236,228,${0.35 * (1 - u)})`; c.beginPath(); c.arc(x + u * 10, y - 12 - u * 12, 2 + u * 4, 0, 7); c.fill(); }
+    });
+    c.fillStyle = 'rgba(200,235,240,0.55)'; c.font = 'italic 600 10px "Plus Jakarta Sans", sans-serif'; c.fillText('Selat Sunda', 186, 300);
+    c.save(); c.translate(500, 40); c.strokeStyle = 'rgba(243,234,208,0.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(0, 0, 14, 0, 7); c.stroke();
+    c.fillStyle = '#f2a516'; c.beginPath(); c.moveTo(0, -18); c.lineTo(4, 0); c.lineTo(-4, 0); c.closePath(); c.fill();
+    c.fillStyle = '#f3ead0'; c.font = '800 10px "Big Shoulders Display", sans-serif'; c.textAlign = 'center'; c.fillText('U', 0, -22); c.textAlign = 'start'; c.restore();
+    const sel = titleMap.focus || nextMissionId();
+    Object.entries(MAP_ROUTES).forEach(([id, m]) => {
+      const on = id === sel;
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      c.strokeStyle = on ? 'rgba(255,255,255,0.9)' : 'rgba(40,40,40,0.55)'; c.lineWidth = on ? 6 : 4;
+      c.beginPath(); m.pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke();
+      c.strokeStyle = m.col; c.lineWidth = on ? 3.5 : 2; c.setLineDash(on ? [] : [4, 3]);
+      c.beginPath(); m.pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke(); c.setLineDash([]);
+    });
+    MAP_ST.forEach(([x, y, n]) => {
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(x, y, 4, 0, 7); c.fill(); c.strokeStyle = '#2a2a2a'; c.lineWidth = 1.5; c.stroke();
+      c.fillStyle = '#1f2a22'; c.font = '700 9px "Plus Jakarta Sans", sans-serif'; c.textAlign = 'center'; c.fillText(n, x, y + (y > 300 ? 16 : -9)); c.textAlign = 'start';
+    });
+    const u = REDUCE_MOTION ? 0.5 : Math.sin(t * 0.6) * 0.5 + 0.5, [px, py, a] = routeAt(MAP_ROUTES[sel].pts, u);
+    c.save(); c.translate(px, py); c.rotate(a);
+    c.fillStyle = '#f7f3e8'; roundRect(c, -9, -4, 18, 8, 2); c.fill(); c.fillStyle = '#f2a516'; c.fillRect(-9, 0, 18, 2); c.fillStyle = '#1f6f6d'; c.fillRect(5, -3, 3, 3);
+    c.restore();
+  }
+  function drawGarage(c, w, h, t) {
+    const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#1a1f24'); g.addColorStop(1, '#0c0f12');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    for (let i = 0; i < 3; i++) {
+      const x = w * (0.12 + i * 0.3), bw = w * 0.12;
+      const bg = c.createLinearGradient(0, h * 0.08, 0, h * 0.85); bg.addColorStop(0, 'rgba(255,220,160,0.14)'); bg.addColorStop(1, 'rgba(255,220,160,0)');
+      c.fillStyle = bg; c.beginPath(); c.moveTo(x, h * 0.08); c.lineTo(x + bw, h * 0.08); c.lineTo(x + bw * 1.7, h * 0.85); c.lineTo(x + bw * 0.6, h * 0.85); c.closePath(); c.fill();
+    }
+    const gy = h * 0.78, ppm = w / 24;
+    c.fillStyle = '#2a2f33'; c.beginPath(); c.ellipse(w / 2, gy + 6, w * 0.46, h * 0.1, 0, 0, 7); c.fill();
+    c.fillStyle = '#7d8487'; c.fillRect(w * 0.06, gy - 2, w * 0.88, 2); c.fillStyle = '#a3a9ab'; c.fillRect(w * 0.06, gy + 2, w * 0.88, 2);
+    // Si Gagah dari samping, digambar dengan fungsi kereta di game
+    const V = { c, ppm, gy, X: (wx) => w / 2 + (wx - 9) * ppm, st: { x: 18, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0, rimA: 0.35, rim: '#ffcf8a', refl: 0.15, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
+    const keep = [N_COACH]; N_COACH = 0;
+    try { drawTrain(V); } finally { N_COACH = keep[0]; }
+    for (let i = 0; i < 30; i++) { const x = ((hash(i) * w + t * 5 * (hash(i + 2) - 0.5)) % w + w) % w, y = (hash(i + 5) * h * 0.7 + t * 3) % (h * 0.7) + h * 0.08; c.fillStyle = 'rgba(255,230,190,0.3)'; c.fillRect(x, y, 1.5, 1.5); }
+    c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(h * 0.09)}px "Big Shoulders Display", sans-serif`; c.fillText('SI GAGAH · RN 2001', w * 0.04, h * 0.14);
+    const done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
+    c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(h * 0.045)}px "Plus Jakarta Sans", sans-serif`;
+    c.fillText(`Depo Sukamaju · ${done} dari ${MISSION_ORDER.length} misi selesai · diesel-elektrik CC, livery Rel Nusantara`, w * 0.04, h * 0.22);
+  }
+
   function renderMissionList() {
     const nextId = nextMissionId();
     $('missionList').innerHTML = MISSION_ORDER.map((id) => {
@@ -2083,6 +2191,23 @@
   $('btnRestart').addEventListener('click', () => { Sound.init(); startMission(); });
   $('btnQuit').addEventListener('click', () => { S = null; showScreen('title'); });
   $('btnContinue').addEventListener('click', () => { Sound.init(); selectMission(nextMissionId()); showBrief(); });
+  // peta misi: sorot rute saat karcis disentuh, ketuk rute untuk memilih misi, tab peta/garasi
+  $('missionList').addEventListener('pointerover', (e) => { const b = e.target.closest('.ticket'); if (b) titleMap.focus = b.dataset.id; });
+  $('missionList').addEventListener('focusin', (e) => { const b = e.target.closest('.ticket'); if (b) titleMap.focus = b.dataset.id; });
+  document.querySelectorAll('[data-maptab]').forEach((b) => b.addEventListener('click', () => {
+    titleMap.tab = b.dataset.maptab;
+    document.querySelectorAll('[data-maptab]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  }));
+  $('mapCv').addEventListener('click', (e) => {
+    if (titleMap.tab !== 'map') return;
+    const cvm = e.currentTarget, r = cvm.getBoundingClientRect(), w = r.width, h = r.height;
+    const k = Math.min(w / 540, h / 370), ox = (w - 540 * k) / 2, oy = (h - 370 * k) / 2 - 8 * k;
+    const x = (e.clientX - r.left - ox) / k, y = (e.clientY - r.top - oy) / k;
+    let best = null, bd = 22;
+    Object.entries(MAP_ROUTES).forEach(([id, m]) => m.pts.forEach(([px, py]) => { const d = Math.hypot(px - x, py - y); if (d < bd) { bd = d; best = id; } }));
+    if (!best) return;
+    if (titleMap.focus === best) { Sound.init(); selectMission(best); showBrief(); } else titleMap.focus = best;
+  });
   $('missionList').addEventListener('click', (e) => {
     const b = e.target.closest('.ticket');
     if (!b) return;
@@ -2287,11 +2412,15 @@
   function latAccel(st) { const z = st && zoneAt(st.x); return z && z.curve ? 0.9 * Math.pow((st.v * 3.6) / z.limit, 2) : 0; }
   // lapisan dunia digambar lebih lebar dari layar (E piksel di kiri-kanan) supaya saat rel memendek
   // karena menjauh, isi dari luar layar ikut masuk dan tidak ada celah kosong di tepi
+  // lapisan tikungan digambar dengan resolusi sedikit lebih rendah agar ringan di ponsel
+  // kualitas turun otomatis bila frame di tikungan terlalu lambat (perangkat lemah)
+  let bendLite = false, bendDtAvg = 16;
+  const LDPR = () => Math.min(DPR, bendLite ? 0.8 : 1.25);
   function beginBend(V, E, ER) {
-    const w = Math.round((W + E + ER) * DPR), h = cv.height;
+    const ld = LDPR(), w = Math.round((W + E + ER) * ld), h = Math.round(H * ld);
     if (bendCv.width !== w || bendCv.height !== h) { bendCv.width = w; bendCv.height = h; }
     bctx.setTransform(1, 0, 0, 1, 0, 0); bctx.clearRect(0, 0, bendCv.width, bendCv.height);
-    bctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    bctx.setTransform(ld, 0, 0, ld, 0, 0);
     const mid = E + W / 2; // tengah layar dalam koordinat lapisan
     return Object.assign({}, V, { c: bctx, bdy: () => 0, bx: null, X: (wx) => V.X(wx) + E, Xn: (sx) => mid + (sx - mid) * 1.75, wx0: V.wx0 - E / V.ppm, wx1: V.wx1 + ER / V.ppm });
   }
@@ -2311,8 +2440,9 @@
       if (c.globalAlpha <= 0.01) continue;
       const dK = Math.min(H - 4, gy + (yK - gy) * s + dy);
       const top = dK - yK * s;
-      c.drawImage(bendCv, sx * DPR, 0, w * DPR, yK * DPR, dx, top, dw + 0.6, yK * s);
-      c.drawImage(bendCv, sx * DPR, yK * DPR, w * DPR, (H - yK) * DPR, dx, dK, dw + 0.6, H - dK);
+      const ld = LDPR();
+      c.drawImage(bendCv, sx * ld, 0, w * ld, yK * ld, dx, top, dw + 0.6, yK * s);
+      c.drawImage(bendCv, sx * ld, yK * ld, w * ld, (H - yK) * ld, dx, dK, dw + 0.6, H - dK);
     }
     c.globalAlpha = 1;
   }
@@ -2433,15 +2563,29 @@
       const col = inTun ? '#24221f' : deck ? (night ? '#2a3038' : '#4a535a') : mix('#8d8275', '#a59a8c', p);
       quad(W3(a, -2.3, 0), W3(a, 2.3, 0), W3(b, 2.3, 0), W3(b, -2.3, 0), col);
     }
+    // tekstur batu balas yang bergerak mendekat
+    if (!inTun) {
+      const tones = [mix('#6f665d', '#7c736a', p), mix('#a39889', '#b2a798', p), mix('#827869', '#8e8478', p)];
+      for (const [lat, zz, sz, tn] of CAB_BAL) {
+        const d = 1.5 + (((zz * 60 - x0) % 60) + 60) % 60;
+        if (d > FAR || onB(d)) continue;
+        const q = W3(d, lat * 2.2, 0.02); if (!q) continue;
+        const r = Math.max(0.6, sz * 0.06 * q.k);
+        c.fillStyle = tones[tn < 0.33 ? 0 : tn < 0.66 ? 1 : 2]; c.fillRect(q.x - r / 2, q.y - r / 2, r, r * 0.7);
+      }
+    }
     const slp = 0.65;
     for (let wd = Math.floor((x0 + 60) / slp) * slp; wd > x0 + 1.4; wd -= slp) {
       const d = wd - x0;
-      quad(W3(d - 0.12, -1.2, 0.05), W3(d - 0.12, 1.2, 0.05), W3(d + 0.12, 1.2, 0.05), W3(d + 0.12, -1.2, 0.05), inTun ? '#3a3631' : mix('#6f6a63', '#8b857b', p));
+      const odd = Math.floor(wd / slp) % 7 === 0;
+      quad(W3(d - 0.12, -1.2, 0.05), W3(d - 0.12, 1.2, 0.05), W3(d + 0.12, 1.2, 0.05), W3(d + 0.12, -1.2, 0.05), inTun ? '#3a3631' : odd ? mix('#7d776e', '#9a948a', p) : mix('#6f6a63', '#8b857b', p));
     }
     [-0.53, 0.53].forEach((o) => {
       for (let i = 0; i < steps.length - 1; i++) {
         const a = W3(steps[i], o - 0.035, 0.16), b = W3(steps[i + 1], o - 0.035, 0.16), a2 = W3(steps[i], o + 0.035, 0.16), b2 = W3(steps[i + 1], o + 0.035, 0.16);
-        quad(a, b, b2, a2, inTun ? '#6d6a66' : '#b9c0c3');
+        quad(a, b, b2, a2, inTun ? '#6d6a66' : '#9aa2a6');
+        // kilap kepala rel
+        if (!inTun && steps[i] < 160) { const m0 = W3(steps[i], o, 0.17), m1 = W3(steps[i + 1], o, 0.17); if (m0 && m1) { c.strokeStyle = night ? 'rgba(200,210,255,0.5)' : 'rgba(255,236,204,0.85)'; c.lineWidth = Math.max(0.6, 0.018 * m0.k); c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke(); } }
       }
     });
 
@@ -2476,6 +2620,32 @@
         });
       }
     }
+    // patok hektometer di kiri rel tiap 100 m (angka km di atas, hektometer di bawah)
+    if (!inTun) for (let wd = Math.ceil(x0 / 100) * 100; wd < x0 + Math.min(FAR, 320); wd += 100) {
+      const d = wd - x0; if (d < 2 || onB(d)) continue;
+      add(d, () => {
+        const b = W3(d, -2.6, 0), t = W3(d, -2.6, 0.9); if (!b || !t) return;
+        const w = Math.max(2, 0.22 * b.k);
+        c.fillStyle = '#f4f1e8'; c.fillRect(b.x - w / 2, t.y, w, b.y - t.y);
+        if (b.k > 14) {
+          c.fillStyle = '#1b1b1b'; c.textAlign = 'center'; c.font = `800 ${Math.round(0.16 * b.k)}px "Big Shoulders Display", sans-serif`;
+          c.fillText(String(Math.floor(wd / 1000)), b.x, t.y + 0.3 * b.k); c.fillText(String(Math.floor((wd % 1000) / 100)), b.x, t.y + 0.6 * b.k);
+          c.textAlign = 'start';
+        }
+      });
+    }
+    // papan semboyan 35 (perintah membunyikan klakson) sebelum perlintasan
+    ROUTE.crossings.forEach((cr) => {
+      const d = cr.hornFrom + 40 - x0; if (d < 2 || d > FAR) return;
+      add(d, () => {
+        const b = W3(d, -2.8, 0), t = W3(d, -2.8, 2.6); if (!b || !t) return;
+        c.strokeStyle = '#3a3a3a'; c.lineWidth = Math.max(1, 0.1 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+        const w = 0.9 * b.k, h = 0.6 * b.k;
+        c.fillStyle = '#f4f1e8'; c.fillRect(t.x - w / 2, t.y - h, w, h);
+        c.strokeStyle = '#1b1b1b'; c.lineWidth = Math.max(1, 0.06 * b.k); c.strokeRect(t.x - w / 2, t.y - h, w, h);
+        if (h > 7) { c.fillStyle = '#1b1b1b'; c.textAlign = 'center'; c.font = `900 ${Math.round(h * 0.75)}px "Big Shoulders Display", sans-serif`; c.fillText('35', t.x, t.y - h * 0.2); c.textAlign = 'start'; }
+      });
+    });
     // sinyal di kiri rel
     for (const sig of ROUTE.signals) {
       const d = sig.x - x0; if (d < 2 || d > FAR) continue;
@@ -2706,6 +2876,7 @@
       c.restore();
     }
 
+    applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0 });
     // ---- kabin: kaca depan, pilar, dasbor ----
     const rain = MIS.rain && !inTun;
     if (rain) {
@@ -2721,7 +2892,7 @@
       });
       c.globalAlpha = 1;
       c.strokeStyle = '#141619'; c.lineWidth = Math.max(2, W * 0.004); c.lineCap = 'round';
-      [[W * 0.27, H * 0.73], [W * 0.73, H * 0.73]].forEach(([px, py]) => {
+      [[W * 0.27, H * 0.67], [W * 0.73, H * 0.67]].forEach(([px, py]) => {
         const a = -Math.PI * (0.12 + wa * 0.76);
         c.beginPath(); c.moveTo(px, py); c.lineTo(px + Math.cos(a) * H * 0.42, py + Math.sin(a) * H * 0.42); c.stroke();
       });
@@ -2732,48 +2903,68 @@
     c.fillRect(0, 0, W, H * 0.055);
     c.beginPath(); c.moveTo(0, 0); c.lineTo(W * 0.045, 0); c.lineTo(W * 0.02, H); c.lineTo(0, H); c.closePath(); c.fill();
     c.beginPath(); c.moveTo(W, 0); c.lineTo(W * 0.955, 0); c.lineTo(W * 0.98, H); c.lineTo(W, H); c.closePath(); c.fill();
-    c.fillRect(W * 0.665, 0, W * 0.009, H * 0.72); // pilar tengah kaca depan (di kanan masinis)
+    c.fillRect(W * 0.665, 0, W * 0.009, H * 0.66); // pilar tengah kaca depan (di kanan masinis)
     // pelindung matahari & pantulan kaca
     c.fillStyle = 'rgba(20,26,32,0.55)'; c.fillRect(W * 0.08, H * 0.055, W * 0.32, H * 0.05); c.fillRect(W * 0.6, H * 0.055, W * 0.32, H * 0.05);
     c.fillStyle = 'rgba(255,255,255,0.035)'; c.beginPath(); c.moveTo(W * 0.1, H * 0.06); c.lineTo(W * 0.2, H * 0.06); c.lineTo(W * 0.08, H * 0.7); c.lineTo(W * 0.04, H * 0.7); c.closePath(); c.fill();
     // dasbor
-    const dy0 = H * 0.72; // dasbor dinaikkan agar panelnya tidak tertutup tombol HUD bawah
+    const dy0 = H * 0.66; // dasbor dinaikkan agar instrumennya tidak tertutup tombol & strip HUD bawah
     const dg = c.createLinearGradient(0, dy0, 0, H);
     dg.addColorStop(0, night ? '#1d232a' : '#2e363e'); dg.addColorStop(1, night ? '#0b0e12' : '#151a1f');
     c.fillStyle = dg; c.beginPath(); c.moveTo(0, dy0 + H * 0.03); c.quadraticCurveTo(W * 0.5, dy0 - H * 0.03, W, dy0 + H * 0.03); c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.fill();
     c.fillStyle = 'rgba(255,255,255,0.06)'; c.fillRect(0, dy0 + H * 0.01, W, 1.5);
     // pengukur tekanan udara (pipa utama & silinder rem) di tengah dasbor
     const gauge = (gx, val, label) => {
-      const r = Math.min(W, H) * 0.045, gy2 = dy0 + H * 0.075;
+      const r = Math.min(W, H) * 0.042, gy2 = dy0 + H * 0.066;
       c.fillStyle = '#e9e5da'; c.beginPath(); c.arc(gx, gy2, r, 0, 7); c.fill();
       c.strokeStyle = '#2a2f33'; c.lineWidth = 2; c.stroke();
       const a = Math.PI * (0.75 + 1.5 * clamp(val, 0, 1));
       c.strokeStyle = '#c0392b'; c.lineWidth = Math.max(1.5, r * 0.08); c.beginPath(); c.moveTo(gx, gy2); c.lineTo(gx + Math.cos(a) * r * 0.8, gy2 + Math.sin(a) * r * 0.8); c.stroke();
       c.fillStyle = '#2a2f33'; c.font = `700 ${Math.max(7, Math.round(r * 0.32))}px "Plus Jakarta Sans", sans-serif`; c.textAlign = 'center'; c.fillText(label, gx, gy2 + r * 0.55); c.textAlign = 'start';
     };
-    // panel kecepatan digital di dasbor (menggantikan speedometer HUD di tampilan kabin)
+    // panel instrumen: speedometer jarum dengan papan batas kecepatan (menggantikan speedometer HUD di kabin)
+    c.fillStyle = 'rgba(32,39,46,0.95)'; roundRect(c, W * 0.12, dy0 + H * 0.01, W * 0.62, H * 0.115, H * 0.03); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.08)'; c.lineWidth = 1; c.stroke();
     {
       const kmh = st.v * 3.6, { lim } = currentLimit(), nl = nextLimitAhead();
-      const px = W * 0.22, py = dy0 + H * 0.075, pw = Math.min(W * 0.16, 150), ph = H * 0.1;
-      c.fillStyle = '#0a0e12'; roundRect(c, px - pw / 2, py - ph / 2, pw, ph, ph * 0.18); c.fill();
-      c.strokeStyle = 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.stroke();
-      const over = kmh > lim + 2;
-      c.fillStyle = over ? '#ff7a6c' : '#9ef0c0'; c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.font = `900 ${Math.round(ph * 0.62)}px "Big Shoulders Display", sans-serif`; c.fillText(String(Math.round(kmh)), px - pw * 0.12, py);
-      c.font = `700 ${Math.max(8, Math.round(ph * 0.16))}px "Plus Jakarta Sans", sans-serif`; c.fillStyle = '#7f9a8c'; c.fillText('km/h', px - pw * 0.12, py + ph * 0.36);
-      const lr = ph * 0.3, lx = px + pw * 0.3;
-      c.fillStyle = '#fff'; c.beginPath(); c.arc(lx, py - ph * 0.08, lr, 0, 7); c.fill();
-      c.strokeStyle = '#e5483b'; c.lineWidth = lr * 0.22; c.stroke();
-      c.fillStyle = '#111'; c.font = `900 ${Math.round(lr * 0.95)}px "Big Shoulders Display", sans-serif`; c.fillText(String(lim), lx, py - ph * 0.08);
-      if (nl) { c.fillStyle = '#ffd98a'; c.font = `700 ${Math.max(8, Math.round(ph * 0.14))}px "Plus Jakarta Sans", sans-serif`; c.fillText(`${nl.limit} · ${Math.round(nl.from - st.x)} m`, lx, py + ph * 0.36); }
+      const r = Math.min(W, H) * 0.052, gx = W * 0.2, gy2 = dy0 + H * 0.066;
+      c.fillStyle = '#efeadf'; c.beginPath(); c.arc(gx, gy2, r, 0, 7); c.fill(); c.strokeStyle = '#3a4046'; c.lineWidth = 3; c.stroke();
+      c.strokeStyle = '#2a2f33'; c.lineWidth = 1;
+      for (let i = 0; i <= 12; i++) { const a = Math.PI * (0.75 + 1.5 * i / 12); c.beginPath(); c.moveTo(gx + Math.cos(a) * r * 0.76, gy2 + Math.sin(a) * r * 0.76); c.lineTo(gx + Math.cos(a) * r * 0.92, gy2 + Math.sin(a) * r * 0.92); c.stroke(); }
+      const la = Math.PI * (0.75 + 1.5 * clamp(lim / 120, 0, 1));
+      c.strokeStyle = '#e5483b'; c.lineWidth = 3; c.beginPath(); c.arc(gx, gy2, r * 0.86, la - 0.04, la + 0.04); c.stroke();
+      const a = Math.PI * (0.75 + 1.5 * clamp(kmh / 120, 0, 1));
+      c.strokeStyle = kmh > lim + 2 ? '#e5483b' : '#c0392b'; c.lineWidth = Math.max(2, r * 0.07); c.beginPath(); c.moveTo(gx, gy2); c.lineTo(gx + Math.cos(a) * r * 0.82, gy2 + Math.sin(a) * r * 0.82); c.stroke();
+      c.fillStyle = '#2a2f33'; c.beginPath(); c.arc(gx, gy2, r * 0.08, 0, 7); c.fill();
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = `900 ${Math.round(r * 0.36)}px "Big Shoulders Display", sans-serif`; c.fillText(String(Math.round(kmh)), gx, gy2 + r * 0.45);
+      const lr = r * 0.32, lx = gx + r * 1.35, ly = gy2 - r * 0.35;
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(lx, ly, lr, 0, 7); c.fill(); c.strokeStyle = '#e5483b'; c.lineWidth = lr * 0.22; c.stroke();
+      c.fillStyle = '#111'; c.font = `900 ${Math.round(lr * 0.95)}px "Big Shoulders Display", sans-serif`; c.fillText(String(lim), lx, ly);
+      if (nl) { c.fillStyle = '#ffd98a'; c.font = `700 ${Math.max(8, Math.round(r * 0.22))}px "Plus Jakarta Sans", sans-serif`; c.fillText(`${nl.limit} · ${Math.round(nl.from - st.x)} m`, lx, ly + lr * 2.1); }
       c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    }
+    // tuas notch (pengendali utama) dan tuas rem ikut bergerak
+    {
+      const bx = W * 0.68, top = dy0 + H * 0.015, hgt = H * 0.1, n = st.notch;
+      c.fillStyle = '#11161b'; roundRect(c, bx - W * 0.018, top, W * 0.036, hgt, 6); c.fill();
+      for (let i = -5; i <= 4; i++) { const y = top + hgt * (1 - (i + 5) / 9.5) - 2; c.fillStyle = i === n ? '#f2a516' : i > 0 ? 'rgba(246,207,122,0.4)' : 'rgba(246,163,154,0.35)'; c.fillRect(bx - W * 0.012, y, W * 0.008, 1.5); }
+      const hy2 = top + hgt * (1 - (n + 5) / 9.5) - 2;
+      c.fillStyle = '#c9cfd2'; c.fillRect(bx - 2, hy2 - hgt * 0.22, 4, hgt * 0.22);
+      c.fillStyle = n < 0 ? '#e0614f' : '#e2ac45'; roundRect(c, bx - W * 0.014, hy2 - hgt * 0.3, W * 0.028, hgt * 0.1, 4); c.fill();
+      const ra = n < 0 ? -0.35 - Math.min(5, -n) * 0.12 : -0.2;
+      c.save(); c.translate(W * 0.725, dy0 + H * 0.115); c.rotate(ra);
+      c.fillStyle = '#8a1d14'; roundRect(c, -3, -hgt * 0.75, 6, hgt * 0.75, 3); c.fill();
+      c.fillStyle = '#d8392b'; c.beginPath(); c.arc(0, -hgt * 0.78, Math.max(4, hgt * 0.1), 0, 7); c.fill();
+      c.restore();
     }
     const brk = clamp(-(st.aCmd || 0) / 1.2, 0, 1);
     gauge(W * 0.44, 0.7 - brk * 0.3, 'BP'); gauge(W * 0.56, brk, 'BC');
     const lamp = (lx, on, col) => { c.fillStyle = on ? col : 'rgba(120,120,120,0.35)'; c.beginPath(); c.arc(lx, dy0 + H * 0.035, Math.max(2, H * 0.008), 0, 7); c.fill(); };
-    lamp(W * 0.36, st.doors === 'open', '#f2c94c'); lamp(W * 0.64, st.notch > 0, '#5fd08a'); lamp(W * 0.67, !!st.slip, '#ef5b4c');
+    lamp(W * 0.36, st.doors === 'open', '#f2c94c'); lamp(W * 0.38, st.notch > 0, '#5fd08a'); lamp(W * 0.6, st.notch < 0, '#f2c94c'); lamp(W * 0.62, !!st.slip, '#ef5b4c');
   }
   const TOS_COL = '#1f8f86';
+  const CAB_BAL = Array.from({ length: 700 }, (_, i) => [hash(i * 1.3) * 2 - 1, hash(i * 2.7), 0.4 + hash(i * 3.9) * 0.8, hash(i + 9)]);
 
   function render(dtReal) {
     const c = ctx;
@@ -2819,7 +3010,9 @@
       const xr = st.x - TRAIN_LEN / 2, Xr = X(xr);
       V.pan = bAt(BEND.H, xr) * ppm * PD; // latar jauh bergeser saat kamera ikut berputar
       // ke depan rel memendek paling banyak, jadi lapisan diperluas lebih jauh ke kanan
-      const E = Math.round(W * 0.25), ER = Math.round(W * 0.8), step = Math.max(3, W / 240), cols = [];
+      const E = Math.round(W * 0.2), ER = Math.round(W * 0.6), step = Math.max(5, W / (bendLite ? 90 : 140)), cols = [];
+      bendDtAvg += ((dtReal || 0.016) * 1000 - bendDtAvg) * 0.05;
+      if (!bendLite && bendDtAvg > 45) bendLite = true;
       const proj = (wx) => { const q = bendPlan(wx, xr), sc = projS(q.b); return { x: Xr + q.a * ppm * sc, b: q.b, s: sc }; };
       let mx = 0;
       for (let lx = 0; lx < W + E + ER; lx += step) {
@@ -2898,7 +3091,23 @@
     drawNight(V);
     drawSmoke(V);
     drawTunnelDark(V);
+    applyGrade(c, V);
     drawMoments(c, V, dtReal);
+  }
+  // gradasi warna khas misi di atas seluruh dunia (tidak mengenai HUD), plus kabut lembap Sumatra
+  function applyGrade(c, V) {
+    const P = MIS.pal; if (!P) return;
+    if (P.mist && !V.tf) {
+      const top = V.gy - 9 * V.ppm, bot = V.gy + 2 * V.ppm;
+      const mg = c.createLinearGradient(0, top, 0, bot);
+      mg.addColorStop(0, 'rgba(240,236,220,0)'); mg.addColorStop(0.55, 'rgba(240,236,220,0.32)'); mg.addColorStop(1, 'rgba(240,236,220,0)');
+      c.fillStyle = mg; c.fillRect(-W, top, W * 3, bot - top);
+    }
+    if (P.grade) {
+      c.save(); c.globalCompositeOperation = 'soft-light';
+      const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, P.grade[0]); g.addColorStop(1, P.grade[1]);
+      c.fillStyle = g; c.fillRect(-W, -H, W * 3, H * 3); c.restore();
+    }
   }
 
   // ---------- reaksi momen penting: cap hasil, kilau, koin terbang, peringatan merah ----------
@@ -3258,9 +3467,10 @@
 
   function drawSky(V) {
     const { c, gy, p } = V;
+    const PAL = MIS.pal || {};
     if (V.night) {
-      const sg = c.createLinearGradient(0, 0, 0, gy);
-      sg.addColorStop(0, '#070b24'); sg.addColorStop(0.7, '#18214d'); sg.addColorStop(1, '#3b3a66');
+      const sg = c.createLinearGradient(0, 0, 0, gy), nc = PAL.night || ['#070b24', '#18214d', '#3b3a66'];
+      sg.addColorStop(0, nc[0]); sg.addColorStop(0.7, nc[1]); sg.addColorStop(1, nc[2]);
       c.fillStyle = sg; c.fillRect(0, 0, W, gy + 4);
       const tw = performance.now() / 600;
       for (let i = 0; i < 110; i++) {
@@ -3272,12 +3482,12 @@
       // bulan sabit (hilal)
       const mx = W * 0.64, my = gy * 0.32, mr = Math.max(14, gy * 0.05);
       c.fillStyle = '#fff3c8'; c.beginPath(); c.arc(mx, my, mr, 0, 7); c.fill();
-      c.fillStyle = '#0d1433'; c.beginPath(); c.arc(mx + mr * 0.45, my - mr * 0.15, mr * 0.92, 0, 7); c.fill();
+      c.fillStyle = PAL.night ? PAL.night[0] : '#0d1433'; c.beginPath(); c.arc(mx + mr * 0.45, my - mr * 0.15, mr * 0.92, 0, 7); c.fill();
       return;
     }
     if (V.storm) {
-      const sg = c.createLinearGradient(0, 0, 0, gy);
-      sg.addColorStop(0, '#36404b'); sg.addColorStop(0.7, '#66737e'); sg.addColorStop(1, '#8a96a0');
+      const sg = c.createLinearGradient(0, 0, 0, gy), sc = PAL.storm || ['#36404b', '#66737e', '#8a96a0'];
+      sg.addColorStop(0, sc[0]); sg.addColorStop(0.7, sc[1]); sg.addColorStop(1, sc[2]);
       c.fillStyle = sg; c.fillRect(0, 0, W, gy + 4);
       // awan mendung bergerak pelan
       const off = V.camX * V.ppm * 0.03 + performance.now() * 0.004;
@@ -3290,9 +3500,10 @@
       return;
     }
     const g = c.createLinearGradient(0, 0, 0, gy);
-    g.addColorStop(0, mix('#2c3a6b', '#5d9fd3', p));
-    g.addColorStop(0.65, mix('#c97a7a', '#a8d2ea', p));
-    g.addColorStop(1, mix('#f7b36d', '#e3f0f0', p));
+    const ks = PAL.sky || [['#2c3a6b', '#5d9fd3'], ['#c97a7a', '#a8d2ea'], ['#f7b36d', '#e3f0f0']];
+    g.addColorStop(0, mix(ks[0][0], ks[0][1], p));
+    g.addColorStop(0.65, mix(ks[1][0], ks[1][1], p));
+    g.addColorStop(1, mix(ks[2][0], ks[2][1], p));
     c.fillStyle = g; c.fillRect(0, 0, W, gy + 4);
     // matahari terbit
     const sx = W * 0.8, sy = lerp(gy - 10, gy * 0.25, p);
@@ -5252,6 +5463,7 @@
     if (radioTimer > 0 && mode === 'play') { radioTimer -= dt; if (radioTimer <= 0) $('radio').hidden = true; }
     if (mode !== 'pause') updateWeather(dt, (S || idleState).v);
     if (W && H) render(dt);
+    if (mode === 'title') drawTitleMap(dt);
     Sound.update(audioInfo());
     if (S && (mode === 'play' || mode === 'pause')) { updateHud(); renderStrip(); }
     requestAnimationFrame(frame);
