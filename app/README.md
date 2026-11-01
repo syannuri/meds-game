@@ -51,6 +51,13 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
     stasiun, dentum panel karet saat melintasi jalan perlintasan
   - Klakson udara tiga nada dengan hembusan udara dan gema perbukitan; berbunyi selama tombol
     (atau tombol `H`) ditahan
+- HUD ringkas: panel atas satu baris, speedometer kecil tembus pandang, tuas ramping, tombol bulat;
+  strip rute dan titik henti hanya muncul saat mendekati stasiun, sinyal, perlintasan, satwa, atau
+  perubahan batas kecepatan. Di tampilan kabin, kecepatan pindah ke panel dasbor
+- Skala nyata: atap gerbong dan lokomotif sekitar 4 m, orang 1,65 m; kamera sedikit lebih dekat
+- Latar berlapis: gunung, bukit, kampung (rumah genteng, masjid, kelapa, pisang, bambu; rumah panggung
+  dan sawit di Sumatra), dataran sawah di seberang rel dengan petani bercaping dan burung kuntul,
+  serta bayangan kontak di bawah objek
 - Dua sudut pandang: samping 2.5D atau kabin masinis (tombol kabin di kanan atas, atau tombol `V`).
   Dari kabin terlihat rel di depan dengan perspektif, tikungan yang berbelok, sinyal, perlintasan,
   stasiun dengan penumpang, jembatan busur, mulut terowongan, gajah dan kambing, wiper saat hujan,
