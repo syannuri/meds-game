@@ -5985,12 +5985,52 @@
   }
 
   // ornamen livery Si Gagah (pita emas di sisi lokomotif): kawung, parang, atau mega mendung
-  let LOCO_ORN = 'kawung';
+
+  // ukiran Dayak: sulur spiral berkait (satu satuan), dir = 1 atau -1 untuk dicerminkan
+  // (cx, cy) pusat spiral, u = ukuran satuan (piksel)
+  function dayakScroll(c, cx, cy, u, dir, col, accent) {
+    c.save(); c.translate(cx, cy); c.scale(dir, 1);
+    c.strokeStyle = col; c.lineCap = 'round'; c.lineJoin = 'round';
+    // spiral utama
+    c.lineWidth = Math.max(1, u * 0.11); c.beginPath();
+    for (let k = 0; k <= 40; k++) { const t = k / 40 * Math.PI * 2.4, r = u * 0.42 * (1 - t / (Math.PI * 2.9)); const px = Math.cos(t + Math.PI) * r, py = Math.sin(t + Math.PI) * r; k ? c.lineTo(px, py) : c.moveTo(px, py); }
+    c.stroke();
+    // sulur besar yang menyapu ke kanan lalu berkait balik
+    c.lineWidth = Math.max(1, u * 0.1); c.beginPath();
+    c.moveTo(-u * 0.42, 0);
+    c.bezierCurveTo(-u * 0.45, u * 0.55, u * 0.55, u * 0.6, u * 0.85, u * 0.05);
+    c.bezierCurveTo(u * 1.0, -u * 0.25, u * 0.75, -u * 0.42, u * 0.6, -u * 0.22);
+    c.quadraticCurveTo(u * 0.55, -u * 0.08, u * 0.7, -u * 0.06);
+    c.stroke();
+    // sulur kecil ke atas dengan kait (taring)
+    c.lineWidth = Math.max(1, u * 0.07); c.beginPath();
+    c.moveTo(u * 0.05, -u * 0.36);
+    c.bezierCurveTo(u * 0.15, -u * 0.62, u * 0.5, -u * 0.62, u * 0.52, -u * 0.42);
+    c.quadraticCurveTo(u * 0.5, -u * 0.32, u * 0.4, -u * 0.36);
+    c.stroke();
+    // duri-duri kecil di sepanjang sulur bawah
+    c.lineWidth = Math.max(1, u * 0.05);
+    [0.05, 0.3, 0.55].forEach((t) => { const bx = -u * 0.2 + t * u * 1.05, by = u * 0.43 - t * t * u * 0.4; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + u * 0.08, by + u * 0.14); c.stroke(); });
+    if (accent) { c.fillStyle = accent; c.beginPath(); c.arc(0, 0, u * 0.08, 0, 7); c.fill(); c.beginPath(); c.arc(u * 0.68, -u * 0.12, u * 0.05, 0, 7); c.fill(); }
+    c.restore();
+  }
+  let LOCO_ORN = 'dayak';
   function drawOrnament(c, kind, x0, x1, yTop, yBot, u, col) {
     const h = yBot - yTop, ym = (yTop + yBot) / 2;
     c.save();
     c.fillStyle = col; c.strokeStyle = col;
-    if (kind === 'kawung') {
+    if (kind === 'dayak') {
+      // pinggiran bergerigi (gigi) di atas & bawah, sulur berkait berpasangan saling bercermin
+      const gh = h * 0.13, gw = gh * 1.2;
+      c.fillStyle = '#f4efe2';
+      for (let x = x0; x < x1; x += gw) {
+        c.beginPath(); c.moveTo(x, yTop); c.lineTo(x + gw / 2, yTop + gh); c.lineTo(x + gw, yTop); c.fill();
+        c.beginPath(); c.moveTo(x, yBot); c.lineTo(x + gw / 2, yBot - gh); c.lineTo(x + gw, yBot); c.fill();
+      }
+      const su = h * 0.62, step = su * 2.6;
+      let i = 0;
+      for (let x = x0 + su; x < x1 + step; x += step / 2, i++) dayakScroll(c, x, ym + (i % 2 ? -1 : 1) * h * 0.04, su, i % 2 ? -1 : 1, col, '#d0392b');
+    } else if (kind === 'kawung') {
       // empat kelopak lonjong mengelilingi titik, berulang
       const step = u * 1.0, r = u * 0.42;
       for (let x = x0; x < x1 + step; x += step) {
@@ -6264,7 +6304,7 @@
     const red = vgrad(6.0, 1.85, [[0, '#e5513f'], [0.35, '#c8322a'], [0.8, '#a1221b'], [1, '#7e1813']]);
     const roofG = vgrad(6.4, 6.0, [[0, '#8a939a'], [1, '#5a6268']]);
     const glass2 = vgrad(5.8, 4.0, [[0, '#56708a'], [0.5, '#1f2d38'], [1, '#111a22']]);
-    const gold = '#e9b949', cream = '#f6e3b0', bandBg = '#6e1510', mask = '#1b1416';
+    const gold = '#e9b949', cream = '#f6e3b0', bandBg = LOCO_ORN === 'dayak' ? '#160e0d' : '#6e1510', mask = '#1b1416';
     // atap datar: muka atas sedikit terlihat
     poly([[15.55, 6.0], [1.2, 6.0], [1.5, 6.38], [15.3, 6.38]], roofG);
     // siluet badan: ujung belakang menyudut, moncong miring ke kaca depan lebar
@@ -6303,7 +6343,21 @@
     c.stroke();
     c.strokeStyle = 'rgba(233,185,73,0.7)'; c.lineWidth = 1; roundRect(c, L(15.35), Y(5.75), 3.5 * ppm, 1.8 * ppm, 0.12 * ppm); c.stroke();
     // pintu servis ruang mesin
-    for (const [a, b] of [[9.2, 10.3], [10.4, 11.45]]) { c.strokeStyle = 'rgba(60,8,6,0.55)'; c.strokeRect(L(b), Y(5.6), (b - a) * ppm, 1.65 * ppm); c.fillStyle = '#c9b07a'; c.fillRect(L(a + 0.15), Y(4.9), 0.07 * ppm, 0.3 * ppm); }
+    if (LOCO_ORN === 'dayak') {
+      // panel ukiran Dayak besar: sulur bercermin di atas dasar hitam, bingkai emas
+      const pa = 9.15, pb = 11.45, pt = 5.65, pbt = 3.95;
+      c.fillStyle = '#160e0d'; roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.fill();
+      c.save(); roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.clip();
+      const cx = L((pa + pb) / 2), cy = Y((pt + pbt) / 2), u = 0.88 * ppm;
+      dayakScroll(c, cx - u * 0.78, cy + u * 0.08, u, 1, gold, '#d0392b');
+      dayakScroll(c, cx + u * 0.78, cy + u * 0.08, u, -1, gold, '#d0392b');
+      dayakScroll(c, cx - u * 0.55, cy - u * 0.55, u * 0.45, -1, '#f4efe2', null);
+      dayakScroll(c, cx + u * 0.55, cy - u * 0.55, u * 0.45, 1, '#f4efe2', null);
+      c.strokeStyle = '#f4efe2'; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(cx, cy - u * 0.75); c.lineTo(cx, cy + u * 0.75); c.stroke();
+      c.fillStyle = '#f4efe2'; c.beginPath(); c.moveTo(cx, cy - u * 0.32); c.lineTo(cx + u * 0.16, cy); c.lineTo(cx, cy + u * 0.32); c.lineTo(cx - u * 0.16, cy); c.closePath(); c.fill();
+      c.restore();
+      c.strokeStyle = gold; c.lineWidth = Math.max(1, 0.06 * ppm); roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.stroke();
+    } else for (const [a, b] of [[9.2, 10.3], [10.4, 11.45]]) { c.strokeStyle = 'rgba(60,8,6,0.55)'; c.strokeRect(L(b), Y(5.6), (b - a) * ppm, 1.65 * ppm); c.fillStyle = '#c9b07a'; c.fillRect(L(a + 0.15), Y(4.9), 0.07 * ppm, 0.3 * ppm); }
     // sabuk bawah gelap
     box(-1.02, 15.85, 1.85, 2.32, '#2b2023');
     // pita ornamen emas di sepanjang badan, membungkus moncong
