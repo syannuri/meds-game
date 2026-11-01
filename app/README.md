@@ -39,6 +39,17 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Sinyal 3 aspek (merah/kuning/hijau), sinyal blok yang berubah (kereta barang di petak depan)
 - Batas kecepatan per zona (tikungan, jembatan, area stasiun); anjlok jika terlalu cepat di tikungan
 - Perlintasan sebidang (wajib klakson) dan kambing di rel
+- Landmark rute: 14 tempat khas fiksi (Menara Air Depo, Pabrik Gula Cibening, Candi Batu, Masjid Agung
+  Pasar Lama, Curug Watu, Gunung Sela, pasar malam, Beringin Krajan, Waduk Kedung Banteng, Bukit Barisan,
+  mercusuar, dll.) di latar tengah (paralaks 0,62; gunung jauh di belakang punggung bukit) dan di kiri
+  rel pada tampilan kabin. Saat pertama kali dilewati muncul kartu pos; koleksinya tampil sebagai
+  album di tab Garasi (`rn.cards` di penyimpanan lokal). Posisi per misi ada di `ROUTE_LM`.
+- Tikungan tanpa lengkung rel: papan peringatan belah ketupat kuning (panah belok + batas) 120 m
+  sebelum tikungan dan papan chevron hitam-kuning tiap 14 m di sisi luar tikungan, di tampilan samping
+  maupun kabin
+- Zoom stasiun: setelah berhenti Good/Perfect, kamera mendekat 1,45× ke rangkaian dan peron selama
+  pintu terbuka dan penumpang naik/turun, lalu menjauh saat pintu ditutup (tidak dipakai di kabin
+  dan saat reduced motion)
 - Kejadian lintas (data di rute misi): `meet` (persilangan di sepur belok dengan jalur utama di sisi
   depan, patok bebas, KA berlawanan yang lewat di tampilan samping dan kabin), `tree` (pohon tumbang
   di titik acak dalam zona, peringatan radio, kamera melirik ke depan) dan `flood` (genangan menutupi
