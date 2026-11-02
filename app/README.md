@@ -52,6 +52,14 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Zoom stasiun: setelah berhenti Good/Perfect, kamera mendekat 1,45× ke rangkaian dan peron selama
   pintu terbuka dan penumpang naik/turun, lalu menjauh saat pintu ditutup (tidak dipakai di kabin
   dan saat reduced motion)
+- Dunia hidup: sawah dengan petak padi muda, padi menguning, tanah bera, dan petak air yang memantulkan
+  langit & kilau matahari; rumpun padi bergoyang, kuntul yang terbang saat kereta lewat, petani bercaping;
+  kabut pagi, halo matahari, pantulan lensa, dan butir debu bercahaya (`drawPaddyLife`, `drawMist`,
+  `drawSunFx`; mati saat hujan/malam)
+- Zoom otomatis (`autoZoom`, pegas teredam): menjauh saat melaju kencang, mendekat saat mendekati titik
+  henti/corong, menjauh saat bus berdampingan atau bersilang dengan KA 112
+- Jalan raya balapan (`drawRoad`): kerb, aspal bertekstur, marka, mata kucing, pagar pengaman; bus
+  TransKilat antarkota modern yang berayun halus; KA 112 detail (perak, sabuk navy, motif tumpal emas)
 - Rute Harian: karcis lebar di atas daftar misi. Tanggal menentukan misi (1-4, 1-5, 1-6, 1-7, 2-2)
   dan 2–3 kondisi acak (hujan, kabut, pohon tumbang, kambing, jadwal ketat −3%), sama untuk semua
   pemain pada hari itu. Skor harian = koin + 150 per bintang + bonus waktu; skor terbaik per hari dan
