@@ -56,6 +56,10 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
   langit & kilau matahari; rumpun padi bergoyang, kuntul yang terbang saat kereta lewat, petani bercaping;
   kabut pagi, halo matahari, pantulan lensa, dan butir debu bercahaya (`drawPaddyLife`, `drawMist`,
   `drawSunFx`; mati saat hujan/malam)
+- Pantulan cahaya: lantai peron keramik mengkilap (`glossyFloor`) dengan nat ubin berperspektif,
+  pantulan kereta yang memudar, kilau matahari, genangan saat hujan, dan kolom cahaya lampu saat malam;
+  gerbong stainless dan lokomotif mendapat pantulan lingkungan (`bodySheen`): langit, garis horizon,
+  tanah, pita kilau yang mengalir, dan kilau matahari
 - Zoom otomatis (`autoZoom`, pegas teredam): menjauh saat melaju kencang, mendekat saat mendekati titik
   henti/corong, menjauh saat bus berdampingan atau bersilang dengan KA 112
 - Jalan raya balapan (`drawRoad`): kerb, aspal bertekstur, marka, mata kucing, pagar pengaman; bus
