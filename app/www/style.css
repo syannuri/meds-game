@@ -779,9 +779,9 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 
 @media (prefers-reduced-motion: no-preference) {
   /* logo berkilau */
-  #screenTitle h1.logo span { background: linear-gradient(100deg, var(--saffron) 0%, var(--saffron) 40%, #fff0c2 50%, var(--saffron) 60%, var(--saffron) 100%); background-size: 260% 100%;
-    -webkit-background-clip: text; background-clip: text; color: transparent; animation: logoSweep 6s ease-in-out infinite; }
-  @keyframes logoSweep { 0%, 55% { background-position: 100% 0; } 85%, 100% { background-position: 0 0; } }
+  /* logo berpendar lembut (tanpa background-clip:text yang membuat huruf tumpang-tindih di Safari) */
+  #screenTitle h1.logo span { animation: logoGlow 4.5s ease-in-out infinite; }
+  @keyframes logoGlow { 0%, 100% { text-shadow: 0 0 0 rgba(255, 199, 87, 0); } 50% { text-shadow: 0 0 18px rgba(255, 199, 87, 0.45), 0 0 2px rgba(255, 240, 194, 0.6); } }
   /* tombol utama bernapas + kilatan */
   #btnContinue { animation: breathe 2.8s ease-in-out infinite; }
   @keyframes breathe { 0%, 100% { box-shadow: 0 10px 24px rgba(232, 150, 15, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5); } 50% { box-shadow: 0 10px 34px rgba(255, 180, 40, 0.62), 0 0 0 4px rgba(255, 199, 87, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.5); } }
@@ -814,3 +814,7 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .tap-hint { left: max(16px, env(safe-area-inset-left, 0px)); transform: none; }
 .tap-hint.gone { transform: translateY(8px); }
 @media (prefers-reduced-motion: no-preference) { @keyframes hintBob { 0%, 100% { transform: none; } 50% { transform: translateY(-3px); } } }
+
+/* logo: jarak baris cukup agar REL dan NUSANTARA tidak saling menimpa, dan tak pernah melebar keluar kolom */
+#screenTitle h1.logo { line-height: 0.9; white-space: nowrap; max-width: 100%; }
+#screenTitle h1.logo span { margin-top: 0.02em; }

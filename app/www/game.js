@@ -2693,7 +2693,7 @@
     for (const [k, el] of Object.entries(ui.screens)) el.hidden = k !== name;
     ui.hud.hidden = !(name === 'play' || name === 'pause');
     if (name !== 'play') { toastTimer = 0; ui.toast.className = ''; }
-    if (name === 'title') { renderMissionList(); const st = ui.screens.title; st.classList.remove('enter'); void st.offsetWidth; st.classList.add('enter'); const th = $('tapHint'); if (th) th.classList.toggle('gone', Sound.ready || !Sound.musicOn || Sound.muted); }
+    if (name === 'title') { renderMissionList(); const st = ui.screens.title; st.classList.remove('enter'); void st.offsetWidth; st.classList.add('enter'); requestAnimationFrame(() => fitLogo && fitLogo()); const th = $('tapHint'); if (th) th.classList.toggle('gone', Sound.ready || !Sound.musicOn || Sound.muted); }
     if (name !== 'play' && name !== 'pause') $('radio').hidden = true;
   }
   const bestOf = (id) => Number(store.get('relnusantara.best.' + id) || 0);
@@ -3203,6 +3203,14 @@
     $('titleTabLbl').textContent = titleMap.tab === 'missions' ? '10 misi · 2 pulau' : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
   }));
   titleFxInit();
+  // kecilkan logo bila lebih lebar dari kolomnya (mis. huruf cadangan saat font belum termuat)
+  function fitLogo() {
+    const h = document.querySelector('#screenTitle h1.logo'); if (!h || h.offsetParent === null) return;
+    h.style.fontSize = ''; const col = h.parentElement.clientWidth;
+    const wide = Math.max(...[...h.querySelectorAll('span'), h].map((e) => e.scrollWidth));
+    if (wide > col && col > 0) h.style.fontSize = (parseFloat(getComputedStyle(h).fontSize) * col / wide * 0.98).toFixed(1) + 'px';
+  }
+  window.addEventListener('resize', fitLogo); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitLogo); setTimeout(fitLogo, 300);
   $('mapCv').addEventListener('click', (e) => {
     if (titleMap.tab !== 'map') return;
     const cvm = e.currentTarget, r = cvm.getBoundingClientRect(), w = r.width, h = r.height;
