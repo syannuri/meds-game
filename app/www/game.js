@@ -577,7 +577,7 @@
     '1-5': { storm: ['#24323d', '#4f6673', '#86a0aa'], grade: ['rgba(60,115,150,0.26)', 'rgba(40,95,105,0.2)'] },
     '1-6': { night: ['#120b2c', '#3a2366', '#8a4170'], grade: ['rgba(150,60,180,0.24)', 'rgba(255,120,60,0.12)'] },
     '1-7': { storm: ['#34434e', '#62798a', '#a7b8bd'], grade: ['rgba(80,125,140,0.2)', 'rgba(60,100,90,0.16)'] },
-    '2-2': { night: ['#05081a', '#141c3a', '#2a2f52'], grade: ['rgba(60,80,150,0.24)', 'rgba(20,40,60,0.2)'], mist: true },
+    '2-2': { night: ['#0d1634', '#26355f', '#475683'], grade: ['rgba(90,120,190,0.2)', 'rgba(40,70,90,0.14)'], mist: true },
     '2-3': { sky: [['#5a6a7e', '#8aa0aa'], ['#d9b48a', '#e6d8b8'], ['#f0d29a', '#f2ead2']], grade: ['rgba(230,180,110,0.2)', 'rgba(120,80,40,0.16)'], mist: true },
     '2-1': { sky: [['#4a6a6e', '#6a9aa6'], ['#b9b08a', '#cfd9c0'], ['#ead6a4', '#f0ead2']], grade: ['rgba(200,215,170,0.2)', 'rgba(160,70,40,0.2)'], mist: true },
   };
@@ -4207,7 +4207,11 @@
   function drawNight(V) {
     if (!V.night) return;
     const { c, ppm, gy, X, st } = V;
-    c.fillStyle = MIS.dark ? 'rgba(4,6,20,0.7)' : 'rgba(8,12,38,0.5)'; c.fillRect(0, 0, W, H);
+    c.fillStyle = MIS.dark ? 'rgba(10,16,40,0.46)' : 'rgba(8,12,38,0.5)'; c.fillRect(0, 0, W, H);
+    if (MIS.dark) { // cahaya bulan kebiruan dari kanan atas: siluet & tanah tetap terbaca
+      const mg = c.createRadialGradient(W * 0.72, H * 0.12, 0, W * 0.72, H * 0.12, W * 0.9); mg.addColorStop(0, 'rgba(150,180,235,0.16)'); mg.addColorStop(1, 'rgba(150,180,235,0)');
+      c.fillStyle = mg; c.fillRect(0, 0, W, H);
+    }
     c.save(); c.globalCompositeOperation = 'lighter';
     // lampu peron dan lampu sinyal
     const lamp = (x, y, r, col) => {
@@ -5473,23 +5477,37 @@
     if (xF < 0 || xR > W) return;
     const nearStn = allStations().some((q) => st.x > q.x - 140 && st.x - TRAIN_LEN < q.x + 40);
     if (nearStn) return;
-    const segs = [[st.x - LOCO_LEN, st.x, V.night ? 'rgba(255,170,120,' : 'rgba(205,60,46,']];
-    for (let k = 0; k < N_COACH; k++) { const f = st.x - carFront(k); segs.push([f - CAR_LEN, f, V.night ? 'rgba(255,205,120,' : 'rgba(220,226,232,']); }
+    // tiap kendaraan: [belakang, depan, warna badan, warna pita jendela/aksen]
+    const segs = [[st.x - LOCO_LEN, st.x, V.night ? 'rgba(150,50,40,' : 'rgba(205,60,46,', V.night ? 'rgba(255,190,120,' : 'rgba(40,20,20,']];
+    for (let k = 0; k < N_COACH; k++) {
+      const f = st.x - carFront(k);
+      if (MIS.freight) segs.push([f - CAR_LEN, f, V.night ? 'rgba(90,60,50,' : 'rgba(130,70,55,', 'rgba(30,25,22,']);
+      else segs.push([f - CAR_LEN, f, V.night ? 'rgba(150,160,175,' : 'rgba(225,230,236,', V.night ? 'rgba(255,205,120,' : 'rgba(45,60,75,']);
+    }
     const i0 = Math.floor((st.x - TRAIN_LEN - 60) / cell), i1 = Math.ceil((st.x + 60) / cell);
     c.save();
-    for (let i = i0; i <= i1; i++) for (let r = 0; r < 3; r++) {
+    for (let i = i0; i <= i1; i++) for (let r = 0; r < 4; r++) {
       if (hash(i * 7.31 + r * 1.93) > 0.45) continue;  // hanya petak berair
       const t0 = r / rows + 0.025, t1 = (r + 1) / rows - 0.025, xa = X(i * cell), xb = X((i + 1) * cell);
       const q = [[at(xa, t0) + 2, rowY(t0)], [at(xb, t0) - 2, rowY(t0)], [at(xb, t1) - 3, rowY(t1)], [at(xa, t1) + 3, rowY(t1)]];
       if (q[1][0] < xR - 40 || q[0][0] > xF + 40) continue;
       c.save(); c.beginPath(); q.forEach(([x, y], n) => (n ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.clip();
-      const y0 = q[0][1], y1 = q[3][1], hgt = y1 - y0, strips = 6, fade = 1 - r * 0.3;
+      const y0 = q[0][1], y1 = q[3][1], hgt = y1 - y0, strips = 10, fade = 1 - r * 0.22;
+      // pantulan terbalik: lajur paling atas = bagian bawah kereta (rangka gelap), lalu badan, pita jendela, atap
+      const bands = [[0, 0.12, 'under'], [0.12, 0.42, 'body'], [0.42, 0.62, 'win'], [0.62, 0.86, 'body'], [0.86, 1, 'roof']];
       for (let k = 0; k < strips; k++) {
-        const yy = y0 + (k / strips) * hgt, wob = Math.sin(tt * 3.2 + k * 1.3 + i) * (1 + r) * 1.4;
-        const a = (V.night ? 0.42 : 0.4) * fade * (1 - k / strips * 0.6);
-        for (const [m0, m1, col] of segs) {
-          const sx0 = at(X(m0), t0 + (t1 - t0) * k / strips) + wob, sx1 = at(X(m1), t0 + (t1 - t0) * k / strips) + wob;
-          c.fillStyle = col + a + ')'; c.fillRect(sx0 + 1, yy, sx1 - sx0 - 2, hgt / strips + 0.5);
+        const tk = k / strips, yy = y0 + tk * hgt, wob = Math.sin(tt * 3.2 + k * 1.3 + i) * (1 + r) * 1.4;
+        const a = (V.night ? 0.5 : 0.46) * fade * (1 - tk * 0.55);
+        const band = bands.find(([b0, b1]) => tk >= b0 && tk < b1)[2];
+        for (const [m0, m1, col, acc] of segs) {
+          const sx0 = at(X(m0), t0 + (t1 - t0) * tk) + wob, sx1 = at(X(m1), t0 + (t1 - t0) * tk) + wob;
+          const fill = band === 'under' ? 'rgba(25,28,32,' : band === 'win' ? acc : band === 'roof' ? (V.night ? 'rgba(90,95,110,' : 'rgba(170,178,186,') : col;
+          c.fillStyle = fill + a + ')'; c.fillRect(sx0 + 1, yy, sx1 - sx0 - 2, hgt / strips + 0.5);
+          // jendela bersekat & garis livery pada pantulan gerbong
+          if (band === 'win' && sx1 - sx0 > 30 && col.indexOf('225') > 0 || (band === 'win' && V.night)) {
+            c.fillStyle = `rgba(10,14,18,${a * 0.6})`; for (let w = sx0 + 6; w < sx1 - 6; w += Math.max(8, (sx1 - sx0) / 8)) c.fillRect(w, yy, 2, hgt / strips + 0.5);
+          }
+          if (band === 'body' && tk < 0.42 && tk > 0.3 && col.indexOf('225') > 0) { c.fillStyle = `rgba(242,165,22,${a})`; c.fillRect(sx0 + 1, yy, sx1 - sx0 - 2, Math.max(1, hgt / strips * 0.35)); }
         }
       }
       // kilau riak putih tipis yang bergerak mengikuti kereta
