@@ -114,20 +114,20 @@
       <div class="title-left">
         <div class="eyebrow">Prototipe · Babak 1 &amp; 2</div>
         <h1 class="logo">Rel<span>Nusantara</span></h1>
-        <p class="lead">Kemudikan Cakra, lokomotif diesel yang dipulihkan di depo kakek Raka. Patuhi sinyal, jaga penumpang tetap nyaman, dan hidupkan kembali rel Nusantara.</p>
-        <div class="btn-row">
+        <p class="lead">Kemudikan Cakra, lokomotif diesel dari depo kakek Raka. Patuhi sinyal, jaga penumpang tetap nyaman, hidupkan kembali rel Nusantara.</p>
+        <div class="btn-row main-row">
           <button class="btn primary" id="btnContinue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z" fill="currentColor"/></svg><span id="continueLbl">Mulai · Misi 1-4</span></button>
           <button class="btn" id="btnHowto">Cara bermain</button>
         </div>
-        <div class="btn-row">
+        <div class="btn-row sub-row">
           <button class="btn sm" id="btnMusicTitle">Musik: nyala</button>
           <button class="btn sm" id="btnSoundTitle">Suara: nyala</button>
         </div>
       </div>
       <div class="title-right">
-        <div class="maphead"><span class="lbl">Peta perjalanan</span>
-          <div class="maptabs" role="group" aria-label="Peta atau garasi"><button type="button" data-maptab="map" aria-pressed="true">Peta</button><button type="button" data-maptab="garage" aria-pressed="false">Garasi</button></div></div>
-        <div class="mapbox glass"><canvas id="mapCv" aria-label="Peta misi Jawa dan Sumatra. Ketuk rute untuk menyorot, ketuk lagi untuk memilih."></canvas></div>
+        <div class="maphead"><span class="lbl" id="titleTabLbl">Pilih misi</span>
+          <div class="maptabs" role="group" aria-label="Misi, peta, atau garasi"><button type="button" data-maptab="missions" aria-pressed="true">Misi</button><button type="button" data-maptab="map" aria-pressed="false">Peta</button><button type="button" data-maptab="garage" aria-pressed="false">Garasi</button></div></div>
+        <div class="mapbox glass" id="mapBox" hidden><canvas id="mapCv" aria-label="Peta misi Jawa dan Sumatra. Ketuk rute untuk menyorot, ketuk lagi untuk memilih."></canvas></div>
         <ul class="tickets" id="missionList"></ul>
       </div>
     </div>

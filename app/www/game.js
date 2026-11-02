@@ -2700,7 +2700,7 @@
   const MAP_ST = [[282, 308, 'Depo'], [319, 299, ''], [300, 300, 'Sukamaju'], [338, 292, 'Cibening'], [372, 300, 'Pasar Lama'], [404, 314, 'Kali Jernih'], [440, 306, 'Watugede'], [464, 314, ''], [486, 318, 'Kedung Banteng'], [176, 168, 'Muara Kelam'], [150, 140, ''], [124, 112, 'Simpang Barisan'], [262, 238, 'Tanjung Api']];
   const ISL_SUM = [[22, 30], [60, 14], [110, 44], [160, 92], [212, 136], [262, 178], [300, 222], [306, 256], [282, 266], [240, 246], [190, 214], [134, 168], [84, 120], [40, 78], [18, 48]];
   const ISL_JAW = [[252, 266], [300, 254], [360, 260], [420, 266], [480, 272], [522, 288], [528, 330], [492, 352], [430, 348], [370, 346], [310, 342], [262, 330], [240, 298]];
-  const titleMap = { tab: 'map', focus: null, t: 0 };
+  const titleMap = { tab: 'missions', focus: null, t: 0 };
   function islandPath(c, pts) {
     const n = pts.length, mid = (i) => [(pts[i][0] + pts[(i + 1) % n][0]) / 2, (pts[i][1] + pts[(i + 1) % n][1]) / 2];
     c.beginPath(); const m0 = mid(n - 1); c.moveTo(m0[0], m0[1]);
@@ -2782,10 +2782,10 @@
     const keep = [N_COACH]; N_COACH = 0;
     try { drawTrain(V); } finally { N_COACH = keep[0]; }
     for (let i = 0; i < 30; i++) { const x = ((hash(i) * w + t * 5 * (hash(i + 2) - 0.5)) % w + w) % w, y = (hash(i + 5) * h * 0.7 + t * 3) % (h * 0.7) + h * 0.08; c.fillStyle = 'rgba(255,230,190,0.3)'; c.fillRect(x, y, 1.5, 1.5); }
-    c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(h * 0.09)}px "Big Shoulders Display", sans-serif`; c.fillText('CAKRA · RN 2001', w * 0.04, h * 0.14);
+    c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(Math.min(h * 0.09, w * 0.055))}px "Big Shoulders Display", sans-serif`; c.fillText('CAKRA · RN 2001', w * 0.04, h * 0.14, w * 0.92);
     const done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
-    c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(h * 0.045)}px "Plus Jakarta Sans", sans-serif`;
-    c.fillText(`Depo Sukamaju · ${done} dari ${MISSION_ORDER.length} misi selesai · diesel-elektrik CC, livery Rel Nusantara`, w * 0.04, h * 0.22);
+    c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(Math.min(h * 0.045, w * 0.026))}px "Plus Jakarta Sans", sans-serif`;
+    c.fillText(`Depo Sukamaju · ${done} dari ${MISSION_ORDER.length} misi selesai · diesel-elektrik CC, livery Dayak`, w * 0.04, h * 0.22, w * 0.92);
     // album kartu pos landmark
     const got = cardsGot(), n = LM_IDS.length, gap = w * 0.008, cw = (w * 0.92 - gap * (n - 1)) / n, ch = cw * 1.08, ay = h * 0.275;
     c.fillStyle = '#c9b48a'; c.font = `800 ${Math.round(h * 0.032)}px "Plus Jakarta Sans", sans-serif`;
@@ -3034,6 +3034,9 @@
   document.querySelectorAll('[data-maptab]').forEach((b) => b.addEventListener('click', () => {
     titleMap.tab = b.dataset.maptab;
     document.querySelectorAll('[data-maptab]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    // tab Misi: daftar karcis; tab Peta/Garasi: kanvas mengisi ruang yang sama (layar judul muat satu halaman)
+    $('mapBox').hidden = titleMap.tab === 'missions'; $('missionList').hidden = titleMap.tab !== 'missions';
+    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? 'Pilih misi' : titleMap.tab === 'map' ? 'Peta perjalanan' : 'Garasi depo';
   }));
   $('mapCv').addEventListener('click', (e) => {
     if (titleMap.tab !== 'map') return;
