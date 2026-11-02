@@ -729,3 +729,5 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 @media (max-width: 760px) { #screenTitle .tickets li:not(.daily) .ticket .tbody b { font-size: 10.5px; } }
 #screenTitle .tickets li:not(.daily) .ticket .tbody b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: clamp(10.5px, 3vh, 13.5px); line-height: 1.02; }
 @media (max-width: 760px) { #screenTitle .tickets li:not(.daily) .ticket .tnew { letter-spacing: 0; font-size: 8px; text-overflow: clip; } }
+#screenTitle .tickets li:not(.daily) .ticket .stub small { display: none; }
+#screenTitle .tickets li:not(.daily) .ticket .stub { justify-content: center; }

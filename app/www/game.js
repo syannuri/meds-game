@@ -2846,11 +2846,11 @@
     c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(Math.min(h * 0.09, w * 0.055))}px "Big Shoulders Display", sans-serif`; c.fillText('CAKRA · RN 2001', w * 0.04, h * 0.14, w * 0.92);
     const done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
     c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(Math.min(h * 0.045, w * 0.026))}px "Plus Jakarta Sans", sans-serif`;
-    c.fillText(`Depo Sukamaju · ${done} dari ${MISSION_ORDER.length} misi selesai · diesel-elektrik CC, livery Dayak`, w * 0.04, h * 0.22, w * 0.92);
+    c.fillText(`${done}/${MISSION_ORDER.length} misi selesai · Diesel CC · Livery Dayak`, w * 0.04, h * 0.22, w * 0.92);
     // album kartu pos landmark
     const got = cardsGot(), n = LM_IDS.length, gap = w * 0.008, cw = (w * 0.92 - gap * (n - 1)) / n, ch = cw * 1.08, ay = h * 0.275;
     c.fillStyle = '#c9b48a'; c.font = `800 ${Math.round(h * 0.032)}px "Plus Jakarta Sans", sans-serif`;
-    c.fillText(`ALBUM KARTU POS · ${got.length} DARI ${n}`, w * 0.04, ay - h * 0.012);
+    c.fillText(`KARTU POS ${got.length}/${n}`, w * 0.04, ay - h * 0.012);
     if (!albumCv) { albumCv = document.createElement('canvas'); albumCv.width = 80; albumCv.height = 100; }
     const ac2 = albumCv.getContext('2d');
     LM_IDS.forEach((id, i) => {
@@ -2909,7 +2909,7 @@
     const D = MISSIONS.daily, best = dailyScores()[D.daily.key], streak = dailyStreak(), bm = MISSIONS[D.base];
     const dailyLi = `<li class="daily"><button class="ticket t-daily" data-id="daily">
         <span class="stub"><small>HARIAN</small><b>${D.daily.label}</b><small>${D.daily.hari}</small></span>
-        <span class="tbody">${misIcon('daily')}<b>Rute Harian · ${bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik hari ini <strong>${best}</strong>` : 'Belum dimainkan hari ini'}${streak ? ` · 🔥 ${streak} hari beruntun` : ''}</span></span>
+        <span class="tbody">${misIcon('daily')}<b>Harian · ${bm.nick || bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik <strong>${best}</strong>` : 'Rute baru tiap hari'}${streak ? ` · 🔥 ${streak} hari` : ''}</span></span>
       </button></li>`;
     const ahli = ahliSet();
     $('missionList').innerHTML = dailyLi + MISSION_ORDER.map((id) => {
@@ -2922,7 +2922,7 @@
       </button></li>`;
     }).join('');
     const anyPlayed = MISSION_ORDER.some((id) => bestOf(id) > 0);
-    $('continueLbl').textContent = `${anyPlayed ? 'Lanjutkan' : 'Mulai'} · Misi ${nextId}`;
+    $('continueLbl').textContent = `${anyPlayed ? 'Lanjut' : 'Mulai'} ${nextId}`;
   }
   function selectMission(id) {
     MIS = MISSIONS[id]; ROUTE = MIS.route;
@@ -3097,7 +3097,7 @@
     document.querySelectorAll('[data-maptab]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     // tab Misi: daftar karcis; tab Peta/Garasi: kanvas mengisi ruang yang sama (layar judul muat satu halaman)
     $('mapBox').hidden = titleMap.tab === 'missions'; $('missionList').hidden = titleMap.tab !== 'missions';
-    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? 'Pilih misi' : titleMap.tab === 'map' ? 'Peta perjalanan' : 'Garasi depo';
+    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? '10 misi · 2 pulau' : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
   }));
   $('mapCv').addEventListener('click', (e) => {
     if (titleMap.tab !== 'map') return;
@@ -3132,8 +3132,8 @@
     $('btnMute').setAttribute('aria-label', m ? 'Nyalakan suara' : 'Matikan semua suara');
     $('btnMusic').classList.toggle('off', !mu);
     $('btnMusic').setAttribute('aria-label', mu ? 'Matikan musik' : 'Nyalakan musik');
-    $('btnMusicTitle').textContent = `Musik: ${mu ? 'nyala' : 'mati'}`;
-    $('btnSoundTitle').textContent = `Suara: ${m ? 'mati' : 'nyala'}`;
+    $('btnMusicTitle').textContent = `Musik ${mu ? '✓' : '✕'}`;
+    $('btnSoundTitle').textContent = `Suara ${m ? '✕' : '✓'}`;
   }
   $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
   $('btnSoundTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
