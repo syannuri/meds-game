@@ -40,7 +40,7 @@
     '1-1': {
       id: '1-1',
       chapter: 'Babak 1 · Jawa',
-      title: 'Langkah Pertama di Depo',
+      title: 'Langkah Pertama di Depo', nick: 'Kenalan Cakra',
       startClock: 5 * 3600 + 30 * 60,
       sky: 'dawn',
       rain: false,
@@ -67,7 +67,7 @@
     '1-2': {
       id: '1-2',
       chapter: 'Babak 1 · Jawa',
-      title: 'Membaca Sinyal',
+      title: 'Membaca Sinyal', nick: 'Mata Sinyal',
       startClock: 5 * 3600 + 50 * 60,
       sky: 'dawn',
       rain: false,
@@ -103,7 +103,7 @@
     '1-3': {
       id: '1-3',
       chapter: 'Babak 1 · Jawa',
-      title: 'Penumpang Pertama',
+      title: 'Penumpang Pertama', nick: 'Pintu Terbuka',
       startClock: 6 * 3600 + 20 * 60,
       sky: 'dawn',
       rain: false,
@@ -141,7 +141,7 @@
     '1-4': {
       id: '1-4',
       chapter: 'Babak 1 · Jawa',
-      title: 'Pagi Pertama Pasar Minggu',
+      title: 'Pagi Pertama Pasar Minggu', nick: 'Pasar Berkabut',
       startClock: 6 * 3600,
       sky: 'dawn',
       rain: false,
@@ -197,7 +197,7 @@
     '1-5': {
       id: '1-5',
       chapter: 'Babak 1 · Jawa',
-      title: 'Hujan di Lengkung Watu',
+      title: 'Hujan di Lengkung Watu', nick: 'Wesel Basah',
       startClock: 15 * 3600 + 30 * 60,
       sky: 'storm',
       rain: true,
@@ -261,7 +261,7 @@
   MISSIONS['1-6'] = {
     id: '1-6',
     chapter: 'Babak 1 · Jawa',
-    title: 'Duel Malam Takbiran',
+    title: 'Duel Malam Takbiran', nick: 'Duel Takbiran',
     startClock: 18 * 3600 + 45 * 60,
     sky: 'night',
     rain: false,
@@ -338,7 +338,7 @@
   MISSIONS['2-1'] = {
     id: '2-1',
     chapter: 'Babak 2 · Sumatra',
-    title: 'Emas Hitam',
+    title: 'Emas Hitam', nick: 'Emas Hitam',
     startClock: 7 * 3600 + 10 * 60,
     sky: 'dawn',
     rain: false,
@@ -397,7 +397,7 @@
   MISSIONS['1-7'] = {
     id: '1-7',
     chapter: 'Babak 1 · Jawa',
-    title: 'Bersilang di Krajan',
+    title: 'Bersilang di Krajan', nick: 'Silang Krajan',
     startClock: 16 * 3600 + 10 * 60,
     sky: 'storm',
     rain: true,
@@ -457,7 +457,7 @@
   MISSIONS['2-2'] = {
     id: '2-2',
     chapter: 'Babak 2 · Sumatra',
-    title: 'Jalur yang Ditutup',
+    title: 'Jalur yang Ditutup', nick: 'Semafor Tua',
     startClock: 19 * 3600 + 40 * 60,
     sky: 'night',
     rain: false,
@@ -517,7 +517,7 @@
   MISSIONS['2-3'] = {
     id: '2-3',
     chapter: 'Babak 2 · Sumatra',
-    title: 'Kereta Rakyat',
+    title: 'Kereta Rakyat', nick: 'Panen Kopi',
     startClock: 6 * 3600 + 20 * 60,
     sky: 'dawn',
     rain: false,
@@ -2857,7 +2857,7 @@
       const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BELUM DIMAINKAN</span>';
       return `<li${m.tutorial ? ' class="tut"' : ''}><button class="ticket t-${m.ticket || m.sky}${m.tutorial ? ' t-tut' : ''}${id === nextId ? ' next' : ''}" data-id="${id}">
         <span class="stub"><small>MISI</small><b>${id}</b></span>
-        <span class="tbody"><b>${m.title}</b><small>${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
+        <span class="tbody"><b title="${m.title}">${m.nick || m.title}</b><small>${m.title} · ${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
       </button></li>`;
     }).join('');
     const anyPlayed = MISSION_ORDER.some((id) => bestOf(id) > 0);
@@ -2883,7 +2883,7 @@
   }
   function showBrief() {
     const m = MIS, R = ROUTE, f = finalStation();
-    $('briefEyebrow').textContent = m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}`;
+    $('briefEyebrow').textContent = m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
     $('briefTitle').textContent = m.title;
     $('briefAvatar').textContent = m.speaker.initials;
     $('briefWho').textContent = m.speaker.who;
