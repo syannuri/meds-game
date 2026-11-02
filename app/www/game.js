@@ -6015,7 +6015,7 @@
     c.restore();
   }
   let LOCO_ORN = 'dayak';
-  let LOCO_SHAPE = 'box'; // 'box' (kotak modern) atau 'aero' (moncong aerodinamis)
+  let LOCO_SHAPE = 'boxC'; // 'boxC' moncong pendek (utama), 'box' kotak ramping, 'boxB' kabin tinggi, 'aero' aerodinamis
   function drawOrnament(c, kind, x0, x1, yTop, yBot, u, col) {
     const h = yBot - yTop, ym = (yTop + yBot) / 2;
     c.save();
@@ -6328,28 +6328,38 @@
       line([[1.4, 5.83], [-0.8, 5.83]], '#fff2c4', lw(0.06));
       for (let k = 0; k < 3; k++) line([[-0.86, 4.3 - k * 0.12], [-1.11, 4.24 - k * 0.12]], 'rgba(30,10,10,0.55)', lw(0.04));
     } else if (SH === 'boxC') {
-      // ---- kotak C: moncong pendek bersudut di depan kabin tegak (gaya lokomotif barang modern) ----
-      poly([[15.6, 6.0], [1.55, 6.0], [1.8, 6.4], [15.35, 6.4]], roofG);
-      poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [1.55, 6.0], [1.3, 5.82], [1.27, 4.16], [-0.5, 4.1], [-0.85, 3.75], [-0.85, 1.85]], red);
-      poly([[15.62, 6.0], [1.55, 6.0], [1.3, 5.82], [1.3, 5.6], [15.85, 5.6], [15.85, 5.78]], '#2a1a1b');
-      line([[15.6, 5.98], [1.56, 5.98]], 'rgba(255,255,255,0.3)', 1);
-      // muka kabin (kaca depan tegak) yang terlihat di atas moncong
-      poly([[1.3, 5.82], [1.27, 4.16], [1.0, 4.12], [1.03, 5.74]], mask);
-      poly([[1.29, 5.62], [1.27, 4.36], [1.04, 4.32], [1.05, 5.56]], glass2);
-      // atap moncong & muka moncong 3/4
-      poly([[1.27, 4.16], [-0.5, 4.1], [-0.35, 4.3], [1.0, 4.34]], '#a92a22');
-      poly([[-0.5, 4.1], [-0.85, 3.75], [-1.12, 3.66], [-0.78, 4.02]], '#3a2324');
-      poly([[-0.85, 3.75], [-0.85, 2.08], [-1.12, 1.98], [-1.12, 3.66]], vgrad(3.75, 2.0, [[0, '#d24237'], [1, '#7e1813']]));
-      // jendela samping kabin
-      poly([[3.85, 5.6], [1.3, 5.6], [1.3, 4.5], [3.85, 4.5]], mask);
-      c.fillStyle = glass2; roundRect(c, L(3.65), Y(5.48), 2.2 * ppm, 0.88 * ppm, 0.1 * ppm); c.fill();
-      if (V.cabA > 0.02) { c.fillStyle = `rgba(255,215,143,${V.cabA})`; roundRect(c, L(3.65), Y(5.48), 2.2 * ppm, 0.88 * ppm, 0.1 * ppm); c.fill(); }
-      if (V.refl > 0.01) poly([[3.3, 5.48], [2.9, 5.48], [3.2, 4.6], [3.6, 4.6]], `rgba(255,255,255,${V.refl})`);
-      line([[2.45, 5.52], [2.45, 4.56]], mask, lw(0.1));
-      line([[3.7, 5.7], [1.35, 5.7]], '#fff2c4', lw(0.06));
-      // kisi di atas moncong
-      for (let k = 0; k < 4; k++) line([[0.9 - k * 0.38, 4.12], [0.9 - k * 0.38, 3.82]], 'rgba(30,10,10,0.5)', lw(0.05));
-    } else if (BOXY) {
+      // ---- kotak C: kabin bermuka miring di belakang moncong pendek bertingkat (gaya lokomotif barang modern) ----
+      poly([[15.6, 6.0], [2.0, 6.0], [2.25, 6.4], [15.35, 6.4]], roofG);
+      // badan + kabin + moncong
+      poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [2.0, 6.0], [1.68, 6.12], [1.22, 4.32], [1.1, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]], red);
+      // visor atap kabin (menjorok ke depan) dengan lampu sorot LED ganda
+      poly([[4.2, 6.12], [1.68, 6.12], [1.45, 6.22], [1.52, 6.34], [4.2, 6.34]], '#2a1a1b');
+      poly([[15.62, 6.0], [4.2, 6.0], [4.2, 5.78], [15.85, 5.78]], '#2a1a1b');
+      line([[15.6, 5.98], [2.0, 5.98]], 'rgba(255,255,255,0.3)', 1);
+      // muka kabin miring: topeng hitam, kaca depan dua panel, papan nomor menyala
+      poly([[1.68, 6.12], [1.22, 4.32], [0.93, 4.3], [1.38, 6.06]], mask);
+      poly([[1.6, 5.86], [1.3, 4.66], [1.13, 4.64], [1.42, 5.82]], glass2);
+      poly([[1.32, 4.62], [1.24, 4.4], [1.0, 4.38], [1.08, 4.6]], glass2);
+      c.save(); c.globalAlpha = 0.35; poly([[1.55, 5.8], [1.47, 5.5], [1.35, 5.48], [1.42, 5.78]], '#ffffff'); c.restore();
+      poly([[1.66, 6.06], [1.62, 5.92], [1.4, 5.88], [1.43, 6.02]], '#120c0e');
+      c.fillStyle = '#ffe9a6'; c.font = `900 ${Math.max(5, Math.round(0.13 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('2001', L(1.53), Y(5.97)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      // jendela samping kabin besar + jendela pintu
+      poly([[4.15, 5.78], [1.62, 5.78], [1.28, 4.48], [4.15, 4.48]], mask);
+      c.fillStyle = glass2; c.beginPath(); c.moveTo(L(3.95), Y(5.66)); c.lineTo(L(1.7), Y(5.66)); c.lineTo(L(1.42), Y(4.6)); c.lineTo(L(3.95), Y(4.6)); c.closePath(); c.fill();
+      if (V.cabA > 0.02) { c.fillStyle = `rgba(255,215,143,${V.cabA})`; c.beginPath(); c.moveTo(L(3.95), Y(5.66)); c.lineTo(L(1.7), Y(5.66)); c.lineTo(L(1.42), Y(4.6)); c.lineTo(L(3.95), Y(4.6)); c.closePath(); c.fill(); }
+      if (V.refl > 0.01) poly([[3.4, 5.66], [3.0, 5.66], [3.25, 4.6], [3.65, 4.6]], `rgba(255,255,255,${V.refl})`);
+      line([[2.75, 5.7], [2.75, 4.54]], mask, lw(0.09));
+      line([[4.1, 5.86], [1.72, 5.86]], '#fff2c4', lw(0.05));
+      // moncong bertingkat: atap moncong, bevel depan, muka moncong 3/4
+      poly([[1.1, 4.26], [-0.25, 4.26], [-0.1, 4.46], [1.0, 4.48]], '#b7362c');
+      poly([[-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-1.12, 3.47], [-0.9, 3.9], [-0.53, 4.18]], '#4a2a2a');
+      poly([[-0.85, 3.55], [-0.85, 2.08], [-1.12, 1.98], [-1.12, 3.47]], vgrad(3.55, 2.0, [[0, '#d24237'], [1, '#7e1813']]));
+      // kisi isap udara di atas moncong
+      for (let k = 0; k < 6; k++) line([[0.95 - k * 0.2, 4.22], [0.95 - k * 0.2, 3.92]], 'rgba(25,8,8,0.6)', lw(0.045));
+      c.strokeStyle = 'rgba(233,185,73,0.6)'; c.lineWidth = 1; c.strokeRect(L(1.02), Y(4.24), 1.1 * ppm, 0.34 * ppm);
+      // pegangan tangan kuning di sudut moncong
+      line([[-0.7, 3.9], [-0.7, 2.9]], '#f2c230', lw(0.05)); line([[-0.42, 4.15], [-0.42, 3.2]], '#f2c230', lw(0.05));
+        } else if (BOXY) {
       // ---- versi kotak modern: muka depan hampir tegak, sudut tegas, kaca membungkus sudut kabin ----
       poly([[15.6, 6.0], [0.05, 6.0], [0.3, 6.4], [15.35, 6.4]], roofG);
       poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [0.05, 6.0], [-0.52, 5.9], [-0.82, 2.08], [-0.86, 1.85]], red);
@@ -6440,7 +6450,7 @@
     else line([[15.85, 3.79], [0.22, 3.79], [-0.52, 3.44]], cream, lw(0.07));
     line([[15.85, 2.38], [-0.75, 2.38]], cream, lw(0.07));
     // perlengkapan atap: unit AC kabin, klakson, cerobong knalpot diesel, kipas radiator, antena
-    { const acY = SH === 'boxB' ? 0.36 : 0; c.fillStyle = vgrad(6.85 + acY, 6.38 + acY, [[0, '#a3abb1'], [1, '#6a7378']]); roundRect(c, L(3.9), Y(6.8 + acY), 2.2 * ppm, 0.45 * ppm, 0.12 * ppm); c.fill(); }
+    { const acY = SH === 'boxB' ? 0.36 : 0; if (SH === 'boxC') { c.fillStyle = vgrad(6.75, 6.4, [[0, '#a3abb1'], [1, '#6a7378']]); roundRect(c, L(6.6), Y(6.75), 1.8 * ppm, 0.35 * ppm, 0.1 * ppm); c.fill(); } else c.fillStyle = vgrad(6.85 + acY, 6.38 + acY, [[0, '#a3abb1'], [1, '#6a7378']]); roundRect(c, L(3.9), Y(6.8 + acY), 2.2 * ppm, 0.45 * ppm, 0.12 * ppm); c.fill(); }
     box(4.3, 5.0, 6.38, 6.55, '#5b646a'); poly([[4.3, 6.55], [4.12, 6.68], [4.12, 6.42], [4.3, 6.42]], '#4b545a');
     c.fillStyle = '#25292d'; roundRect(c, L(8.6), Y(6.85), 0.8 * ppm, 0.5 * ppm, 0.12 * ppm); c.fill();
     c.fillStyle = '#0d0f11'; c.beginPath(); c.ellipse(L(8.2), Y(6.85), 0.34 * ppm, 0.1 * ppm, 0, 0, 7); c.fill();
@@ -6457,9 +6467,14 @@
       poly([[-0.85, 2.04], [-0.85, 1.9], [-1.12, 1.84], [-1.12, 1.98]], '#ff7a5c');
       box(-0.8, 1.3, 5.86, 5.92, '#fff2c4');
     } else if (SH === 'boxC') {
-      poly([[1.29, 5.95], [1.29, 5.84], [1.06, 5.78], [1.06, 5.89]], '#fff5d0');
-      poly([[-0.86, 2.3], [-0.86, 2.14], [-1.1, 2.07], [-1.1, 2.23]], '#fff5d0');
-      poly([[-0.86, 2.06], [-0.86, 1.92], [-1.1, 1.86], [-1.1, 2.0]], '#ff7a5c');
+      // lampu sorot LED ganda di visor, lampu kabut terang di sudut moncong, penanda merah, chevron keselamatan
+      box(1.5, 1.85, 6.2, 6.3, '#fff5d0'); box(1.9, 2.25, 6.2, 6.3, '#fff5d0');
+      poly([[-0.86, 3.38], [-0.86, 3.2], [-1.1, 3.13], [-1.1, 3.3]], '#fff5d0');
+      poly([[-0.86, 2.34], [-0.86, 2.18], [-1.1, 2.11], [-1.1, 2.27]], '#fff5d0');
+      poly([[-0.86, 2.08], [-0.86, 1.94], [-1.1, 1.88], [-1.1, 2.02]], '#ff7a5c');
+      c.save(); c.beginPath(); [[-0.85, 2.45], [-0.85, 2.1], [-1.12, 2.0], [-1.12, 2.36]].forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); c.clip();
+      for (let k = -2; k < 4; k++) poly([[-0.85, 2.1 + k * 0.14], [-0.85, 2.17 + k * 0.14], [-1.12, 2.3 + k * 0.14], [-1.12, 2.23 + k * 0.14]], k % 2 ? '#f2c230' : '#160e0d');
+      c.restore();
     } else if (BOXY) {
       // klaster LED persegi di muka depan: lampu utama, lampu jauh, lampu penanda merah
       poly([[-0.75, 4.05], [-0.77, 3.86], [-1.03, 3.79], [-1.01, 3.97]], '#1b1416');
@@ -6498,7 +6513,7 @@
       c.save(); c.globalAlpha = V.rimA;
       line([[15.3, 6.38], [1.5, 6.38]], V.rim, lw(0.09));
       if (SH === 'boxB') line([[4.15, 6.4], [-0.6, 6.4], [-0.87, 6.3], [-1.12, 6.08], [-1.12, 1.98]], V.rim, lw(0.09));
-      else if (SH === 'boxC') { line([[1.55, 6.0], [1.3, 5.82], [1.03, 5.74]], V.rim, lw(0.09)); line([[-0.5, 4.1], [-0.78, 4.02], [-1.12, 3.66], [-1.12, 1.98]], V.rim, lw(0.09)); }
+      else if (SH === 'boxC') { line([[2.0, 6.0], [1.68, 6.12], [1.38, 6.06]], V.rim, lw(0.09)); line([[-0.1, 4.46], [-0.53, 4.18], [-0.9, 3.9], [-1.12, 3.47], [-1.12, 1.98]], V.rim, lw(0.09)); }
       else if (BOXY) line([[0.05, 6.0], [-0.52, 5.9], [-0.84, 5.82], [-1.12, 1.98]], V.rim, lw(0.09));
       else line([[1.2, 6.0], [0.75, 5.78], [-0.3, 3.98], [-0.62, 3.45], [-0.9, 3.3], [-1.02, 2.88], [-1.02, 1.9]], V.rim, lw(0.09));
       c.restore();
@@ -6506,7 +6521,7 @@
     // lampu depan berkedip saat klakson dibunyikan
     if (st.hornFlash > 0 && Math.floor(st.hornFlash * 6) % 2 === 0) {
       c.save(); c.globalCompositeOperation = 'lighter';
-      (SH === 'boxB' ? [4.06] : SH === 'boxC' ? [2.22] : BOXY ? [3.92] : [3.22, 2.86]).forEach((h) => { const gx = L(SH === 'boxB' || SH === 'boxC' ? -0.98 : BOXY ? -0.88 : -0.6), gyy = Y(h), r = 2.2 * ppm; const lg = c.createRadialGradient(gx, gyy, 0, gx, gyy, r); lg.addColorStop(0, 'rgba(255,246,210,0.95)'); lg.addColorStop(1, 'rgba(255,240,190,0)'); c.fillStyle = lg; c.beginPath(); c.arc(gx, gyy, r, 0, 7); c.fill(); });
+      (SH === 'boxB' ? [4.06] : SH === 'boxC' ? [3.28, 2.25] : BOXY ? [3.92] : [3.22, 2.86]).forEach((h) => { const gx = L(SH === 'boxB' || SH === 'boxC' ? -0.98 : BOXY ? -0.88 : -0.6), gyy = Y(h), r = 2.2 * ppm; const lg = c.createRadialGradient(gx, gyy, 0, gx, gyy, r); lg.addColorStop(0, 'rgba(255,246,210,0.95)'); lg.addColorStop(1, 'rgba(255,240,190,0)'); c.fillStyle = lg; c.beginPath(); c.arc(gx, gyy, r, 0, 7); c.fill(); });
       c.restore();
     }
     c.restore();
