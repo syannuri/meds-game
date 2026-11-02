@@ -2685,21 +2685,85 @@
   };
   // ---------- layar judul: peta misi Jawa–Sumatra dan garasi Cakra ----------
   // koordinat peta dalam bidang 540 x 390; diskalakan ke ukuran kanvas
-  const MAP_ROUTES = {
-    '1-1': { pts: [[282, 308], [300, 300]], col: '#f2c94c' },
-    '1-2': { pts: [[300, 300], [338, 292]], col: '#e0b07a' },
-    '1-3': { pts: [[300, 300], [319, 299], [338, 292]], col: '#d8a06a' },
-    '1-4': { pts: [[300, 300], [338, 292], [372, 300]], col: '#e8955a' },
-    '1-5': { pts: [[372, 300], [404, 314], [440, 306]], col: '#7aa6b8' },
-    '1-6': { pts: [[440, 306], [404, 318], [372, 306], [336, 300], [300, 306]], col: '#b07ad8' },
-    '1-7': { pts: [[440, 306], [464, 314], [486, 318]], col: '#5f9fb0' },
-    '2-2': { pts: [[176, 168], [150, 140], [124, 112]], col: '#8fa0d8' },
-    '2-3': { pts: [[124, 112], [140, 150], [176, 168]], col: '#c9a05a' },
-    '2-1': { pts: [[176, 168], [206, 196], [236, 214], [262, 238]], col: '#6fb36a' },
+  // peta berdasar garis pantai nyata (bujur, lintang) -> koordinat peta 540x370
+  const GEO = (lo, la) => [33 + (lo - 95) * 24, 6 + (6 - la) * 24];
+  const geoPoly = (a) => a.map(([lo, la]) => GEO(lo, la));
+  const ISL_SUM = geoPoly([[95.3, 5.6], [95.9, 5.6], [97.0, 5.25], [97.9, 4.6], [98.7, 3.8], [99.8, 3.2], [100.4, 2.4], [101.0, 2.0], [101.4, 1.7], [102.2, 1.4], [103.0, 0.8], [103.7, 0.3], [103.5, -0.3], [103.8, -1.0], [104.4, -1.6], [104.9, -2.2], [105.5, -2.5], [105.9, -3.0], [105.9, -3.8], [105.8, -4.6], [105.9, -5.6], [105.6, -5.85], [105.25, -5.55], [104.6, -5.9], [104.0, -5.6], [103.4, -4.9], [102.3, -3.9], [101.4, -2.8], [100.9, -2.0], [100.4, -1.1], [99.9, -0.2], [99.2, 0.5], [98.7, 1.5], [97.9, 2.3], [97.2, 3.0], [96.6, 3.7], [96.0, 4.3], [95.4, 5.0], [95.2, 5.4]]);
+  const ISL_JAW = geoPoly([[105.2, -6.8], [105.4, -6.55], [105.9, -6.0], [106.2, -5.95], [106.8, -6.1], [107.4, -5.95], [108.0, -6.25], [108.3, -6.25], [108.6, -6.7], [109.1, -6.85], [109.7, -6.9], [110.4, -6.95], [110.7, -6.5], [111.1, -6.4], [111.4, -6.7], [112.0, -6.85], [112.6, -6.9], [112.75, -7.2], [112.85, -7.6], [113.5, -7.7], [114.1, -7.65], [114.45, -7.8], [114.4, -8.3], [114.6, -8.75], [114.1, -8.6], [113.3, -8.3], [112.5, -8.4], [111.6, -8.3], [110.6, -8.1], [109.6, -7.75], [109.0, -7.7], [108.5, -7.8], [107.6, -7.6], [106.8, -7.4], [106.4, -7.0], [105.8, -6.85], [105.4, -6.9]]);
+  const ISL_SMALL = [
+    [[112.7, -7.05], [113.3, -6.9], [114.1, -6.9], [114.0, -7.15], [113.2, -7.2], [112.8, -7.15]], // Madura
+    [[114.45, -8.15], [115.2, -8.05], [115.7, -8.35], [115.5, -8.7], [115.15, -8.85], [114.6, -8.4]], // Bali
+    [[105.1, -1.6], [106.0, -1.6], [106.8, -2.9], [106.4, -3.1], [105.8, -2.5], [105.1, -2.0]], // Bangka
+    [[107.6, -2.6], [108.2, -2.6], [108.3, -3.1], [107.7, -3.2]], // Belitung
+    [[97.0, 1.4], [97.4, 1.5], [97.9, 0.9], [97.8, 0.6], [97.4, 0.8], [97.1, 1.1]], // Nias
+    [[98.6, -1.0], [99.1, -1.3], [99.3, -1.8], [99.0, -1.7], [98.6, -1.3]], // Siberut
+    [[95.8, 2.9], [96.3, 2.6], [96.5, 2.4], [96.1, 2.5]], // Simeulue
+  ].map(geoPoly);
+  const G = {
+    D: GEO(106.4, -6.45), S: GEO(107.0, -6.55), A: GEO(107.5, -6.65), C: GEO(108.1, -6.75), P: GEO(108.9, -6.9), K: GEO(109.8, -7.1), W: GEO(110.7, -7.25), B: GEO(111.5, -7.35), KB: GEO(112.3, -7.45),
+    MK: GEO(103.75, -3.75), M2: GEO(103.3, -3.35), SB: GEO(102.85, -2.95), T1: GEO(104.3, -4.3), T2: GEO(104.85, -4.95), TA: GEO(105.3, -5.45),
   };
-  const MAP_ST = [[282, 308, 'Depo'], [319, 299, ''], [300, 300, 'Sukamaju'], [338, 292, 'Cibening'], [372, 300, 'Pasar Lama'], [404, 314, 'Kali Jernih'], [440, 306, 'Watugede'], [464, 314, ''], [486, 318, 'Kedung Banteng'], [176, 168, 'Muara Kelam'], [150, 140, ''], [124, 112, 'Simpang Barisan'], [262, 238, 'Tanjung Api']];
-  const ISL_SUM = [[22, 30], [60, 14], [110, 44], [160, 92], [212, 136], [262, 178], [300, 222], [306, 256], [282, 266], [240, 246], [190, 214], [134, 168], [84, 120], [40, 78], [18, 48]];
-  const ISL_JAW = [[252, 266], [300, 254], [360, 260], [420, 266], [480, 272], [522, 288], [528, 330], [492, 352], [430, 348], [370, 346], [310, 342], [262, 330], [240, 298]];
+  const off = (p, d) => [p[0], p[1] + d];
+  const MAP_ROUTES = {
+    '1-1': { pts: [G.D, G.S], col: '#f2c94c' },
+    '1-2': { pts: [G.S, G.C], col: '#e0b07a' },
+    '1-3': { pts: [G.S, G.A, G.C], col: '#d8a06a' },
+    '1-4': { pts: [G.S, G.C, G.P], col: '#e8955a' },
+    '1-5': { pts: [G.P, G.K, G.W], col: '#7aa6b8' },
+    '1-6': { pts: [G.W, G.K, G.P, G.C, G.S].map((p) => off(p, 3)), col: '#b07ad8' },
+    '1-7': { pts: [G.W, G.B, G.KB], col: '#5f9fb0' },
+    '2-2': { pts: [G.MK, G.M2, G.SB], col: '#8fa0d8' },
+    '2-3': { pts: [G.SB, G.M2, G.MK].map((p) => off(p, 3)), col: '#c9a05a' },
+    '2-1': { pts: [G.MK, G.T1, G.T2, G.TA], col: '#6fb36a' },
+  };
+  // [x, y, nama, label di atas(-1)/bawah(1)]
+  const MAP_ST = [[...G.D, 'Depo', 1], [...G.S, 'Sukamaju', -1], [...G.A, '', 0], [...G.C, 'Cibening', 1], [...G.P, 'Pasar Lama', -1], [...G.K, 'Kali Jernih', 1], [...G.W, 'Watugede', -1], [...G.B, 'Krajan', 1], [...G.KB, 'Kedung Banteng', -1],
+    [...G.MK, 'Muara Kelam', 1], [...G.M2, '', 0], [...G.SB, 'Simpang Barisan', -1], [...G.TA, 'Tanjung Api', 1]];
+  const MAP_VOLC = [GEO(101.26, -1.7), GEO(103.12, -4.03), GEO(98.4, 3.2), GEO(106.98, -6.8), GEO(110.44, -7.55), GEO(112.92, -8.05)];
+  // ikon garis 24x24 untuk karcis misi
+  const MIS_ICON = {
+    '1-1': '<rect x="5" y="3" width="14" height="15" rx="3"/><path d="M8 7h8v4H8z"/><circle cx="9" cy="14.5" r="1"/><circle cx="15" cy="14.5" r="1"/><path d="M7.5 18l-2 3.5M16.5 18l2 3.5"/>',
+    '1-2': '<rect x="8" y="2" width="8" height="14" rx="4"/><circle cx="12" cy="6" r="1.6"/><circle cx="12" cy="11.5" r="1.6"/><path d="M12 16v6M8 22h8"/>',
+    '1-3': '<circle cx="9" cy="7" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 13.2A5 5 0 0 1 21 18v3"/>',
+    '1-4': '<path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/><path d="M9 13v4M12 13v4M15 13v4"/>',
+    '1-5': '<path d="M7 15a4 4 0 0 1 .5-8A6 6 0 0 1 19 8a3.5 3.5 0 0 1-.5 7z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+    '1-6': '<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 7h16M4 11h16"/><circle cx="8" cy="14.5" r="1"/><circle cx="16" cy="14.5" r="1"/><path d="M6.5 18v3M17.5 18v3"/>',
+    '1-7': '<path d="M3 8h15M14 4l4 4-4 4"/><path d="M21 16H6M10 12l-4 4 4 4"/>',
+    '2-1': '<path d="M3 9h18l-3 8H6z"/><path d="M5 9l2.5-3 3 2 3-3 3 2.5L19 9"/><circle cx="8" cy="20" r="1.6"/><circle cx="16" cy="20" r="1.6"/>',
+    '2-2': '<path d="M7 22V3"/><path d="M7 5l12-1.5v4L7 9z"/><circle cx="7" cy="13" r="1.6"/><path d="M4 22h6"/>',
+    '2-3': '<ellipse cx="12" cy="12" rx="6" ry="9" transform="rotate(35 12 12)"/><path d="M8.6 17.4c3.2-3 .2-7.6 6.8-10.8"/>',
+    daily: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
+  };
+  const misIcon = (id) => `<span class="ticon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${MIS_ICON[id] || ''}</svg></span>`;
+  // ilustrasi adegan kecil untuk tiap karcis misi (SVG 120x70)
+  const skyG = (id, a, b) => `<defs><linearGradient id="sk${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="120" height="70" fill="url(#sk${id})"/>`;
+  const rails = (y, c = '#3b3229') => `<rect x="0" y="${y}" width="120" height="1.6" fill="${c}"/><rect x="0" y="${y + 3}" width="120" height="1.6" fill="${c}"/>`;
+  const MIS_ART = {
+    '1-1': skyG('a1', '#f2a65c', '#fde3b0') + '<circle cx="100" cy="18" r="8" fill="#fff3d1" opacity=".9"/><path d="M0 52 Q30 44 60 50 T120 47 V70 H0z" fill="#9a8a62"/><rect x="12" y="24" width="58" height="34" fill="#8a6a55"/><path d="M7 26 L41 9 L75 26z" fill="#5a4033"/><rect x="23" y="31" width="36" height="27" fill="#2a1f1a"/><rect x="30" y="34" width="22" height="22" rx="3" fill="#c8352b"/><rect x="33" y="37" width="16" height="6" rx="1" fill="#1e2a33"/><rect x="30" y="46" width="22" height="2" fill="#f2c94c"/><circle cx="35" cy="51.5" r="1.8" fill="#fff3c4"/><circle cx="47" cy="51.5" r="1.8" fill="#fff3c4"/>' + rails(58) + '<path d="M90 58 V36 M90 36 q-7 -2 -11 3 M90 36 q7 -3 12 2 M90 36 q-3 -6 -9 -6 M90 36 q4 -6 10 -5" stroke="#5a6a3a" stroke-width="2" fill="none" stroke-linecap="round"/>',
+    '1-2': skyG('a2', '#8fc4dd', '#e6f2ea') + '<path d="M0 44 Q40 34 80 42 T120 38 V70 H0z" fill="#8fb070"/><path d="M48 70 L58 40 M72 70 L62 40" stroke="#3b3229" stroke-width="1.8"/><path d="M52 62h16M54 54h12M56 47h8" stroke="#6b5b4b" stroke-width="1.4"/><rect x="85" y="20" width="3" height="42" fill="#2d3236"/><rect x="79" y="9" width="15" height="30" rx="7" fill="#1d2226"/><circle cx="86.5" cy="16" r="3.4" fill="#5a2320"/><circle cx="86.5" cy="24" r="3.4" fill="#5c5220"/><circle cx="86.5" cy="32" r="7" fill="#5fd08a" opacity=".35"/><circle cx="86.5" cy="32" r="3.4" fill="#7af0a6"/><rect x="33" y="36" width="2" height="22" fill="#4a4a4a"/><circle cx="34" cy="33" r="7" fill="#fff" stroke="#d83a2e" stroke-width="2.2"/><text x="34" y="35.6" font-size="7" font-weight="800" text-anchor="middle" fill="#222" font-family="sans-serif">40</text>',
+    '1-3': skyG('a3', '#f6c98a', '#fdf0d4') + '<rect x="0" y="8" width="120" height="5" fill="#5a6a6e"/><rect x="10" y="13" width="2" height="12" fill="#5a6a6e"/><rect x="108" y="13" width="2" height="12" fill="#5a6a6e"/><rect x="0" y="22" width="120" height="30" rx="3" fill="#f3eee1"/><rect x="0" y="40" width="120" height="3" fill="#c8352b"/><rect x="6" y="27" width="16" height="9" rx="1.5" fill="#2b3a44"/><rect x="26" y="27" width="16" height="9" rx="1.5" fill="#2b3a44"/><rect x="80" y="27" width="16" height="9" rx="1.5" fill="#2b3a44"/><rect x="100" y="27" width="16" height="9" rx="1.5" fill="#2b3a44"/><rect x="51" y="25" width="18" height="27" fill="#ffd88a"/><rect x="0" y="52" width="120" height="18" fill="#b9a58a"/><rect x="0" y="52" width="120" height="2" fill="#f2c94c"/><g fill="#3a2e2a"><circle cx="40" cy="44" r="3"/><path d="M35.5 58 v-8 a4.5 4.5 0 0 1 9 0 v8z"/><circle cx="78" cy="45" r="2.6"/><path d="M74 58 v-7 a4 4 0 0 1 8 0 v7z"/><circle cx="59" cy="38" r="3"/><path d="M54.5 52 v-8 a4.5 4.5 0 0 1 9 0 v8z"/></g>',
+    '1-4': skyG('a4', '#e39a6a', '#f4e3cc') + '<circle cx="24" cy="26" r="9" fill="#ffe0a8"/><rect x="0" y="30" width="120" height="14" fill="#8a7a8a" opacity=".35"/><g><rect x="10" y="40" width="28" height="18" fill="#7a5a3e"/><path d="M8 40 L14 32 H34 L40 40z" fill="#d83a2e"/><path d="M14 32 L12 40 M20 32 V40 M27 32 V40 M33 32 L36 40" stroke="#fff" stroke-width="2.2"/><rect x="50" y="42" width="26" height="16" fill="#7a5a3e"/><path d="M48 42 L54 34 H72 L78 42z" fill="#2bb3a3"/><path d="M54 34 L52 42 M60 34 V42 M66 34 V42 M72 34 L75 42" stroke="#fff" stroke-width="2.2"/></g><g fill="#5a8a3a"><circle cx="18" cy="56" r="3"/><circle cx="24" cy="56" r="3"/><circle cx="30" cy="56" r="3" fill="#e8955a"/><circle cx="58" cy="56" r="3" fill="#e8c24a"/><circle cx="64" cy="56" r="3"/></g><path d="M86 58 V46 h30 v12" fill="#f3eee1" opacity=".75"/><rect x="0" y="58" width="120" height="12" fill="#9a8a72"/><rect x="0" y="46" width="120" height="8" fill="#fff" opacity=".35"/><rect x="0" y="54" width="120" height="5" fill="#fff" opacity=".25"/>',
+    '1-5': skyG('a5', '#3d4e59', '#8aa2ac') + '<path d="M20 16 a10 10 0 0 1 19 -4 a8 8 0 0 1 13 6 a6 6 0 0 1 -1 12 H22 a7 7 0 0 1 -2 -14z" fill="#5d707b"/><path d="M70 12 a9 9 0 0 1 17 -3 a7 7 0 0 1 12 5 a6 6 0 0 1 -1 11 H72 a6 6 0 0 1 -2 -13z" fill="#566a75"/><path d="M60 22 L54 34 H60 L55 44" stroke="#fff6c0" stroke-width="1.6" fill="none"/><path d="M0 56 Q60 40 120 50 V70 H0z" fill="#4f6b55"/><path d="M0 64 Q50 50 120 56" stroke="#2a2520" stroke-width="1.8" fill="none"/><path d="M0 68 Q50 54 120 60" stroke="#2a2520" stroke-width="1.8" fill="none"/><path d="M40 60 Q70 52 100 64" stroke="#2a2520" stroke-width="1.6" fill="none"/><ellipse cx="80" cy="66" rx="14" ry="2" fill="#a8c4cc" opacity=".6"/><g stroke="#cfe2ea" stroke-width="1" opacity=".7">' + Array.from({ length: 22 }, (_, i) => `<path d="M${(i * 17) % 124} ${(i * 23) % 50 + 6} l-3 7"/>`).join('') + '</g>',
+    '1-6': skyG('a6', '#120b2c', '#5a2f70') + '<path d="M96 10 a8 8 0 1 0 6 14 a7 7 0 1 1 -6 -14z" fill="#ffe2a6"/><g fill="#ffcf6b">' + Array.from({ length: 12 }, (_, i) => `<circle cx="${(i * 37) % 118 + 1}" cy="${(i * 13) % 24 + 3}" r=".8"/>`).join('') + '</g><g transform="translate(12 0)"><g fill="#1c1236"><path d="M12 44 V30 a12 12 0 0 1 24 0 V44z"/><rect x="8" y="40" width="32" height="8"/><rect x="42" y="16" width="4" height="32"/><path d="M41 17 L44 9 L47 17z"/></g><circle cx="24" cy="20" r="1.2" fill="#ffcf6b"/></g><rect x="0" y="48" width="120" height="22" fill="#241a3a"/><rect x="0" y="58" width="120" height="1.4" fill="#ffcf6b" opacity=".6"/><rect x="58" y="36" width="54" height="11" rx="2" fill="#e8955a"/><rect x="62" y="38" width="44" height="4" fill="#ffe7b8"/><circle cx="66" cy="48" r="2.4" fill="#111"/><circle cx="104" cy="48" r="2.4" fill="#111"/><rect x="0" y="59" width="70" height="9" rx="2" fill="#f3eee1"/><g fill="#ffd88a"><rect x="4" y="61" width="8" height="3"/><rect x="16" y="61" width="8" height="3"/><rect x="28" y="61" width="8" height="3"/><rect x="40" y="61" width="8" height="3"/></g><rect x="56" y="59" width="14" height="9" rx="2" fill="#c8352b"/><path d="M70 62 L120 58 V66z" fill="#fff6c4" opacity=".25"/>',
+    '1-7': skyG('a7', '#5e7380', '#b6c5c8') + '<path d="M0 42 Q30 34 60 40 T120 36 V70 H0z" fill="#6e8a64"/>' + rails(52) + '<path d="M20 60 Q40 60 50 66 H120 M20 60 H0" stroke="#3b3229" stroke-width="1.6" fill="none"/><path d="M20 63 Q40 63 50 69 H120 M20 63 H0" stroke="#3b3229" stroke-width="1.6" fill="none"/><rect x="66" y="38" width="52" height="13" rx="2" fill="#c7ccd0"/><rect x="66" y="44" width="52" height="2" fill="#1f3a6a"/><path d="M66 38 L58 46 V51 H66z" fill="#c7ccd0"/><rect x="70" y="40" width="7" height="3" fill="#2b3a44"/><rect x="81" y="40" width="7" height="3" fill="#2b3a44"/><rect x="92" y="40" width="7" height="3" fill="#2b3a44"/><rect x="4" y="47" width="34" height="13" rx="2" fill="#c8352b"/><path d="M38 47 L46 54 V60 H38z" fill="#c8352b"/><rect x="4" y="54" width="42" height="2" fill="#f2c94c"/><rect x="32" y="49" width="7" height="4" fill="#1e2a33"/><path d="M96 64 L112 56" stroke="#5a4030" stroke-width="3" stroke-linecap="round"/><circle cx="112" cy="55" r="6" fill="#4f7a3a"/><circle cx="107" cy="53" r="4" fill="#5a8a42"/>',
+    '2-1': skyG('b1', '#5f8f9a', '#d8dfc4') + '<path d="M0 40 Q20 24 42 34 Q62 20 84 32 Q102 22 120 30 V70 H0z" fill="#4f7a4a"/><path d="M0 48 Q40 40 120 46 V70 H0z" fill="#6e8a5a"/><g fill="#3d3a36"><rect x="62" y="12" width="3" height="40"/><rect x="88" y="12" width="3" height="40"/><path d="M58 12 H96 V24 L84 34 H72 L58 24z"/></g><path d="M74 34 h8 l-2 8 h-4z" fill="#2a2725"/><path d="M60 52 H96 L93 62 H63z" fill="#6a6f74"/><path d="M63 52 Q78 40 93 52z" fill="#141414"/><circle cx="68" cy="64" r="3" fill="#222"/><circle cx="88" cy="64" r="3" fill="#222"/><path d="M14 52 H46 L43 62 H17z" fill="#6a6f74"/><path d="M17 52 Q30 44 43 52z" fill="#141414"/><circle cx="22" cy="64" r="3" fill="#222"/><circle cx="38" cy="64" r="3" fill="#222"/>' + rails(66),
+    '2-2': skyG('b2', '#0d1634', '#3f4d7a') + '<g fill="#e8ecff">' + Array.from({ length: 14 }, (_, i) => `<circle cx="${(i * 29) % 118 + 1}" cy="${(i * 11) % 26 + 3}" r=".7"/>`).join('') + '</g><path d="M0 40 Q30 28 60 36 T120 30 V70 H0z" fill="#1a2440"/><path d="M0 50 H120" stroke="#5a4636" stroke-width="3"/><g stroke="#5a4636" stroke-width="1.6"><path d="M10 52 L20 70 M30 52 L20 70 M30 52 L40 70 M50 52 L40 70 M50 52 L60 70 M70 52 L60 70 M70 52 L80 70 M90 52 L80 70"/></g><path d="M0 44 L60 38 L60 54 L0 52z" fill="#fff6c4" opacity=".18"/><rect x="94" y="16" width="2.6" height="34" fill="#2a2a2a"/><path d="M96 19 L112 17 L112 21 L96 23z" fill="#d83a2e"/><rect x="102" y="18" width="3" height="4" fill="#fff"/><circle cx="93" cy="26" r="2.4" fill="#ff5a4a"/><circle cx="93" cy="26" r="6" fill="#ff5a4a" opacity=".25"/><rect x="0" y="58" width="120" height="12" fill="#9aa8d8" opacity=".15"/>',
+    '2-3': skyG('b3', '#d9b48a', '#f2ead2') + '<path d="M0 36 L24 18 L44 32 L66 14 L92 30 L120 20 V70 H0z" fill="#7a8a6a"/><path d="M0 46 Q40 38 120 44 V70 H0z" fill="#5a7a42"/><g>' + [10, 28, 46, 98, 114].map((x) => `<circle cx="${x}" cy="54" r="7" fill="#3d6a32"/><circle cx="${x - 3}" cy="52" r="1.3" fill="#d83a2e"/><circle cx="${x + 2}" cy="56" r="1.3" fill="#d83a2e"/><circle cx="${x + 3}" cy="51" r="1.3" fill="#b02a22"/>`).join('') + '</g><rect x="56" y="44" width="34" height="14" rx="1.5" fill="#8a5a3a"/><g fill="#d9c09a"><rect x="59" y="38" width="9" height="7" rx="2"/><rect x="69" y="37" width="9" height="8" rx="2"/><rect x="79" y="38" width="9" height="7" rx="2"/></g><circle cx="62" cy="60" r="2.8" fill="#222"/><circle cx="84" cy="60" r="2.8" fill="#222"/>' + rails(62),
+  };
+  const misArt = (id) => MIS_ART[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid slice">${MIS_ART[id]}</svg></span>` : '';
+  // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
+  function dailyArt(base) {
+    const night = base === '1-6' || base === '2-2', storm = base === '1-5' || base === '1-7', sum = base[0] === '2';
+    const sky = night ? ['#0d1634', '#3f4d7a'] : storm ? ['#4f6673', '#a7b8bd'] : sum ? ['#6a9aa6', '#e6dcc0'] : ['#f2a65c', '#fde3b0'];
+    const hill = sum ? '#4f7a4a' : '#7d9a6a', field = night ? '#1f2c3a' : storm ? '#5e7a5a' : '#8fb070';
+    const coach = (x) => `<rect x="${x}" y="40" width="34" height="11" rx="2" fill="#f3eee1"/><rect x="${x}" y="46" width="34" height="1.6" fill="#c8352b"/>${[3, 12, 21].map((d) => `<rect x="${x + d}" y="42" width="7" height="3" rx=".6" fill="${night ? '#ffd88a' : '#2b3a44'}"/>`).join('')}<circle cx="${x + 6}" cy="52" r="1.8" fill="#222"/><circle cx="${x + 28}" cy="52" r="1.8" fill="#222"/>`;
+    return `<span class="tart" aria-hidden="true"><svg viewBox="0 0 200 60" preserveAspectRatio="xMidYMax slice"><defs><linearGradient id="skd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs><rect width="200" height="60" fill="url(#skd)"/>`
+      + (night ? `<path d="M168 8 a7 7 0 1 0 5 12 a6 6 0 1 1 -5 -12z" fill="#ffe2a6"/>${Array.from({ length: 16 }, (_, i) => `<circle cx="${(i * 41) % 198 + 1}" cy="${(i * 13) % 22 + 3}" r=".7" fill="#e8ecff"/>`).join('')}` : storm ? `<g stroke="#dfeaf0" stroke-width=".9" opacity=".6">${Array.from({ length: 26 }, (_, i) => `<path d="M${(i * 23) % 204} ${(i * 17) % 34} l-3 7"/>`).join('')}</g>` : `<circle cx="164" cy="18" r="9" fill="#fff3d1" opacity=".9"/>`)
+      + `<path d="M0 34 L26 20 L48 30 L78 14 L106 28 L134 18 L160 30 L200 22 V60 H0z" fill="${hill}" opacity=".85"/><rect x="0" y="50" width="200" height="10" fill="${field}"/><path d="M0 55 H200 M0 58 H200" stroke="${night ? '#33445a' : '#7aa060'}" stroke-width=".8"/>`
+      + `<rect x="0" y="51" width="200" height="1.4" fill="#3b3229"/>` + coach(30) + coach(66)
+      + `<rect x="102" y="38" width="38" height="13" rx="2" fill="#c8352b"/><path d="M140 38 L150 45 V51 H140z" fill="#c8352b"/><rect x="102" y="46" width="48" height="2" fill="#f2c94c"/><rect x="134" y="40" width="9" height="4" fill="#1e2a33"/><circle cx="108" cy="52" r="2" fill="#222"/><circle cx="116" cy="52" r="2" fill="#222"/><circle cx="136" cy="52" r="2" fill="#222"/><circle cx="144" cy="52" r="2" fill="#222"/>`
+      + (night || storm ? `<path d="M150 44 L200 38 V54z" fill="#fff6c4" opacity=".28"/>` : '') + `</svg></span>`;
+  }
   const titleMap = { tab: 'missions', focus: null, t: 0 };
   function islandPath(c, pts) {
     const n = pts.length, mid = (i) => [(pts[i][0] + pts[(i + 1) % n][0]) / 2, (pts[i][1] + pts[(i + 1) % n][1]) / 2];
@@ -2730,21 +2794,25 @@
     c.setTransform(k, 0, 0, k, ox, oy);
     c.strokeStyle = 'rgba(200,235,240,0.12)'; c.lineWidth = 1;
     for (let i = 0; i < 40; i++) { const x = (hash(i) * 560 + t * 4) % 560 - 10, y = hash(i + 7) * 390; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 5, y - 3, x + 10, y); c.stroke(); }
-    [[ISL_SUM, 'SUMATRA', 66, 50], [ISL_JAW, 'JAWA', 352, 334]].forEach(([pts, name, lx, ly]) => {
-      c.save(); islandPath(c, pts); c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = 14; c.fillStyle = '#e9dcb8'; c.fill(); c.restore();
+    const land = (pts, i) => {
+      c.save(); islandPath(c, pts); c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = 10; c.fillStyle = '#e9dcb8'; c.fill(); c.restore();
       c.save(); islandPath(c, pts); c.clip();
       const g = c.createLinearGradient(0, 0, 0, 390); g.addColorStop(0, '#b9cf8a'); g.addColorStop(1, '#8fb070'); c.fillStyle = g; c.fillRect(0, 0, 540, 390);
       c.fillStyle = 'rgba(70,110,60,0.25)';
-      for (let i = 0; i < 120; i++) { c.beginPath(); c.arc(hash(i * 3.1 + lx) * 540, hash(i * 1.7 + ly) * 390, 1.6, 0, 7); c.fill(); }
+      for (let q = 0; q < 160; q++) { c.beginPath(); c.arc(hash(q * 3.1 + i) * 540, hash(q * 1.7 + i * 5) * 390, 1.4, 0, 7); c.fill(); }
       c.restore();
-      islandPath(c, pts); c.strokeStyle = '#f3ead0'; c.lineWidth = 3; c.stroke();
-      c.fillStyle = 'rgba(40,60,40,0.55)'; c.font = '800 15px "Big Shoulders Display", sans-serif'; c.textAlign = 'center'; c.fillText(name, lx, ly); c.textAlign = 'start';
+      islandPath(c, pts); c.strokeStyle = '#f3ead0'; c.lineWidth = 2; c.stroke();
+    };
+    ISL_SMALL.forEach((p, i) => land(p, 10 + i)); land(ISL_SUM, 1); land(ISL_JAW, 2);
+    c.fillStyle = 'rgba(40,60,40,0.55)'; c.font = '800 15px "Big Shoulders Display", sans-serif'; c.textAlign = 'center';
+    c.save(); c.translate(...GEO(100.9, 0.2)); c.rotate(-0.72); c.fillText('SUMATRA', 0, 0); c.restore();
+    c.fillStyle = 'rgba(200,235,240,0.5)'; c.fillText('JAWA', ...GEO(110.6, -9.0)); c.textAlign = 'start';
+    MAP_VOLC.forEach(([x, y], i) => {
+      c.fillStyle = '#7c6a5a'; c.beginPath(); c.moveTo(x - 7, y + 4); c.lineTo(x - 1, y - 6); c.lineTo(x + 1, y - 6); c.lineTo(x + 7, y + 4); c.closePath(); c.fill();
+      c.fillStyle = '#efe6d2'; c.beginPath(); c.moveTo(x - 2.4, y - 3); c.lineTo(x - 1, y - 6); c.lineTo(x + 1, y - 6); c.lineTo(x + 2.4, y - 3); c.closePath(); c.fill();
+      for (let q = 0; q < 3; q++) { const u = (t * 0.08 + q / 3 + i * 0.2) % 1; c.fillStyle = `rgba(240,236,228,${0.3 * (1 - u)})`; c.beginPath(); c.arc(x + u * 6, y - 8 - u * 8, 1.4 + u * 2.6, 0, 7); c.fill(); }
     });
-    [[96, 70], [150, 118], [352, 274], [478, 296]].forEach(([x, y], i) => {
-      c.fillStyle = '#7c6a5a'; c.beginPath(); c.moveTo(x - 12, y + 6); c.lineTo(x - 2, y - 10); c.lineTo(x + 2, y - 10); c.lineTo(x + 12, y + 6); c.closePath(); c.fill();
-      for (let q = 0; q < 4; q++) { const u = (t * 0.08 + q / 4 + i * 0.2) % 1; c.fillStyle = `rgba(240,236,228,${0.35 * (1 - u)})`; c.beginPath(); c.arc(x + u * 10, y - 12 - u * 12, 2 + u * 4, 0, 7); c.fill(); }
-    });
-    c.fillStyle = 'rgba(200,235,240,0.55)'; c.font = 'italic 600 10px "Plus Jakarta Sans", sans-serif'; c.fillText('Selat Sunda', 186, 300);
+    c.fillStyle = 'rgba(200,235,240,0.55)'; c.font = 'italic 600 10px "Plus Jakarta Sans", sans-serif'; c.textAlign = 'center'; c.fillText('Selat Sunda', ...GEO(103.6, -6.6)); c.fillText('Laut Jawa', ...GEO(110.2, -4.6)); c.fillText('Samudra Hindia', ...GEO(100.5, -6.2)); c.fillText('Selat Malaka', ...GEO(99.4, 4.6)); c.textAlign = 'start';
     c.save(); c.translate(500, 40); c.strokeStyle = 'rgba(243,234,208,0.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(0, 0, 14, 0, 7); c.stroke();
     c.fillStyle = '#f2a516'; c.beginPath(); c.moveTo(0, -18); c.lineTo(4, 0); c.lineTo(-4, 0); c.closePath(); c.fill();
     c.fillStyle = '#f3ead0'; c.font = '800 10px "Big Shoulders Display", sans-serif'; c.textAlign = 'center'; c.fillText('U', 0, -22); c.textAlign = 'start'; c.restore();
@@ -2757,9 +2825,15 @@
       c.strokeStyle = m.col; c.lineWidth = on ? 3.5 : 2; c.setLineDash(on ? [] : [4, 3]);
       c.beginPath(); m.pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke(); c.setLineDash([]);
     });
-    MAP_ST.forEach(([x, y, n]) => {
-      c.fillStyle = '#fff'; c.beginPath(); c.arc(x, y, 4, 0, 7); c.fill(); c.strokeStyle = '#2a2a2a'; c.lineWidth = 1.5; c.stroke();
-      c.fillStyle = '#1f2a22'; c.font = '700 9px "Plus Jakarta Sans", sans-serif'; c.textAlign = 'center'; c.fillText(n, x, y + (y > 300 ? 16 : -9)); c.textAlign = 'start';
+    const onSel = new Set(MAP_ROUTES[sel].pts.map(([x, y]) => Math.round(x) + ',' + Math.round(y)));
+    MAP_ST.forEach(([x, y, n, dir]) => {
+      const hot = onSel.has(Math.round(x) + ',' + Math.round(y)) || onSel.has(Math.round(x) + ',' + Math.round(y + 3));
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(x, y, hot ? 3.6 : 2.6, 0, 7); c.fill(); c.strokeStyle = '#2a2a2a'; c.lineWidth = 1.2; c.stroke();
+      if (!n || !hot) return;
+      c.font = '700 9px "Plus Jakarta Sans", sans-serif'; c.textAlign = 'center';
+      const ly = y + (dir > 0 ? 15 : -9), tw = c.measureText(n).width + 8;
+      c.fillStyle = 'rgba(20,30,26,0.78)'; roundRect(c, x - tw / 2, ly - 9, tw, 12, 3); c.fill();
+      c.fillStyle = '#f7f1e2'; c.fillText(n, x, ly); c.textAlign = 'start';
     });
     const u = REDUCE_MOTION ? 0.5 : Math.sin(t * 0.6) * 0.5 + 0.5, [px, py, a] = routeAt(MAP_ROUTES[sel].pts, u);
     c.save(); c.translate(px, py); c.rotate(a);
@@ -2785,11 +2859,11 @@
     c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(Math.min(h * 0.09, w * 0.055))}px "Big Shoulders Display", sans-serif`; c.fillText('CAKRA · RN 2001', w * 0.04, h * 0.14, w * 0.92);
     const done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
     c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(Math.min(h * 0.045, w * 0.026))}px "Plus Jakarta Sans", sans-serif`;
-    c.fillText(`Depo Sukamaju · ${done} dari ${MISSION_ORDER.length} misi selesai · diesel-elektrik CC, livery Dayak`, w * 0.04, h * 0.22, w * 0.92);
+    c.fillText(`${done}/${MISSION_ORDER.length} misi selesai · Diesel CC · Livery Dayak`, w * 0.04, h * 0.22, w * 0.92);
     // album kartu pos landmark
     const got = cardsGot(), n = LM_IDS.length, gap = w * 0.008, cw = (w * 0.92 - gap * (n - 1)) / n, ch = cw * 1.08, ay = h * 0.275;
     c.fillStyle = '#c9b48a'; c.font = `800 ${Math.round(h * 0.032)}px "Plus Jakarta Sans", sans-serif`;
-    c.fillText(`ALBUM KARTU POS · ${got.length} DARI ${n}`, w * 0.04, ay - h * 0.012);
+    c.fillText(`KARTU POS ${got.length}/${n}`, w * 0.04, ay - h * 0.012);
     if (!albumCv) { albumCv = document.createElement('canvas'); albumCv.width = 80; albumCv.height = 100; }
     const ac2 = albumCv.getContext('2d');
     LM_IDS.forEach((id, i) => {
@@ -2848,20 +2922,20 @@
     const D = MISSIONS.daily, best = dailyScores()[D.daily.key], streak = dailyStreak(), bm = MISSIONS[D.base];
     const dailyLi = `<li class="daily"><button class="ticket t-daily" data-id="daily">
         <span class="stub"><small>HARIAN</small><b>${D.daily.label}</b><small>${D.daily.hari}</small></span>
-        <span class="tbody"><b>Rute Harian · ${bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik hari ini <strong>${best}</strong>` : 'Belum dimainkan hari ini'}${streak ? ` · 🔥 ${streak} hari beruntun` : ''}</span></span>
+        <span class="tbody"><b>Harian · ${bm.nick || bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik <strong>${best}</strong>` : 'Rute baru tiap hari'}${streak ? ` · 🔥 ${streak} hari` : ''}</span></span>${dailyArt(D.base)}
       </button></li>`;
     const ahli = ahliSet();
     $('missionList').innerHTML = dailyLi + MISSION_ORDER.map((id) => {
       const m = MISSIONS[id], b = bestOf(id), st = m.route.stations;
       const route = `${titleCase(st[0].name)} → ${titleCase(st[st.length - 1].name)} · ${clockOf(m.startClock)} · ${m.weather}`;
-      const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BELUM DIMAINKAN</span>';
+      const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BARU</span>';
       return `<li${m.tutorial ? ' class="tut"' : ''}><button class="ticket t-${m.ticket || m.sky}${m.tutorial ? ' t-tut' : ''}${id === nextId ? ' next' : ''}" data-id="${id}">
         <span class="stub"><small>MISI</small><b>${id}</b></span>
-        <span class="tbody"><b title="${m.title}">${m.nick || m.title}</b><small>${m.title} · ${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
+        ${misArt(id)}<span class="tbody"><b title="${m.title}">${m.nick || m.title}</b><small>${m.title} · ${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
       </button></li>`;
     }).join('');
     const anyPlayed = MISSION_ORDER.some((id) => bestOf(id) > 0);
-    $('continueLbl').textContent = `${anyPlayed ? 'Lanjutkan' : 'Mulai'} · Misi ${nextId}`;
+    $('continueLbl').textContent = `${anyPlayed ? 'Lanjut' : 'Mulai'} ${nextId}`;
   }
   function selectMission(id) {
     MIS = MISSIONS[id]; ROUTE = MIS.route;
@@ -3036,7 +3110,7 @@
     document.querySelectorAll('[data-maptab]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     // tab Misi: daftar karcis; tab Peta/Garasi: kanvas mengisi ruang yang sama (layar judul muat satu halaman)
     $('mapBox').hidden = titleMap.tab === 'missions'; $('missionList').hidden = titleMap.tab !== 'missions';
-    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? 'Pilih misi' : titleMap.tab === 'map' ? 'Peta perjalanan' : 'Garasi depo';
+    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? '10 misi · 2 pulau' : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
   }));
   $('mapCv').addEventListener('click', (e) => {
     if (titleMap.tab !== 'map') return;
@@ -3071,8 +3145,8 @@
     $('btnMute').setAttribute('aria-label', m ? 'Nyalakan suara' : 'Matikan semua suara');
     $('btnMusic').classList.toggle('off', !mu);
     $('btnMusic').setAttribute('aria-label', mu ? 'Matikan musik' : 'Nyalakan musik');
-    $('btnMusicTitle').textContent = `Musik: ${mu ? 'nyala' : 'mati'}`;
-    $('btnSoundTitle').textContent = `Suara: ${m ? 'mati' : 'nyala'}`;
+    $('btnMusicTitle').textContent = `Musik ${mu ? '✓' : '✕'}`;
+    $('btnSoundTitle').textContent = `Suara ${m ? '✕' : '✓'}`;
   }
   $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
   $('btnSoundTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
