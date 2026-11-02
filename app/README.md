@@ -59,11 +59,13 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
 - Masinis Ahli: tombol di layar briefing untuk misi yang sudah pernah selesai. Peta jalur, panduan
   titik henti, petunjuk batas, dan petunjuk pertama kali disembunyikan; koin ×1,5; tiga bintang
   memberi lencana emas AHLI di karcis (`rn.ahli`)
-- Cakra: lokomotif diesel modern berbadan lebar (full-width carbody) dengan moncong aerodinamis,
-  kaca depan lebar bertopeng hitam, kisi radiator, panel isap udara, kipas & cerobong knalpot di atap,
-  lampu LED. Livery merah dengan pita ukiran Dayak (sulur spiral berkait emas, mata merah, pinggiran
-  gigi putih di dasar hitam) dan panel ukiran besar di sisi ruang mesin; `drawOrnament` juga punya
-  kawung, parang, dan mega mendung (`LOCO_ORN`)
+- Cakra: lokomotif diesel modern berbentuk kotak dengan kabin bermuka miring di belakang moncong pendek
+  bertingkat (`LOCO_SHAPE = 'boxC'`): kaca depan dua panel, visor dengan lampu sorot LED ganda, papan
+  nomor menyala, kisi moncong, pegangan tangan kuning, lampu kabut, chevron keselamatan, atap dua warna.
+  Bentuk lain tetap tersedia di kode: `'box'` (kotak ramping), `'boxB'` (kabin tinggi), `'aero'`
+  (moncong aerodinamis). Livery merah dengan pita ukiran Dayak (sulur spiral berkait emas, mata merah,
+  pinggiran gigi putih di dasar hitam) dan panel ukiran besar di sisi ruang mesin; `drawOrnament` juga
+  punya kawung, parang, dan mega mendung (`LOCO_ORN`)
 - Bogie CC: rangka samping berperut ikan, pegas primer gulung, pegas sekunder, peredam, blok & silinder
   rem, motor traksi, pipa pasir; roda monoblok (`locoWheel`) dengan flens, ban baja, dan tanda cat berputar
 - Masjid: kubah bawang di atas tabuh berjendela dengan mustaka bulan sabit (`onionDome`), dua kubah
