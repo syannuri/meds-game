@@ -2123,7 +2123,15 @@
         S.moment = { kind: rating.c, label: rating.r, t: 0, x: ROUTE.loading.silo, coins: rating.coins, sub: `gerbong ${i + 1} · ${fmtM(Math.abs(d))} m dari corong${rating.coins ? ` · +${rating.coins} koin` : ''}` };
         if (rating.c === 'miss') { S.comfort -= 8; toast(`Gerbong ${i + 1} lewat ${fmtM(d)} m. Batu bara tumpah ke rel!`, 'bad', 3, null, 3); }
         else toast(`${rating.r.toUpperCase()}! Gerbong ${i + 1} ${fmtM(Math.abs(d))} m dari corong. Memuat...`, rating.c === 'ok' ? 'info' : 'good', 2.6, null, 3);
-        S.loadT = 2.3; Sound.coal(2.3);
+        S.loadT = 2.3; Sound.coal(2.3); S.rev = false;
+      } else if (S.v === 0 && prevV === 0 && d >= 9 && !S.rev) {
+        // kebablasan melewati corong: aktifkan mundur supaya gerbong bisa kembali ke bawah corong
+        S.rev = true;
+        toast(`Gerbong ${i + 1} lewat ${fmtM(d)} m dari corong. Mode MUNDUR: dorong tuas ke P untuk mundur pelan.`, 'warn', 4, null, 3);
+        radio(`Kebablasan, Raka. Mundur pelan sampai gerbong ${i + 1} tepat di bawah corong, lalu berhenti.`, 5.5, 'Sari', 'SR');
+      } else if (S.v === 0 && prevV === 0 && d <= -6 && d > -60 && S.rev) {
+        S.rev = false;
+        toast(`Terlalu jauh mundur. Mode MAJU lagi: maju pelan ${fmtM(-d)} m ke corong.`, 'warn', 3.2, null, 3);
       } else if (S.v === 0 && prevV === 0 && d <= -6 && d > -60 && !S.stoppedShortShown) {
         S.stoppedShortShown = true;
         toast(`Belum di bawah corong. Maju ${fmtM(-d)} m lagi.`, 'warn', 2.4, null, 2);
@@ -3087,7 +3095,7 @@
     // pemandu titik henti: muncul saat moncong mendekati marka atau corong
     const cplG = S.phase === 'dwell' && S.dwell.step === 'couple' && S.cw && S.cw.slide >= 1 ? Math.max(0, coupleGap()) : null;
     const pd = cplG !== null ? cplG : tg && !(S.loadT > 0) ? tg.x - S.x : null;
-    const showP = pd !== null && (cplG !== null ? pd < 14 : pd < (tg.load ? 14 : 32) && pd > -12);
+    const showP = pd !== null && (cplG !== null ? pd < 14 : pd < (tg.load ? 14 : 32) && pd > (tg.load ? -20 : -12));
     ui.precise.hidden = !showP;
     // HUD ringkas: strip rute & titik henti hanya muncul saat ada yang perlu diperhatikan di depan
     {
@@ -3104,7 +3112,7 @@
     if (showP) {
       setText(ui.precTxt, pd >= 0 ? `${fmtM(pd)} m` : `+${fmtM(-pd)} m`);
       if (cplG !== null) setText(ui.precSub, `ke gerbong kopi · ${fmtM(S.v * 3.6)} km/h`);
-      else setText(ui.precSub, tg.load ? (pd >= 0 ? `gerbong ${S.loadIdx + 1} ke corong` : 'melewati corong') : pd >= 0 ? (MIS.freight ? 'lagi ke marka bongkar' : `lagi ke marka "${markNum()}"`) : 'melewati marka');
+      else setText(ui.precSub, tg.load ? (S.rev ? `mundur · gerbong ${S.loadIdx + 1} ke corong` : pd >= 0 ? `gerbong ${S.loadIdx + 1} ke corong` : 'melewati corong') : pd >= 0 ? (MIS.freight ? 'lagi ke marka bongkar' : `lagi ke marka "${markNum()}"`) : 'melewati marka');
       const scale = tg && tg.load ? 28 : 14;
       const px = 150 + clamp(-pd * scale, -140, 140);
       ui.precPtr.setAttribute('transform', `translate(${px.toFixed(1)},0)`);
@@ -3934,7 +3942,7 @@
       c.translate(W / 2 + sway, H / 2); c.rotate(-r); c.scale(k, k); c.translate(-W / 2, -H / 2);
     }
 
-    if (viewMode === 'cab' && S && st === S && !(S.phase === 'dwell' && S.dwell.step === 'couple')) { drawCab(c, st, dtReal, lat); return; }
+    if (viewMode === 'cab' && S && st === S && !S.rev && !(S.phase === 'dwell' && S.dwell.step === 'couple')) { drawCab(c, st, dtReal, lat); return; }
     // momen Perfect: kamera mendekat sebentar ke marka henti
     const mo = st.moment;
     if (mo && st === S) {
