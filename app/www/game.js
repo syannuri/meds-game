@@ -1596,6 +1596,7 @@
   function resize() {
     DPR = Math.min(2, window.devicePixelRatio || 1);
     W = cv.clientWidth; H = cv.clientHeight;
+    if (!W || !H) return;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     checkOrientation();
   }
@@ -3006,6 +3007,12 @@
   $('btnRotateSkip').addEventListener('click', () => { rotateSkipped = true; checkOrientation(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
   window.addEventListener('resize', resize);
+  // iOS Safari: saat HP diputar (terutama dari layar utama/layar penuh), event resize sering datang
+  // sebelum ukuran baru diterapkan. Ukur ulang beberapa kali setelah rotasi, dan dari visualViewport.
+  const resizeSoon = () => { resize(); [120, 350, 800].forEach((ms) => setTimeout(resize, ms)); };
+  window.addEventListener('orientationchange', resizeSoon);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeSoon);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) resizeSoon(); });
 
   // ---------- HUD ----------
   function syncExpert() {
@@ -7154,6 +7161,8 @@
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) ui.toast.className = ''; }
     if (radioTimer > 0 && mode === 'play') { radioTimer -= dt; if (radioTimer <= 0) $('radio').hidden = true; }
     if (mode !== 'pause') updateWeather(dt, (S || idleState).v);
+    // jaga agar ukuran gambar canvas selalu sama dengan ukuran tampilnya (mencegah kereta tampak gepeng)
+    if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(2, window.devicePixelRatio || 1) !== DPR) resize();
     if (W && H) render(dt);
     if (mode === 'title') drawTitleMap(dt);
     Sound.update(audioInfo());
