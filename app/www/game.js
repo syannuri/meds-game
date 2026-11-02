@@ -6329,34 +6329,34 @@
       for (let k = 0; k < 3; k++) line([[-0.86, 4.3 - k * 0.12], [-1.11, 4.24 - k * 0.12]], 'rgba(30,10,10,0.55)', lw(0.04));
     } else if (SH === 'boxC') {
       // ---- kotak C: kabin bermuka miring di belakang moncong pendek bertingkat (gaya lokomotif barang modern) ----
-      poly([[15.6, 6.0], [2.0, 6.0], [2.25, 6.4], [15.35, 6.4]], roofG);
+      poly([[15.6, 6.0], [1.25, 6.0], [1.5, 6.4], [15.35, 6.4]], roofG);
       // badan + kabin + moncong
-      poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [2.0, 6.0], [1.68, 6.12], [1.22, 4.32], [1.1, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]], red);
+      poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [1.25, 6.0], [0.93, 6.12], [0.47, 4.32], [0.35, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]], red);
       // visor atap kabin (menjorok ke depan) dengan lampu sorot LED ganda
-      poly([[4.2, 6.12], [1.68, 6.12], [1.45, 6.22], [1.52, 6.34], [4.2, 6.34]], '#2a1a1b');
+      poly([[4.2, 6.12], [0.93, 6.12], [0.7, 6.22], [0.77, 6.34], [4.2, 6.34]], '#2a1a1b');
       poly([[15.62, 6.0], [4.2, 6.0], [4.2, 5.78], [15.85, 5.78]], '#2a1a1b');
-      line([[15.6, 5.98], [2.0, 5.98]], 'rgba(255,255,255,0.3)', 1);
+      line([[15.6, 5.98], [1.25, 5.98]], 'rgba(255,255,255,0.3)', 1);
       // muka kabin miring: topeng hitam, kaca depan dua panel, papan nomor menyala
-      poly([[1.68, 6.12], [1.22, 4.32], [0.93, 4.3], [1.38, 6.06]], mask);
-      poly([[1.6, 5.86], [1.3, 4.66], [1.13, 4.64], [1.42, 5.82]], glass2);
-      poly([[1.32, 4.62], [1.24, 4.4], [1.0, 4.38], [1.08, 4.6]], glass2);
-      c.save(); c.globalAlpha = 0.35; poly([[1.55, 5.8], [1.47, 5.5], [1.35, 5.48], [1.42, 5.78]], '#ffffff'); c.restore();
-      poly([[1.66, 6.06], [1.62, 5.92], [1.4, 5.88], [1.43, 6.02]], '#120c0e');
-      c.fillStyle = '#ffe9a6'; c.font = `900 ${Math.max(5, Math.round(0.13 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('2001', L(1.53), Y(5.97)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      poly([[0.93, 6.12], [0.47, 4.32], [0.18, 4.3], [0.63, 6.06]], mask);
+      poly([[0.85, 5.86], [0.55, 4.66], [0.38, 4.64], [0.67, 5.82]], glass2);
+      poly([[0.57, 4.62], [0.49, 4.4], [0.25, 4.38], [0.33, 4.6]], glass2);
+      c.save(); c.globalAlpha = 0.35; poly([[0.8, 5.8], [0.72, 5.5], [0.6, 5.48], [0.67, 5.78]], '#ffffff'); c.restore();
+      poly([[0.91, 6.06], [0.87, 5.92], [0.65, 5.88], [0.68, 6.02]], '#120c0e');
+      c.fillStyle = '#ffe9a6'; c.font = `900 ${Math.max(5, Math.round(0.13 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('2001', L(0.78), Y(5.97)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
       // jendela samping kabin besar + jendela pintu
-      poly([[4.15, 5.78], [1.62, 5.78], [1.28, 4.48], [4.15, 4.48]], mask);
-      c.fillStyle = glass2; c.beginPath(); c.moveTo(L(3.95), Y(5.66)); c.lineTo(L(1.7), Y(5.66)); c.lineTo(L(1.42), Y(4.6)); c.lineTo(L(3.95), Y(4.6)); c.closePath(); c.fill();
-      if (V.cabA > 0.02) { c.fillStyle = `rgba(255,215,143,${V.cabA})`; c.beginPath(); c.moveTo(L(3.95), Y(5.66)); c.lineTo(L(1.7), Y(5.66)); c.lineTo(L(1.42), Y(4.6)); c.lineTo(L(3.95), Y(4.6)); c.closePath(); c.fill(); }
-      if (V.refl > 0.01) poly([[3.4, 5.66], [3.0, 5.66], [3.25, 4.6], [3.65, 4.6]], `rgba(255,255,255,${V.refl})`);
-      line([[2.75, 5.7], [2.75, 4.54]], mask, lw(0.09));
-      line([[4.1, 5.86], [1.72, 5.86]], '#fff2c4', lw(0.05));
+      poly([[4.15, 5.78], [0.87, 5.78], [0.53, 4.48], [4.15, 4.48]], mask);
+      c.fillStyle = glass2; c.beginPath(); c.moveTo(L(3.95), Y(5.66)); c.lineTo(L(0.95), Y(5.66)); c.lineTo(L(0.67), Y(4.6)); c.lineTo(L(3.95), Y(4.6)); c.closePath(); c.fill();
+      if (V.cabA > 0.02) { c.fillStyle = `rgba(255,215,143,${V.cabA})`; c.beginPath(); c.moveTo(L(3.95), Y(5.66)); c.lineTo(L(0.95), Y(5.66)); c.lineTo(L(0.67), Y(4.6)); c.lineTo(L(3.95), Y(4.6)); c.closePath(); c.fill(); }
+      if (V.refl > 0.01) poly([[2.65, 5.66], [2.25, 5.66], [2.5, 4.6], [2.9, 4.6]], `rgba(255,255,255,${V.refl})`);
+      line([[2.0, 5.7], [2.0, 4.54]], mask, lw(0.09));
+      line([[4.1, 5.86], [0.97, 5.86]], '#fff2c4', lw(0.05));
       // moncong bertingkat: atap moncong, bevel depan, muka moncong 3/4
-      poly([[1.1, 4.26], [-0.25, 4.26], [-0.1, 4.46], [1.0, 4.48]], '#b7362c');
+      poly([[0.35, 4.26], [-0.25, 4.26], [-0.1, 4.46], [0.25, 4.48]], '#b7362c');
       poly([[-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-1.12, 3.47], [-0.9, 3.9], [-0.53, 4.18]], '#4a2a2a');
       poly([[-0.85, 3.55], [-0.85, 2.08], [-1.12, 1.98], [-1.12, 3.47]], vgrad(3.55, 2.0, [[0, '#d24237'], [1, '#7e1813']]));
       // kisi isap udara di atas moncong
-      for (let k = 0; k < 6; k++) line([[0.95 - k * 0.2, 4.22], [0.95 - k * 0.2, 3.92]], 'rgba(25,8,8,0.6)', lw(0.045));
-      c.strokeStyle = 'rgba(233,185,73,0.6)'; c.lineWidth = 1; c.strokeRect(L(1.02), Y(4.24), 1.1 * ppm, 0.34 * ppm);
+      for (let k = 0; k < 3; k++) line([[0.22 - k * 0.17, 4.22], [0.22 - k * 0.17, 3.92]], 'rgba(25,8,8,0.6)', lw(0.045));
+      c.strokeStyle = 'rgba(233,185,73,0.6)'; c.lineWidth = 1; c.strokeRect(L(0.3), Y(4.24), 0.55 * ppm, 0.34 * ppm);
       // pegangan tangan kuning di sudut moncong
       line([[-0.7, 3.9], [-0.7, 2.9]], '#f2c230', lw(0.05)); line([[-0.42, 4.15], [-0.42, 3.2]], '#f2c230', lw(0.05));
         } else if (BOXY) {
@@ -6468,7 +6468,7 @@
       box(-0.8, 1.3, 5.86, 5.92, '#fff2c4');
     } else if (SH === 'boxC') {
       // lampu sorot LED ganda di visor, lampu kabut terang di sudut moncong, penanda merah, chevron keselamatan
-      box(1.5, 1.85, 6.2, 6.3, '#fff5d0'); box(1.9, 2.25, 6.2, 6.3, '#fff5d0');
+      box(0.75, 1.1, 6.2, 6.3, '#fff5d0'); box(1.15, 1.5, 6.2, 6.3, '#fff5d0');
       poly([[-0.86, 3.38], [-0.86, 3.2], [-1.1, 3.13], [-1.1, 3.3]], '#fff5d0');
       poly([[-0.86, 2.34], [-0.86, 2.18], [-1.1, 2.11], [-1.1, 2.27]], '#fff5d0');
       poly([[-0.86, 2.08], [-0.86, 1.94], [-1.1, 1.88], [-1.1, 2.02]], '#ff7a5c');
@@ -6513,7 +6513,7 @@
       c.save(); c.globalAlpha = V.rimA;
       line([[15.3, 6.38], [1.5, 6.38]], V.rim, lw(0.09));
       if (SH === 'boxB') line([[4.15, 6.4], [-0.6, 6.4], [-0.87, 6.3], [-1.12, 6.08], [-1.12, 1.98]], V.rim, lw(0.09));
-      else if (SH === 'boxC') { line([[2.0, 6.0], [1.68, 6.12], [1.38, 6.06]], V.rim, lw(0.09)); line([[-0.1, 4.46], [-0.53, 4.18], [-0.9, 3.9], [-1.12, 3.47], [-1.12, 1.98]], V.rim, lw(0.09)); }
+      else if (SH === 'boxC') { line([[1.25, 6.0], [0.93, 6.12], [0.63, 6.06]], V.rim, lw(0.09)); line([[-0.1, 4.46], [-0.53, 4.18], [-0.9, 3.9], [-1.12, 3.47], [-1.12, 1.98]], V.rim, lw(0.09)); }
       else if (BOXY) line([[0.05, 6.0], [-0.52, 5.9], [-0.84, 5.82], [-1.12, 1.98]], V.rim, lw(0.09));
       else line([[1.2, 6.0], [0.75, 5.78], [-0.3, 3.98], [-0.62, 3.45], [-0.9, 3.3], [-1.02, 2.88], [-1.02, 1.9]], V.rim, lw(0.09));
       c.restore();
