@@ -1820,12 +1820,30 @@
     toast(`Pasir ditabur ke rel. Cengkeraman roda pulih selama ${SAND_TIME} detik.`, 'good', 2.4, null, 2);
   }
 
+  // radio di langit atas, tersusun di bawah toast/panel henti presisi agar tidak menutupi kereta
+  function placeRadio() {
+    const el = $('radio'), top0 = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0);
+    let y = 54 + top0;
+    for (const id of ['toast', 'precise']) {
+      const o = id === 'toast' ? ui.toast : document.querySelector('.precise');
+      if (!o || o.hidden || o.offsetParent === null) continue;
+      if (id === 'toast' && !o.classList.contains('show')) continue;
+      const r = o.getBoundingClientRect(); if (r.height) y = Math.max(y, r.bottom + 6);
+    }
+    const ty = Math.round(y) + 'px'; if (el.style.top !== ty) el.style.top = ty;
+    // geser ke kanan bila bertabrakan dengan chip sasaran di kiri atas
+    const gc = $('goalChips'), rr = el.getBoundingClientRect();
+    let dx = 0;
+    if (gc && gc.offsetParent !== null) { const g = gc.getBoundingClientRect(); if (g.width && rr.top < g.bottom && rr.bottom > g.top) dx = Math.max(0, g.right + 8 - (rr.left - (parseFloat(el.dataset.dx) || 0))); }
+    dx = Math.min(dx, Math.max(0, window.innerWidth - 110 - (rr.right - (parseFloat(el.dataset.dx) || 0))));
+    if (Math.abs(dx - (parseFloat(el.dataset.dx) || 0)) > 1) { el.dataset.dx = dx; el.style.transform = `translateX(calc(-50% + ${dx.toFixed(0)}px))`; }
+  }
   function radio(text, dur = 6.5, who = 'Dimas', initials = 'DM') {
     const el = $('radio');
     $('radioText').textContent = text;
     $('radioWho').textContent = `Radio · ${who}`;
     $('radioAvatar').textContent = initials;
-    el.hidden = false;
+    el.hidden = false; placeRadio();
     radioTimer = dur;
     Sound.radio();
   }
@@ -8073,6 +8091,7 @@
     if (pcTimer > 0) { pcTimer -= dt; const pc = $('postcard'); if (pcTimer <= 0.5) pc.classList.add('out'); if (pcTimer <= 0 || mode !== 'play') { pc.hidden = true; pcTimer = 0; } }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) ui.toast.className = ''; }
     if (radioTimer > 0 && mode === 'play') { radioTimer -= dt; if (radioTimer <= 0) $('radio').hidden = true; }
+    if (!$('radio').hidden) placeRadio();
     if (mode !== 'pause') updateWeather(dt, (S || idleState).v);
     // jaga agar ukuran gambar canvas selalu sama dengan ukuran tampilnya (mencegah kereta tampak gepeng)
     if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(2, window.devicePixelRatio || 1) !== DPR) resize();
@@ -8090,6 +8109,7 @@
     get ROUTE() { return ROUTE; },
     get MIS() { return MIS; },
     get S() { return S; },
+    radio: (t) => radio(t),
     get mode() { return mode; },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
     audioMeter: () => Sound.meter(),

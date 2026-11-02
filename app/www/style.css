@@ -818,3 +818,6 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 /* logo: jarak baris cukup agar REL dan NUSANTARA tidak saling menimpa, dan tak pernah melebar keluar kolom */
 #screenTitle h1.logo { line-height: 0.9; white-space: nowrap; max-width: 100%; }
 #screenTitle h1.logo span { margin-top: 0.02em; }
+/* radio: pindah ke langit atas (di bawah bilah HUD), tidak lagi menutupi kereta & peron */
+#radio { top: calc(54px + env(safe-area-inset-top, 0px)); bottom: auto; transition: top 0.25s ease; max-width: min(460px, 50vw); }
+@media (max-height: 460px) { #radio { bottom: auto; padding: 6px 11px; } }
