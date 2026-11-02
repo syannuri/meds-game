@@ -718,3 +718,14 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
   #screenTitle .tickets li.daily .ticket .stub { padding: 2px 0; }
   #screenTitle .tickets li.daily .ticket .stub b { font-size: 16px; }
 }
+/* panel Misi berbingkai sama dengan Peta & Garasi; tiap karcis punya ilustrasi adegan */
+#screenTitle .tickets.glass { border-radius: 14px; padding: clamp(6px, 1.6vh, 10px); }
+#screenTitle .tickets li:not(.daily) .ticket .tart { display: block; flex: 1 1 auto; min-height: 0; position: relative; overflow: hidden; }
+#screenTitle .tickets li:not(.daily) .ticket .tart svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#screenTitle .tickets li:not(.daily) .ticket .tbody { flex: 0 0 auto; min-height: 0; padding: 4px 8px 5px; gap: 1px; }
+#screenTitle .tickets li:not(.daily) .ticket .tbody b { -webkit-line-clamp: 1; white-space: nowrap; text-overflow: ellipsis; display: block; }
+#screenTitle .tickets li:not(.daily) .ticket .tnew, #screenTitle .tickets li:not(.daily) .ticket .tstars { margin-top: 0; }
+#screenTitle .tickets li:not(.daily) .ticket .tnew { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 760px) { #screenTitle .tickets li:not(.daily) .ticket .tbody b { font-size: 10.5px; } }
+#screenTitle .tickets li:not(.daily) .ticket .tbody b { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: clamp(10.5px, 3vh, 13.5px); line-height: 1.02; }
+@media (max-width: 760px) { #screenTitle .tickets li:not(.daily) .ticket .tnew { letter-spacing: 0; font-size: 8px; text-overflow: clip; } }
