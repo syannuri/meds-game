@@ -2685,21 +2685,56 @@
   };
   // ---------- layar judul: peta misi Jawa–Sumatra dan garasi Cakra ----------
   // koordinat peta dalam bidang 540 x 390; diskalakan ke ukuran kanvas
-  const MAP_ROUTES = {
-    '1-1': { pts: [[282, 308], [300, 300]], col: '#f2c94c' },
-    '1-2': { pts: [[300, 300], [338, 292]], col: '#e0b07a' },
-    '1-3': { pts: [[300, 300], [319, 299], [338, 292]], col: '#d8a06a' },
-    '1-4': { pts: [[300, 300], [338, 292], [372, 300]], col: '#e8955a' },
-    '1-5': { pts: [[372, 300], [404, 314], [440, 306]], col: '#7aa6b8' },
-    '1-6': { pts: [[440, 306], [404, 318], [372, 306], [336, 300], [300, 306]], col: '#b07ad8' },
-    '1-7': { pts: [[440, 306], [464, 314], [486, 318]], col: '#5f9fb0' },
-    '2-2': { pts: [[176, 168], [150, 140], [124, 112]], col: '#8fa0d8' },
-    '2-3': { pts: [[124, 112], [140, 150], [176, 168]], col: '#c9a05a' },
-    '2-1': { pts: [[176, 168], [206, 196], [236, 214], [262, 238]], col: '#6fb36a' },
+  // peta berdasar garis pantai nyata (bujur, lintang) -> koordinat peta 540x370
+  const GEO = (lo, la) => [33 + (lo - 95) * 24, 6 + (6 - la) * 24];
+  const geoPoly = (a) => a.map(([lo, la]) => GEO(lo, la));
+  const ISL_SUM = geoPoly([[95.3, 5.6], [95.9, 5.6], [97.0, 5.25], [97.9, 4.6], [98.7, 3.8], [99.8, 3.2], [100.4, 2.4], [101.0, 2.0], [101.4, 1.7], [102.2, 1.4], [103.0, 0.8], [103.7, 0.3], [103.5, -0.3], [103.8, -1.0], [104.4, -1.6], [104.9, -2.2], [105.5, -2.5], [105.9, -3.0], [105.9, -3.8], [105.8, -4.6], [105.9, -5.6], [105.6, -5.85], [105.25, -5.55], [104.6, -5.9], [104.0, -5.6], [103.4, -4.9], [102.3, -3.9], [101.4, -2.8], [100.9, -2.0], [100.4, -1.1], [99.9, -0.2], [99.2, 0.5], [98.7, 1.5], [97.9, 2.3], [97.2, 3.0], [96.6, 3.7], [96.0, 4.3], [95.4, 5.0], [95.2, 5.4]]);
+  const ISL_JAW = geoPoly([[105.2, -6.8], [105.4, -6.55], [105.9, -6.0], [106.2, -5.95], [106.8, -6.1], [107.4, -5.95], [108.0, -6.25], [108.3, -6.25], [108.6, -6.7], [109.1, -6.85], [109.7, -6.9], [110.4, -6.95], [110.7, -6.5], [111.1, -6.4], [111.4, -6.7], [112.0, -6.85], [112.6, -6.9], [112.75, -7.2], [112.85, -7.6], [113.5, -7.7], [114.1, -7.65], [114.45, -7.8], [114.4, -8.3], [114.6, -8.75], [114.1, -8.6], [113.3, -8.3], [112.5, -8.4], [111.6, -8.3], [110.6, -8.1], [109.6, -7.75], [109.0, -7.7], [108.5, -7.8], [107.6, -7.6], [106.8, -7.4], [106.4, -7.0], [105.8, -6.85], [105.4, -6.9]]);
+  const ISL_SMALL = [
+    [[112.7, -7.05], [113.3, -6.9], [114.1, -6.9], [114.0, -7.15], [113.2, -7.2], [112.8, -7.15]], // Madura
+    [[114.45, -8.15], [115.2, -8.05], [115.7, -8.35], [115.5, -8.7], [115.15, -8.85], [114.6, -8.4]], // Bali
+    [[105.1, -1.6], [106.0, -1.6], [106.8, -2.9], [106.4, -3.1], [105.8, -2.5], [105.1, -2.0]], // Bangka
+    [[107.6, -2.6], [108.2, -2.6], [108.3, -3.1], [107.7, -3.2]], // Belitung
+    [[97.0, 1.4], [97.4, 1.5], [97.9, 0.9], [97.8, 0.6], [97.4, 0.8], [97.1, 1.1]], // Nias
+    [[98.6, -1.0], [99.1, -1.3], [99.3, -1.8], [99.0, -1.7], [98.6, -1.3]], // Siberut
+    [[95.8, 2.9], [96.3, 2.6], [96.5, 2.4], [96.1, 2.5]], // Simeulue
+  ].map(geoPoly);
+  const G = {
+    D: GEO(106.4, -6.45), S: GEO(107.0, -6.55), A: GEO(107.5, -6.65), C: GEO(108.1, -6.75), P: GEO(108.9, -6.9), K: GEO(109.8, -7.1), W: GEO(110.7, -7.25), B: GEO(111.5, -7.35), KB: GEO(112.3, -7.45),
+    MK: GEO(103.75, -3.75), M2: GEO(103.3, -3.35), SB: GEO(102.85, -2.95), T1: GEO(104.3, -4.3), T2: GEO(104.85, -4.95), TA: GEO(105.3, -5.45),
   };
-  const MAP_ST = [[282, 308, 'Depo'], [319, 299, ''], [300, 300, 'Sukamaju'], [338, 292, 'Cibening'], [372, 300, 'Pasar Lama'], [404, 314, 'Kali Jernih'], [440, 306, 'Watugede'], [464, 314, ''], [486, 318, 'Kedung Banteng'], [176, 168, 'Muara Kelam'], [150, 140, ''], [124, 112, 'Simpang Barisan'], [262, 238, 'Tanjung Api']];
-  const ISL_SUM = [[22, 30], [60, 14], [110, 44], [160, 92], [212, 136], [262, 178], [300, 222], [306, 256], [282, 266], [240, 246], [190, 214], [134, 168], [84, 120], [40, 78], [18, 48]];
-  const ISL_JAW = [[252, 266], [300, 254], [360, 260], [420, 266], [480, 272], [522, 288], [528, 330], [492, 352], [430, 348], [370, 346], [310, 342], [262, 330], [240, 298]];
+  const off = (p, d) => [p[0], p[1] + d];
+  const MAP_ROUTES = {
+    '1-1': { pts: [G.D, G.S], col: '#f2c94c' },
+    '1-2': { pts: [G.S, G.C], col: '#e0b07a' },
+    '1-3': { pts: [G.S, G.A, G.C], col: '#d8a06a' },
+    '1-4': { pts: [G.S, G.C, G.P], col: '#e8955a' },
+    '1-5': { pts: [G.P, G.K, G.W], col: '#7aa6b8' },
+    '1-6': { pts: [G.W, G.K, G.P, G.C, G.S].map((p) => off(p, 3)), col: '#b07ad8' },
+    '1-7': { pts: [G.W, G.B, G.KB], col: '#5f9fb0' },
+    '2-2': { pts: [G.MK, G.M2, G.SB], col: '#8fa0d8' },
+    '2-3': { pts: [G.SB, G.M2, G.MK].map((p) => off(p, 3)), col: '#c9a05a' },
+    '2-1': { pts: [G.MK, G.T1, G.T2, G.TA], col: '#6fb36a' },
+  };
+  // [x, y, nama, label di atas(-1)/bawah(1)]
+  const MAP_ST = [[...G.D, 'Depo', 1], [...G.S, 'Sukamaju', -1], [...G.A, '', 0], [...G.C, 'Cibening', 1], [...G.P, 'Pasar Lama', -1], [...G.K, 'Kali Jernih', 1], [...G.W, 'Watugede', -1], [...G.B, 'Krajan', 1], [...G.KB, 'Kedung Banteng', -1],
+    [...G.MK, 'Muara Kelam', 1], [...G.M2, '', 0], [...G.SB, 'Simpang Barisan', -1], [...G.TA, 'Tanjung Api', 1]];
+  const MAP_VOLC = [GEO(101.26, -1.7), GEO(103.12, -4.03), GEO(98.4, 3.2), GEO(106.98, -6.8), GEO(110.44, -7.55), GEO(112.92, -8.05)];
+  // ikon garis 24x24 untuk karcis misi
+  const MIS_ICON = {
+    '1-1': '<rect x="5" y="3" width="14" height="15" rx="3"/><path d="M8 7h8v4H8z"/><circle cx="9" cy="14.5" r="1"/><circle cx="15" cy="14.5" r="1"/><path d="M7.5 18l-2 3.5M16.5 18l2 3.5"/>',
+    '1-2': '<rect x="8" y="2" width="8" height="14" rx="4"/><circle cx="12" cy="6" r="1.6"/><circle cx="12" cy="11.5" r="1.6"/><path d="M12 16v6M8 22h8"/>',
+    '1-3': '<circle cx="9" cy="7" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2"/><circle cx="17" cy="8" r="2.4"/><path d="M15.5 13.2A5 5 0 0 1 21 18v3"/>',
+    '1-4': '<path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/><path d="M9 13v4M12 13v4M15 13v4"/>',
+    '1-5': '<path d="M7 15a4 4 0 0 1 .5-8A6 6 0 0 1 19 8a3.5 3.5 0 0 1-.5 7z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+    '1-6': '<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 7h16M4 11h16"/><circle cx="8" cy="14.5" r="1"/><circle cx="16" cy="14.5" r="1"/><path d="M6.5 18v3M17.5 18v3"/>',
+    '1-7': '<path d="M3 8h15M14 4l4 4-4 4"/><path d="M21 16H6M10 12l-4 4 4 4"/>',
+    '2-1': '<path d="M3 9h18l-3 8H6z"/><path d="M5 9l2.5-3 3 2 3-3 3 2.5L19 9"/><circle cx="8" cy="20" r="1.6"/><circle cx="16" cy="20" r="1.6"/>',
+    '2-2': '<path d="M7 22V3"/><path d="M7 5l12-1.5v4L7 9z"/><circle cx="7" cy="13" r="1.6"/><path d="M4 22h6"/>',
+    '2-3': '<ellipse cx="12" cy="12" rx="6" ry="9" transform="rotate(35 12 12)"/><path d="M8.6 17.4c3.2-3 .2-7.6 6.8-10.8"/>',
+    daily: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
+  };
+  const misIcon = (id) => `<span class="ticon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${MIS_ICON[id] || ''}</svg></span>`;
   const titleMap = { tab: 'missions', focus: null, t: 0 };
   function islandPath(c, pts) {
     const n = pts.length, mid = (i) => [(pts[i][0] + pts[(i + 1) % n][0]) / 2, (pts[i][1] + pts[(i + 1) % n][1]) / 2];
@@ -2730,21 +2765,25 @@
     c.setTransform(k, 0, 0, k, ox, oy);
     c.strokeStyle = 'rgba(200,235,240,0.12)'; c.lineWidth = 1;
     for (let i = 0; i < 40; i++) { const x = (hash(i) * 560 + t * 4) % 560 - 10, y = hash(i + 7) * 390; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 5, y - 3, x + 10, y); c.stroke(); }
-    [[ISL_SUM, 'SUMATRA', 66, 50], [ISL_JAW, 'JAWA', 352, 334]].forEach(([pts, name, lx, ly]) => {
-      c.save(); islandPath(c, pts); c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = 14; c.fillStyle = '#e9dcb8'; c.fill(); c.restore();
+    const land = (pts, i) => {
+      c.save(); islandPath(c, pts); c.shadowColor = 'rgba(0,0,0,0.35)'; c.shadowBlur = 10; c.fillStyle = '#e9dcb8'; c.fill(); c.restore();
       c.save(); islandPath(c, pts); c.clip();
       const g = c.createLinearGradient(0, 0, 0, 390); g.addColorStop(0, '#b9cf8a'); g.addColorStop(1, '#8fb070'); c.fillStyle = g; c.fillRect(0, 0, 540, 390);
       c.fillStyle = 'rgba(70,110,60,0.25)';
-      for (let i = 0; i < 120; i++) { c.beginPath(); c.arc(hash(i * 3.1 + lx) * 540, hash(i * 1.7 + ly) * 390, 1.6, 0, 7); c.fill(); }
+      for (let q = 0; q < 160; q++) { c.beginPath(); c.arc(hash(q * 3.1 + i) * 540, hash(q * 1.7 + i * 5) * 390, 1.4, 0, 7); c.fill(); }
       c.restore();
-      islandPath(c, pts); c.strokeStyle = '#f3ead0'; c.lineWidth = 3; c.stroke();
-      c.fillStyle = 'rgba(40,60,40,0.55)'; c.font = '800 15px "Big Shoulders Display", sans-serif'; c.textAlign = 'center'; c.fillText(name, lx, ly); c.textAlign = 'start';
+      islandPath(c, pts); c.strokeStyle = '#f3ead0'; c.lineWidth = 2; c.stroke();
+    };
+    ISL_SMALL.forEach((p, i) => land(p, 10 + i)); land(ISL_SUM, 1); land(ISL_JAW, 2);
+    c.fillStyle = 'rgba(40,60,40,0.55)'; c.font = '800 15px "Big Shoulders Display", sans-serif'; c.textAlign = 'center';
+    c.save(); c.translate(...GEO(100.9, 0.2)); c.rotate(-0.72); c.fillText('SUMATRA', 0, 0); c.restore();
+    c.fillStyle = 'rgba(200,235,240,0.5)'; c.fillText('JAWA', ...GEO(110.6, -9.0)); c.textAlign = 'start';
+    MAP_VOLC.forEach(([x, y], i) => {
+      c.fillStyle = '#7c6a5a'; c.beginPath(); c.moveTo(x - 7, y + 4); c.lineTo(x - 1, y - 6); c.lineTo(x + 1, y - 6); c.lineTo(x + 7, y + 4); c.closePath(); c.fill();
+      c.fillStyle = '#efe6d2'; c.beginPath(); c.moveTo(x - 2.4, y - 3); c.lineTo(x - 1, y - 6); c.lineTo(x + 1, y - 6); c.lineTo(x + 2.4, y - 3); c.closePath(); c.fill();
+      for (let q = 0; q < 3; q++) { const u = (t * 0.08 + q / 3 + i * 0.2) % 1; c.fillStyle = `rgba(240,236,228,${0.3 * (1 - u)})`; c.beginPath(); c.arc(x + u * 6, y - 8 - u * 8, 1.4 + u * 2.6, 0, 7); c.fill(); }
     });
-    [[96, 70], [150, 118], [352, 274], [478, 296]].forEach(([x, y], i) => {
-      c.fillStyle = '#7c6a5a'; c.beginPath(); c.moveTo(x - 12, y + 6); c.lineTo(x - 2, y - 10); c.lineTo(x + 2, y - 10); c.lineTo(x + 12, y + 6); c.closePath(); c.fill();
-      for (let q = 0; q < 4; q++) { const u = (t * 0.08 + q / 4 + i * 0.2) % 1; c.fillStyle = `rgba(240,236,228,${0.35 * (1 - u)})`; c.beginPath(); c.arc(x + u * 10, y - 12 - u * 12, 2 + u * 4, 0, 7); c.fill(); }
-    });
-    c.fillStyle = 'rgba(200,235,240,0.55)'; c.font = 'italic 600 10px "Plus Jakarta Sans", sans-serif'; c.fillText('Selat Sunda', 186, 300);
+    c.fillStyle = 'rgba(200,235,240,0.55)'; c.font = 'italic 600 10px "Plus Jakarta Sans", sans-serif'; c.textAlign = 'center'; c.fillText('Selat Sunda', ...GEO(103.6, -6.6)); c.fillText('Laut Jawa', ...GEO(110.2, -4.6)); c.fillText('Samudra Hindia', ...GEO(100.5, -6.2)); c.fillText('Selat Malaka', ...GEO(99.4, 4.6)); c.textAlign = 'start';
     c.save(); c.translate(500, 40); c.strokeStyle = 'rgba(243,234,208,0.7)'; c.lineWidth = 1.2; c.beginPath(); c.arc(0, 0, 14, 0, 7); c.stroke();
     c.fillStyle = '#f2a516'; c.beginPath(); c.moveTo(0, -18); c.lineTo(4, 0); c.lineTo(-4, 0); c.closePath(); c.fill();
     c.fillStyle = '#f3ead0'; c.font = '800 10px "Big Shoulders Display", sans-serif'; c.textAlign = 'center'; c.fillText('U', 0, -22); c.textAlign = 'start'; c.restore();
@@ -2757,9 +2796,15 @@
       c.strokeStyle = m.col; c.lineWidth = on ? 3.5 : 2; c.setLineDash(on ? [] : [4, 3]);
       c.beginPath(); m.pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke(); c.setLineDash([]);
     });
-    MAP_ST.forEach(([x, y, n]) => {
-      c.fillStyle = '#fff'; c.beginPath(); c.arc(x, y, 4, 0, 7); c.fill(); c.strokeStyle = '#2a2a2a'; c.lineWidth = 1.5; c.stroke();
-      c.fillStyle = '#1f2a22'; c.font = '700 9px "Plus Jakarta Sans", sans-serif'; c.textAlign = 'center'; c.fillText(n, x, y + (y > 300 ? 16 : -9)); c.textAlign = 'start';
+    const onSel = new Set(MAP_ROUTES[sel].pts.map(([x, y]) => Math.round(x) + ',' + Math.round(y)));
+    MAP_ST.forEach(([x, y, n, dir]) => {
+      const hot = onSel.has(Math.round(x) + ',' + Math.round(y)) || onSel.has(Math.round(x) + ',' + Math.round(y + 3));
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(x, y, hot ? 3.6 : 2.6, 0, 7); c.fill(); c.strokeStyle = '#2a2a2a'; c.lineWidth = 1.2; c.stroke();
+      if (!n || !hot) return;
+      c.font = '700 9px "Plus Jakarta Sans", sans-serif'; c.textAlign = 'center';
+      const ly = y + (dir > 0 ? 15 : -9), tw = c.measureText(n).width + 8;
+      c.fillStyle = 'rgba(20,30,26,0.78)'; roundRect(c, x - tw / 2, ly - 9, tw, 12, 3); c.fill();
+      c.fillStyle = '#f7f1e2'; c.fillText(n, x, ly); c.textAlign = 'start';
     });
     const u = REDUCE_MOTION ? 0.5 : Math.sin(t * 0.6) * 0.5 + 0.5, [px, py, a] = routeAt(MAP_ROUTES[sel].pts, u);
     c.save(); c.translate(px, py); c.rotate(a);
@@ -2848,7 +2893,7 @@
     const D = MISSIONS.daily, best = dailyScores()[D.daily.key], streak = dailyStreak(), bm = MISSIONS[D.base];
     const dailyLi = `<li class="daily"><button class="ticket t-daily" data-id="daily">
         <span class="stub"><small>HARIAN</small><b>${D.daily.label}</b><small>${D.daily.hari}</small></span>
-        <span class="tbody"><b>Rute Harian · ${bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik hari ini <strong>${best}</strong>` : 'Belum dimainkan hari ini'}${streak ? ` · 🔥 ${streak} hari beruntun` : ''}</span></span>
+        <span class="tbody">${misIcon('daily')}<b>Rute Harian · ${bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik hari ini <strong>${best}</strong>` : 'Belum dimainkan hari ini'}${streak ? ` · 🔥 ${streak} hari beruntun` : ''}</span></span>
       </button></li>`;
     const ahli = ahliSet();
     $('missionList').innerHTML = dailyLi + MISSION_ORDER.map((id) => {
@@ -2857,7 +2902,7 @@
       const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BELUM DIMAINKAN</span>';
       return `<li${m.tutorial ? ' class="tut"' : ''}><button class="ticket t-${m.ticket || m.sky}${m.tutorial ? ' t-tut' : ''}${id === nextId ? ' next' : ''}" data-id="${id}">
         <span class="stub"><small>MISI</small><b>${id}</b></span>
-        <span class="tbody"><b title="${m.title}">${m.nick || m.title}</b><small>${m.title} · ${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
+        <span class="tbody">${misIcon(id)}<b title="${m.title}">${m.nick || m.title}</b><small>${m.title} · ${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
       </button></li>`;
     }).join('');
     const anyPlayed = MISSION_ORDER.some((id) => bestOf(id) > 0);
