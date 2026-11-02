@@ -731,3 +731,10 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 @media (max-width: 760px) { #screenTitle .tickets li:not(.daily) .ticket .tnew { letter-spacing: 0; font-size: 8px; text-overflow: clip; } }
 #screenTitle .tickets li:not(.daily) .ticket .stub small { display: none; }
 #screenTitle .tickets li:not(.daily) .ticket .stub { justify-content: center; }
+/* ilustrasi rute harian: adegan misi dasar hari ini di sisi kanan karcis */
+#screenTitle .tickets li.daily .ticket .tart { display: block; flex: 0 0 38%; position: relative; overflow: hidden; }
+#screenTitle .tickets li.daily .ticket .tart svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#screenTitle .tickets li.daily .ticket .tart::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 28%; z-index: 1; background: linear-gradient(90deg, #f4efe2, rgba(244, 239, 226, 0)); }
+#screenTitle .tickets li.daily .ticket .tart::after { content: 'HARI INI'; position: absolute; right: 6px; top: 5px; z-index: 1; font-size: 8.5px; font-weight: 800; letter-spacing: 0.1em; color: #fff; background: rgba(31, 111, 109, 0.85); padding: 1px 6px; border-radius: 999px; }
+#screenTitle .tickets li.daily .ticket .tart { flex-basis: 48%; }
+#screenTitle .tickets li.daily .ticket .tbody { display: flex; flex-direction: column; justify-content: center; }

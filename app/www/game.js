@@ -2751,6 +2751,19 @@
     '2-3': skyG('b3', '#d9b48a', '#f2ead2') + '<path d="M0 36 L24 18 L44 32 L66 14 L92 30 L120 20 V70 H0z" fill="#7a8a6a"/><path d="M0 46 Q40 38 120 44 V70 H0z" fill="#5a7a42"/><g>' + [10, 28, 46, 98, 114].map((x) => `<circle cx="${x}" cy="54" r="7" fill="#3d6a32"/><circle cx="${x - 3}" cy="52" r="1.3" fill="#d83a2e"/><circle cx="${x + 2}" cy="56" r="1.3" fill="#d83a2e"/><circle cx="${x + 3}" cy="51" r="1.3" fill="#b02a22"/>`).join('') + '</g><rect x="56" y="44" width="34" height="14" rx="1.5" fill="#8a5a3a"/><g fill="#d9c09a"><rect x="59" y="38" width="9" height="7" rx="2"/><rect x="69" y="37" width="9" height="8" rx="2"/><rect x="79" y="38" width="9" height="7" rx="2"/></g><circle cx="62" cy="60" r="2.8" fill="#222"/><circle cx="84" cy="60" r="2.8" fill="#222"/>' + rails(62),
   };
   const misArt = (id) => MIS_ART[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid slice">${MIS_ART[id]}</svg></span>` : '';
+  // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
+  function dailyArt(base) {
+    const night = base === '1-6' || base === '2-2', storm = base === '1-5' || base === '1-7', sum = base[0] === '2';
+    const sky = night ? ['#0d1634', '#3f4d7a'] : storm ? ['#4f6673', '#a7b8bd'] : sum ? ['#6a9aa6', '#e6dcc0'] : ['#f2a65c', '#fde3b0'];
+    const hill = sum ? '#4f7a4a' : '#7d9a6a', field = night ? '#1f2c3a' : storm ? '#5e7a5a' : '#8fb070';
+    const coach = (x) => `<rect x="${x}" y="40" width="34" height="11" rx="2" fill="#f3eee1"/><rect x="${x}" y="46" width="34" height="1.6" fill="#c8352b"/>${[3, 12, 21].map((d) => `<rect x="${x + d}" y="42" width="7" height="3" rx=".6" fill="${night ? '#ffd88a' : '#2b3a44'}"/>`).join('')}<circle cx="${x + 6}" cy="52" r="1.8" fill="#222"/><circle cx="${x + 28}" cy="52" r="1.8" fill="#222"/>`;
+    return `<span class="tart" aria-hidden="true"><svg viewBox="0 0 200 60" preserveAspectRatio="xMidYMax slice"><defs><linearGradient id="skd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs><rect width="200" height="60" fill="url(#skd)"/>`
+      + (night ? `<path d="M168 8 a7 7 0 1 0 5 12 a6 6 0 1 1 -5 -12z" fill="#ffe2a6"/>${Array.from({ length: 16 }, (_, i) => `<circle cx="${(i * 41) % 198 + 1}" cy="${(i * 13) % 22 + 3}" r=".7" fill="#e8ecff"/>`).join('')}` : storm ? `<g stroke="#dfeaf0" stroke-width=".9" opacity=".6">${Array.from({ length: 26 }, (_, i) => `<path d="M${(i * 23) % 204} ${(i * 17) % 34} l-3 7"/>`).join('')}</g>` : `<circle cx="164" cy="18" r="9" fill="#fff3d1" opacity=".9"/>`)
+      + `<path d="M0 34 L26 20 L48 30 L78 14 L106 28 L134 18 L160 30 L200 22 V60 H0z" fill="${hill}" opacity=".85"/><rect x="0" y="50" width="200" height="10" fill="${field}"/><path d="M0 55 H200 M0 58 H200" stroke="${night ? '#33445a' : '#7aa060'}" stroke-width=".8"/>`
+      + `<rect x="0" y="51" width="200" height="1.4" fill="#3b3229"/>` + coach(30) + coach(66)
+      + `<rect x="102" y="38" width="38" height="13" rx="2" fill="#c8352b"/><path d="M140 38 L150 45 V51 H140z" fill="#c8352b"/><rect x="102" y="46" width="48" height="2" fill="#f2c94c"/><rect x="134" y="40" width="9" height="4" fill="#1e2a33"/><circle cx="108" cy="52" r="2" fill="#222"/><circle cx="116" cy="52" r="2" fill="#222"/><circle cx="136" cy="52" r="2" fill="#222"/><circle cx="144" cy="52" r="2" fill="#222"/>`
+      + (night || storm ? `<path d="M150 44 L200 38 V54z" fill="#fff6c4" opacity=".28"/>` : '') + `</svg></span>`;
+  }
   const titleMap = { tab: 'missions', focus: null, t: 0 };
   function islandPath(c, pts) {
     const n = pts.length, mid = (i) => [(pts[i][0] + pts[(i + 1) % n][0]) / 2, (pts[i][1] + pts[(i + 1) % n][1]) / 2];
@@ -2909,7 +2922,7 @@
     const D = MISSIONS.daily, best = dailyScores()[D.daily.key], streak = dailyStreak(), bm = MISSIONS[D.base];
     const dailyLi = `<li class="daily"><button class="ticket t-daily" data-id="daily">
         <span class="stub"><small>HARIAN</small><b>${D.daily.label}</b><small>${D.daily.hari}</small></span>
-        <span class="tbody">${misIcon('daily')}<b>Harian · ${bm.nick || bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik <strong>${best}</strong>` : 'Rute baru tiap hari'}${streak ? ` · 🔥 ${streak} hari` : ''}</span></span>
+        <span class="tbody"><b>Harian · ${bm.nick || bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik <strong>${best}</strong>` : 'Rute baru tiap hari'}${streak ? ` · 🔥 ${streak} hari` : ''}</span></span>${dailyArt(D.base)}
       </button></li>`;
     const ahli = ahliSet();
     $('missionList').innerHTML = dailyLi + MISSION_ORDER.map((id) => {
