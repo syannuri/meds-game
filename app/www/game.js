@@ -261,7 +261,7 @@
   MISSIONS['1-6'] = {
     id: '1-6',
     chapter: 'Babak 1 · Jawa',
-    title: 'Duel Malam Takbiran', nick: 'Duel Takbiran',
+    title: 'Duel Malam Takbiran', nick: 'Duel Mudik',
     startClock: 18 * 3600 + 45 * 60,
     sky: 'night',
     rain: false,
