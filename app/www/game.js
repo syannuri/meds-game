@@ -1690,6 +1690,7 @@
   }
 
   function setNotch(n, fromUser = true) {
+    if (fromUser) wakeLever(1600);
     n = clamp(Math.round(n), -5, 4);
     if (n === S.notch) return;
     const prev = S.notch;
@@ -2456,6 +2457,7 @@
     const sig = gs.map((g) => g.state).join('|');
     if (sig !== goalSig) {
       const changed = goalSig ? goalSig.split('|') : [];
+      showGoals(changed.length ? 4500 : 6000);
       el.innerHTML = gs.map((g, i) => `<li class="gchip ${g.state}${changed.length && changed[i] !== g.state ? ' flash' : ''}"><span class="s">★</span><span class="t">${g.label}</span><span class="m">${g.state === 'ok' ? '✓' : g.state === 'lost' ? '✕' : ''}</span></li>`).join('');
       goalSig = sig;
     }
@@ -2891,14 +2893,18 @@
     if (S && S.mode === 'play') setNotch(4 - idx);
   }
   let leverDrag = false;
+  // tuas transparan saat tidak dipakai; jelas saat disentuh atau saat ada yang perlu dilakukan
+  let leverWakeUntil = 0, goalShowUntil = 0;
+  const wakeLever = (ms = 1600) => { leverWakeUntil = Math.max(leverWakeUntil, performance.now() + ms); };
+  const showGoals = (ms = 5000) => { goalShowUntil = Math.max(goalShowUntil, performance.now() + ms); };
   ui.lever.addEventListener('pointerdown', (e) => {
     e.preventDefault(); Sound.init();
-    leverDrag = true;
+    leverDrag = true; ui.lever.classList.add('touch');
     try { ui.lever.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
     leverFromY(e.clientY);
   });
   ui.lever.addEventListener('pointermove', (e) => { if (leverDrag) leverFromY(e.clientY); });
-  const endDrag = () => { leverDrag = false; };
+  const endDrag = () => { leverDrag = false; ui.lever.classList.remove('touch'); wakeLever(1400); };
   ui.lever.addEventListener('pointerup', endDrag);
   ui.lever.addEventListener('pointercancel', endDrag);
   ui.lever.addEventListener('keydown', (e) => {
@@ -2906,6 +2912,29 @@
     if (e.key === 'ArrowUp') { e.preventDefault(); setNotch(S.notch + 1); }
     if (e.key === 'ArrowDown') { e.preventDefault(); setNotch(S.notch - 1); }
   });
+  ui.lever.addEventListener('focus', () => wakeLever(2500));
+  // kapan elemen HUD perlu tampil jelas
+  function updateHudFocus() {
+    if (!S) return;
+    const now = performance.now(), kmh = S.v * 3.6;
+    // tuas: perlu bertindak (sinyal baru hijau saat berangkat, bahaya di depan, merah dekat, petunjuk menyorot tuas)
+    const redNear = ROUTE.signals.some((q) => q.x > S.x && q.x - S.x < 220 && S.sig[q.id] === 'R');
+    const departNow = S.phase === 'dwell' && S.dwell.step === 'signal' && S.dwell.timer > 1.6 && S.notch <= 0;
+    const startNow = S.phase === 'run' && S.v < 0.2 && S.notch <= 0;
+    const tutLever = S.tut && S.tut.active !== null && TUTORIAL[MIS.id] && TUTORIAL[MIS.id][S.tut.active] && TUTORIAL[MIS.id][S.tut.active].target === '#lever';
+    const danger = (S.tree && S.tree.phase === 'warn') || (S.eleph && S.eleph.phase === 'block') || redNear || (S.phase === 'dwell' && S.dwell.step === 'couple');
+    const needLever = departNow || startNow || tutLever || danger || S.mode !== 'play';
+    setClass(ui.lever, 'awake', needLever || now < leverWakeUntil || leverDrag);
+    setClass(ui.lever, 'urgent', danger && !leverDrag);
+    // bintang: tampil jelas di awal misi, saat sasaran berubah, saat dijeda, dan saat sasaran terancam
+    const atRisk = S.comfort < 85 || S.overT > 0.4;
+    setClass(ui.goalChips, 'dim', !(now < goalShowUntil || mode === 'pause' || atRisk));
+    // papan batas kecepatan: jelas saat mendekati/melebihi batas atau ada batas baru di depan
+    const { lim } = currentLimit(), nl = nextLimitAhead();
+    const limNeed = kmh > lim - 4 || (nl && nl.from - S.x < 250 && nl.limit < kmh + 2) || S.yellowLimit;
+    setClass(ui.limit, 'dim', !limNeed);
+    setClass(ui.nextLimit, 'dim', !(nl && nl.from - S.x < 250));
+  }
 
   function renderLever() {
     if (!S) return;
@@ -7581,7 +7610,7 @@
     if (W && H) render(dt);
     if (mode === 'title') drawTitleMap(dt);
     Sound.update(audioInfo());
-    if (S && (mode === 'play' || mode === 'pause')) { updateHud(); updateGoalChips(); renderStrip(); }
+    if (S && (mode === 'play' || mode === 'pause')) { updateHud(); updateGoalChips(); updateHudFocus(); renderStrip(); }
     if (S && mode === 'play') updateTutorial(dt); else if (ui.coach) ui.coach.hidden = true;
     requestAnimationFrame(frame);
   }

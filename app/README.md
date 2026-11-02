@@ -56,6 +56,10 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
   langit & kilau matahari; rumpun padi bergoyang, kuntul yang terbang saat kereta lewat, petani bercaping;
   kabut pagi, halo matahari, pantulan lensa, dan butir debu bercahaya (`drawPaddyLife`, `drawMist`,
   `drawSunFx`; mati saat hujan/malam)
+- HUD yang tidak mengganggu: tuas transparan saat diam, jelas saat disentuh (bingkai emas) atau saat
+  pemain perlu bertindak (berangkat, sinyal merah dekat, bahaya → berdenyut merah); chip bintang samar
+  kecuali di awal misi, saat berubah, saat terancam, atau saat jeda; papan batas kecepatan samar
+  kecuali mendekati/melebihi batas atau ada batas baru di depan (`updateHudFocus`)
 - Pantulan cahaya: lantai peron keramik mengkilap (`glossyFloor`) dengan nat ubin berperspektif,
   pantulan kereta yang memudar, kilau matahari, genangan saat hujan, dan kolom cahaya lampu saat malam;
   gerbong stainless dan lokomotif mendapat pantulan lingkungan (`bodySheen`): langit, garis horizon,

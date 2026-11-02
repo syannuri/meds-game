@@ -622,3 +622,21 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .reward.ahli { border-color: #e1b84a; background: rgba(225,184,74,0.14); }
 /* mode Masinis Ahli: bantuan HUD disembunyikan */
 #hud.expert .strip-wrap, #hud.expert #stopBox, #hud.expert #precise, #hud.expert #nextLimit { display: none !important; }
+/* ---------- HUD yang muncul jelas hanya saat diperlukan ---------- */
+/* tuas: transparan saat diam, jelas saat disentuh atau saat pemain perlu bertindak */
+#lever { transition: opacity 0.35s ease, box-shadow 0.25s ease, transform 0.2s ease; }
+#lever:not(.awake):not(.touch) { opacity: 0.3; }
+#lever.awake { opacity: 0.92; }
+#lever.touch { opacity: 1; box-shadow: 0 0 0 2px rgba(242, 165, 22, 0.75), 0 0 22px rgba(242, 165, 22, 0.45); transform: scale(1.03); }
+#lever.urgent:not(.touch) { opacity: 1; animation: leverPulse 1.1s ease-in-out infinite; }
+@keyframes leverPulse { 50% { box-shadow: 0 0 0 3px rgba(255, 90, 70, 0.7), 0 0 24px rgba(255, 90, 70, 0.45); } }
+/* chip bintang: samar, muncul jelas di awal misi, saat berubah, saat terancam, dan saat jeda */
+.goalchips { transition: opacity 0.45s ease; }
+.goalchips.dim { opacity: 0.28; }
+/* papan batas & petunjuk batas berikutnya: samar kecuali relevan */
+.limit-sign { transition: opacity 0.35s ease, transform 0.25s ease; }
+.limit-sign.dim { opacity: 0.45; }
+.gauge.over .limit-sign { opacity: 1; transform: scale(1.12); }
+.gauge .nextlim { transition: opacity 0.35s ease; }
+.gauge .nextlim.dim { opacity: 0.4; }
+@media (prefers-reduced-motion: reduce) { #lever.touch { transform: none; } #lever.urgent:not(.touch) { animation: none; box-shadow: 0 0 0 3px rgba(255, 90, 70, 0.7); } .gauge.over .limit-sign { transform: none; } }
