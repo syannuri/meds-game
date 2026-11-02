@@ -56,6 +56,14 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
   langit & kilau matahari; rumpun padi bergoyang, kuntul yang terbang saat kereta lewat, petani bercaping;
   kabut pagi, halo matahari, pantulan lensa, dan butir debu bercahaya (`drawPaddyLife`, `drawMist`,
   `drawSunFx`; mati saat hujan/malam)
+- Suasana natural: berkas lampu depan lembut dengan genangan cahaya & debu di berkas, cahaya jendela
+  jatuh ke tanah, lampu peron berkerucut cahaya; klakson udara tiga corong yang beresonansi dengan
+  tekanan naik perlahan; simpang jalan perlintasan menyatu dengan jalan raya (`junctionBlend`);
+  jembatan busur dengan rangka Warren, paku keling, sandaran tangan, kepala jembatan batu kali, sungai
+  berarus dengan tepian berbatu & gelagah; pantulan kereta di petak sawah berair (`drawTrainOnPaddy`)
+- Latar stabil: paralaks memakai acuan yang tidak terpengaruh zoom (`pcOf`), zoom stasiun berporos
+  di titik tetap; pohon detail (`treeCoconut`, `treeBanana`, `treeBroadleaf`) dan gunung berapi dengan
+  alur jurang, bibir kawah, sisi terang/gelap, dan asap (`mountainDetail`, `forestRidge`)
 - HUD yang tidak mengganggu: tuas transparan saat diam, jelas saat disentuh (bingkai emas) atau saat
   pemain perlu bertindak (berangkat, sinyal merah dekat, bahaya → berdenyut merah); chip bintang samar
   kecuali di awal misi, saat berubah, saat terancam, atau saat jeda; papan batas kecepatan samar
