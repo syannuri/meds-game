@@ -738,3 +738,79 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 #screenTitle .tickets li.daily .ticket .tart::after { content: 'HARI INI'; position: absolute; right: 6px; top: 5px; z-index: 1; font-size: 8.5px; font-weight: 800; letter-spacing: 0.1em; color: #fff; background: rgba(31, 111, 109, 0.85); padding: 1px 6px; border-radius: 999px; }
 #screenTitle .tickets li.daily .ticket .tart { flex-basis: 48%; }
 #screenTitle .tickets li.daily .ticket .tbody { display: flex; flex-direction: column; justify-content: center; }
+
+/* ---------- halaman utama hidup ---------- */
+#titleFx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+#screenTitle .screen-inner { position: relative; z-index: 1; }
+#screenTitle { --px: 0; --py: 0; }
+#screenTitle .title-left { transform: translate3d(calc(var(--px) * -7px), calc(var(--py) * -5px), 0); transition: transform 0.5s cubic-bezier(.2,.8,.2,1); }
+#screenTitle .title-right { transform: translate3d(calc(var(--px) * 5px), calc(var(--py) * 4px), 0); transition: transform 0.5s cubic-bezier(.2,.8,.2,1); }
+.tap-hint { position: absolute; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 2; pointer-events: none;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: #1d1405; background: rgba(255, 199, 87, 0.92); padding: 4px 12px; border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(232, 150, 15, 0.35); transition: opacity 0.5s, transform 0.5s; }
+.tap-hint.gone { opacity: 0; transform: translate(-50%, 8px); }
+
+/* tombol: riak cahaya, tekan memantul */
+#screenTitle .btn, #screenTitle .ticket, #screenTitle .maptabs button { position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+.rip { position: absolute; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.18) 40%, rgba(255, 255, 255, 0) 70%); transform: scale(0); animation: rip 0.65s ease-out forwards; z-index: 3; }
+@keyframes rip { to { transform: scale(1); opacity: 0; } }
+#screenTitle .btn { transition: transform 0.25s cubic-bezier(.3,1.6,.5,1), box-shadow 0.25s, background 0.25s, border-color 0.25s; }
+#screenTitle .btn:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.34); background: rgba(255, 255, 255, 0.11); }
+#screenTitle .btn.press, #screenTitle .btn:active { transform: scale(0.94); transition-duration: 0.08s; }
+#screenTitle .btn.primary:hover { background: linear-gradient(180deg, #ffd06e, #ef9f16); }
+#btnContinue::after { content: ''; position: absolute; top: -20%; bottom: -20%; width: 38%; left: -60%; pointer-events: none; z-index: 2;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.65) 50%, rgba(255, 255, 255, 0) 100%); transform: skewX(-18deg); }
+#btnContinue svg { transition: transform 0.25s; }
+#btnContinue:hover svg { transform: translateX(3px) scale(1.1); }
+.maptabs button { transition: background 0.3s, color 0.3s, transform 0.2s cubic-bezier(.3,1.6,.5,1); }
+.maptabs button.press { transform: scale(0.92); }
+
+/* karcis: miring 3D, kilau, adegan sedikit membesar */
+#screenTitle .tickets { perspective: 900px; }
+#screenTitle .ticket { transition: transform 0.35s cubic-bezier(.2,.8,.2,1), box-shadow 0.35s; transform: perspective(700px) rotateX(0) rotateY(0); will-change: transform; }
+#screenTitle .ticket::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2; opacity: 0; transition: opacity 0.3s;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 55%); mix-blend-mode: soft-light; }
+#screenTitle .ticket.tilt { transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-4px) scale(1.035); box-shadow: 0 16px 30px rgba(0, 0, 0, 0.45); z-index: 2; transition: transform 0.12s ease-out, box-shadow 0.3s; }
+#screenTitle .ticket.tilt::after { opacity: 1; }
+#screenTitle .ticket.press { transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(0.95); transition-duration: 0.08s; }
+#screenTitle .ticket .tart svg { transition: transform 0.6s cubic-bezier(.2,.8,.2,1); transform-origin: 50% 70%; }
+#screenTitle .ticket.tilt .tart svg { transform: scale(1.09); }
+#screenTitle .ticket:hover { transform: perspective(700px) translateY(-3px); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* logo berkilau */
+  #screenTitle h1.logo span { background: linear-gradient(100deg, var(--saffron) 0%, var(--saffron) 40%, #fff0c2 50%, var(--saffron) 60%, var(--saffron) 100%); background-size: 260% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent; animation: logoSweep 6s ease-in-out infinite; }
+  @keyframes logoSweep { 0%, 55% { background-position: 100% 0; } 85%, 100% { background-position: 0 0; } }
+  /* tombol utama bernapas + kilatan */
+  #btnContinue { animation: breathe 2.8s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { box-shadow: 0 10px 24px rgba(232, 150, 15, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5); } 50% { box-shadow: 0 10px 34px rgba(255, 180, 40, 0.62), 0 0 0 4px rgba(255, 199, 87, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.5); } }
+  #btnContinue::after { animation: shine 3.6s ease-in-out infinite 1.2s; }
+  @keyframes shine { 0% { left: -60%; } 30%, 100% { left: 130%; } }
+  #btnContinue svg { animation: nudge 2.8s ease-in-out infinite; }
+  @keyframes nudge { 0%, 70%, 100% { transform: none; } 80% { transform: translateX(3px); } 90% { transform: translateX(-1px); } }
+  /* karcis berikutnya berdenyut */
+  #screenTitle .ticket.next { animation: nextPulse 2.4s ease-in-out infinite; }
+  @keyframes nextPulse { 0%, 100% { box-shadow: 0 0 0 2px var(--saffron), 0 12px 28px rgba(0, 0, 0, 0.35); } 50% { box-shadow: 0 0 0 3px #ffd36b, 0 0 22px rgba(255, 190, 70, 0.55), 0 12px 28px rgba(0, 0, 0, 0.35); } }
+  /* adegan karcis bernapas pelan */
+  #screenTitle .ticket .tart svg { animation: kenBurns 9s ease-in-out infinite alternate; }
+  #screenTitle .ticket.tilt .tart svg { animation: none; }
+  @keyframes kenBurns { from { transform: scale(1); } to { transform: scale(1.06) translateX(-2%); } }
+  /* masuk bertahap */
+  #screenTitle.enter .title-left > * { animation: riseIn 0.7s cubic-bezier(.2,.8,.2,1) both; }
+  #screenTitle.enter .title-left > *:nth-child(2) { animation-delay: 0.08s; }
+  #screenTitle.enter .title-left > *:nth-child(3) { animation-delay: 0.16s; }
+  #screenTitle.enter .title-left > *:nth-child(4) { animation-delay: 0.24s; }
+  #screenTitle.enter .title-left > *:nth-child(5) { animation-delay: 0.32s; }
+  #screenTitle.enter .maphead { animation: riseIn 0.6s cubic-bezier(.2,.8,.2,1) both 0.1s; }
+  #screenTitle .tickets li { animation: cardIn 0.6s cubic-bezier(.2,.9,.3,1.2) both; animation-delay: calc(0.15s + var(--i, 0) * 0.045s); }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(18px) scale(0.92); } to { opacity: 1; transform: none; } }
+  #screenTitle .mapbox:not([hidden]), #screenTitle .tickets:not([hidden]) { animation: panelIn 0.35s ease-out both; }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .tap-hint:not(.gone) { animation: hintBob 2.2s ease-in-out infinite; }
+  @keyframes hintBob { 0%, 100% { transform: translateX(-50%); } 50% { transform: translate(-50%, -3px); } }
+}
+.tap-hint { left: max(16px, env(safe-area-inset-left, 0px)); transform: none; }
+.tap-hint.gone { transform: translateY(8px); }
+@media (prefers-reduced-motion: no-preference) { @keyframes hintBob { 0%, 100% { transform: none; } 50% { transform: translateY(-3px); } } }
