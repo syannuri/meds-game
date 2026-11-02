@@ -5561,6 +5561,108 @@
   }
 
   // peron sisi dekat (di antara rel dan kamera): menutupi roda kereta seperti peron tinggi
+  // ---------- pantulan cahaya realistis ----------
+  // pantulan lingkungan pada badan logam/cat mengkilap: langit di atas, garis horizon terpantul,
+  // tanah di bawah, pita kilau di posisi tetap layar (jadi "mengalir" saat kereta bergerak), kilau matahari
+  function bodySheen(c, V, x0, y0, w, h, clipFn, strength = 1) {
+    if (V.tf > 0.5) return;
+    const night = V.night, storm = V.storm, k = (night ? 0.45 : storm ? 0.6 : 1) * strength;
+    c.save(); clipFn(); c.clip();
+    // langit (atas) & tanah (bawah)
+    const g = c.createLinearGradient(0, y0, 0, y0 + h);
+    g.addColorStop(0, night ? 'rgba(120,140,220,0.16)' : storm ? 'rgba(170,190,205,0.16)' : `rgba(170,205,235,${0.2 * k})`);
+    g.addColorStop(0.42, 'rgba(255,255,255,0)');
+    g.addColorStop(0.47, `rgba(40,45,50,${0.16 * k})`);
+    g.addColorStop(0.5, `rgba(255,255,255,${0.12 * k})`);
+    g.addColorStop(0.62, 'rgba(255,255,255,0)');
+    g.addColorStop(1, night ? 'rgba(20,30,20,0.25)' : `rgba(70,100,40,${0.18 * k})`);
+    c.fillStyle = g; c.fillRect(x0, y0, w, h);
+    // pita kilau miring di posisi tetap layar
+    const bands = night ? [[0.3, 0.05, 0.12]] : [[0.18, 0.04, 0.22], [0.47, 0.07, 0.3], [0.8, 0.05, 0.38]];
+    for (const [fx, fw, fa] of bands) {
+      const cx = W * fx, bw = W * fw, a = fa * k;
+      const sg = c.createLinearGradient(cx - bw, 0, cx + bw, 0);
+      sg.addColorStop(0, 'rgba(255,255,255,0)'); sg.addColorStop(0.45, `rgba(255,255,255,${a * 0.55})`); sg.addColorStop(0.5, `rgba(255,255,255,${a})`); sg.addColorStop(0.55, `rgba(255,255,255,${a * 0.55})`); sg.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = sg; c.beginPath(); c.moveTo(cx - bw + h * 0.25, y0); c.lineTo(cx + bw + h * 0.25, y0); c.lineTo(cx + bw - h * 0.25, y0 + h); c.lineTo(cx - bw - h * 0.25, y0 + h); c.closePath(); c.fill();
+    }
+    // kilau matahari hangat di sisi yang menghadap matahari
+    if (!night && !storm) {
+      const sx = W * 0.8, rg = c.createRadialGradient(sx, y0 + h * 0.3, 0, sx, y0 + h * 0.3, W * 0.18);
+      rg.addColorStop(0, `rgba(255,226,170,${0.28 * k * (1 - V.p * 0.5)})`); rg.addColorStop(1, 'rgba(255,226,170,0)');
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = rg; c.fillRect(x0, y0, w, h);
+    }
+    c.restore();
+  }
+  // lantai peron keramik mengkilap: nat ubin berperspektif, pantulan kereta & langit, kilau, lampu malam
+  function glossyFloor(V, a, b, yTop, yBot, depthNear, sAnchor) {
+    const { c, ppm, X } = V, night = V.night, wet = MIS.rain || V.storm;
+    const tile = 0.6;
+    c.save(); c.beginPath(); c.rect(a, yTop, b - a, yBot - yTop); c.clip();
+    // dasar keramik krem dengan variasi tone ubin
+    const base = c.createLinearGradient(0, yTop, 0, yBot);
+    base.addColorStop(0, night ? '#6f6c78' : '#d8d1c2'); base.addColorStop(1, night ? '#827f8b' : '#e7e1d3');
+    c.fillStyle = base; c.fillRect(a, yTop, b - a, yBot - yTop);
+    const rows = Math.max(3, Math.round((yBot - yTop) / (0.5 * ppm)));
+    const rowY = (t) => yTop + (yBot - yTop) * (depthNear ? Math.pow(t, 0.85) : t);
+    const fan = (x, t) => (depthNear ? x + (V.Xn(x) - x) * 0.12 * t : x);
+    for (let r = 0; r < rows; r++) {
+      const t0 = r / rows, t1 = (r + 1) / rows, y0 = rowY(t0), y1 = rowY(t1);
+      const m0 = Math.floor((sAnchor + (V.wx0 - sAnchor)) / tile) * tile;
+      for (let m = m0; m < V.wx1; m += tile) {
+        const xa = X(m), xb = X(m + tile); if (xb < a || xa > b) continue;
+        const v = hash(Math.floor(m / tile) * 3.1 + r * 7.7);
+        if (v < 0.3) { c.fillStyle = night ? 'rgba(0,0,0,0.05)' : 'rgba(120,105,80,0.06)'; c.fillRect(fan(xa, t0), y0, xb - xa, y1 - y0); }
+        else if (v > 0.85) { c.fillStyle = 'rgba(255,255,255,0.06)'; c.fillRect(fan(xa, t0), y0, xb - xa, y1 - y0); }
+      }
+    }
+    // pantulan kereta di lantai (cermin vertikal dari gambar kereta yang sudah digambar)
+    if (c.canvas === cv) {
+      const T = c.getTransform(), mirrorY = yTop, hgt = Math.min(5.5 * ppm, (yBot - yTop) * 2.2);
+      const sy0 = (mirrorY - hgt) * T.d + T.f, sh = hgt * T.d, dx0 = a * T.a + T.e, dw = (b - a) * T.a;
+      if (sh > 2 && dw > 2 && sy0 >= 0) {
+        c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
+        c.globalAlpha = night ? 0.42 : wet ? 0.6 : 0.46;
+        c.translate(0, (mirrorY * T.d + T.f) * 2); c.scale(1, -1);
+        try { c.drawImage(cv, dx0, sy0, dw, sh, dx0, sy0, dw, sh); } catch (e) { /* kanvas belum siap */ }
+        c.restore();
+        // pantulan memudar menjauhi tepi peron
+        const fade = c.createLinearGradient(0, yTop, 0, yBot);
+        const fc = night ? '130,126,140' : '231,225,211';
+        fade.addColorStop(0, `rgba(${fc},0)`); fade.addColorStop(0.35, `rgba(${fc},${wet ? 0.1 : 0.2})`); fade.addColorStop(0.75, `rgba(${fc},${wet ? 0.35 : 0.6})`); fade.addColorStop(1, `rgba(${fc},${wet ? 0.55 : 0.85})`);
+        c.fillStyle = fade; c.fillRect(a, yTop, b - a, yBot - yTop);
+      }
+    }
+    // nat ubin (di atas pantulan, jadi lantai tetap terlihat detail)
+    c.strokeStyle = night ? 'rgba(30,28,36,0.35)' : 'rgba(110,98,78,0.32)'; c.lineWidth = 1;
+    c.beginPath();
+    for (let r = 1; r < rows; r++) { const y = rowY(r / rows); c.moveTo(a, y); c.lineTo(b, y); }
+    const m0 = Math.floor(V.wx0 / tile) * tile;
+    for (let m = m0; m < V.wx1; m += tile) { const x = X(m); if (x < a - 20 || x > b + 20) continue; c.moveTo(fan(x, 0), yTop); c.lineTo(fan(x, 1), yBot); }
+    c.stroke();
+    c.strokeStyle = 'rgba(255,255,255,0.18)'; c.beginPath();
+    for (let r = 1; r < rows; r++) { const y = rowY(r / rows) + 1; c.moveTo(a, y); c.lineTo(b, y); }
+    c.stroke();
+    // kilau langit/matahari memanjang di lantai mengkilap
+    if (!night) {
+      const sx = W * 0.8, sg = c.createRadialGradient(sx, yTop + (yBot - yTop) * 0.5, 0, sx, yTop + (yBot - yTop) * 0.5, W * 0.22);
+      sg.addColorStop(0, `rgba(255,236,196,${V.storm ? 0.12 : 0.32 * (1 - V.p * 0.4)})`); sg.addColorStop(1, 'rgba(255,236,196,0)');
+      c.save(); c.translate(0, yTop + (yBot - yTop) * 0.5); c.scale(1, 0.25); c.translate(0, -(yTop + (yBot - yTop) * 0.5));
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = sg; c.fillRect(a, yTop - (yBot - yTop) * 2, b - a, (yBot - yTop) * 5); c.restore();
+    }
+    // genangan kecil berkilau saat hujan
+    if (wet) for (let i = 0; i < 6; i++) { const m = sAnchor - 90 + i * 19 + hash(i * 3) * 8, x = X(m); if (x < a || x > b) continue; c.fillStyle = 'rgba(200,215,225,0.25)'; c.beginPath(); c.ellipse(x, yTop + (yBot - yTop) * (0.4 + hash(i) * 0.4), (2 + hash(i + 1) * 2.5) * ppm, 0.18 * ppm, 0, 0, 7); c.fill(); }
+    // pantulan lampu kanopi saat malam: kolom cahaya hangat memanjang
+    if (night) {
+      c.globalCompositeOperation = 'lighter';
+      for (let k = 0; k <= 5; k++) {
+        const x = X(sAnchor - 80 + k * 11.5); if (x < a - 30 || x > b + 30) continue;
+        const lg = c.createLinearGradient(0, yTop, 0, yBot); lg.addColorStop(0, 'rgba(255,214,140,0.42)'); lg.addColorStop(1, 'rgba(255,214,140,0.05)');
+        c.fillStyle = lg; c.beginPath(); c.ellipse(x, (yTop + yBot) / 2, 0.9 * ppm, (yBot - yTop) * 0.55, 0, 0, 7); c.fill();
+      }
+    }
+    c.restore();
+  }
+
   function drawPlatformFront(V) {
     if (MIS.freight) return;
     const { c, ppm, gy, X, st } = V;
@@ -5569,14 +5671,14 @@
     ROUTE.stations.forEach((s, si) => {
       const a = X(s.x + PLAT_FROM), b = X(s.x + PLAT_TO);
       if (b < -50 || a > W + 50) return;
-      const g = c.createLinearGradient(0, yb, 0, yf);
-      g.addColorStop(0, V.night ? '#7d7a86' : '#cfc8b8'); g.addColorStop(1, V.night ? '#8c8994' : '#ddd6c6');
-      c.fillStyle = g; c.fillRect(a, yb, b - a, yf - yb);
+      glossyFloor(V, a, b, yb + 0.34 * ppm, yf, true, s.x);
+      // jalur pemandu tunanetra kuning bertekstur di tepi peron
       c.fillStyle = '#e8c33a'; c.fillRect(a, yb + 0.12 * ppm, b - a, 0.22 * ppm);
       c.fillStyle = 'rgba(120,96,30,0.35)';
       for (let x = a; x < b; x += Math.max(3, 0.6 * ppm)) c.fillRect(x, yb + 0.12 * ppm, Math.max(1, 0.08 * ppm), 0.22 * ppm);
-      c.fillStyle = 'rgba(0,0,0,0.05)';
-      for (let i = 1; i < 5; i++) c.fillRect(a, yb + (i / 5) * (yf - yb), b - a, 1);
+      c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(a, yb + 0.12 * ppm, b - a, 1);
+      // tepi beton peron dengan sudut tertangkap cahaya
+      c.fillStyle = V.night ? '#b8b4c0' : '#f2ede1'; c.fillRect(a, yb, b - a, 0.12 * ppm);
       c.fillStyle = V.night ? '#5d5a63' : '#9d968a'; c.fillRect(a, yf, b - a, 0.9 * ppm);
       c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(a, yf + 0.9 * ppm, b - a, 0.25 * ppm);
       c.fillStyle = 'rgba(0,0,0,0.14)'; c.fillRect(a, yb, b - a, 0.1 * ppm);
@@ -5654,6 +5756,14 @@
       }
       // peron: muka atas (terlihat dari atas) dan tepi depan
       c.fillStyle = '#cfc8b8'; c.fillRect(a, gy - 1.75 * ppm, b - a, 0.8 * ppm);
+      { // keramik peron belakang: nat ubin & kilau tipis
+        c.strokeStyle = V.night ? 'rgba(30,28,36,0.3)' : 'rgba(110,98,78,0.28)'; c.lineWidth = 1; c.beginPath();
+        c.moveTo(a, gy - 1.42 * ppm); c.lineTo(b, gy - 1.42 * ppm);
+        for (let m = Math.floor((s.x - 95) / 0.6) * 0.6; m < s.x + 25; m += 0.6) { const x = X(m); c.moveTo(x, gy - 1.75 * ppm); c.lineTo(x, gy - 1.1 * ppm); }
+        c.stroke();
+        const sh = c.createLinearGradient(0, gy - 1.75 * ppm, 0, gy - 1.1 * ppm); sh.addColorStop(0, 'rgba(255,255,255,0)'); sh.addColorStop(0.5, V.night ? 'rgba(255,214,140,0.18)' : 'rgba(255,255,255,0.22)'); sh.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = sh; c.fillRect(a, gy - 1.75 * ppm, b - a, 0.65 * ppm);
+      }
       c.fillStyle = 'rgba(0,0,0,0.08)'; c.fillRect(a, gy - 1.75 * ppm, b - a, 0.2 * ppm);
       c.fillStyle = '#e8c33a'; c.fillRect(a, gy - 1.08 * ppm, b - a, 0.14 * ppm);
       c.fillStyle = '#9d968a'; c.fillRect(a, gy - 0.95 * ppm, b - a, 0.75 * ppm);
@@ -6484,6 +6594,9 @@
       }
       // badan sisi
       c.fillStyle = steel; roundRect(c, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, 0.35 * ppm); c.fill();
+      bodySheen(c, V, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, () => roundRect(c, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, 0.35 * ppm), 1);
+      // garis panel bergelombang stainless
+      c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = 1; c.beginPath(); for (let q = 4.6; q > 4.4; q -= 0.08) { c.moveTo(L(u(4)), Y(q)); c.lineTo(L(u(236)), Y(q)); } c.stroke();
       c.fillStyle = vgrad(1.5, 1.0, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.22)']]);
       c.fillRect(L(u(0)), Y(1.5), COACH_LEN * ppm, 0.5 * ppm);
       line([[u(30), 1.72], [u(210), 1.72]], 'rgba(255,255,255,0.4)', 1);
@@ -6640,6 +6753,7 @@
       poly([[15.6, 6.0], [1.25, 6.0], [1.5, 6.4], [15.35, 6.4]], roofG);
       // badan + kabin + moncong
       poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [1.25, 6.0], [0.93, 6.12], [0.47, 4.32], [0.35, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]], red);
+      bodySheen(c, V, L(15.85), Y(6.12), 16.7 * ppm, 4.27 * ppm, () => { c.beginPath(); [[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [1.25, 6.0], [0.93, 6.12], [0.47, 4.32], [0.35, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]].forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); }, 0.75);
       // visor atap kabin (menjorok ke depan) dengan lampu sorot LED ganda
       poly([[4.2, 6.12], [0.93, 6.12], [0.7, 6.22], [0.77, 6.34], [4.2, 6.34]], '#2a1a1b');
       poly([[15.62, 6.0], [4.2, 6.0], [4.2, 5.78], [15.85, 5.78]], '#2a1a1b');
