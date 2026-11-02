@@ -613,7 +613,8 @@
   // suasana & musik sesaat (ducking) supaya tidak bertabrakan, lalu naik kembali perlahan.
   const Sound = (() => {
     const AC = window.AudioContext || window.webkitAudioContext;
-    const MIX = { master: 0.85, engine: 0.9, brake: 0.8, door: 0.85, sfx: 0.75, amb: 0.7, musicIdle: 0.15, musicPlay: 0.08 };
+    const MIX = { master: 0.85, engine: 0.9, brake: 0.8, door: 0.85, sfx: 0.75, amb: 0.7, musicIdle: 0.15, musicPlay: 0.08, musicTitle: 0.24 };
+    let titleMode = false;
     let ac = null, master = null;
     let engine = null, brake = null, door = null, sfx = null, amb = null, music = null;
     let engineSend = null, brakeSend = null, revOut = null;
@@ -1001,6 +1002,16 @@
       }
       if (pos % 2 === 0) tone(110, 0.16, 0.22, { bus: music, delay: d, to: 70, glide: 0.18 });
       if (pos % 4 === 1) burst(2200, 1.5, 0.05, 0.06, 'bandpass', music, d + BEAT * 0.5);
+      if (!titleMode) return;
+      // lagu menu: alas nada hangat, kendang, dan suling agar halaman utama terasa hidup
+      if (pos % 8 === 0) {
+        tone(BASE * 0.5 * SL[n], 0.05, BEAT * 8.4, { type: 'triangle', bus: music, delay: d, attack: 0.9 });
+        tone(BASE * 0.75 * SL[n], 0.03, BEAT * 8.2, { type: 'triangle', bus: music, delay: d + 0.05, attack: 1.1 });
+        tone(BASE * SL[nx], 0.02, BEAT * 8, { type: 'sine', bus: music, delay: d + 0.1, attack: 1.3 });
+      }
+      if ([0, 3, 6, 8, 11, 14].includes(pos)) tone(98, 0.13, 0.28, { bus: music, delay: d, to: 66, glide: 0.2 });
+      if ([2, 5, 10, 13].includes(pos)) { burst(1700, 2.2, 0.06, 0.05, 'bandpass', music, d); tone(420, 0.03, 0.06, { bus: music, delay: d }); }
+      if (pos === 4 && (i >> 4) % 2 === 1) tone(BASE * 2 * SL[nx], 0.035, BEAT * 3.2, { type: 'sine', bus: music, delay: d, attack: 0.3, to: BASE * 2 * SL[n], glide: BEAT * 2.6 });
     }
 
     // ---- satwa & suasana ----
@@ -1197,7 +1208,8 @@
       set(L.wind.g.gain, scene && !info.tunnel ? 0.04 + v * 0.0035 + info.fog * 0.03 + (info.rain || 0) * 0.03 : 0, 0.5);
       set(L.river.g.gain, scene ? info.river * 0.11 : 0, 0.4);
       set(L.crowd.g.gain, scene ? info.crowd * 0.07 : 0, 0.5);
-      const want = !musicOn || muted ? 0 : info.running ? MIX.musicPlay : MIX.musicIdle;
+      titleMode = !!info.title;
+      const want = !musicOn || muted ? 0 : info.running ? MIX.musicPlay : info.title ? MIX.musicTitle : MIX.musicIdle;
       if (Math.abs(want - musicLevel) > 0.001) { musicLevel = want; set(music.gain, want, 0.6); }
       if (!scene) return;
       if (info.bell > 0 && t >= nextBell) { crossingBell(0.04 + info.bell * 0.1); nextBell = t + 0.55; }
@@ -1520,6 +1532,15 @@
         if (muted && 'speechSynthesis' in window) { try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } }
         return muted;
       },
+      uiTap(i = 0, strong = false) { // ketukan tombol: bilah saron bernada sesuai urutan
+        if (!ac) return; const k = [1, 2, 3, 5, 6, 7][((i % 6) + 6) % 6];
+        metal(BASE * 2 * SL[k], strong ? 0.09 : 0.06, strong ? 1.1 : 0.7, sfx);
+        if (strong) { metal(BASE * 2 * SL[k] * 1.5, 0.05, 0.9, sfx, 0.08); metal(BASE * 4 * SL[k], 0.035, 0.7, sfx, 0.16); }
+        burst(3200, 1.2, 0.02, 0.03, 'bandpass', sfx);
+      },
+      uiHover(i = 0) { if (!ac) return; const k = [1, 2, 3, 5, 6, 7][((i % 6) + 6) % 6]; tone(BASE * 4 * SL[k], 0.012, 0.22, { bus: sfx }); },
+      uiWhoosh() { if (!ac || muted) return; const t = ac.currentTime; nz(t, 'bandpass', 700, 0.8, 0.035, 0.28, sfx, 0.06); tone(BASE * 2, 0.02, 0.3, { bus: sfx, to: BASE * 3, glide: 0.2 }); },
+      get ready() { return !!ac && ac.state === 'running'; },
       toggleMusic() { musicOn = !musicOn; store.set('rn.music', musicOn ? '1' : '0'); return musicOn; },
       meter() { // hanya untuk pengujian: tingkat RMS & puncak per jalur
         const r = {};
@@ -2672,7 +2693,7 @@
     for (const [k, el] of Object.entries(ui.screens)) el.hidden = k !== name;
     ui.hud.hidden = !(name === 'play' || name === 'pause');
     if (name !== 'play') { toastTimer = 0; ui.toast.className = ''; }
-    if (name === 'title') renderMissionList();
+    if (name === 'title') { renderMissionList(); const st = ui.screens.title; st.classList.remove('enter'); void st.offsetWidth; st.classList.add('enter'); const th = $('tapHint'); if (th) th.classList.toggle('gone', Sound.ready || !Sound.musicOn || Sound.muted); }
     if (name !== 'play' && name !== 'pause') $('radio').hidden = true;
   }
   const bestOf = (id) => Number(store.get('relnusantara.best.' + id) || 0);
@@ -2763,6 +2784,75 @@
       + `<rect x="0" y="51" width="200" height="1.4" fill="#3b3229"/>` + coach(30) + coach(66)
       + `<rect x="102" y="38" width="38" height="13" rx="2" fill="#c8352b"/><path d="M140 38 L150 45 V51 H140z" fill="#c8352b"/><rect x="102" y="46" width="48" height="2" fill="#f2c94c"/><rect x="134" y="40" width="9" height="4" fill="#1e2a33"/><circle cx="108" cy="52" r="2" fill="#222"/><circle cx="116" cy="52" r="2" fill="#222"/><circle cx="136" cy="52" r="2" fill="#222"/><circle cx="144" cy="52" r="2" fill="#222"/>`
       + (night || storm ? `<path d="M150 44 L200 38 V54z" fill="#fff6c4" opacity=".28"/>` : '') + `</svg></span>`;
+  }
+  // ---------- halaman utama hidup: kunang-kunang, ketukan bercahaya, paralaks, karcis miring ----------
+  const TFX = { motes: [], bursts: [], px: -1, py: -1, near: 0, t: 0, spr: null, cv: null };
+  function titleFxInit() {
+    TFX.cv = $('titleFx'); if (!TFX.cv) return;
+    const sp = document.createElement('canvas'); sp.width = sp.height = 64; const x = sp.getContext('2d');
+    const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,240,190,1)'); gr.addColorStop(0.25, 'rgba(255,205,110,0.55)'); gr.addColorStop(1, 'rgba(255,170,60,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 64, 64); TFX.spr = sp;
+    for (let i = 0; i < 44; i++) TFX.motes.push({ x: Math.random(), y: 0.25 + Math.random() * 0.75, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 6, r: 5 + Math.random() * 9, ph: Math.random() * 7, f: 0.6 + Math.random() * 1.4 });
+    const scr = $('screenTitle');
+    scr.addEventListener('pointermove', (e) => {
+      const r = scr.getBoundingClientRect(); TFX.px = e.clientX - r.left; TFX.py = e.clientY - r.top; TFX.near = 1;
+      scr.style.setProperty('--px', ((TFX.px / r.width) * 2 - 1).toFixed(3)); scr.style.setProperty('--py', ((TFX.py / r.height) * 2 - 1).toFixed(3));
+    });
+    scr.addEventListener('pointerleave', () => { TFX.near = 0; scr.style.setProperty('--px', 0); scr.style.setProperty('--py', 0); });
+    scr.addEventListener('pointerdown', (e) => {
+      Sound.init(); $('tapHint').classList.add('gone');
+      const r = scr.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      const sparks = Array.from({ length: 12 }, (_, k) => { const a = (k / 12) * Math.PI * 2 + Math.random() * 0.4, v = 60 + Math.random() * 90; return { x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 20, life: 0 }; });
+      TFX.bursts.push({ x, y, t: 0, sparks });
+      const el = e.target.closest('.btn, .ticket, .maptabs button');
+      if (el) {
+        const er = el.getBoundingClientRect(), rp = document.createElement('span'); rp.className = 'rip';
+        const d = Math.max(er.width, er.height) * 2.2; rp.style.width = rp.style.height = d + 'px';
+        rp.style.left = (e.clientX - er.left - d / 2) + 'px'; rp.style.top = (e.clientY - er.top - d / 2) + 'px';
+        el.appendChild(rp); setTimeout(() => rp.remove(), 650);
+        el.classList.add('press'); setTimeout(() => el.classList.remove('press'), 180);
+        const idx = el.dataset.id ? MISSION_ORDER.indexOf(el.dataset.id) + 1 : el.id === 'btnContinue' ? 0 : 3;
+        if (el.closest('.maptabs')) Sound.uiWhoosh(); else Sound.uiTap(idx, el.id === 'btnContinue' || !!el.dataset.id);
+      } else Sound.uiTap(Math.floor(x / 60), false);
+    });
+    // karcis miring mengikuti jari/kursor, kilau mengikuti posisi
+    const list = $('missionList'); let cur = null;
+    const untilt = () => { if (cur) { cur.classList.remove('tilt'); cur = null; } };
+    list.addEventListener('pointermove', (e) => {
+      const t = e.target.closest('.ticket'); if (t !== cur) { untilt(); if (t) { cur = t; t.classList.add('tilt'); if (e.pointerType === 'mouse') Sound.uiHover(MISSION_ORDER.indexOf(t.dataset.id) + 1); } }
+      if (!t) return; const r = t.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
+      t.style.setProperty('--ry', ((nx - 0.5) * 14).toFixed(2) + 'deg'); t.style.setProperty('--rx', ((0.5 - ny) * 10).toFixed(2) + 'deg');
+      t.style.setProperty('--mx', (nx * 100).toFixed(1) + '%'); t.style.setProperty('--my', (ny * 100).toFixed(1) + '%');
+    });
+    list.addEventListener('pointerleave', untilt); list.addEventListener('pointercancel', untilt);
+    document.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') setTimeout(untilt, 120); });
+  }
+  function drawTitleFx(dt) {
+    const cvf = TFX.cv; if (!cvf || cvf.offsetParent === null) return;
+    const w = cvf.clientWidth, h = cvf.clientHeight; if (!w || !h) return;
+    if (cvf.width !== Math.round(w * DPR) || cvf.height !== Math.round(h * DPR)) { cvf.width = Math.round(w * DPR); cvf.height = Math.round(h * DPR); }
+    const c = cvf.getContext('2d'); TFX.t += dt; const t = TFX.t, still = REDUCE_MOTION;
+    c.setTransform(DPR, 0, 0, DPR, 0, 0); c.clearRect(0, 0, w, h); c.globalCompositeOperation = 'lighter';
+    // cahaya lembut mengikuti jari
+    if (TFX.near && TFX.px >= 0) { const g = c.createRadialGradient(TFX.px, TFX.py, 0, TFX.px, TFX.py, 160); g.addColorStop(0, 'rgba(255,190,90,0.13)'); g.addColorStop(1, 'rgba(255,190,90,0)'); c.fillStyle = g; c.fillRect(TFX.px - 160, TFX.py - 160, 320, 320); }
+    for (const m of TFX.motes) {
+      if (!still) {
+        let ax = Math.sin(t * 0.7 * m.f + m.ph) * 6, ay = Math.cos(t * 0.5 * m.f + m.ph) * 4;
+        if (TFX.near) { const dx = TFX.px - m.x * w, dy = TFX.py - m.y * h, d = Math.hypot(dx, dy); if (d < 170 && d > 1) { const k = (1 - d / 170) * 70; ax += (dx / d) * k - (dy / d) * k * 0.6; ay += (dy / d) * k + (dx / d) * k * 0.6; } }
+        m.vx = (m.vx + ax * dt) * (1 - 0.9 * dt); m.vy = (m.vy + ay * dt) * (1 - 0.9 * dt);
+        m.x += (m.vx * dt) / w; m.y += (m.vy * dt) / h;
+        if (m.x < -0.03) m.x = 1.03; if (m.x > 1.03) m.x = -0.03; if (m.y < 0.15) m.y = 1.02; if (m.y > 1.03) m.y = 0.16;
+      }
+      const a = 0.25 + 0.6 * Math.pow(Math.sin(t * m.f + m.ph) * 0.5 + 0.5, 2);
+      c.globalAlpha = a; c.drawImage(TFX.spr, m.x * w - m.r, m.y * h - m.r, m.r * 2, m.r * 2);
+    }
+    for (const b of TFX.bursts) {
+      b.t += dt; const u = b.t / 0.7;
+      if (u < 1) { c.globalAlpha = (1 - u) * 0.7; c.strokeStyle = 'rgba(255,214,140,1)'; c.lineWidth = 2 * (1 - u) + 0.5; c.beginPath(); c.arc(b.x, b.y, 8 + u * 70, 0, 7); c.stroke(); }
+      for (const p of b.sparks) { p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 120 * dt; p.vx *= 1 - 1.6 * dt; const q = 1 - p.life / 0.9; if (q > 0) { c.globalAlpha = q; c.drawImage(TFX.spr, p.x - 6 * q - 2, p.y - 6 * q - 2, 12 * q + 4, 12 * q + 4); } }
+    }
+    TFX.bursts = TFX.bursts.filter((b) => b.t < 1);
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   }
   const titleMap = { tab: 'missions', focus: null, t: 0 };
   function islandPath(c, pts) {
@@ -2925,11 +3015,11 @@
         <span class="tbody"><b>Harian · ${bm.nick || bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik <strong>${best}</strong>` : 'Rute baru tiap hari'}${streak ? ` · 🔥 ${streak} hari` : ''}</span></span>${dailyArt(D.base)}
       </button></li>`;
     const ahli = ahliSet();
-    $('missionList').innerHTML = dailyLi + MISSION_ORDER.map((id) => {
+    $('missionList').innerHTML = dailyLi + MISSION_ORDER.map((id, ix) => {
       const m = MISSIONS[id], b = bestOf(id), st = m.route.stations;
       const route = `${titleCase(st[0].name)} → ${titleCase(st[st.length - 1].name)} · ${clockOf(m.startClock)} · ${m.weather}`;
       const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BARU</span>';
-      return `<li${m.tutorial ? ' class="tut"' : ''}><button class="ticket t-${m.ticket || m.sky}${m.tutorial ? ' t-tut' : ''}${id === nextId ? ' next' : ''}" data-id="${id}">
+      return `<li${m.tutorial ? ' class="tut"' : ''} style="--i:${ix + 1}"><button class="ticket t-${m.ticket || m.sky}${m.tutorial ? ' t-tut' : ''}${id === nextId ? ' next' : ''}" data-id="${id}">
         <span class="stub"><small>MISI</small><b>${id}</b></span>
         ${misArt(id)}<span class="tbody"><b title="${m.title}">${m.nick || m.title}</b><small>${m.title} · ${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
       </button></li>`;
@@ -3112,6 +3202,7 @@
     $('mapBox').hidden = titleMap.tab === 'missions'; $('missionList').hidden = titleMap.tab !== 'missions';
     $('titleTabLbl').textContent = titleMap.tab === 'missions' ? '10 misi · 2 pulau' : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
   }));
+  titleFxInit();
   $('mapCv').addEventListener('click', (e) => {
     if (titleMap.tab !== 'map') return;
     const cvm = e.currentTarget, r = cvm.getBoundingClientRect(), w = r.width, h = r.height;
@@ -7908,6 +7999,7 @@
     const st = S || idleState;
     const scene = mode !== 'pause';
     const running = !!S && mode === 'play' && S.mode === 'play';
+    const title = mode === 'title';
     const b = ROUTE.bridge;
     const onBridge = !!b && st.x > b.from && st.x - TRAIN_LEN < b.to;
     const river = b ? clamp(1 - Math.abs(st.x - 25 - (b.from + b.to) / 2) / 240, 0, 1) : 0;
@@ -7924,7 +8016,7 @@
       if (st.x > c.x - 320 && st.x - TRAIN_LEN < c.x + 5) bell = Math.max(bell, clamp(1 - Math.abs(c.x - st.x) / 320, 0.15, 1));
     }
     const tunnel = inTunnel(st.x - 12);
-    return {
+    return { title, 
       scene, running, v: st.v, x: st.x, onBridge, river, crowd, bell,
       power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0,
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
@@ -7977,7 +8069,7 @@
     // jaga agar ukuran gambar canvas selalu sama dengan ukuran tampilnya (mencegah kereta tampak gepeng)
     if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(2, window.devicePixelRatio || 1) !== DPR) resize();
     if (W && H) render(dt);
-    if (mode === 'title') drawTitleMap(dt);
+    if (mode === 'title') { drawTitleMap(dt); drawTitleFx(dt); }
     Sound.update(audioInfo());
     if (S && (mode === 'play' || mode === 'pause')) { updateHud(); updateGoalChips(); updateHudFocus(); renderStrip(); }
     if (S && mode === 'play') updateTutorial(dt); else if (ui.coach) ui.coach.hidden = true;
