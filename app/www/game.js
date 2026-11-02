@@ -794,8 +794,23 @@
           o.connect(gn); o2.connect(g2).connect(gn); gn.connect(engine); o.start(); o2.start();
           L.motor = { o, o2, g: gn };
         }
-        // rem: gesekan blok rem dan decit roda
+        // rem: gesekan blok rem pada tapak roda, berdenyut mengikuti putaran roda
         L.grind = loop(white, 'bandpass', 1400, 0.9, brake);
+        {
+          L.grind.g.disconnect();
+          const am = g(0.75), rot = ac.createOscillator(); rot.frequency.value = 2; const rg = g(0.25); rot.connect(rg).connect(am.gain); rot.start();
+          L.grind.g.connect(am).connect(brake); L.grindRot = rot;
+        }
+        L.shoe = loop(brown, 'lowpass', 260, 0.7, brake);          // dengung berat blok rem menekan roda
+        L.squealN = loop(white, 'bandpass', 2900, 22, brake);      // decit logam (noise sangat sempit) menjelang berhenti
+        // gesekan rel saat menanjak di bawah beban: dengung roda yang bekerja keras + kerat tergelincir mikro
+        L.climb = loop(brown, 'bandpass', 320, 1.2, engine);
+        {
+          L.climb.g.disconnect();
+          const am = g(0.7), lf = ac.createOscillator(); lf.frequency.value = 9; const lgc = g(0.3); lf.connect(lgc).connect(am.gain); lf.start();
+          L.climb.g.connect(am).connect(engine); L.climbLfo = lf;
+        }
+        L.creak = loop(white, 'bandpass', 2300, 9, brake);
         const sq = g(0), sqf = ac.createBiquadFilter();
         sqf.type = 'bandpass'; sqf.frequency.value = 3000; sqf.Q.value = 3;
         [2850, 3170].forEach((f, i) => {
@@ -923,11 +938,18 @@
     }
 
     // ---- roda & udara ----
-    function clack(t, vol) { // "jeglak" roda melewati sambungan rel: tik logam + dentum + dengung rel
-      const b = railBus || engine;
-      nz(t, 'highpass', 2600, 0.8, vol * 0.6, 0.025, b, 0.002);
-      nz(t, 'bandpass', 420 + Math.random() * 80, 1.1, vol, 0.07, b, 0.003);
-      tone(1800 + Math.random() * 250, vol * 0.1, 0.09, { at: t, bus: b, attack: 0.002 });
+    function clack(t, vol) { // "jeg-lak" roda melewati sambungan rel: roda jatuh ke celah (dentum) lalu menghantam ujung rel berikutnya (ketuk logam), rel berdenting singkat
+      const b = railBus || engine, r = Math.random();
+      // 1) roda turun ke celah sambungan: dentum rendah berat
+      nz(t, 'lowpass', 150 + r * 40, 0.7, vol * 1.5, 0.1, b, 0.004);
+      tone(92 + r * 14, vol * 0.7, 0.14, { at: t, to: 64, bus: b, attack: 0.004 });
+      // 2) roda naik ke rel berikutnya: ketuk logam tajam, sedikit setelahnya
+      const t2 = t + 0.01 + r * 0.006;
+      nz(t2, 'bandpass', 1900 + r * 500, 1.3, vol * 0.55, 0.035, b, 0.0015);
+      nz(t2, 'bandpass', 520 + r * 90, 1.4, vol * 0.75, 0.06, b, 0.002);
+      // 3) rel berdenting (resonansi baja tak harmonis), cepat meredam
+      tone(1170 + r * 60, vol * 0.05, 0.22, { at: t2, bus: b, attack: 0.002 });
+      tone(2640 + r * 120, vol * 0.025, 0.12, { at: t2, type: 'triangle', bus: b, attack: 0.002 });
     }
     function girder(t, vol) { // dentum berongga tiap segmen gelagar jembatan
       nz(t, 'lowpass', 190, 0.8, vol * 1.6, 0.2, railBus, 0.004);
@@ -1142,11 +1164,26 @@
           AXLES.forEach((off, i) => { const d = off / v; if (d < 2.6) clack(t + d, vol * (i % 2 ? 0.75 : 1)); });
         }
       } else if (!run) lastJoint = null;
-      // rem: gesekan saat cepat, decit saat hampir berhenti
-      set(L.grind.g.gain, run ? clamp(brakeF, 0, 1.6) * clamp(v / 8, 0, 1) * 0.08 : 0, 0.15);
-      L.grind.f.frequency.setTargetAtTime(900 + Math.min(v, 22) * 40, t, 0.3);
-      const sq = run && brakeF > 0.18 && v > 0.25 && v < 6.5 ? 0.03 * clamp(brakeF, 0, 1.2) * (1 - v / 6.5) + 0.006 : 0;
-      set(L.squeal.g.gain, sq, 0.12);
+      // rem: gesekan blok rem (desir berdenyut mengikuti putaran roda), dengung berat, decit menjelang berhenti
+      const bk = run ? clamp(brakeF, 0, 1.6) : 0;
+      set(L.grind.g.gain, bk * clamp(v / 6, 0, 1) * 0.06, 0.15);
+      L.grind.f.frequency.setTargetAtTime(700 + Math.min(v, 22) * 55, t, 0.3);
+      L.grind.f.Q.setTargetAtTime(0.7 + bk * 0.4, t, 0.3);
+      L.grindRot.frequency.setTargetAtTime(Math.max(0.5, v / 2.9), t, 0.2);
+      set(L.shoe.g.gain, bk * clamp(v / 4, 0, 1) * 0.09, 0.2);
+      L.shoe.f.frequency.setTargetAtTime(160 + Math.min(v, 22) * 9, t, 0.3);
+      const sqk = run && brakeF > 0.18 && v > 0.15 && v < 5 ? clamp(brakeF, 0, 1.2) * Math.pow(1 - v / 5, 1.4) : 0;
+      set(L.squealN.g.gain, sqk * 0.11 * (0.75 + 0.25 * Math.sin(t * 13.7) * Math.sin(t * 5.3)), 0.06);
+      L.squealN.f.frequency.setTargetAtTime(2600 + (1 - v / 5) * 900, t, 0.25);
+      set(L.squeal.g.gain, sqk * 0.012, 0.12);
+      // menanjak: roda bekerja keras di rel, sesekali "kerat" tergelincir mikro
+      const climbK = run ? clamp(info.climb || 0, 0, 1) * clamp(power, 0, 1) * clamp(1.4 - v / 14, 0.25, 1) : 0;
+      set(L.climb.g.gain, climbK * 0.09, 0.4);
+      L.climb.f.frequency.setTargetAtTime(240 + v * 18, t, 0.3);
+      L.climbLfo.frequency.setTargetAtTime(6 + v * 0.9, t, 0.3);
+      const creakK = climbK * (Math.sin(t * 2.3) * Math.sin(t * 0.77) > 0.55 ? 1 : 0) + (info.slip ? 1 : 0);
+      set(L.creak.g.gain, creakK * 0.02, 0.05);
+      L.creak.f.frequency.setTargetAtTime(info.slip ? 1700 + Math.sin(t * 9) * 200 : 2200 + Math.sin(t * 3) * 250, t, 0.08);
       // pompa udara terdengar saat lokomotif diam
       if (scene && v < 0.3 && t >= nextPump) { pump(t + 0.02); nextPump = t + 1.8 + Math.random() * 0.5; }
       // gema terowongan
@@ -1325,12 +1362,14 @@
         const t = ac.currentTime;
         const gn = ac.createGain();
         gn.gain.setValueAtTime(0.0001, t);
-        gn.gain.exponentialRampToValueAtTime(0.05, t + 0.06);
-        gn.gain.exponentialRampToValueAtTime(0.115, t + 0.2);
-        gn.gain.setTargetAtTime(0.1, t + 0.25, 0.4);
+        gn.gain.exponentialRampToValueAtTime(0.028, t + 0.06);
+        gn.gain.exponentialRampToValueAtTime(0.064, t + 0.2);
+        gn.gain.setTargetAtTime(0.056, t + 0.25, 0.4);
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(900, t); lp.frequency.exponentialRampToValueAtTime(2600, t + 0.22); lp.Q.value = 0.4;
-        const hs = ac.createBiquadFilter(); hs.type = 'highshelf'; hs.frequency.value = 2500; hs.gain.value = -8;
-        gn.connect(lp).connect(hs).connect(sfx);
+        const hs = ac.createBiquadFilter(); hs.type = 'highshelf'; hs.frequency.value = 2200; hs.gain.value = -10;
+        const ws = ac.createWaveShaper(); { const cv2 = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; cv2[i] = Math.tanh(x * 2.2) / Math.tanh(2.2); } ws.curve = cv2; }
+        const body = ac.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 700; body.Q.value = 0.9; body.gain.value = 4;
+        gn.connect(ws).connect(body).connect(lp).connect(hs).connect(sfx);
         const dl = ac.createDelay(1.2); dl.delayTime.value = 0.55;
         const fb = g(0.22), ef = ac.createBiquadFilter(); ef.type = 'lowpass'; ef.frequency.value = 1100;
         const eg = g(0.28);
@@ -7797,6 +7836,7 @@
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
       rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
       curve: !!(zoneAt(st.x) && zoneAt(st.x).curve),
+      climb: (() => { const gr = gradeAt(st.x - TRAIN_LEN / 2); return gr && gr.permil > 0 ? gr.permil / 20 : 0; })(),
       lat: latAccel(st),
       bridgeFrac: b ? clamp((Math.min(st.x, b.to) - Math.max(st.x - TRAIN_LEN, b.from)) / TRAIN_LEN, 0, 1) : 0,
     };

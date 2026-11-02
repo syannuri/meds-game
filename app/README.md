@@ -61,6 +61,11 @@ Misi dipilih di layar judul. Setiap misi didefinisikan sebagai data di objek `MI
   tekanan naik perlahan; simpang jalan perlintasan menyatu dengan jalan raya (`junctionBlend`);
   jembatan busur dengan rangka Warren, paku keling, sandaran tangan, kepala jembatan batu kali, sungai
   berarus dengan tepian berbatu & gelagah; pantulan kereta di petak sawah berair (`drawTrainOnPaddy`)
+- Suara nyata: sambungan rel "jeg-lak" (roda jatuh ke celah lalu menghantam rel berikutnya, rel
+  berdenting singkat); rem dengan desir blok rem yang berdenyut mengikuti putaran roda, dengung berat
+  blok rem, dan decit logam sempit yang naik nadanya menjelang berhenti; menanjak dengan dengung roda
+  yang bekerja keras dan sesekali kerat tergelincir mikro; klakson udara dengan warna corong yang lebih
+  "kuning" (pembentuk gelombang lembut & resonansi badan)
 - Latar stabil: paralaks memakai acuan yang tidak terpengaruh zoom (`pcOf`), zoom stasiun berporos
   di titik tetap; pohon detail (`treeCoconut`, `treeBanana`, `treeBroadleaf`); gunung tetap
   bergaya polos
