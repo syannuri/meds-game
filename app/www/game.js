@@ -1790,6 +1790,7 @@
     if (!S || S.mode !== 'play') return;
     Sound.hornStart();
     S.hornFlash = 1.2;
+    ui.btnHorn.classList.add('honk'); clearTimeout(horn.tm); horn.tm = setTimeout(() => ui.btnHorn.classList.remove('honk'), 1200);
     if (ROUTE.elephants && (S.eleph.phase === 'block' || S.eleph.phase === 'cross') && !S.eleph.honked) {
       S.eleph.honked = true;
       Sound.trumpet(0.7);
@@ -7431,11 +7432,32 @@
       else line([[1.2, 6.0], [0.75, 5.78], [-0.3, 3.98], [-0.62, 3.45], [-0.9, 3.3], [-1.02, 2.88], [-1.02, 1.9]], V.rim, lw(0.09));
       c.restore();
     }
-    // lampu depan berkedip saat klakson dibunyikan
-    if (st.hornFlash > 0 && Math.floor(st.hornFlash * 6) % 2 === 0) {
-      c.save(); c.globalCompositeOperation = 'lighter';
-      (SH === 'boxB' ? [4.06] : SH === 'boxC' ? [3.28, 2.25] : BOXY ? [3.92] : [3.22, 2.86]).forEach((h) => { const gx = L(SH === 'boxB' || SH === 'boxC' ? -0.98 : BOXY ? -0.88 : -0.6), gyy = Y(h), r = 2.2 * ppm; const lg = c.createRadialGradient(gx, gyy, 0, gx, gyy, r); lg.addColorStop(0, 'rgba(255,246,210,0.95)'); lg.addColorStop(1, 'rgba(255,240,190,0)'); c.fillStyle = lg; c.beginPath(); c.arc(gx, gyy, r, 0, 7); c.fill(); });
-      c.restore();
+    // klakson udara ganda di atap kabin (krom), selalu terlihat
+    {
+      const hm = BOXY || SH === 'boxC' ? 2.1 : 2.7, hh = SH === 'boxB' ? 6.42 : 6.4, HS = 1.5;
+      c.fillStyle = '#3a3f44'; c.fillRect(L(hm + 0.15), Y(hh + 0.3), 0.2 * ppm, 0.3 * ppm); // dudukan
+      [[0.5, 0.18], [0.24, 0.15]].forEach(([dh, rb], k) => {
+        const y0 = Y(hh + 0.3 + dh), xb = L(hm - 0.8 - k * 0.18), xt = L(hm + 0.8);
+        const g = c.createLinearGradient(0, y0 - rb * ppm, 0, y0 + rb * ppm); g.addColorStop(0, '#f4f7f8'); g.addColorStop(0.5, '#9aa3a8'); g.addColorStop(1, '#5d666b');
+        c.fillStyle = g; c.beginPath(); c.moveTo(xt, y0 - 0.05 * ppm); c.lineTo(xb, y0 - rb * ppm); c.lineTo(xb, y0 + rb * ppm); c.lineTo(xt, y0 + 0.05 * ppm); c.closePath(); c.fill();
+        c.fillStyle = '#2c3135'; c.fillRect(xb - 0.03 * ppm, y0 - rb * ppm, 0.06 * ppm, rb * 2 * ppm);
+      });
+      // saat klakson: gelombang suara memancar ke depan, embusan udara, lampu depan berpendar lembut
+      if (st.hornFlash > 0) {
+        const age = 1.2 - st.hornFlash, fade = Math.min(1, st.hornFlash / 0.35), hx = L(hm - 1.0), hy = Y(hh + 0.66);
+        c.save(); c.lineCap = 'round';
+        for (let k = 0; k < 4; k++) {
+          const u = ((age * 1.6 + k / 4) % 1); if (age * 1.6 < k / 4) continue;
+          const r = (0.5 + u * 4.2) * ppm;
+          c.globalAlpha = (1 - u) * 0.85 * fade; c.strokeStyle = '#fff6d8'; c.lineWidth = Math.max(1.2, (1 - u) * 0.22 * ppm);
+          c.beginPath(); c.arc(hx, hy, r, -0.55, 0.55); c.stroke();
+        }
+        for (let k = 0; k < 3; k++) { const u = Math.min(1, age * 1.4 + k * 0.12); c.globalAlpha = (1 - u) * 0.35 * fade; c.fillStyle = '#eef2f4'; c.beginPath(); c.arc(hx + u * 1.4 * ppm, hy - u * 0.9 * ppm - k * 0.1 * ppm, (0.12 + u * 0.45) * ppm, 0, 7); c.fill(); }
+        c.globalCompositeOperation = 'lighter';
+        const pulse = (0.55 + 0.45 * Math.sin(age * 14)) * fade;
+        (SH === 'boxB' ? [4.06] : SH === 'boxC' ? [3.28, 2.25] : BOXY ? [3.92] : [3.22, 2.86]).forEach((h) => { const gx = L(SH === 'boxB' || SH === 'boxC' ? -0.98 : BOXY ? -0.88 : -0.6), gyy = Y(h), r = 2.2 * ppm; const lg = c.createRadialGradient(gx, gyy, 0, gx, gyy, r); lg.addColorStop(0, `rgba(255,246,210,${(0.9 * pulse).toFixed(3)})`); lg.addColorStop(1, 'rgba(255,240,190,0)'); c.globalAlpha = 1; c.fillStyle = lg; c.beginPath(); c.arc(gx, gyy, r, 0, 7); c.fill(); });
+        c.restore();
+      }
     }
     c.restore();
     c.textAlign = 'start'; c.textBaseline = 'alphabetic';

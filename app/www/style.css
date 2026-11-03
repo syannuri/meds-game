@@ -821,3 +821,12 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 /* radio: pindah ke langit atas (di bawah bilah HUD), tidak lagi menutupi kereta & peron */
 #radio { top: calc(54px + env(safe-area-inset-top, 0px)); bottom: auto; transition: top 0.25s ease; max-width: min(460px, 50vw); }
 @media (max-height: 460px) { #radio { bottom: auto; padding: 6px 11px; } }
+/* tombol klakson: ikon klakson udara ganda; gelombang memancar saat ditekan */
+#btnHorn .hw { opacity: 0.55; transition: opacity 0.2s; }
+#btnHorn.honk { border-color: rgba(255, 214, 140, 0.8); background: rgba(242, 165, 22, 0.22); box-shadow: 0 0 0 3px rgba(242, 165, 22, 0.18), 0 0 18px rgba(255, 190, 80, 0.4); }
+#btnHorn.honk svg { animation: hornShake 0.12s linear 6; }
+#btnHorn.honk .hw { opacity: 1; animation: hornWave 0.5s ease-out infinite; }
+#btnHorn.honk .hw2 { animation-delay: 0.15s; }
+@keyframes hornWave { 0% { opacity: 0; transform: translateX(-2px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateX(2px); } }
+@keyframes hornShake { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(0.6px) rotate(-2deg); } }
+@media (prefers-reduced-motion: reduce) { #btnHorn.honk svg, #btnHorn.honk .hw { animation: none; } }
