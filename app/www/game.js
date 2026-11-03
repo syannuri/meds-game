@@ -1851,11 +1851,58 @@
     dx = Math.min(dx, Math.max(0, window.innerWidth - 110 - (rr.right - (parseFloat(el.dataset.dx) || 0))));
     if (Math.abs(dx - (parseFloat(el.dataset.dx) || 0)) > 1) { el.dataset.dx = dx; el.style.transform = `translateX(calc(-50% + ${dx.toFixed(0)}px))`; }
   }
+  // ---------- potret karakter (SVG) untuk briefing, radio, dan petunjuk ----------
+  const PORTRAIT = (() => {
+    const face = (skin, sh) => `<path d="M32 60c-10 0-17-7-17-19V35c0-10 7-17 17-17s17 7 17 17v6c0 12-7 19-17 19z" fill="${skin}"/><path d="M20 44c3 8 8 12 12 12s9-4 12-12c-2 9-6 14-12 14S22 53 20 44z" fill="${sh}" opacity=".35"/>`;
+    const ears = (skin) => `<ellipse cx="15.5" cy="40" rx="3" ry="4.5" fill="${skin}"/><ellipse cx="48.5" cy="40" rx="3" ry="4.5" fill="${skin}"/>`;
+    const eyes = (y = 39, c = '#2a1d17') => `<ellipse cx="25.5" cy="${y}" rx="2" ry="2.3" fill="${c}"/><ellipse cx="38.5" cy="${y}" rx="2" ry="2.3" fill="${c}"/><circle cx="26.2" cy="${y - 0.8}" r=".6" fill="#fff"/><circle cx="39.2" cy="${y - 0.8}" r=".6" fill="#fff"/>`;
+    const brows = (y, c, tilt = 0) => `<path d="M21.5 ${y + tilt}q4-2.4 8 0M34.5 ${y}q4-2.4 8 ${tilt}" stroke="${c}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+    const smile = (y = 49) => `<path d="M27 ${y}q5 4 10 0" stroke="#7a3b2e" stroke-width="1.6" fill="none" stroke-linecap="round"/>`;
+    const nose = (y = 44) => `<path d="M32 ${y - 3}q-1.6 3 0 3.6" stroke="rgba(90,50,30,.45)" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+    const blush = `<ellipse cx="21.5" cy="46" rx="2.6" ry="1.5" fill="#e5806a" opacity=".28"/><ellipse cx="42.5" cy="46" rx="2.6" ry="1.5" fill="#e5806a" opacity=".28"/>`;
+    const bg = (a, b) => `<defs><radialGradient id="pg${a.slice(1)}" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></radialGradient></defs><rect width="64" height="64" fill="url(#pg${a.slice(1)})"/>`;
+    const P = {
+      // Kakek: pensiunan masinis, rambut & kumis putih, topi masinis lama biru tua berlencana emas
+      KK: bg('#4a7f8c', '#1e3e48') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#2b4a6b"/><path d="M26 52l6 6 6-6v12h-12z" fill="#f3ead6"/><circle cx="32" cy="60" r="1.3" fill="#d9a93a"/>`
+        + ears('#c9926b') + face('#c9926b', '#8a5a3a') + `<path d="M17 34c0-4 3-6 4-6M47 34c0-4-3-6-4-6" stroke="#eceae4" stroke-width="3" fill="none" stroke-linecap="round"/>`
+        + eyes(39.5) + brows(34.5, '#eceae4') + nose(45) + `<path d="M23.5 48.5q4.5-3.4 8.5-1 4-2.4 8.5 1-4 3.2-8.5 1.6-4.5 1.6-8.5-1.6z" fill="#eceae4"/><path d="M28 53q4 2 8 0" stroke="#7a3b2e" stroke-width="1.4" fill="none" stroke-linecap="round"/>`
+        + `<path d="M23 42.5l5 0M36 42.5l5 0" stroke="rgba(90,50,30,.35)" stroke-width="1"/><circle cx="25.5" cy="39.5" r="4.2" fill="none" stroke="#8a7a60" stroke-width="1.1"/><circle cx="38.5" cy="39.5" r="4.2" fill="none" stroke="#8a7a60" stroke-width="1.1"/><path d="M29.7 39.5h4.6" stroke="#8a7a60" stroke-width="1.1"/>`
+        + `<path d="M12 29c2-10 10-15 20-15s18 5 20 15z" fill="#1f3550"/><path d="M10 29h44c0 2-2 3.5-4 3.5H14c-2 0-4-1.5-4-3.5z" fill="#152538"/><rect x="11" y="27" width="42" height="2.2" fill="#d9a93a"/><path d="M29 19.5h6l-1 4.5h-4z" fill="#d9a93a"/><circle cx="32" cy="21" r="1.4" fill="#fff6d0"/>`,
+      // Dimas: mekanik muda, topi pet terbalik, wearpack biru, noda oli, senyum lebar
+      DM: bg('#3f8f86', '#1b4d48') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#2f5f9a"/><path d="M20 53l3 11M44 53l-3 11" stroke="#f2a516" stroke-width="2.4"/><rect x="36" y="56" width="6" height="5" rx="1" fill="#244a78"/><path d="M14 58l4 1" stroke="#1d1d1d" stroke-width="1.4" opacity=".5"/>`
+        + ears('#b87a52') + face('#b87a52', '#7a4a2a') + `<path d="M15 33c1-11 8-16 17-16s16 5 17 16c-3-4-6-6-9-6-5 2-12 2-17 0-3 0-6 2-8 6z" fill="#1b1512"/>`
+        + `<path d="M14 26c1-7 8-11 18-11s17 4 18 11z" fill="#c8352b"/><rect x="13" y="24.5" width="38" height="3" rx="1.5" fill="#a32a22"/><path d="M8 27c1-2 4-2.5 7-2.5v3c-3 0-5 .2-7-.5z" fill="#a32a22"/><circle cx="32" cy="17" r="1.3" fill="#f2a516"/>`
+        + eyes(39) + brows(34, '#1b1512') + nose(44) + `<path d="M25.5 48.5q6.5 6 13 0q-6.5 2.4-13 0z" fill="#fff"/><path d="M25.5 48.5q6.5 6 13 0" stroke="#7a3b2e" stroke-width="1.4" fill="none" stroke-linecap="round"/>`
+        + blush + `<path d="M40 44.5q2.5.6 3.5-1" stroke="#2a2420" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".55"/>`,
+      // Sari: PPKA magang, kerudung teal, topi merah PPKA, peluit
+      SR: bg('#c9776a', '#6a2e3a') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#f3ead6"/><path d="M8 64c2-9 11-13 24-13s22 4 24 13" fill="none" stroke="#1f6b6a" stroke-width="0"/>`
+        + `<path d="M11 44c0-15 9-24 21-24s21 9 21 24c0 8-3 13-7 15H18c-4-2-7-7-7-15z" fill="#1f7a72"/>` + face('#d6a27a', '#9a6a4a')
+        + `<path d="M16 38c1-9 7-14 16-14s15 5 16 14c-4-5-10-7-16-7s-12 2-16 7z" fill="#1f7a72"/>`
+        + eyes(40) + `<path d="M22.5 37.6l-1.2-1.2M41.5 37.6l1.2-1.2" stroke="#2a1d17" stroke-width="1"/>` + brows(35.5, '#3a2a20') + nose(45) + smile(49.5) + blush
+        + `<path d="M15 25c1-7 8-11 17-11s16 4 17 11z" fill="#d83a2e"/><rect x="13" y="24" width="38" height="3.4" rx="1.6" fill="#1d1a18"/><rect x="13" y="24" width="38" height="1" fill="#f3ead6" opacity=".7"/><circle cx="32" cy="19.5" r="2" fill="#f2c94c"/>`
+        + `<path d="M40 61.5l5 1" stroke="#c0a060" stroke-width="1.2"/><rect x="44.5" y="61" width="6" height="3" rx="1.5" fill="#c9ced2"/>`,
+      // Bu Wulan: kepala stasiun, kerudung marun, kacamata, seragam putih berpangkat
+      BW: bg('#8a6aa8', '#3a2a55') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#f6f2ea"/><rect x="15" y="56" width="8" height="3" rx="1" fill="#d9a93a"/><rect x="41" y="56" width="8" height="3" rx="1" fill="#d9a93a"/>`
+        + `<path d="M11 43c0-15 9-24 21-24s21 9 21 24c0 9-4 14-8 16H19c-4-2-8-7-8-16z" fill="#7a2e3a"/>` + face('#c48e68', '#8a5a3a')
+        + `<path d="M15 37c1-10 8-15 17-15s16 5 17 15c-4-5-10-7-17-7s-13 2-17 7z" fill="#7a2e3a"/><path d="M22 28q10-5 20 0" stroke="#a84a58" stroke-width="1.4" fill="none"/>`
+        + eyes(40.5) + brows(35.5, '#3a2a20') + nose(45.5) + `<path d="M27.5 50q4.5 2.6 9 0" stroke="#8a3b3e" stroke-width="1.7" fill="none" stroke-linecap="round"/>` + blush
+        + `<rect x="20.5" y="36.8" width="9.6" height="6.8" rx="2.6" fill="rgba(255,255,255,.12)" stroke="#2a2420" stroke-width="1.3"/><rect x="33.9" y="36.8" width="9.6" height="6.8" rx="2.6" fill="rgba(255,255,255,.12)" stroke="#2a2420" stroke-width="1.3"/><path d="M30.1 39.6h3.8" stroke="#2a2420" stroke-width="1.3"/>`
+        + `<circle cx="44" cy="58" r="2" fill="#d83a2e"/>`,
+      // Pak Bram: bos bus rival, kacamata hitam, kumis tebal, jaket oranye
+      PB: bg('#d9894a', '#6a3218') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#e8822a"/><path d="M26 52l6 7 6-7" fill="#1d1d1d"/><path d="M22 53l-4 11M42 53l4 11" stroke="#b85a14" stroke-width="2"/>`
+        + ears('#a8714c') + face('#a8714c', '#6a4028') + `<path d="M15 34c0-12 8-18 17-18s17 6 17 18c-2-6-5-9-8-10-3 3-15 3-18 0-3 1-6 4-8 10z" fill="#141210"/><path d="M22 21q10-6 20 0" stroke="#3a3632" stroke-width="1.2" fill="none" opacity=".8"/>`
+        + `<path d="M20 35.5l9 .5M35 36l9-.5" stroke="#141210" stroke-width="2.4" stroke-linecap="round"/><path d="M19.5 37.5h10.5v3.6q-5.3 3-10.5 0zM34 37.5h10.5v3.6q-5.2 3-10.5 0z" fill="#121418"/><path d="M30 38.4h4" stroke="#121418" stroke-width="1.6"/><path d="M21.5 38.6l3 0" stroke="#fff" stroke-width=".9" opacity=".6"/>`
+        + nose(46) + `<path d="M23 49q4.5-3.6 9-1.2 4.5-2.4 9 1.2-3.6 2.2-9 1.2-5.4 1-9-1.2z" fill="#141210"/><path d="M29 53.4q3 .9 6 0" stroke="#6a3020" stroke-width="1.3" fill="none" stroke-linecap="round"/>`,
+    };
+    P.RK = P.DM;
+    return (id) => P[id] ? `<svg viewBox="0 0 64 64" aria-hidden="true">${P[id]}</svg>` : null;
+  })();
+  function setAvatar(el, id) { if (!el) return; const sv = PORTRAIT(id); if (sv) { el.innerHTML = sv; el.classList.add('pic'); } else { el.textContent = id; el.classList.remove('pic'); } }
   function radio(text, dur = 6.5, who = 'Dimas', initials = 'DM') {
     const el = $('radio');
     $('radioText').textContent = text;
     $('radioWho').textContent = `Radio · ${who}`;
-    $('radioAvatar').textContent = initials;
+    setAvatar($('radioAvatar'), initials);
     el.classList.remove('mini', 'ghost', 'fade'); el.hidden = false; placeRadio();
     // lama tampil mengikuti panjang pesan (3-5,5 detik), bukan tetap 6-7 detik
     radioTimer = radioDur = clamp(Math.min(dur, 1.8 + text.length * 0.042), 3, 5.5);
@@ -2296,22 +2343,27 @@
     S.burst = Math.max(0, (S.burst || 0) - dt);
     const rateSmoke = 4 + power * 12 + S.v * 0.35;
     if (Math.random() < rateSmoke * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), power, false));
-    if ((S.burst > 0 || S.slip) && Math.random() < 28 * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), 1, true));
+    if ((S.burst > 0 || S.slip) && Math.random() < 11 * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), 1, true));
     if (S.sandT > 0 && Math.random() < 25 * dt) S.smoke.push(sandPuff(S.x - 7 - Math.random() * 4));
     for (const p of S.smoke) {
-      p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy *= 0.993; p.vx *= 0.995; p.r += p.grow * dt * (1 - p.life / (p.max * 1.6));
+      p.life += dt; p.x += p.vx * dt + (p.sw !== undefined ? Math.sin(p.sw + p.life * 3.1) * 0.35 * dt : 0); p.y += p.vy * dt; p.vy *= 0.993; p.vx *= 0.995; p.r += p.grow * dt * (1 - p.life / (p.max * 1.6));
     }
     S.smoke = S.smoke.filter((p) => p.life < p.max);
+    if (S.smoke.length > 140) S.smoke.splice(0, S.smoke.length - 140);
     if (S.shake > 0) S.shake = Math.max(0, S.shake - dt * 1.6);
   }
 
   // gas buang diesel: tipis, dengan semburan gelap saat tuas tenaga dinaikkan
+  // asap knalpot diesel: kepulan tipis berlapis yang tertiup angin (lebih kencang saat hujan/badai),
+  // kepekatan mengikuti notch; saat selip/hentakan hanya sedikit lebih gelap, tidak menggumpal
   function exhaust(x, y, power, dark) {
+    const wind = (MIS && (MIS.rain || MIS.sky === 'storm')) ? 2.6 : 1.1;
     return {
-      x: x + (Math.random() - 0.5) * 0.2, y, r: 0.22 + power * 0.1,
-      grow: 0.55 + power * 0.5 + Math.random() * 0.3 + (dark ? 0.4 : 0),
-      vx: (Math.random() - 0.5) * 0.6 - 1.3, vy: 1.3 + power * 1.6 + Math.random() * 0.6,
-      life: 0, max: 1.5 + Math.random() * 0.8 + (dark ? 0.7 : 0), dark, a: dark ? 0.6 : 0.26 + power * 0.22,
+      x: x + (Math.random() - 0.5) * 0.25, y, r: 0.18 + power * 0.08,
+      grow: 0.42 + power * 0.32 + Math.random() * 0.22 + (dark ? 0.18 : 0),
+      vx: (Math.random() - 0.5) * 0.5 - wind - power * 0.4, vy: 1.1 + power * 1.3 + Math.random() * 0.5,
+      sw: Math.random() * 6.3, life: 0, max: 1.3 + Math.random() * 0.7 + (dark ? 0.3 : 0), dark,
+      a: dark ? 0.2 + Math.random() * 0.06 : 0.15 + power * 0.2,
     };
   }
   function puff(x, y, white, power = 0) {
@@ -2629,7 +2681,7 @@
       for (let k = 0; k <= i; k++) T.shown[k] = true;
       T.active = i; T.t = 0;
       const b = beats[i];
-      $('coachWho').textContent = TUT_WHO[b.who]; $('coachAv').textContent = b.who; $('coachText').textContent = b.text;
+      $('coachWho').textContent = TUT_WHO[b.who]; setAvatar($('coachAv'), b.who); $('coachText').textContent = b.text;
       coach.hidden = false;
     }
     // ikuti posisi kontrol yang disorot (layout bisa berubah)
@@ -3108,7 +3160,7 @@
     const m = MIS, R = ROUTE, f = finalStation();
     $('briefEyebrow').textContent = m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
     $('briefTitle').textContent = m.title;
-    $('briefAvatar').textContent = m.speaker.initials;
+    setAvatar($('briefAvatar'), m.speaker.initials);
     $('briefWho').textContent = m.speaker.who;
     $('briefText').textContent = m.brief;
     const stops = R.stations.slice(1);
@@ -8317,7 +8369,7 @@
     get ROUTE() { return ROUTE; },
     get MIS() { return MIS; },
     get S() { return S; },
-    radio: (t) => radio(t),
+    radio: (t, w, i) => radio(t, 6, w, i), portrait: (id) => PORTRAIT(id),
     get mode() { return mode; },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
     audioMeter: () => Sound.meter(),
