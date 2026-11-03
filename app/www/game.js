@@ -2804,6 +2804,33 @@
       + `<rect x="102" y="38" width="38" height="13" rx="2" fill="#c8352b"/><path d="M140 38 L150 45 V51 H140z" fill="#c8352b"/><rect x="102" y="46" width="48" height="2" fill="#f2c94c"/><rect x="134" y="40" width="9" height="4" fill="#1e2a33"/><circle cx="108" cy="52" r="2" fill="#222"/><circle cx="116" cy="52" r="2" fill="#222"/><circle cx="136" cy="52" r="2" fill="#222"/><circle cx="144" cy="52" r="2" fill="#222"/>`
       + (night || storm ? `<path d="M150 44 L200 38 V54z" fill="#fff6c4" opacity=".28"/>` : '') + `</svg></span>`;
   }
+  // ---------- layar pembuka: muat font & render awal, lalu "Ketuk untuk mulai" (membuka audio & mengunci mendatar) ----------
+  function bootSplash() {
+    const sp = $('splash'), SPL = window.__splash; if (!sp || !SPL) return;
+    if (navigator.webdriver) { sp.remove(); return; } // uji otomatis: lewati
+    let k = 0; const say = () => SPL.msgs[k++ % SPL.msgs.length];
+    SPL.set(35, say());
+    const t0 = performance.now(), steps = [];
+    steps.push(document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 2500))]).then(() => SPL.set(65, say())) : Promise.resolve());
+    steps.push(new Promise((r) => { let n = 0; const f = () => { if (++n >= 12) { SPL.set(85, say()); r(); } else requestAnimationFrame(f); }; requestAnimationFrame(f); }));
+    Promise.all(steps).then(() => new Promise((r) => setTimeout(r, Math.max(0, 1400 - (performance.now() - t0))))).then(() => {
+      textCache.clear(); SPL.set(100, 'Siap berangkat!'); sp.classList.add('ready');
+    });
+    const go = () => {
+      if (!sp.classList.contains('ready')) return;
+      Sound.init();
+      const th = $('tapHint'); if (th) th.classList.add('gone');
+      // layar mendatar otomatis bila peramban mengizinkan (Android/Chrome); iPhone mengikuti putaran ponsel
+      try {
+        const de = document.documentElement, fs = de.requestFullscreen || de.webkitRequestFullscreen;
+        const lock = () => { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); };
+        if (fs && !document.fullscreenElement && !/iPhone|iPad|iPod/.test(navigator.userAgent)) { const pr = fs.call(de); if (pr && pr.then) pr.then(lock).catch(lock); else lock(); } else lock();
+      } catch (e) { /* abaikan */ }
+      sp.classList.add('out'); setTimeout(() => sp.remove(), 700);
+      ui.screens.title.classList.remove('enter'); void ui.screens.title.offsetWidth; ui.screens.title.classList.add('enter');
+    };
+    sp.addEventListener('click', go);
+  }
   // ---------- halaman utama hidup: kunang-kunang, ketukan bercahaya, paralaks, karcis miring ----------
   const TFX = { motes: [], bursts: [], px: -1, py: -1, near: 0, t: 0, spr: null, cv: null };
   function titleFxInit() {
@@ -8147,4 +8174,5 @@
   showScreen('title');
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { textCache.clear(); });
   requestAnimationFrame(frame);
+  bootSplash();
 })();
