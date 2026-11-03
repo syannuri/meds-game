@@ -916,3 +916,53 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
   #screenHowto .card { padding: 8px 10px; }
   #screenHowto .lead { font-size: 12px; }
 }
+
+/* ---------- briefing bergambar ---------- */
+.briefcard { padding-top: 0; overflow: hidden; }
+.bhero { position: relative; margin: 0 -18px 12px; height: clamp(84px, 24vh, 140px); }
+.bhero .bart { position: absolute; inset: 0; display: block; overflow: hidden; }
+.bhero .bart svg { width: 100%; height: 100%; display: block; }
+.bhero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 16, 22, 0) 35%, rgba(18, 28, 34, 0.92) 100%); pointer-events: none; }
+.broute { position: absolute; left: 30px; right: 30px; bottom: 8px; height: 34px; z-index: 1; }
+.brail { position: absolute; left: 0; right: 0; top: 6px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #ffc757, #f2a516); box-shadow: 0 0 8px rgba(242, 165, 22, 0.6); }
+.bst { position: absolute; top: 1px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.bst.first { transform: translateX(-12%); align-items: flex-start; } .bst.last { transform: translateX(-88%); align-items: flex-end; }
+.bst i { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2.5px solid #f2a516; box-sizing: border-box; }
+.bst em { font-style: normal; font-size: 10.5px; font-weight: 800; color: #f3eee1; white-space: nowrap; margin-top: 3px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.bst small { font-size: 9.5px; font-weight: 700; color: #ffd98a; }
+#screenBrief .facts dt:first-of-type, #screenBrief .facts dt:first-of-type + dd, #screenBrief .facts dt:nth-of-type(5), #screenBrief .facts dt:nth-of-type(5) + dd { display: none; }
+@media (max-height: 460px) { .bhero { height: clamp(70px, 22vh, 96px); margin-bottom: 8px; } .briefcard .goals li { font-size: 12px; } }
+
+/* ---------- layar hasil: bintang bersinar bertahap + konfeti ---------- */
+#screenResult { position: relative; }
+#confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+.stars span { position: relative; display: inline-block; }
+.stars .on { animation: starPop 0.55s cubic-bezier(.2, 1.6, .4, 1) both; animation-delay: var(--d, 0s); }
+.stars .off { animation: starOff 0.4s ease-out both; animation-delay: var(--d, 0s); }
+.stars .ray { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: conic-gradient(from 0deg, rgba(255, 214, 120, 0) 0 8%, rgba(255, 214, 120, 0.55) 10%, rgba(255, 214, 120, 0) 12% 33%, rgba(255, 214, 120, 0.55) 35%, rgba(255, 214, 120, 0) 37% 58%, rgba(255, 214, 120, 0.55) 60%, rgba(255, 214, 120, 0) 62% 83%, rgba(255, 214, 120, 0.55) 85%, rgba(255, 214, 120, 0) 87%);
+  -webkit-mask: radial-gradient(circle, #000 20%, transparent 70%); mask: radial-gradient(circle, #000 20%, transparent 70%); }
+.stars .on .ray { animation: starRay 0.9s ease-out both; animation-delay: var(--d, 0s); }
+.stars .off .ray { display: none; }
+.stars svg { position: relative; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35)); }
+.stars .on svg { filter: drop-shadow(0 0 10px rgba(255, 190, 70, 0.7)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.35)); }
+.stars.three .on svg { animation: starGlow 2.2s ease-in-out infinite; animation-delay: 1.4s; }
+@keyframes starPop { 0% { transform: scale(0.2) rotate(-40deg); opacity: 0; } 60% { transform: scale(1.3) rotate(8deg); opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes starOff { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes starRay { 0% { opacity: 0; transform: scale(0.4) rotate(0); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.4) rotate(50deg); } }
+@keyframes starGlow { 0%, 100% { filter: drop-shadow(0 0 8px rgba(255, 190, 70, 0.6)); } 50% { filter: drop-shadow(0 0 18px rgba(255, 214, 120, 0.95)); } }
+@media (prefers-reduced-motion: reduce) { .stars .on, .stars .off, .stars .ray, .stars.three .on svg { animation: none !important; opacity: 1; } .stars .ray { display: none; } }
+/* sampul briefing: ilustrasi utuh di kiri, rute mini di kanan, latar ilustrasi kabur */
+.briefcard { padding-top: 14px; }
+.bhero { margin: 0 0 12px; height: clamp(74px, 21vh, 112px); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; }
+.bhero::after { display: none; }
+.bhero .bart { position: relative; inset: auto; height: 100%; aspect-ratio: 12 / 7; border-radius: 12px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.broute { position: relative; left: auto; right: auto; bottom: auto; height: 46px; margin: 0 22px 0 18px; }
+.bst em { font-size: 10px; }
+@media (max-height: 460px) { .bhero { height: clamp(60px, 19vh, 80px); gap: 10px; } .broute { height: 40px; margin: 0 16px 0 12px; } .bst em { font-size: 9px; } .bst small { font-size: 8.5px; } }
+.broute { height: 64px; }
+.brail { top: 26px; }
+.bst { top: 21px; }
+.bst.up { top: auto; bottom: calc(100% - 33px); flex-direction: column-reverse; }
+.bst.up em { margin: 0 0 3px; }
+@media (max-height: 460px) { .broute { height: 58px; } .brail { top: 24px; } .bst { top: 19px; } .bst.up { bottom: calc(100% - 31px); } }

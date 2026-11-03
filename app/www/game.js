@@ -1466,8 +1466,8 @@
       },
       stars(n) {
         const notes = [523.25, 659.25, 783.99];
-        for (let i = 0; i < n; i++) metal(notes[i] * 2, 0.14, 1.4, sfx, 0.35 + i * 0.3);
-        if (n === 3) metal(1046.5 * 2, 0.1, 2, sfx, 1.4);
+        for (let i = 0; i < n; i++) { metal(notes[i] * 2, 0.14, 1.4, sfx, 0.35 + i * 0.3); burst(5200, 1.4, 0.03, 0.05, 'bandpass', sfx, 0.35 + i * 0.3); }
+        if (n === 3) { metal(1046.5 * 2, 0.1, 2, sfx, 1.25); [1318.5, 1568, 2093].forEach((f, k) => metal(f * 2, 0.045, 1.2, sfx, 1.3 + k * 0.07)); nz(ac.currentTime + 1.2, 'highpass', 3500, 0.5, 0.05, 0.9, sfx); }
         duck({ music: 0.6 }, 2.4);
       },
       thunder(delay) {
@@ -2734,6 +2734,31 @@
 
   const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
 
+  // konfeti merah-putih-emas saat tiga bintang
+  function confetti() {
+    const cv2 = $('confetti'); if (!cv2 || REDUCE_MOTION) return;
+    const host = ui.screens.result, w = host.clientWidth, h = host.clientHeight;
+    cv2.width = Math.round(w * DPR); cv2.height = Math.round(h * DPR);
+    const c = cv2.getContext('2d'), cols = ['#d83a2e', '#f7f3e8', '#f2a516', '#ffd36b', '#2bb3a3'];
+    const ps = Array.from({ length: 140 }, (_, i) => ({ x: w * (0.15 + Math.random() * 0.3), y: h * 0.38, vx: (Math.random() - 0.35) * 520, vy: -260 - Math.random() * 420, r: Math.random() * 6.3, vr: (Math.random() - 0.5) * 14, s: 4 + Math.random() * 5, col: cols[i % cols.length], f: Math.random() * 6 }));
+    let t0 = performance.now(), last = t0;
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; const age = (now - t0) / 1000;
+      c.setTransform(DPR, 0, 0, DPR, 0, 0); c.clearRect(0, 0, w, h);
+      for (const p of ps) {
+        p.vy += 620 * dt; p.vx *= 1 - 1.2 * dt; p.vy *= 1 - 0.6 * dt; p.x += p.vx * dt + Math.sin(age * 6 + p.f) * 18 * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+        c.save(); c.globalAlpha = Math.max(0, Math.min(1, 3.2 - age)); c.translate(p.x, p.y); c.rotate(p.r); c.scale(1, Math.abs(Math.cos(age * 5 + p.f)) + 0.15);
+        c.fillStyle = p.col; c.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); c.restore();
+      }
+      if (age < 3.4 && mode === 'result') requestAnimationFrame(tick); else c.clearRect(0, 0, w, h);
+    };
+    requestAnimationFrame(tick);
+  }
+  function renderResStars(n, failed) {
+    $('resStars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < n ? 'on' : 'off'}" style="--d:${(0.35 + i * 0.3).toFixed(2)}s"><b class="ray"></b>${STAR_SVG}</span>`).join('');
+    $('resStars').classList.toggle('three', !failed && n === 3);
+    if (!failed && n === 3) setTimeout(() => confetti(), 1150);
+  }
   function showResult() {
     const r = computeResult();
     const best = MIS.daily ? 3 : bestOf(MIS.id);
@@ -2752,7 +2777,7 @@
     $('resTitle').textContent = r.failed ? 'Misi gagal' : 'Misi selesai';
     const mid = MIS.daily ? `Rute Harian ${MIS.daily.label}` : `Misi ${MIS.id}`;
     $('resEyebrow').textContent = (r.failed ? `${mid} · ${MIS.title}` : `${mid} · tiba ${fmtClock(S.clock)}`) + (S.expert ? ' · Masinis Ahli' : '');
-    $('resStars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < r.stars ? 'on' : 'off'}">${STAR_SVG}</span>`).join('');
+    renderResStars(r.stars, r.failed);
     $('resStars').setAttribute('aria-label', `${r.stars} dari 3 bintang`);
     const fr = $('resFail');
     fr.hidden = !r.failed;
@@ -3187,6 +3212,12 @@
       <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `Cakra + ${N_COACH} gerbong penumpang${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
+    { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
+      const art = m.daily ? dailyArt(m.base).replace('class="tart"', 'class="bart"') : misArt(m.id).replace('class="tart"', 'class="bart"');
+      const x0 = R.stations[0].x, x1 = f.x;
+      const pts = R.stations.map((s2, i) => { const u = (s2.x - x0) / Math.max(1, x1 - x0); return `<span class="bst${i === 0 ? ' first' : ''}${i === R.stations.length - 1 ? ' last' : ''}${i % 2 ? ' up' : ''}" style="left:${(u * 100).toFixed(1)}%"><i></i><em>${titleCase(s2.name)}</em><small>${i === 0 ? fmtClock(0) : s2.sched !== undefined ? fmtClock(s2.sched) : ''}</small></span>`; }).join('');
+      $('briefHero').innerHTML = `${art}<div class="broute"><div class="brail"></div>${pts}</div>`;
+    }
     $('briefGoals').innerHTML = goalDefs().map((g) => `<li><span class="star">★</span>${g.label}</li>`).join('');
     const tb = $('btnTutSkip');
     tb.hidden = !TUTORIAL[m.id];
@@ -3671,7 +3702,7 @@
   // ---------- tampilan kabin masinis (orang pertama) ----------
   // Rel di depan diproyeksikan dengan perspektif dari mata masinis. Tikungan memakai data lengkung yang sama
   // dengan tampilan samping (BEND), sehingga rel benar-benar berbelok ke kiri/kanan di depan kabin.
-  const cabRain = Array.from({ length: 70 }, (_, i) => ({ x: hash(i * 1.7), y: hash(i * 2.9 + 1), r: 0.6 + hash(i + 4) * 1.4 }));
+  const cabRain = Array.from({ length: 70 }, (_, i) => ({ x: hash(i * 1.7), y: hash(i * 2.9 + 1), r: 1.4 + hash(i + 4) * 3.2 }));
   function tickCrossings(st, dt) {
     ROUTE.crossings.forEach((cr, i) => {
       const A = crossState(i);
@@ -4178,8 +4209,15 @@
         const x = r.x * W, y = r.y * H * 0.75;
         const wiperX = lerp(W * 0.08, W * 0.46, wa) + (x > W / 2 ? W * 0.46 : 0);
         if (Math.abs(x - wiperX) < W * 0.05) return;
-        c.globalAlpha = 0.4 + age * 0.5; c.beginPath(); c.arc(x, y, r.r * (1 + age), 0, 7); c.fill();
+        // butir air membiaskan cahaya: tepi gelap, inti terang, kilau kecil, kadang meluncur turun
+        const rr = r.r * (1.1 + age * 0.9), yy = y + (k % 5 === 0 ? age * age * H * 0.12 : 0);
+        c.globalAlpha = 0.5 + age * 0.45;
+        if (k % 5 === 0) { c.strokeStyle = 'rgba(210,225,235,0.18)'; c.lineWidth = rr * 0.7; c.beginPath(); c.moveTo(x, y); c.lineTo(x, yy); c.stroke(); }
+        const g = c.createRadialGradient(x, yy + rr * 0.25, 0, x, yy, rr); g.addColorStop(0, 'rgba(210,225,235,0.14)'); g.addColorStop(0.75, 'rgba(185,205,220,0.26)'); g.addColorStop(1, 'rgba(20,28,36,0.5)');
+        c.fillStyle = g; c.beginPath(); c.arc(x, yy, rr, 0, 7); c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.8)'; c.beginPath(); c.arc(x - rr * 0.35, yy - rr * 0.38, Math.max(0.7, rr * 0.22), 0, 7); c.fill();
       });
+      c.fillStyle = 'rgba(220,232,240,0.35)';
       c.globalAlpha = 1;
       c.strokeStyle = '#141619'; c.lineWidth = Math.max(2, W * 0.004); c.lineCap = 'round';
       [[W * 0.27, H * 0.67], [W * 0.73, H * 0.67]].forEach(([px, py]) => {
@@ -4860,11 +4898,37 @@
         c.fillRect(sx, gy - 0.2 * ppm + hash(i * 3.1) * 1.2 * ppm, 2, 1);
       }
     }
+    if (MIS.rain) rainSplash(V);
     if (weather.flash > 0) {
       c.fillStyle = `rgba(235,240,255,${weather.flash * 0.55})`; c.fillRect(0, 0, W, H);
     }
     // jendela gerbong menyala hangat di tengah hujan
     drawWindowGlow(V, 0.55);
+  }
+  // cipratan mahkota air di peron, atap kereta, dan rel; butir air di kaca kabin
+  const SPL = { list: [], beads: null, last: 0 };
+  function rainSplash(V) {
+    const { c, ppm, gy, X, st } = V, now = performance.now(), dt = Math.min(0.05, (now - (SPL.last || now)) / 1000); SPL.last = now;
+    const T = ROUTE.tunnel, inT = (x) => T && x > T.from && x < T.to;
+    const plat = ROUTE.stations.find((s2) => X(s2.x + 25) > 0 && X(s2.x - 95) < W);
+    for (let k = 0; k < 4; k++) if (Math.random() < 34 * dt) {
+      const r = Math.random(); let wx, h;
+      if (r < 0.4 && st) { wx = st.x - Math.random() * TRAIN_LEN; h = trainH(5.05); }
+      else if (r < 0.75 && plat) { wx = plat.x - 95 + Math.random() * 120; h = 1.72; }
+      else { wx = (V.camX || 0) + Math.random() * W / ppm; h = 0.25; }
+      if (!inT(wx)) SPL.list.push({ wx, h, t: 0, s: 0.6 + Math.random() * 0.6 });
+    }
+    c.save(); c.strokeStyle = 'rgba(228,238,245,0.85)'; c.fillStyle = 'rgba(232,240,246,0.9)'; c.lineWidth = 1.3;
+    for (const q of SPL.list) {
+      q.t += dt; const u = q.t / 0.32; if (u >= 1) continue;
+      const x = (V.bx ? V.bx(q.wx) : X(q.wx)), y = gy - q.h * ppm + (V.bdy ? V.bdy(q.wx) : 0), rr = (0.2 + u * 0.8) * ppm * q.s;
+      c.globalAlpha = (1 - u) * 0.85;
+      c.beginPath(); c.ellipse(x, y, rr, rr * 0.28, 0, Math.PI, 0); c.stroke();
+      const hy = Math.sin(u * Math.PI) * 0.45 * ppm * q.s;
+      c.fillRect(x - rr * 0.8, y - hy, 2, 2); c.fillRect(x + rr * 0.8, y - hy * 0.8, 2, 2); c.fillRect(x - 1, y - hy * 1.25, 1.8, 1.8);
+    }
+    SPL.list = SPL.list.filter((q) => q.t < 0.32);
+    c.restore();
   }
   function drawWindowGlow(V, alpha) {
     const { c, ppm, gy, X, st } = V;
@@ -8442,6 +8506,7 @@
     get ROUTE() { return ROUTE; },
     get MIS() { return MIS; },
     get S() { return S; },
+    starsDemo: (n) => { renderResStars(n, false); Sound.stars(n); },
     radio: (t, w, i) => radio(t, 6, w, i), portrait: (id) => PORTRAIT(id),
     get mode() { return mode; },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
