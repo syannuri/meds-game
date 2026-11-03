@@ -4526,10 +4526,71 @@
     drawSunFx(V);
     drawTunnelDark(V);
     applyGrade(c, V);
+    drawCinema(V);
     drawSpeedFx(V, dtReal);
     drawMoments(c, V, dtReal);
   }
   // gradasi warna khas misi di atas seluruh dunia (tidak mengenai HUD), plus kabut lembap Sumatra
+  // ---------- pencahayaan sinematik: kontras kedalaman, split-tone hangat/dingin, sinar matahari, vinyet ----------
+  const CINEMA = true;
+  function drawCinema(V) {
+    if (!CINEMA || V.tf > 0.6) return;
+    const c = V.c, gy = V.gy, ppm = V.ppm, sun = sunPos(V), tt = performance.now() / 1000;
+    const mood = V.night ? 'night' : V.storm ? 'storm' : (MIS.pal && MIS.pal.mist) ? 'mist' : V.p < 0.55 ? 'golden' : 'day';
+    const hz = gy - 5 * ppm;
+    c.save();
+    // 1) kontras kedalaman: langit atas & tanah depan lebih gelap, cakrawala bercahaya
+    c.globalCompositeOperation = 'soft-light';
+    const T = { golden: ['rgba(30,14,70,0.5)', 'rgba(255,196,120,0.5)', 'rgba(20,60,30,0.32)'], day: ['rgba(20,40,90,0.36)', 'rgba(255,240,210,0.34)', 'rgba(20,60,25,0.3)'],
+      mist: ['rgba(30,40,50,0.32)', 'rgba(255,240,215,0.4)', 'rgba(20,50,25,0.3)'], storm: ['rgba(5,10,20,0.6)', 'rgba(170,190,205,0.3)', 'rgba(5,12,10,0.55)'], night: ['rgba(0,0,20,0.6)', 'rgba(120,130,200,0.3)', 'rgba(0,0,10,0.55)'] }[mood];
+    const vg = c.createLinearGradient(0, 0, 0, H); vg.addColorStop(0, T[0]); vg.addColorStop(clamp(hz / H, 0.2, 0.85), T[1]); vg.addColorStop(1, T[2]);
+    c.fillStyle = vg; c.fillRect(0, 0, W, H);
+    // 2) split-tone: sisi matahari hangat, sisi jauh dingin kebiruan
+    if (mood === 'golden' || mood === 'day' || mood === 'mist') {
+      const st2 = c.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, Math.max(W, H) * 1.1);
+      st2.addColorStop(0, mood === 'golden' ? 'rgba(255,150,60,0.5)' : 'rgba(255,210,140,0.34)'); st2.addColorStop(0.45, 'rgba(128,128,128,0)'); st2.addColorStop(1, mood === 'golden' ? 'rgba(30,90,120,0.4)' : 'rgba(30,90,120,0.3)');
+      c.fillStyle = st2; c.fillRect(0, 0, W, H);
+    } else if (mood === 'night') {
+      c.globalCompositeOperation = 'multiply'; c.fillStyle = 'rgba(70,80,150,0.35)'; c.fillRect(0, 0, W, H);
+    } else if (mood === 'storm') {
+      c.globalCompositeOperation = 'saturation'; c.fillStyle = 'rgba(128,128,128,0.35)'; c.fillRect(0, 0, W, H);
+      c.globalCompositeOperation = 'soft-light'; c.fillStyle = 'rgba(40,90,120,0.4)'; c.fillRect(0, 0, W, H);
+    }
+    // 3) sinar matahari menembus udara (god rays) saat pagi/sore
+    if ((mood === 'golden' || mood === 'mist') && !REDUCE_MOTION) {
+      c.globalCompositeOperation = 'screen';
+      for (let k = 0; k < 7; k++) {
+        const a = Math.PI * (0.62 + k * 0.075) + Math.sin(tt * 0.12 + k * 1.7) * 0.025, len = Math.max(W, H) * 1.3, wd = 0.022 + (k % 3) * 0.012;
+        const g = c.createLinearGradient(sun.x, sun.y, sun.x + Math.cos(a) * len, sun.y + Math.sin(a) * len);
+        const al = (mood === 'mist' ? 0.16 : 0.12) * (0.6 + 0.4 * Math.sin(tt * 0.3 + k * 2.1));
+        g.addColorStop(0, `rgba(255,214,150,${al.toFixed(3)})`); g.addColorStop(0.6, `rgba(255,200,140,${(al * 0.35).toFixed(3)})`); g.addColorStop(1, 'rgba(255,200,140,0)');
+        c.fillStyle = g; c.beginPath(); c.moveTo(sun.x, sun.y);
+        c.lineTo(sun.x + Math.cos(a - wd) * len, sun.y + Math.sin(a - wd) * len); c.lineTo(sun.x + Math.cos(a + wd) * len, sun.y + Math.sin(a + wd) * len); c.closePath(); c.fill();
+      }
+      // pendar cakrawala di bawah matahari
+      const hg = c.createRadialGradient(sun.x, hz, 0, sun.x, hz, W * 0.55); hg.addColorStop(0, 'rgba(255,190,110,0.28)'); hg.addColorStop(1, 'rgba(255,190,110,0)');
+      c.fillStyle = hg; c.fillRect(0, hz - W * 0.3, W, W * 0.6);
+    }
+    // 4) cahaya bulan dingin & sinar lembut di malam hari
+    if (mood === 'night') {
+      c.globalCompositeOperation = 'screen';
+      const mx = W * 0.72, my = H * 0.16, mg = c.createRadialGradient(mx, my, 0, mx, my, W * 0.6);
+      mg.addColorStop(0, 'rgba(150,170,255,0.2)'); mg.addColorStop(1, 'rgba(150,170,255,0)'); c.fillStyle = mg; c.fillRect(0, 0, W, H);
+    }
+    // 4b) kilau matahari di atap & sisi kereta (golden hour)
+    if ((mood === 'golden' || mood === 'mist') && V.st && V.st === S) {
+      c.globalCompositeOperation = 'screen';
+      const x0 = V.X(V.st.x - TRAIN_LEN), x1 = V.X(V.st.x), yr = gy - trainH(5.0) * ppm;
+      const rg = c.createLinearGradient(x0, 0, x1, 0); rg.addColorStop(0, 'rgba(255,180,100,0)'); rg.addColorStop(1, 'rgba(255,190,110,0.45)');
+      c.fillStyle = rg; c.fillRect(x0, yr - 0.15 * ppm, x1 - x0, 0.35 * ppm);
+    }
+    // 5) vinyet sinematik
+    c.globalCompositeOperation = 'multiply';
+    const vn = c.createRadialGradient(W * 0.5, H * 0.52, Math.min(W, H) * 0.45, W * 0.5, H * 0.52, Math.hypot(W, H) * 0.62);
+    vn.addColorStop(0, 'rgba(255,255,255,1)'); vn.addColorStop(1, mood === 'night' || mood === 'storm' ? 'rgba(70,74,92,1)' : mood === 'golden' ? 'rgba(150,105,90,1)' : 'rgba(170,160,150,1)');
+    c.fillStyle = vn; c.fillRect(0, 0, W, H);
+    c.restore();
+  }
   function applyGrade(c, V) {
     const P = MIS.pal; if (!P) return;
     if (P.mist && !V.tf) {
