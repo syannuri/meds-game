@@ -1610,6 +1610,7 @@
   const sv = $('strip'), sctx = sv.getContext('2d');
   let W = 0, H = 0, DPR = 1, SW = 0, SH = 0;
   let mode = 'title';
+  let radioDur = 1, trainScr = null;
   let radioTimer = 0, camLead = 0, camZoom = 1, camZoomV = 0;
   let viewMode = store.get('rn.view') === 'cab' ? 'cab' : 'side'; // 'side' (2.5D) atau 'cab' (kabin masinis)
   let rotateSkipped = false;
@@ -1855,8 +1856,9 @@
     $('radioText').textContent = text;
     $('radioWho').textContent = `Radio · ${who}`;
     $('radioAvatar').textContent = initials;
-    el.hidden = false; placeRadio();
-    radioTimer = dur;
+    el.classList.remove('mini', 'ghost', 'fade'); el.hidden = false; placeRadio();
+    // lama tampil mengikuti panjang pesan (3-5,5 detik), bukan tetap 6-7 detik
+    radioTimer = radioDur = clamp(Math.min(dur, 1.8 + text.length * 0.042), 3, 5.5);
     Sound.radio();
   }
 
@@ -3260,6 +3262,7 @@
     $('titleTabLbl').textContent = titleMap.tab === 'missions' ? '10 misi · 2 pulau' : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
   }));
   titleFxInit();
+  $('radio').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); $('radio').hidden = true; radioTimer = 0; });
   // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
   const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
     btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
@@ -4238,6 +4241,7 @@
     const tf = T ? smooth(T.from, T.from + 25, xc) * (1 - smooth(T.to, T.to + 25, xc)) : 0;
     const ppmB = clamp(H / 44, 3.4, 13);
     if (window.__rnDebug) window.__rnCam = { camX, ppm, camLead, pc: (camX + W / (2 * ppm)) * ppmB - W / 2, old: camX * ppm };
+    trainScr = { x0: X(st.x - TRAIN_LEN), x1: X(st.x), top: gy - 6.6 * ppm, bottom: gy };
     const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2, ppmB, pc: (camX + W / (2 * ppm)) * ppmB - W / 2 };
     // cahaya tepi (rim light), pantulan kaca, lampu kabin per suasana
     if (night) Object.assign(V, { rim: '#9fb4ff', rimA: 0.5, refl: 0.05, cabA: 0.9, haze: '#4b3d6b', hazeA: 0.3, water: '#3a3f74' });
@@ -8163,7 +8167,16 @@
     if (pcTimer > 0) { pcTimer -= dt; const pc = $('postcard'); if (pcTimer <= 0.5) pc.classList.add('out'); if (pcTimer <= 0 || mode !== 'play') { pc.hidden = true; pcTimer = 0; } }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) ui.toast.className = ''; }
     if (radioTimer > 0 && mode === 'play') { radioTimer -= dt; if (radioTimer <= 0) $('radio').hidden = true; }
-    if (!$('radio').hidden) placeRadio();
+    if (!$('radio').hidden) {
+      placeRadio();
+      const el = $('radio'); el.classList.toggle('fade', radioTimer < radioDur * 0.4);
+      // bila menutupi kereta: ringkas jadi satu baris, lalu tembus pandang
+      if (trainScr) {
+        const hit = () => { const r = el.getBoundingClientRect(); return r.bottom > trainScr.top + 6 && r.top < trainScr.bottom && r.right > trainScr.x0 && r.left < trainScr.x1; };
+        if (!el.classList.contains('mini') && hit()) el.classList.add('mini');
+        el.classList.toggle('ghost', el.classList.contains('mini') && hit());
+      }
+    }
     if (mode !== 'pause') updateWeather(dt, (S || idleState).v);
     // jaga agar ukuran gambar canvas selalu sama dengan ukuran tampilnya (mencegah kereta tampak gepeng)
     if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(2, window.devicePixelRatio || 1) !== DPR) resize();
