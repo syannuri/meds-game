@@ -839,3 +839,22 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 #radio.mini small { display: none; }
 #radio.mini p { font-size: 11.5px; line-height: 1.3; }
 #radio.ghost { opacity: 0.38; }
+
+/* ---------- HUD fokus: lebih sedikit teks, layar lebih lapang ---------- */
+/* sasaran bintang: saat tidak perlu perhatian, ringkas jadi tiga bintang kecil berwarna status */
+.goalchips.dim { opacity: 0.9; flex-direction: row; gap: 3px; }
+.goalchips.dim .gchip { padding: 3px 6px; gap: 0; }
+.goalchips.dim .gchip .t, .goalchips.dim .gchip .m { display: none; }
+.goalchips .gchip { transition: padding 0.3s; }
+.goalchips.dim .gchip.ok .s { color: var(--sig-green); }
+.goalchips.dim .gchip.lost .s { color: var(--sig-red); opacity: 0.8; }
+/* koin disembunyikan selama berkendara (ditampilkan di layar hasil) */
+#hud .cluster .cell.coins, #hud .cluster .sep.coins { display: none; }
+/* kotak titik henti hanya muncul bila ada sasaran berhenti di depan */
+.stopdist { transition: opacity 0.3s, transform 0.3s; }
+.stopdist.empty { opacity: 0; transform: translateY(8px); pointer-events: none; }
+/* info batas berikutnya di speedometer: hilang saat masih jauh */
+.gauge .nextlim.dim { opacity: 0; }
+/* toast lebih ringkas */
+#toast { max-width: min(400px, 46vw); padding: 6px 13px 6px 9px; font-size: 12px; gap: 8px; }
+#toast::before { width: 8px; height: 8px; }
