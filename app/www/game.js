@@ -3377,7 +3377,7 @@
       else if (S.phase === 'dwell') setText(ui.nextSched, 'berhenti di peron');
       else {
         const rem = ns.sched - S.clock;
-        setText(ui.nextSched, `jadwal ${fmtClock(ns.sched)} · ${rem >= 0 ? 'sisa ' + fmtDur(rem) : 'terlambat ' + fmtDur(rem)}`);
+        setText(ui.nextSched, rem >= 0 ? fmtClock(ns.sched) : `telat ${fmtDur(rem)}`);
       }
     }
     const cf = Math.round(S.comfort);
@@ -3422,6 +3422,7 @@
       if (last && S.st > 0) stopTxt = last.rating.r;
     }
     setText(ui.stopDist, stopTxt);
+    setClass(ui.stopBox, 'empty', stopTxt === '—');
     setClass(ui.stopBox, 'near', near); setClass(ui.stopBox, 'over', over);
 
     // pemandu titik henti: muncul saat moncong mendekati marka atau corong
@@ -7965,7 +7966,7 @@
     c.textBaseline = 'middle';
     // tanda jarak tiap 100 m
     c.fillStyle = 'rgba(239,233,218,0.35)';
-    for (let d = 100; d <= 600; d += 100) { const sx = M(S.x + d); c.fillRect(sx, ly + 6, 1, 4); c.fillText(`${d}`, sx + 3, h - 6); }
+    for (let d = 100; d <= 600; d += 100) { const sx = M(S.x + d); c.fillRect(sx, ly + 6, 1, 4); }
     // zona batas
     for (const z of ROUTE.zones) {
       const a = Math.max(M(z.from), 0), b = Math.min(M(z.to + TRAIN_LEN), w);
