@@ -1538,6 +1538,17 @@
         if (strong) { metal(BASE * 2 * SL[k] * 1.5, 0.05, 0.9, sfx, 0.08); metal(BASE * 4 * SL[k], 0.035, 0.7, sfx, 0.16); }
         burst(3200, 1.2, 0.02, 0.03, 'bandpass', sfx);
       },
+      ui(kind) { // bunyi khas menu game
+        if (!ac || muted) return;
+        const bell = (f, v, d, dl = 0) => { tone(f, v, d, { bus: sfx, delay: dl, type: 'sine' }); tone(f * 2.01, v * 0.32, d * 0.5, { bus: sfx, delay: dl }); tone(f * 3.02, v * 0.12, d * 0.3, { bus: sfx, delay: dl }); };
+        const tick = (dl = 0) => burst(4200, 1.1, 0.025, 0.018, 'bandpass', sfx, dl);
+        if (kind === 'select') { tone(310, 0.05, 0.07, { bus: sfx, to: 620, glide: 0.05, type: 'triangle' }); bell(784, 0.055, 0.22, 0.03); bell(1175, 0.05, 0.32, 0.09); tick(); }
+        else if (kind === 'confirm') { tick(); bell(1047, 0.06, 0.6); bell(1319, 0.06, 0.6, 0.09); bell(1568, 0.065, 0.95, 0.18); bell(2093, 0.03, 0.8, 0.27); nz(ac.currentTime, 'bandpass', 900, 0.6, 0.03, 0.35, sfx, 0.12); }
+        else if (kind === 'back') { tick(); tone(880, 0.05, 0.12, { bus: sfx, to: 640, glide: 0.1, type: 'triangle' }); bell(587, 0.04, 0.25, 0.08); }
+        else if (kind === 'tab') { nz(ac.currentTime, 'bandpass', 1100, 0.7, 0.05, 0.18, sfx, 0.06); tone(520, 0.06, 0.16, { bus: sfx, to: 820, glide: 0.1, type: 'triangle' }); bell(1319, 0.03, 0.2, 0.08); }
+        else if (kind === 'toggle') { tick(); tone(1046, 0.06, 0.09, { bus: sfx, type: 'triangle' }); tone(1568, 0.055, 0.12, { bus: sfx, delay: 0.06, type: 'triangle' }); }
+        else { tick(); tone(1320, 0.07, 0.1, { bus: sfx, type: 'triangle' }); bell(1760, 0.03, 0.18, 0.03); }
+      },
       uiHover(i = 0) { if (!ac) return; const k = [1, 2, 3, 5, 6, 7][((i % 6) + 6) % 6]; tone(BASE * 4 * SL[k], 0.012, 0.22, { bus: sfx }); },
       uiWhoosh() { if (!ac || muted) return; const t = ac.currentTime; nz(t, 'bandpass', 700, 0.8, 0.035, 0.28, sfx, 0.06); tone(BASE * 2, 0.02, 0.3, { bus: sfx, to: BASE * 3, glide: 0.2 }); },
       get ready() { return !!ac && ac.state === 'running'; },
@@ -2858,7 +2869,7 @@
         el.appendChild(rp); setTimeout(() => rp.remove(), 650);
         el.classList.add('press'); setTimeout(() => el.classList.remove('press'), 180);
         const idx = el.dataset.id ? MISSION_ORDER.indexOf(el.dataset.id) + 1 : el.id === 'btnContinue' ? 0 : 3;
-        if (el.closest('.maptabs')) Sound.uiWhoosh(); else Sound.uiTap(idx, el.id === 'btnContinue' || !!el.dataset.id);
+        void idx; // bunyi tombol ditangani oleh pendengar menu global
       } else Sound.uiTap(Math.floor(x / 60), false);
     });
     // karcis miring mengikuti jari/kursor, kilau mengikuti posisi
@@ -3249,6 +3260,18 @@
     $('titleTabLbl').textContent = titleMap.tab === 'missions' ? '10 misi · 2 pulau' : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
   }));
   titleFxInit();
+  // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
+  const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
+    btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
+    btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
+  document.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest('button, .ticket'); if (!el || el.disabled) return;
+    if (el.classList.contains('act')) return;
+    if (!el.closest('.screen, #splash, #rotate, .hud-top, #hud .round') && !UI_KIND[el.id]) return;
+    Sound.init();
+    const kind = el.classList.contains('ticket') ? 'select' : el.closest('.maptabs') ? 'tab' : UI_KIND[el.id] || 'click';
+    Sound.ui(kind);
+  }, true);
   // kecilkan logo bila lebih lebar dari kolomnya (mis. huruf cadangan saat font belum termuat)
   function fitLogo() {
     const h = document.querySelector('#screenTitle h1.logo'); if (!h || h.offsetParent === null) return;
