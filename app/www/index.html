@@ -254,7 +254,8 @@
           <button class="btn sm" id="btnExpert" aria-pressed="false" hidden title="Tanpa peta jalur, panduan titik henti, dan petunjuk. Koin ×1,5.">Masinis Ahli: mati</button>
         </div>
       </div>
-      <div class="card">
+      <div class="card briefcard">
+        <div class="bhero" id="briefHero"></div>
         <dl class="facts" id="briefFacts"></dl>
         <ul class="goals" id="briefGoals"></ul>
       </div>
@@ -281,7 +282,7 @@
       <div>
         <div class="eyebrow" id="resEyebrow">Misi 1-4</div>
         <h2 id="resTitle">Misi selesai</h2>
-        <div class="stars" id="resStars"></div>
+        <div class="stars" id="resStars"></div><canvas id="confetti" aria-hidden="true"></canvas>
         <p class="fail-reason" id="resFail" hidden></p>
         <div class="btn-row">
           <button class="btn primary" id="btnNext" hidden>Lanjut</button>
