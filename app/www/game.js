@@ -2792,6 +2792,7 @@
     mode = name;
     for (const [k, el] of Object.entries(ui.screens)) el.hidden = k !== name;
     ui.hud.hidden = !(name === 'play' || name === 'pause');
+    ui.hud.classList.toggle('paused', name === 'pause');
     if (name !== 'play') { toastTimer = 0; ui.toast.className = ''; }
     if (name === 'title') { renderMissionList(); const st = ui.screens.title; st.classList.remove('enter'); void st.offsetWidth; st.classList.add('enter'); requestAnimationFrame(() => fitLogo && fitLogo()); const th = $('tapHint'); if (th) th.classList.toggle('gone', Sound.ready || !Sound.musicOn || Sound.muted); }
     if (name !== 'play' && name !== 'pause') $('radio').hidden = true;
@@ -3311,7 +3312,21 @@
     Sound.init();
   });
 
-  function pause() { if (mode === 'play') { showScreen('pause'); } }
+  function pause() { if (mode === 'play') { renderPauseCard(); showScreen('pause'); } }
+  // kartu jeda: progres perjalanan, statistik, dan sasaran bintang
+  function renderPauseCard() {
+    const el = $('pauseCard'); if (!el || !S) return;
+    const R = ROUTE.stations, n = R.length, x0 = R[0].x, x1 = R[n - 1].x, prog = clamp((S.x - x0) / Math.max(1, x1 - x0), 0, 1);
+    const ns = S.phase === 'run' ? nextStation() : R[S.st];
+    const stops = R.map((st, i) => { const u = (st.x - x0) / Math.max(1, x1 - x0); const done = i <= S.st && !(i === S.st && S.phase === 'run' && i > 0 && false); return `<span class="pst${i <= S.st ? ' done' : ''}${ns && st === ns ? ' next' : ''}" style="left:${(u * 100).toFixed(1)}%"><i></i><em>${titleCase(st.name)}</em></span>`; }).join('');
+    const rem = ns && ns.sched !== undefined ? ns.sched - S.clock : null;
+    const gs = goalDefs().map((g) => ({ ...g, ...g.eval() }));
+    const mk = { ok: '✓', lost: '✕', pending: '•' };
+    $('pauseTitle').textContent = MIS.nick || MIS.title;
+    el.innerHTML = `<div class="ptrack"><div class="prail"><div class="pfill" style="width:${(prog * 100).toFixed(1)}%"></div><div class="ptrain" style="left:${(prog * 100).toFixed(1)}%"></div></div>${stops}</div>`
+      + `<div class="pstats"><div><span>Waktu</span><b>${fmtClock(S.clock)}</b></div><div><span>${ns ? titleCase(ns.name) : 'Tujuan'}</span><b class="${rem !== null && rem < 0 ? 'late' : ''}">${rem === null ? '—' : rem >= 0 ? 'sisa ' + fmtDur(rem) : 'telat ' + fmtDur(rem)}</b></div><div><span>Kenyamanan</span><b class="${S.comfort < 80 ? 'late' : ''}">${Math.round(S.comfort)}%</b></div><div><span>Koin</span><b>${S.coins || 0}</b></div></div>`
+      + `<ul class="pgoals">${gs.map((g) => `<li class="${g.state}"><i>${mk[g.state] || '•'}</i><span>${g.label}</span><s>★</s></li>`).join('')}</ul>`;
+  }
   function resume() { if (mode === 'pause') { showScreen('play'); last = performance.now(); } }
   $('btnPause').addEventListener('click', pause);
   $('btnResume').addEventListener('click', resume);
@@ -4265,10 +4280,51 @@
     const last = S.stops[S.stops.length - 1], here = ROUTE.stations[S.st];
     return !!last && !!here && last.name === here.name && okRating(last);
   }
+  // ---------- rasa cepat: garis gerak, kabur tepi, hentakan sambungan rel ----------
+  const SPD = { streaks: [], t: 0 };
+  function drawSpeedFx(V, dt) {
+    const st = V.st; if (!S || st !== S || REDUCE_MOTION) return;
+    const kmh = st.v * 3.6, k = clamp((kmh - 22) / 40, 0, 1);
+    if (k <= 0.01 && !SPD.streaks.length) return;
+    const c = V.c, gy = V.gy, ppm = V.ppm; SPD.t += dt || 0.016;
+    // garis gerak: di bawah (sawah dekat) dan sedikit di langit, melesat ke kiri
+    for (let q = 0; q < 3; q++) if (Math.random() < k * 22 * (dt || 0.016)) {
+      const low = Math.random() < 0.75;
+      SPD.streaks.push({ x: W + 20, y: low ? gy + (0.8 + Math.random() * 5) * ppm + Math.random() * (H - gy) * 0.55 : gy - (6 + Math.random() * 16) * ppm, len: (40 + Math.random() * 90) * (0.6 + k), sp: (900 + Math.random() * 700) * (0.5 + k), a: (low ? 0.42 : 0.2) * (0.4 + k * 0.6), w: low ? 1.8 : 1.1 });
+    }
+    c.save(); c.lineCap = 'round';
+    for (const q of SPD.streaks) {
+      q.x -= q.sp * (dt || 0.016);
+      const g = c.createLinearGradient(q.x, 0, q.x + q.len, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.7, `rgba(255,252,240,${q.a.toFixed(3)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+      c.strokeStyle = g; c.lineWidth = q.w; c.beginPath(); c.moveTo(q.x, q.y); c.lineTo(q.x + q.len, q.y); c.stroke();
+    }
+    SPD.streaks = SPD.streaks.filter((q) => q.x + q.len > -10);
+    // pita tanah di depan rel ikut 'mengabur' (kerikil/rumput melesat)
+    if (k > 0.05) {
+      const y0 = gy + 0.5 * ppm, y1 = gy + 3.2 * ppm, off = (SPD.t * st.v * ppm * 1.2) % 46;
+      c.globalAlpha = 0.16 * k; c.fillStyle = '#fff8e8';
+      for (let x = -off; x < W; x += 46) for (let r = 0; r < 3; r++) c.fillRect(x + r * 15, y0 + r * (y1 - y0) / 3, 26 + r * 6, 1.3);
+      c.globalAlpha = 1;
+    }
+    // tepi layar sedikit kabur/gelap saat cepat (fokus ke kereta)
+    if (k > 0.02) {
+      const vg = c.createRadialGradient(W * 0.5, gy - 3 * ppm, Math.min(W, H) * 0.35, W * 0.5, gy - 3 * ppm, Math.max(W, H) * 0.75);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(8,10,16,${(0.36 * k).toFixed(3)})`);
+      c.fillStyle = vg; c.fillRect(0, 0, W, H);
+    }
+    c.restore();
+  }
+  // hentakan kecil tiap sambungan rel (rel 25 m), makin terasa saat cepat
+  function railBump(st) {
+    if (!S || st !== S || REDUCE_MOTION) return 0;
+    const kmh = st.v * 3.6; if (kmh < 15) return 0;
+    const ph = (st.x % 25) / Math.max(1, st.v), d = Math.min(ph, ((st.x - 12.5 + 25) % 25) / Math.max(1, st.v));
+    return Math.exp(-d * 18) * clamp((kmh - 15) / 60, 0, 1) * 1.6;
+  }
   function render(dtReal) {
     const c = ctx;
-    c.setTransform(DPR, 0, 0, DPR, 0, 0);
     const st = S || idleState;
+    c.setTransform(DPR, 0, 0, DPR, 0, railBump(st) * DPR);
     // zoom-out lembut saat ada satwa di jalur di depan
     const E0 = ROUTE.elephants, st0 = S || idleState;
     const TR0 = st0.tree, treeNear = TR0 && (TR0.phase === 'warn' || TR0.phase === 'work') && TR0.x - st0.x < 260;
@@ -4432,6 +4488,7 @@
     drawSunFx(V);
     drawTunnelDark(V);
     applyGrade(c, V);
+    drawSpeedFx(V, dtReal);
     drawMoments(c, V, dtReal);
   }
   // gradasi warna khas misi di atas seluruh dunia (tidak mengenai HUD), plus kabut lembap Sumatra

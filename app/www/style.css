@@ -865,3 +865,54 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 #coachBubble .av.pic { width: 34px; height: 34px; border: 2px solid #2e6b6a; box-sizing: border-box; }
 .speaker { grid-template-columns: 64px minmax(0, 1fr); }
 .speaker .avatar.pic { width: 64px; height: 64px; }
+
+/* ---------- layar jeda: kartu progres ---------- */
+#hud.paused .goalchips, #hud.paused #toast, #hud.paused .precise { visibility: hidden; }
+.pausecard { display: flex; flex-direction: column; gap: 14px; }
+.ptrack { position: relative; height: 54px; margin: 4px 10px 0; }
+.prail { position: absolute; left: 0; right: 0; top: 14px; height: 4px; border-radius: 2px; background: rgba(243, 238, 225, 0.18); }
+.pfill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: linear-gradient(90deg, #ffc757, #f2a516); box-shadow: 0 0 10px rgba(242, 165, 22, 0.5); }
+.ptrain { position: absolute; top: -8px; width: 24px; height: 11px; margin-left: -20px; border-radius: 2px 6px 2px 2px; background: #c8352b; box-shadow: inset 0 -2.5px 0 #f2c94c; }
+.ptrain::after { content: ''; position: absolute; right: 3px; top: 2px; width: 6px; height: 3px; background: #1e2a33; border-radius: 1px; }
+.pst { position: absolute; top: 9px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.pst i { width: 12px; height: 12px; border-radius: 50%; background: #2a3a42; border: 2px solid rgba(243, 238, 225, 0.5); box-sizing: border-box; }
+.pst.done i { background: #f2a516; border-color: #ffe2a6; }
+.pst.next i { background: #fff; border-color: #f2a516; box-shadow: 0 0 0 4px rgba(242, 165, 22, 0.25); }
+.pst em { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.pst.next em { color: #ffe2a6; }
+.pst:first-of-type { transform: translateX(-10%); } .pst:last-of-type { transform: translateX(-90%); }
+.pstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.pstats div { background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 7px 9px; min-width: 0; }
+.pstats span { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pstats b { font-family: var(--display); font-size: 20px; font-weight: 800; color: #f3eee1; }
+.pstats b.late { color: #ff9a8a; }
+.pgoals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.pgoals li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12.5px; padding: 5px 9px; border-radius: 9px; background: rgba(255, 255, 255, 0.04); }
+.pgoals i { font-style: normal; font-weight: 900; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+.pgoals li.ok i { background: rgba(95, 208, 138, 0.2); color: #5fd08a; }
+.pgoals li.lost i { background: rgba(239, 91, 76, 0.2); color: #ef5b4c; }
+.pgoals li.lost span { color: var(--muted); text-decoration: line-through; }
+.pgoals s { text-decoration: none; color: #f2a516; font-size: 14px; }
+.pgoals li.lost s { color: rgba(140, 125, 100, 0.5); }
+@media (max-height: 460px) { .pausecard { gap: 9px; padding: 11px 14px; } .pstats b { font-size: 17px; } .pgoals li { padding: 3px 8px; font-size: 11.5px; } .ptrack { height: 46px; } }
+
+/* ---------- panduan bergambar ---------- */
+.howto.ill { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.howto.ill li { grid-template-columns: 46px minmax(0, 1fr); gap: 9px; align-items: center; background: rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 7px 9px; }
+.howto.ill svg { width: 46px; height: 46px; display: block; }
+.howto.ill b { display: block; font-size: 12.5px; color: #ffe2a6; margin-bottom: 1px; }
+.howto.ill span { font-size: 11.5px; line-height: 1.35; color: #d8d2c4; }
+#screenHowto .screen-inner { grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr); }
+#screenHowto { overflow: hidden; }
+@media (max-height: 460px) { .howto.ill li { padding: 5px 8px; } .howto.ill svg { width: 38px; height: 38px; } .howto.ill li { grid-template-columns: 38px minmax(0, 1fr); } .howto.ill span { font-size: 10.5px; } .howto.ill b { font-size: 11.5px; } #screenHowto .card { padding: 10px 12px; } }
+@media (hover: none) { #screenHowto .best { display: none; } }
+@media (max-height: 460px) {
+  #screenHowto .howto.ill { gap: 6px; }
+  #screenHowto .howto.ill li { padding: 4px 7px; gap: 7px; grid-template-columns: 34px minmax(0, 1fr); }
+  #screenHowto .howto.ill svg { width: 34px; height: 34px; }
+  #screenHowto .howto.ill span { font-size: 10px; line-height: 1.28; }
+  #screenHowto .howto.ill b { font-size: 11px; }
+  #screenHowto .best { font-size: 10px; margin: 6px 0 0; }
+  #screenHowto .card { padding: 8px 10px; }
+  #screenHowto .lead { font-size: 12px; }
+}
