@@ -6215,45 +6215,167 @@
     });
   }
 
+  // ---------- bangunan stasiun (detail & artistik) ----------
+  function stationBuilding(V, cx, by, s) {
+    const { c, ppm, st } = V, lit = V.lit || V.night, sum = MIS.id && MIS.id[0] === '2';
+    const px = (m) => cx + m * ppm, py = (m) => by - m * ppm;
+    const rect = (x0, y0, x1, y1, col) => { c.fillStyle = col; c.fillRect(px(x0), py(y1), (x1 - x0) * ppm, (y1 - y0) * ppm); };
+    const poly = (pts, col) => { c.fillStyle = col; c.beginPath(); pts.forEach(([x, y], k) => (k ? c.lineTo(px(x), py(y)) : c.moveTo(px(x), py(y)))); c.closePath(); c.fill(); };
+    const wall = sum ? '#efe2c8' : '#f1e8d4', wall2 = sum ? '#e3d2b0' : '#e4d6b8', trim = sum ? '#7a2e22' : '#2e6b6a';
+    const roofA = sum ? '#3b2a23' : '#9a4a33', roofB = sum ? '#2c1f1a' : '#7f3a28', gold = '#d9a93a';
+    const glass = lit ? '#ffcf7a' : '#33424a';
+    // alas batu (plint) dengan nat
+    rect(-12.6, 0, 12.6, 0.55, '#b7a88d');
+    c.strokeStyle = 'rgba(70,58,42,0.35)'; c.lineWidth = 1; c.beginPath();
+    for (let m = -12.6; m < 12.6; m += 1.1) { c.moveTo(px(m), py(0.55)); c.lineTo(px(m), py(0)); } c.moveTo(px(-12.6), py(0.28)); c.lineTo(px(12.6), py(0.28)); c.stroke();
+    // sayap kiri & kanan
+    [-1, 1].forEach((sd) => {
+      const x0 = sd < 0 ? -12.4 : 4.4, x1 = sd < 0 ? -4.4 : 12.4;
+      rect(x0, 0.55, x1, 4.45, wall);
+      rect(x0, 0.55, x1, 1.05, trim); // lis bawah
+      for (let m = x0; m <= x1 + 0.01; m += 2) rect(m - 0.13, 1.05, m + 0.13, 4.1, wall2); // pilaster
+      rect(x0 - 0.15, 4.05, x1 + 0.15, 4.45, '#d8c7a4'); // kornis
+      c.fillStyle = 'rgba(90,70,40,0.35)'; for (let m = x0; m < x1; m += 0.4) c.fillRect(px(m), py(4.12), 0.16 * ppm, 0.12 * ppm); // gigi kornis
+      // tiga jendela lengkung berdaun jendela hijau & kaca patri di ambang
+      for (let k = 0; k < 3; k++) {
+        const wx = x0 + 1 + k * 2 + 0.0, ww = 1.15, y0w = 1.35, y1w = 3.25;
+        if (lit) { const g = c.createRadialGradient(px(wx + 0.5), py(2.3), 0, px(wx + 0.5), py(2.3), 2.2 * ppm); g.addColorStop(0, 'rgba(255,200,110,0.35)'); g.addColorStop(1, 'rgba(255,200,110,0)'); c.fillStyle = g; c.fillRect(px(wx - 1.6), py(4.2), 4.3 * ppm, 3.4 * ppm); }
+        c.fillStyle = glass; c.beginPath(); c.moveTo(px(wx), py(y0w)); c.lineTo(px(wx), py(y1w)); c.arc(px(wx + ww / 2), py(y1w), (ww / 2) * ppm, Math.PI, 0); c.lineTo(px(wx + ww), py(y0w)); c.closePath(); c.fill();
+        // kaca patri setengah lingkaran
+        ['#c0392b', '#e8b33a', '#2e8f7a'].forEach((col, q) => { c.fillStyle = lit ? col : col + 'aa'; c.beginPath(); c.moveTo(px(wx + ww / 2), py(y1w)); c.arc(px(wx + ww / 2), py(y1w), (ww / 2 - 0.06) * ppm, Math.PI + q * Math.PI / 3, Math.PI + (q + 1) * Math.PI / 3); c.closePath(); c.fill(); });
+        c.strokeStyle = '#e9dfc8'; c.lineWidth = Math.max(1, 0.07 * ppm); c.beginPath(); c.moveTo(px(wx), py(y1w)); c.lineTo(px(wx + ww), py(y1w)); c.moveTo(px(wx + ww / 2), py(y0w)); c.lineTo(px(wx + ww / 2), py(y1w)); c.stroke();
+        rect(wx - 0.42, y0w, wx - 0.04, y1w, trim); rect(wx + ww + 0.04, y0w, wx + ww + 0.42, y1w, trim); // daun jendela
+        c.fillStyle = 'rgba(255,255,255,0.18)'; for (let q = 0; q < 5; q++) { c.fillRect(px(wx - 0.38), py(y0w + 0.2 + q * 0.36), 0.3 * ppm, 0.06 * ppm); c.fillRect(px(wx + ww + 0.08), py(y0w + 0.2 + q * 0.36), 0.3 * ppm, 0.06 * ppm); }
+        rect(wx - 0.1, y0w - 0.12, wx + ww + 0.1, y0w, '#d8c7a4'); // ambang
+      }
+      // atap sayap
+      const e0 = x0 - 0.9, e1 = x1 + 0.9;
+      poly([[e0, 4.45], [e1, 4.45], [x1 - 0.8, 6.1], [x0 + 0.8, 6.1]], roofA);
+      c.strokeStyle = 'rgba(0,0,0,0.16)'; c.lineWidth = 1; c.beginPath(); for (let q = 1; q < 5; q++) { const yy = 4.45 + q * 0.33, ins = (q * 0.33) / 1.65 * 1.7; c.moveTo(px(e0 + ins), py(yy)); c.lineTo(px(e1 - ins), py(yy)); } c.stroke();
+      // lisplang berukir (gigi balang)
+      rect(e0, 4.25, e1, 4.45, sum ? gold : '#f3ead6');
+      c.fillStyle = sum ? '#7a2e22' : '#9a4a33'; for (let m = e0; m < e1 - 0.2; m += 0.42) { c.beginPath(); c.moveTo(px(m), py(4.25)); c.lineTo(px(m + 0.21), py(4.02)); c.lineTo(px(m + 0.42), py(4.25)); c.closePath(); c.fill(); }
+      if (sum) { // tanduk gonjong kecil di ujung sayap
+        const hx = sd < 0 ? x0 + 0.8 : x1 - 0.8, w0 = 0.55;
+        c.fillStyle = roofA; c.beginPath(); c.moveTo(px(hx - w0), py(6.1)); c.lineTo(px(hx + w0), py(6.1));
+        c.quadraticCurveTo(px(hx + sd * 0.15), py(6.7), px(hx + sd * 0.75), py(7.5)); c.quadraticCurveTo(px(hx - sd * 0.2), py(6.9), px(hx - w0), py(6.1)); c.closePath(); c.fill();
+        c.fillStyle = gold; c.beginPath(); c.arc(px(hx + sd * 0.75), py(7.55), 0.1 * ppm, 0, 7); c.fill();
+      }
+    });
+    // paviliun tengah
+    rect(-4.5, 0.55, 4.5, 6.4, wall);
+    rect(-4.5, 0.55, 4.5, 1.05, trim);
+    rect(-4.7, 6.0, 4.7, 6.4, '#d8c7a4');
+    [-4.2, 4.2].forEach((m) => rect(m - 0.3, 1.05, m + 0.3, 6.0, wall2)); // pilaster besar
+    // pintu masuk lengkung besar dengan cahaya dalam
+    const dx0 = -1.6, dx1 = 1.6, dy1 = 3.6;
+    c.fillStyle = lit ? '#f7c36a' : '#2a2420'; c.beginPath(); c.moveTo(px(dx0), py(0.55)); c.lineTo(px(dx0), py(dy1)); c.arc(px(0), py(dy1), 1.6 * ppm, Math.PI, 0); c.lineTo(px(dx1), py(0.55)); c.closePath(); c.fill();
+    c.strokeStyle = '#d8c7a4'; c.lineWidth = 0.22 * ppm; c.beginPath(); c.arc(px(0), py(dy1), 1.72 * ppm, Math.PI, 0); c.stroke();
+    rect(-0.18, dy1 + 1.45, 0.18, dy1 + 1.9, '#d8c7a4'); // batu kunci
+    if (!lit) { c.fillStyle = 'rgba(255,220,150,0.25)'; c.beginPath(); c.arc(px(0), py(2.4), 0.5 * ppm, 0, 7); c.fill(); }
+    // lampu gantung di pintu
+    c.strokeStyle = '#3a3330'; c.lineWidth = 1; c.beginPath(); c.moveTo(px(0), py(dy1 + 1.4)); c.lineTo(px(0), py(dy1 + 0.6)); c.stroke();
+    c.fillStyle = lit ? '#fff0c0' : '#d8b25a'; c.beginPath(); c.arc(px(0), py(dy1 + 0.45), 0.22 * ppm, 0, 7); c.fill();
+    // jam stasiun yang berjalan sesuai waktu misi
+    const jx = 0, jy = 5.25, jr = 0.72;
+    c.fillStyle = '#3a3330'; c.beginPath(); c.arc(px(jx), py(jy), (jr + 0.12) * ppm, 0, 7); c.fill();
+    c.fillStyle = lit ? '#fff4d6' : '#fbf7ec'; c.beginPath(); c.arc(px(jx), py(jy), jr * ppm, 0, 7); c.fill();
+    c.fillStyle = '#3a3330'; for (let q = 0; q < 12; q++) { const a = q / 12 * Math.PI * 2; c.fillRect(px(jx + Math.sin(a) * jr * 0.82) - 1, py(jy + Math.cos(a) * jr * 0.82) - 1, 2, 2); }
+    { const tt = (MIS.startClock || 0) + Math.floor(st ? st.clock || 0 : 0), hh = (tt / 3600) % 12, mm = (tt / 60) % 60;
+      c.strokeStyle = '#1d1a18'; c.lineCap = 'round';
+      c.lineWidth = Math.max(1.2, 0.1 * ppm); c.beginPath(); c.moveTo(px(jx), py(jy)); c.lineTo(px(jx + Math.sin(hh / 12 * Math.PI * 2) * jr * 0.5), py(jy + Math.cos(hh / 12 * Math.PI * 2) * jr * 0.5)); c.stroke();
+      c.lineWidth = Math.max(1, 0.06 * ppm); c.beginPath(); c.moveTo(px(jx), py(jy)); c.lineTo(px(jx + Math.sin(mm / 60 * Math.PI * 2) * jr * 0.78), py(jy + Math.cos(mm / 60 * Math.PI * 2) * jr * 0.78)); c.stroke(); c.lineCap = 'butt'; }
+    // relief ornamen di bawah jam
+    c.strokeStyle = 'rgba(150,120,70,0.55)'; c.lineWidth = Math.max(1, 0.07 * ppm);
+    c.beginPath(); for (let q = -3; q <= 3; q++) { c.moveTo(px(q * 0.55 - 0.2), py(4.3)); c.quadraticCurveTo(px(q * 0.55), py(4.6), px(q * 0.55 + 0.2), py(4.3)); } c.stroke();
+    // atap paviliun: joglo bersusun (Jawa) atau gonjong bertanduk (Sumatra)
+    if (!sum) {
+      poly([[-6.0, 6.4], [6.0, 6.4], [4.4, 7.5], [-4.4, 7.5]], roofA);
+      poly([[-3.4, 7.5], [3.4, 7.5], [1.6, 9.9], [-1.6, 9.9]], roofB);
+      c.strokeStyle = 'rgba(0,0,0,0.16)'; c.lineWidth = 1; c.beginPath();
+      for (let q = 1; q < 4; q++) { const yy = 6.4 + q * 0.28, ins = q * 0.28 * 1.45; c.moveTo(px(-6 + ins), py(yy)); c.lineTo(px(6 - ins), py(yy)); }
+      for (let q = 1; q < 7; q++) { const yy = 7.5 + q * 0.34, ins = q * 0.34 * 0.75; c.moveTo(px(-3.4 + ins), py(yy)); c.lineTo(px(3.4 - ins), py(yy)); } c.stroke();
+      rect(-6.0, 6.22, 6.0, 6.4, '#f3ead6');
+      c.fillStyle = '#9a4a33'; for (let m = -6; m < 5.8; m += 0.42) { c.beginPath(); c.moveTo(px(m), py(6.22)); c.lineTo(px(m + 0.21), py(6.0)); c.lineTo(px(m + 0.42), py(6.22)); c.closePath(); c.fill(); }
+      // mustaka (mahkota) di bubungan
+      rect(-1.7, 9.85, 1.7, 10.05, '#5e2a1e');
+      poly([[-0.25, 10.05], [0.25, 10.05], [0.09, 11.0], [-0.09, 11.0]], gold);
+      c.fillStyle = gold; c.beginPath(); c.arc(px(0), py(11.05), 0.16 * ppm, 0, 7); c.fill();
+      [-1.6, 1.6].forEach((m) => { c.fillStyle = gold; c.beginPath(); c.moveTo(px(m), py(10.05)); c.quadraticCurveTo(px(m * 1.08), py(10.5), px(m * 0.92), py(10.7)); c.lineTo(px(m * 0.96), py(10.05)); c.fill(); });
+    } else {
+      // gonjong: pelana melengkung dengan dua tanduk runcing
+      c.fillStyle = roofA; c.beginPath();
+      c.moveTo(px(-6.2), py(6.4)); c.lineTo(px(6.2), py(6.4));
+      c.quadraticCurveTo(px(5.2), py(8.2), px(5.6), py(11.2));
+      c.quadraticCurveTo(px(3.2), py(8.6), px(0), py(8.4));
+      c.quadraticCurveTo(px(-3.2), py(8.6), px(-5.6), py(11.2));
+      c.quadraticCurveTo(px(-5.2), py(8.2), px(-6.2), py(6.4)); c.closePath(); c.fill();
+      c.strokeStyle = gold; c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath();
+      c.moveTo(px(5.6), py(11.2)); c.quadraticCurveTo(px(3.2), py(8.6), px(0), py(8.4)); c.quadraticCurveTo(px(-3.2), py(8.6), px(-5.6), py(11.2)); c.stroke();
+      [-5.6, 5.6].forEach((m) => { c.fillStyle = gold; c.beginPath(); c.arc(px(m), py(11.25), 0.14 * ppm, 0, 7); c.fill(); });
+      // ukiran segitiga merah-hitam-emas di bawah atap
+      const bands = ['#7a2e22', '#1d1a18', gold];
+      for (let m = -4.5, q = 0; m < 4.4; m += 0.5, q++) { c.fillStyle = bands[q % 3]; c.beginPath(); c.moveTo(px(m), py(6.0)); c.lineTo(px(m + 0.25), py(6.38)); c.lineTo(px(m + 0.5), py(6.0)); c.closePath(); c.fill(); }
+    }
+    // bayangan teritis & sisi
+    { const eg = c.createLinearGradient(0, py(4.45), 0, py(3.6)); eg.addColorStop(0, 'rgba(0,0,0,0.25)'); eg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = eg; c.fillRect(px(-12.4), py(4.45), 24.8 * ppm, 0.85 * ppm); }
+    c.fillStyle = 'rgba(0,0,0,0.1)'; c.fillRect(px(-12.4), py(4.45), 1.2 * ppm, 3.9 * ppm);
+    // papan LOKET & bangku, pot tanaman, lonceng stasiun
+    rect(-11.6, 3.45, -9.2, 3.85, '#1d2a2b');
+    c.fillStyle = '#f3ead6'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.max(6, Math.round(0.32 * ppm))}px "Big Shoulders Display", sans-serif`; c.fillText('LOKET', px(-10.4), py(3.65));
+    [[-8.0], [6.6], [9.6]].forEach(([m]) => { rect(m, 0.55, m + 1.6, 0.62, '#5a4030'); rect(m, 0.95, m + 1.6, 1.05, '#7a5a40'); rect(m + 0.1, 0.55, m + 0.2, 0.95, '#3a2a20'); rect(m + 1.4, 0.55, m + 1.5, 0.95, '#3a2a20'); });
+    [-4.9, 4.9].forEach((m) => { poly([[m - 0.35, 0.55], [m + 0.35, 0.55], [m + 0.28, 1.15], [m - 0.28, 1.15]], '#9a5a3a'); c.fillStyle = '#4f7a3a'; [[-0.3, 1.5], [0, 1.85], [0.3, 1.5]].forEach(([dx, dy]) => { c.beginPath(); c.ellipse(px(m + dx), py(dy), 0.28 * ppm, 0.5 * ppm, dx * 1.2, 0, 7); c.fill(); }); });
+    c.fillStyle = '#3a3330'; c.fillRect(px(13.4), py(3.0), 0.12 * ppm, 3.0 * ppm);
+    rect(13.05, 2.9, 13.85, 3.02, '#3a3330');
+    poly([[13.2, 2.5], [13.7, 2.5], [13.6, 2.9], [13.3, 2.9]], gold);
+  }
+  // kanopi peron: tiang besi cor berkonsol ukir, atap seng bergelombang, lisplang berlekuk, lampu gantung
+  function stationCanopy(V, s) {
+    const { c, ppm, gy, X } = V, lit = V.lit || V.night, top = gy - 5.35 * ppm;
+    // dua ruas kanopi di kiri-kanan bangunan (bangunan punya teritis sendiri), agar fasad tetap terlihat utuh
+    [[s.x - 92, s.x - 61.5], [s.x - 34.5, s.x - 6]].forEach(([m0, m1]) => {
+      const x0 = X(m0), len = (m1 - m0) * ppm;
+      c.fillStyle = 'rgba(62,58,54,0.95)'; c.fillRect(x0, top, len, 0.32 * ppm);
+      c.strokeStyle = 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath(); for (let m = 0; m < m1 - m0; m += 0.5) { c.moveTo(x0 + m * ppm, top); c.lineTo(x0 + m * ppm, top + 0.32 * ppm); } c.stroke();
+      c.fillStyle = '#e9dfc8'; c.fillRect(x0, top + 0.32 * ppm, len, 0.18 * ppm);
+      for (let m = 0; m < m1 - m0 - 0.4; m += 0.8) { c.beginPath(); c.arc(x0 + (m + 0.4) * ppm, top + 0.5 * ppm, 0.4 * ppm, 0, Math.PI); c.fill(); }
+      const n = Math.max(1, Math.round((m1 - m0) / 10.5));
+      for (let k = 0; k <= n; k++) {
+        const tx = X(m0 + 0.8 + k * ((m1 - m0 - 1.6) / n));
+        c.fillStyle = '#2f3b3a'; c.fillRect(tx - 0.11 * ppm, top + 0.5 * ppm, 0.22 * ppm, 4.3 * ppm);
+        c.fillRect(tx - 0.24 * ppm, gy - 1.25 * ppm, 0.48 * ppm, 0.22 * ppm);
+        c.strokeStyle = '#2f3b3a'; c.lineWidth = Math.max(1, 0.1 * ppm);
+        [-1, 1].forEach((sd) => { c.beginPath(); c.moveTo(tx, top + 1.6 * ppm); c.quadraticCurveTo(tx + sd * 0.2 * ppm, top + 0.6 * ppm, tx + sd * 1.3 * ppm, top + 0.55 * ppm); c.stroke();
+          c.beginPath(); c.arc(tx + sd * 0.45 * ppm, top + 1.05 * ppm, 0.2 * ppm, 0, 7); c.stroke(); });
+        if (k < n) {
+          const lx = (tx + X(m0 + 0.8 + (k + 1) * ((m1 - m0 - 1.6) / n))) / 2, ly = top + 1.3 * ppm;
+          c.strokeStyle = '#2f3b3a'; c.lineWidth = 1; c.beginPath(); c.moveTo(lx, top + 0.5 * ppm); c.lineTo(lx, ly - 0.2 * ppm); c.stroke();
+          c.fillStyle = '#2f3b3a'; c.beginPath(); c.moveTo(lx - 0.35 * ppm, ly); c.lineTo(lx + 0.35 * ppm, ly); c.lineTo(lx + 0.15 * ppm, ly - 0.25 * ppm); c.lineTo(lx - 0.15 * ppm, ly - 0.25 * ppm); c.closePath(); c.fill();
+          c.fillStyle = lit ? '#fff0c0' : '#e8d9a8'; c.beginPath(); c.arc(lx, ly + 0.1 * ppm, 0.16 * ppm, 0, 7); c.fill();
+          if (lit) { const g = c.createRadialGradient(lx, ly + 0.2 * ppm, 0, lx, ly + 0.2 * ppm, 3.2 * ppm); g.addColorStop(0, 'rgba(255,220,150,0.35)'); g.addColorStop(1, 'rgba(255,220,150,0)'); c.fillStyle = g; c.beginPath(); c.arc(lx, ly + 0.2 * ppm, 3.2 * ppm, 0, 7); c.fill(); }
+        }
+      }
+    });
+  }
   function drawStations(V) {
     const { c, ppm, gy, X, st } = V;
     const list = ROUTE.stations.map((s, i) => [s, i, false]).concat((ROUTE.passStations || []).map((s, i) => [s, 10 + i, true]));
     list.forEach(([s, i, pass]) => {
       const a = X(s.x - 95), b = X(s.x + 25);
       if (b < -50 || a > W + 50) return;
-      // bangunan stasiun
-      const cx = X(s.x - 48), bw = 24 * ppm, bh = 4.6 * ppm, by = gy - 1.0 * ppm;
-      c.fillStyle = '#efe6d2'; c.fillRect(cx - bw / 2, by - bh, bw, bh);
-      c.fillStyle = '#2e6b6a'; c.fillRect(cx - bw / 2, by - 0.6 * ppm, bw, 0.6 * ppm);
-      for (let k = 0; k < 6; k++) {
-        const wx = cx - bw / 2 + (k + 0.5) * (bw / 6);
-        c.fillStyle = '#3d4a4f';
-        c.beginPath(); c.moveTo(wx - 0.8 * ppm, by - 0.9 * ppm); c.lineTo(wx - 0.8 * ppm, by - 3 * ppm);
-        c.arc(wx, by - 3 * ppm, 0.8 * ppm, Math.PI, 0); c.lineTo(wx + 0.8 * ppm, by - 0.9 * ppm); c.closePath(); c.fill();
-      }
-      // atap bersusun (gaya joglo)
-      c.fillStyle = '#8f4330';
-      c.beginPath(); c.moveTo(cx - bw / 2 - 2.5 * ppm, by - bh); c.lineTo(cx + bw / 2 + 2.5 * ppm, by - bh);
-      c.lineTo(cx + bw / 2 - 3 * ppm, by - bh - 2 * ppm); c.lineTo(cx - bw / 2 + 3 * ppm, by - bh - 2 * ppm); c.closePath(); c.fill();
-      c.fillStyle = '#a5513a';
-      c.beginPath(); c.moveTo(cx - bw / 4, by - bh - 2 * ppm); c.lineTo(cx + bw / 4, by - bh - 2 * ppm);
-      c.lineTo(cx + 2 * ppm, by - bh - 4.2 * ppm); c.lineTo(cx - 2 * ppm, by - bh - 4.2 * ppm); c.closePath(); c.fill();
-      // bayangan di bawah teritis atap dan sisi bangunan
-      { const eg = c.createLinearGradient(0, by - bh, 0, by - bh + 1.4 * ppm); eg.addColorStop(0, 'rgba(0,0,0,0.28)'); eg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = eg; c.fillRect(cx - bw / 2, by - bh, bw, 1.4 * ppm); }
-      c.fillStyle = 'rgba(0,0,0,0.1)'; c.fillRect(cx - bw / 2, by - bh, 1.2 * ppm, bh);
-      // kanopi peron
-      c.fillStyle = 'rgba(70,60,50,0.9)';
-      c.fillRect(X(s.x - 82), gy - 5.2 * ppm, (60) * ppm, 0.35 * ppm);
-      for (let k = 0; k <= 5; k++) c.fillRect(X(s.x - 80 + k * 11.5), gy - 5 * ppm, 0.18 * ppm, 4 * ppm);
+      // bangunan stasiun warisan: paviliun tengah berjam, sayap berjendela lengkung, atap joglo (Jawa) / gonjong (Sumatra)
+      stationBuilding(V, X(s.x - 48), gy - 1.0 * ppm, s);
+      stationCanopy(V, s);
       if (MIS.lebaran) {
         // ketupat bergantung di kanopi dan spanduk Lebaran
-        for (let k = 0; k < 10; k++) {
-          const kx = X(s.x - 78 + k * 6), ky = gy - 4.3 * ppm + (k % 2) * 0.4 * ppm;
+        for (let k = 0; k < 14; k++) {
+          const km = s.x - 90 + k * 6; if (km > s.x - 62 && km < s.x - 34) continue;
+          const kx = X(km), ky = gy - 4.3 * ppm + (k % 2) * 0.4 * ppm;
           c.strokeStyle = '#6b5a3a'; c.lineWidth = 1; c.beginPath(); c.moveTo(kx, gy - 4.85 * ppm); c.lineTo(kx, ky - 0.45 * ppm); c.stroke();
           c.fillStyle = k % 2 ? '#d9b648' : '#4f9a3a';
           c.beginPath(); c.moveTo(kx, ky - 0.45 * ppm); c.lineTo(kx + 0.4 * ppm, ky); c.lineTo(kx, ky + 0.45 * ppm); c.lineTo(kx - 0.4 * ppm, ky); c.closePath(); c.fill();
         }
-        const bx0 = X(s.x - 60), bw0 = 26 * ppm;
+        const bx0 = X(s.x - 33), bw0 = 26 * ppm;
         c.fillStyle = '#1f6b3f'; c.fillRect(bx0, gy - 7.0 * ppm, bw0, 1.4 * ppm);
         c.fillStyle = '#f6e7b0'; c.textAlign = 'center'; c.textBaseline = 'middle';
         c.font = `800 ${Math.round(0.8 * ppm)}px "Big Shoulders Display", sans-serif`;
