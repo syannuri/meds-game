@@ -7516,7 +7516,8 @@
     c.restore();
 
     // ---- gerbong stainless ----
-    const steel = vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
+    const ARGOC = MIS.loco === 'argo';
+    const steel = ARGOC ? vgrad(4.85, 1.0, [[0, '#ffffff'], [0.35, '#efede9'], [0.8, '#c8cbd1'], [1, '#9aa0a8']]) : vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
     const glass = vgrad(4.35, 2.95, [[0, '#3b5263'], [0.5, '#1d2b36'], [1, '#121b23']]);
     const roofTop = vgrad(6.55, 6.05, [[0, '#f1f4f5'], [1, '#c7cfd3']]);
     const roofSide = vgrad(6.1, 4.8, [[0, '#cdd4d8'], [1, '#8f999f']]);
@@ -7564,12 +7565,29 @@
       c.fillRect(L(u(0)), Y(1.5), COACH_LEN * ppm, 0.5 * ppm);
       line([[u(30), 1.72], [u(210), 1.72]], 'rgba(255,255,255,0.4)', 1);
       line([[u(30), 1.42], [u(210), 1.42]], 'rgba(255,255,255,0.4)', 1);
-      box(u(240), u(0), 2.27, 2.6, '#f2a516');
-      box(u(240), u(0), 2.0, 2.22, '#1f6f6d');
+      if (ARGOC) {
+        // gerbong eksekutif Argo Senja: pita kaca gelap menyatu, pita senja bergaris emas, logo matahari terbenam
+        const sx0 = (a, b) => Math.min(L(u(a)), L(u(b))), sw0 = (a, b) => Math.abs(L(u(a)) - L(u(b)));
+        c.fillStyle = '#14181e'; roundRect(c, sx0(30, 210), Y(4.5), sw0(30, 210), 1.7 * ppm, 0.3 * ppm); c.fill();
+        line([[u(210), 4.56], [u(30), 4.56]], '#d7dce2', lw(0.04));
+        const sg = c.createLinearGradient(sx0(0, 240), 0, sx0(0, 240) + sw0(0, 240), 0); sg.addColorStop(0, '#4a2e78'); sg.addColorStop(0.5, '#b4337a'); sg.addColorStop(1, '#f0743a');
+        c.fillStyle = sg; c.fillRect(sx0(0, 240), Y(2.75), sw0(0, 240), 0.75 * ppm);
+        line([[u(240), 2.82], [u(0), 2.82]], '#e9c26a', lw(0.06));
+        line([[u(240), 1.98], [u(0), 1.98]], 'rgba(255,255,255,0.55)', lw(0.03));
+        // logo matahari terbenam + tulisan di pita
+        const lx = sx0(0, 240) + sw0(0, 240) * 0.36, ly = Y(2.4), rr = 0.24 * ppm;
+        c.fillStyle = '#ffd27a'; c.beginPath(); c.arc(lx, ly + rr * 0.35, rr, Math.PI, 0); c.fill();
+        c.strokeStyle = '#ffd27a'; c.lineWidth = Math.max(1, 0.04 * ppm); c.beginPath(); for (let q = 0; q < 5; q++) { const a = Math.PI * (1.1 + q * 0.2); c.moveTo(lx + Math.cos(a) * rr * 1.35, ly + rr * 0.35 + Math.sin(a) * rr * 1.35); c.lineTo(lx + Math.cos(a) * rr * 1.75, ly + rr * 0.35 + Math.sin(a) * rr * 1.75); } c.stroke();
+        c.fillStyle = '#fff6e6'; c.font = `italic 800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
+        c.fillText('ARGO SENJA · EKSEKUTIF', lx + rr * 2.2, ly + 0.02 * ppm);
+      } else {
+        box(u(240), u(0), 2.27, 2.6, '#f2a516');
+        box(u(240), u(0), 2.0, 2.22, '#1f6f6d');
+      }
       // jendela berbingkai
       for (let i = 0; i < 7; i++) {
         const a = 36 + i * 24.4, wx = L(u(a)), ww = (21 / 12) * ppm;
-        c.fillStyle = '#5d676e'; roundRect(c, wx - 1, Y(4.38) - 1, ww + 2, 1.46 * ppm + 2, 0.22 * ppm); c.fill();
+        c.fillStyle = ARGOC ? '#0c0f13' : '#5d676e'; roundRect(c, wx - 1, Y(4.38) - 1, ww + 2, 1.46 * ppm + 2, 0.22 * ppm); c.fill();
         c.fillStyle = glass; roundRect(c, wx, Y(4.38), ww, 1.46 * ppm, 0.2 * ppm); c.fill();
         if (V.lit) { c.fillStyle = 'rgba(255,214,140,0.85)'; roundRect(c, wx, Y(4.38), ww, 1.46 * ppm, 0.2 * ppm); c.fill(); }
         if (hash(i + k * 7) * 34 < st.aboard) {
@@ -7601,7 +7619,7 @@
       }
       c.fillStyle = '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.5 * ppm))}px "Plus Jakarta Sans", sans-serif`;
       c.textAlign = 'left'; c.textBaseline = 'middle';
-      c.fillText(`K1 · 0${k + 1}`, L(u(36)), Y(1.2));
+      c.fillText(ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
       if (rimOn) {
         c.save(); c.globalAlpha = V.rimA;
         line([[u(4), 6.06], [u(236), 6.06]], V.rim, lw(0.09));
