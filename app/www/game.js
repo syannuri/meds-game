@@ -658,15 +658,15 @@
   MISSIONS['3-2'] = {
     id: '3-2',
     chapter: 'Babak 3 · Ekspres Jawa',
-    title: 'Kilat di Atas Sawah', nick: 'Kilat Nusantara',
+    title: 'Guntur di Atas Sawah', nick: 'Guntur',
     startClock: 9 * 3600 + 10 * 60,
     sky: 'dawn', day: true,
     rain: false,
     tags: ['Kereta cepat 250 km/h', 'Jalur layang', 'Sawah & kota modern'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
-    brief: 'Raka, hari ini kamu dipercaya membawa Kilat Nusantara, kereta cepat pertama kita. Jalurnya melayang di atas sawah dari Kencana Hub ke Kota Halimun, boleh sampai 250 km/h. Ingat: dari 250, kereta butuh lebih dari 3 km untuk berhenti. Ikuti papan REM dan sinyal kabin. Di Padi Raya kita berhenti sebentar menjemput petani dan pelajar.',
+    brief: 'Raka, hari ini kamu dipercaya membawa Guntur, kereta cepat pertama kita. Jalurnya melayang di atas sawah dari Kencana Hub ke Kota Halimun, boleh sampai 250 km/h. Ingat: dari 250, kereta butuh lebih dari 3 km untuk berhenti. Ikuti papan REM dan sinyal kabin. Di Padi Raya kita berhenti sebentar menjemput petani dan pelajar.',
     weather: 'pagi cerah, angin kencang di perbukitan',
-    intro: 'Kilat Nusantara siap. Tutup pintu dan rasakan 250 km/h di atas sawah.',
+    intro: 'Guntur siap. Tutup pintu dan rasakan 250 km/h di atas sawah.',
     reward: '<strong>Terbuka:</strong> Lencana Masinis Kereta Cepat. Warga Padi Raya kini bisa ke kota dalam 10 menit.',
     aboard: 20,
     ticket: 'hst',
@@ -3285,7 +3285,7 @@
     c.fillStyle = '#2a2f33'; c.beginPath(); c.ellipse(w / 2, gy + 6, w * 0.46, h * 0.1, 0, 0, 7); c.fill();
     c.fillStyle = '#7d8487'; c.fillRect(w * 0.06, gy - 2, w * 0.88, 2); c.fillStyle = '#a3a9ab'; c.fillRect(w * 0.06, gy + 2, w * 0.88, 2);
     // lokomotif terpilih dari samping, digambar dengan fungsi kereta di game
-    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Ekspres 120 km/h · Livery Senja · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · Livery Biru Toska · katalog'], hst2: ['KILAT EVO · KN 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'] };
+    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Ekspres 120 km/h · Livery Senja · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · Livery Biru Toska · katalog'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'] };
     const AG = titleMap.loco !== 'cakra';
     const V = { c, ppm, gy, X: (wx) => w / 2 + (wx - 9) * ppm, st: { x: 18, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0, rimA: 0.35, rim: '#ffcf8a', refl: 0.15, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
     const keep = [N_COACH]; N_COACH = 0; LOCO_FORCE = AG ? titleMap.loco : 'none';
@@ -3297,7 +3297,7 @@
     c.fillText(AG ? CAT[titleMap.loco][1] : `${done}/${MISSION_ORDER.length} misi · Diesel CC · Livery ${(RANKS.find((q) => q.liv === LOCO_ORN) || RANKS[0]).livName}`, w * 0.04, h * 0.22, w * 0.92 - Math.min(210, w * 0.36) - 10);
     // pilihan lokomotif: ketuk untuk berganti
     { const bw2 = Math.min(96, (w * 0.56 - 18) / 4), bh2 = Math.min(26, h * 0.075), bx = w * 0.04, by = h - bh2 - h * 0.05;
-      [['Cakra', 'cakra'], ['Agraveda', 'argo'], ['Kilat G1', 'hst'], ['Kilat Evo', 'hst2']].forEach(([nm, ag], i) => { const x = bx + i * (bw2 + 6), on = ag === titleMap.loco; c.fillStyle = on ? '#f2a516' : 'rgba(255,255,255,0.08)'; roundRect(c, x, by, bw2, bh2, bh2 / 2); c.fill(); c.fillStyle = on ? '#1d1405' : '#d8d2c4'; c.font = `800 ${Math.round(bh2 * 0.5)}px "Plus Jakarta Sans", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(nm, x + bw2 / 2, by + bh2 / 2, bw2 - 6); });
+      [['Cakra', 'cakra'], ['Agraveda', 'argo'], ['Kilat G1', 'hst'], ['Guntur', 'hst2']].forEach(([nm, ag], i) => { const x = bx + i * (bw2 + 6), on = ag === titleMap.loco; c.fillStyle = on ? '#f2a516' : 'rgba(255,255,255,0.08)'; roundRect(c, x, by, bw2, bh2, bh2 / 2); c.fill(); c.fillStyle = on ? '#1d1405' : '#d8d2c4'; c.font = `800 ${Math.round(bh2 * 0.5)}px "Plus Jakarta Sans", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(nm, x + bw2 / 2, by + bh2 / 2, bw2 - 6); });
       c.textAlign = 'start'; c.textBaseline = 'alphabetic'; titleMap.locoBtn = { x: bx, y: by, w: bw2 * 4 + 18, h: bh2, bw: bw2 };
       // Kartu Masinis (kanan bawah): pangkat, bintang, kemajuan ke pangkat berikutnya
       const n = totalStars(), ri = rankOf(n), nx = RANKS[ri + 1], kw = Math.min(210, w * 0.36), kh = bh2 * 1.7, kx = w - w * 0.04 - kw, ky = h * 0.05;
@@ -3425,7 +3425,7 @@
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
-      <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Kilat Evo KN 6001' : m.loco === 'hst' ? 'Kilat Nusantara KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
+      <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat Nusantara KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
@@ -7785,7 +7785,7 @@
       line([[u(30), 1.72], [u(210), 1.72]], 'rgba(255,255,255,0.4)', 1);
       line([[u(30), 1.42], [u(210), 1.42]], 'rgba(255,255,255,0.4)', 1);
       if (HST2C) {
-        // gerbong Kilat Evo: pita jendela hitam menerus, garis merah ramping, penutup sambungan menyatu (rangkaian tunggal)
+        // gerbong Guntur: pita jendela hitam menerus, garis merah ramping, penutup sambungan menyatu (rangkaian tunggal)
         const sx0 = (a, b) => Math.min(L(u(a)), L(u(b))), sw0 = (a, b) => Math.abs(L(u(a)) - L(u(b)));
         c.fillStyle = '#0c0f13'; c.fillRect(sx0(0, 240), Y(4.55), sw0(0, 240), 1.7 * ppm);
         line([[u(240), 4.6], [u(0), 4.6]], 'rgba(215,220,226,0.8)', lw(0.03));
@@ -7849,7 +7849,7 @@
       }
       c.fillStyle = '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.5 * ppm))}px "Plus Jakarta Sans", sans-serif`;
       c.textAlign = 'left'; c.textBaseline = 'middle';
-      c.fillText(HST2C ? `EVO · 0${k + 1}` : HSTC ? `KN · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
+      c.fillText(HST2C ? `GT · 0${k + 1}` : HSTC ? `KN · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
       if (rimOn) {
         c.save(); c.globalAlpha = V.rimA;
         line([[u(4), 6.06], [u(236), 6.06]], V.rim, lw(0.09));
@@ -7942,7 +7942,7 @@
     const SH = HST2 ? 'hst2' : ARGO ? 'argo' : LOCO_SHAPE, BOXY = SH.startsWith('box');
     const argoBody = [[15.85, 1.85], [15.85, 5.7], [15.6, 6.0], [3.0, 6.0], [1.9, 5.93], [0.95, 5.5], [0.1, 4.68], [-0.5, 3.85], [-0.92, 3.05], [-1.12, 2.45], [-1.12, 1.85]];
     if (SH === 'hst2') {
-      // ---- Kilat Evo: kereta cepat bergaya Eropa (rangkaian menyatu), hidung panjang terpahat, kaca kokpit hitam, garis merah ramping ----
+      // ---- Guntur: kereta cepat bergaya Eropa (rangkaian menyatu), hidung panjang terpahat, kaca kokpit hitam, garis merah ramping ----
       const P = (m, h) => [L(m), Y(h)];
       const nose = () => {
         c.beginPath(); c.moveTo(...P(15.85, 1.35)); c.lineTo(...P(15.85, 5.7)); c.quadraticCurveTo(...P(15.85, 6.08), ...P(15.3, 6.08));
@@ -7977,7 +7977,7 @@
       c.fillStyle = '#c9ced4'; c.fillRect(L(13.6), Y(6.24), 3.2 * ppm, 0.16 * ppm);
       // logo kecil
       c.fillStyle = '#d4202b'; c.font = `italic 900 ${Math.max(6, Math.round(0.48 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
-      c.fillText('KILAT', L(8.2), Y(3.45)); c.fillStyle = '#5a6470'; c.font = `800 ${Math.max(5, Math.round(0.3 * ppm))}px "Big Shoulders Display", sans-serif`; c.fillText('EVO · KN 6001', L(8.2), Y(3.05)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      c.fillText('GUNTUR', L(8.2), Y(3.45)); c.fillStyle = '#5a6470'; c.font = `800 ${Math.max(5, Math.round(0.3 * ppm))}px "Big Shoulders Display", sans-serif`; c.fillText('GT 6001', L(8.2), Y(3.05)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     } else if (SH === 'argo') {
       // ---- Argo Senja generasi baru: moncong peluru melengkung mulus, kaca visor menyatu, atap & bogie tertutup fairing ----
       const P = (m, h) => [L(m), Y(h)];
