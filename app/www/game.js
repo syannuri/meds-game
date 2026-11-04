@@ -654,7 +654,82 @@
       bufferStop: 15100,
     },
   };
-  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-1', '2-2', '2-3', '3-1'];
+  // Babak 3: kereta cepat 250 km/h di jalur layang menembus sawah & kawasan modern
+  MISSIONS['3-2'] = {
+    id: '3-2',
+    chapter: 'Babak 3 · Ekspres Jawa',
+    title: 'Kilat di Atas Sawah', nick: 'Kilat Nusantara',
+    startClock: 9 * 3600 + 10 * 60,
+    sky: 'dawn', day: true,
+    rain: false,
+    tags: ['Kereta cepat 250 km/h', 'Jalur layang', 'Sawah & kota modern'],
+    speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
+    brief: 'Raka, hari ini kamu dipercaya membawa Kilat Nusantara, kereta cepat pertama kita. Jalurnya melayang di atas sawah dari Kencana Hub ke Kota Halimun, boleh sampai 250 km/h. Ingat: dari 250, kereta butuh lebih dari 3 km untuk berhenti. Ikuti papan REM dan sinyal kabin. Di Padi Raya kita berhenti sebentar menjemput petani dan pelajar.',
+    weather: 'pagi cerah, angin kencang di perbukitan',
+    intro: 'Kilat Nusantara siap. Tutup pintu dan rasakan 250 km/h di atas sawah.',
+    reward: '<strong>Terbuka:</strong> Lencana Masinis Kereta Cepat. Warga Padi Raya kini bisa ke kota dalam 10 menit.',
+    aboard: 20,
+    ticket: 'hst',
+    loco: 'hst',
+    route: {
+      lineSpeed: 250,
+      stations: [
+        { name: 'KENCANA HUB', elev: '+18 m', x: 0, sched: 0, waiting: 0, modern: true },
+        { name: 'PADI RAYA', elev: '+64 m', x: 10500, sched: 1620, waiting: 18, modern: true, travelers: true },
+        { name: 'KOTA HALIMUN', elev: '+410 m', x: 24000, sched: 3600, waiting: 12, final: true, modern: true },
+      ],
+      zones: [
+        { from: -120, to: 400, limit: 60, label: 'area Kencana Hub' },
+        { from: 400, to: 1500, limit: 160, label: 'keluar kota' },
+        { from: 9300, to: 10800, limit: 60, label: 'area Stasiun Padi Raya' },
+        { from: 10800, to: 11800, limit: 160, label: 'keluar Padi Raya' },
+        { from: 15400, to: 16500, limit: 180, label: 'Angin samping Bukit Halimun' },
+        { from: 18800, to: 20200, limit: 200, label: 'Lengkung Halimun', curve: true },
+        { from: 22600, to: 24150, limit: 60, label: 'area Kota Halimun' },
+      ],
+      signals: [
+        { id: 'S1', x: 60, start: 0, init: 'R' },
+        { id: 'J1', x: 9200, init: 'G' },
+        { id: 'S2', x: 10560, start: 1, init: 'R' },
+        { id: 'B3', x: 17200, init: 'G' },
+        { id: 'J3', x: 22500, init: 'G' },
+      ],
+      scripts: [
+        { type: 'timed', sig: 'B3', at: 14600, red: 10, yellow: 14, msg: 'Sinyal kabin: B3 MERAH! Ada kawanan burung di jalur depan. Kurangi kecepatan.', yellowMsg: 'B3 kuning. Lewati maks 40 km/h, lalu kembali ke 250.' },
+      ],
+      crossings: [],
+      goats: [],
+      fog: null,
+      bridge: { from: 1500, to: 9200, viaduct: true, land: true, name: 'Jalur Layang Padi Raya' },
+      bridges: [
+        { from: 1500, to: 9200, viaduct: true, land: true, name: 'Jalur Layang Padi Raya' },
+        { from: 11800, to: 14200, viaduct: true, land: true, name: 'Jalur Layang Sawah Terasering' },
+        { from: 20600, to: 22400, viaduct: true, land: true, name: 'Jalur Layang Halimun' },
+      ],
+      scenes: [
+        { from: -500, to: 1500, kind: 'city', big: true, glass: true },
+        { from: 1500, to: 5200, kind: 'solar' },
+        { from: 5200, to: 9000, kind: 'wind' },
+        { from: 11500, to: 15000, kind: 'terrace' },
+        { from: 15000, to: 18500, kind: 'wind' },
+        { from: 19000, to: 22000, kind: 'terrace' },
+        { from: 22000, to: 24500, kind: 'city', big: true, glass: true },
+      ],
+      tunnel: { from: 16800, to: 18200, name: 'HALIMUN', year: '2030', modern: true },
+      grades: [{ from: 16000, to: 22000, permil: 8, label: 'Tanjakan Halimun' }],
+      switchX: null,
+      brakeBoards: true,
+      hst: true,
+      hints: [
+        { at: 1300, msg: 'Jalur layang di depan: batas 250 km/h. P4 penuh, nikmati sawah dari ketinggian!' },
+        { at: 14300, msg: 'Kawanan burung terlihat di depan. Sinyal kabin bisa berubah merah.', kind: 'warn' },
+        { at: 15200, msg: 'Angin samping kencang di Bukit Halimun: maks 180 km/h.', kind: 'warn' },
+        { at: 16600, msg: 'Terowongan Halimun 1,4 km. Tekanan udara berubah, telinga mungkin berdengung.' },
+      ],
+      bufferStop: 24100,
+    },
+  };
+  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-1', '2-2', '2-3', '3-1', '3-2'];
   // palet khas tiap misi: warna langit (fajar → siang, atau gelap/mendung), dan gradasi warna akhir
   // (soft-light) yang diterapkan ke seluruh dunia game, ditambah kabut lembap untuk Sumatra
   const PALETTES = {
@@ -664,6 +739,7 @@
     '1-7': { storm: ['#34434e', '#62798a', '#a7b8bd'], grade: ['rgba(80,125,140,0.2)', 'rgba(60,100,90,0.16)'] },
     '2-2': { night: ['#0d1634', '#26355f', '#475683'], grade: ['rgba(90,120,190,0.2)', 'rgba(40,70,90,0.14)'], mist: true },
     '2-3': { sky: [['#5a6a7e', '#8aa0aa'], ['#d9b48a', '#e6d8b8'], ['#f0d29a', '#f2ead2']], grade: ['rgba(230,180,110,0.2)', 'rgba(120,80,40,0.16)'], mist: true },
+    '3-2': { sky: [['#5aa8e0', '#cfeaf5'], ['#62b0e6', '#d8f0f8'], ['#6ab8ec', '#e2f4fa']], grade: ['rgba(255,240,210,0.1)', 'rgba(120,200,160,0.1)'] },
     '3-1': { sky: [['#2e2a5e', '#e8875a'], ['#3a2f66', '#f09a5a'], ['#4a3570', '#ffb46a']], grade: ['rgba(255,140,70,0.26)', 'rgba(255,190,110,0.18)'] },
     '2-1': { sky: [['#4a6a6e', '#6a9aa6'], ['#b9b08a', '#cfd9c0'], ['#ead6a4', '#f0ead2']], grade: ['rgba(200,215,170,0.2)', 'rgba(160,70,40,0.2)'], mist: true },
   };
@@ -1732,30 +1808,35 @@
   });
 
   // ---------- speedometer analog (SVG) ----------
-  const gAng = (v) => (135 + clamp(v, 0, 100) * 2.7) * Math.PI / 180;
+  let GMAX = 100;
+  const gAng = (v) => (135 + clamp(v * 100 / GMAX, 0, 100) * 2.7) * Math.PI / 180;
   const gPt = (r, v) => [98 + r * Math.cos(gAng(v)), 98 + r * Math.sin(gAng(v))];
   function gArc(r, v0, v1) {
     const a = gPt(r, v0), b = gPt(r, v1);
-    const large = (v1 - v0) * 2.7 > 180 ? 1 : 0;
+    const large = (v1 - v0) * 100 / GMAX * 2.7 > 180 ? 1 : 0;
     return `M${a[0].toFixed(1)} ${a[1].toFixed(1)}A${r} ${r} 0 ${large} 1 ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
   }
-  (function initGauge() {
-    ui.gTrack.setAttribute('d', gArc(80, 0, 100));
+  function initGauge() {
+    GMAX = ROUTE.lineSpeed > 150 ? 300 : ROUTE.lineSpeed > 100 ? 140 : 100;
+    const step = GMAX / 20, big = GMAX / 5;
+    ui.gTrack.setAttribute('d', gArc(80, 0, GMAX));
+    ui.gLabels.textContent = ''; gaugeCache.v = -1; gaugeCache.lim = -1;
     let d = '';
-    for (let v = 0; v <= 100; v += 5) {
-      const a = gPt(v % 20 === 0 ? 60 : 64, v), b = gPt(71, v);
+    for (let v = 0; v <= GMAX + 0.01; v += step) {
+      const a = gPt(Math.round(v / step) % 4 === 0 ? 60 : 64, v), b = gPt(71, v);
       d += `M${a[0].toFixed(1)} ${a[1].toFixed(1)}L${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
     }
     ui.gTicks.setAttribute('d', d);
-    for (let v = 20; v <= 80; v += 20) {
+    for (let v = big; v <= GMAX - big + 0.01; v += big) {
       const p = gPt(48, v);
       const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       t.setAttribute('x', p[0].toFixed(1)); t.setAttribute('y', (p[1] + 4).toFixed(1));
       t.textContent = String(v);
       ui.gLabels.appendChild(t);
     }
-  })();
+  }
   const gaugeCache = { v: -1, lim: -1 };
+  initGauge();
   function updateGauge(kmh, lim) {
     const v = Math.round(kmh * 2) / 2;
     if (v !== gaugeCache.v) {
@@ -2278,10 +2359,11 @@
     const brakeF = 1 + (massF - 1) * 0.6;
     // lintas ekspres: kurva daya diesel (tenaga konstan) supaya bisa mencapai 120 km/h; lintas biasa tetap seperti semula
     const EXP = ROUTE.lineSpeed >= 100;
-    if (n > 0) target = powerLocked ? 0 : (n * 0.26 * (EXP ? Math.min(1, 14 / Math.max(1, S.v)) : Math.max(0, 1 - S.v / 26))) / massF * (S.wetMotor ? 0.6 : 1);
+    const HST = !!ROUTE.hst;
+    if (n > 0) target = powerLocked ? 0 : (n * 0.26 * (HST ? Math.min(1.25, 46 / Math.max(1, S.v)) : EXP ? Math.min(1, 14 / Math.max(1, S.v)) : Math.max(0, 1 - S.v / 26))) / massF * (S.wetMotor ? 0.6 : 1);
     else if (n === 0) target = 0;
     else if (n === -5) target = (-1.6 * grip) / brakeF;
-    else target = (n * 0.25 * grip) / brakeF;
+    else target = (n * (HST ? 0.3 : 0.25) * grip) / brakeF;
     // roda selip: tenaga besar di kecepatan rendah saat rel basah
     S.slip = wet && S.sandT <= 0 && n > 0 && !powerLocked && S.v < 6 && target > 0.6;
     if (S.slip) {
@@ -2292,7 +2374,7 @@
     }
     const rate = n === -5 ? 3.2 : 0.9;
     S.aCmd += clamp(target - S.aCmd, -rate * dt, rate * dt);
-    const resist = S.v > 0.01 ? 0.012 + (EXP ? 0.00018 : 0.00032) * S.v * S.v : 0;
+    const resist = S.v > 0.01 ? 0.012 + (HST ? 0.000055 : EXP ? 0.00018 : 0.00032) * S.v * S.v : 0;
     const gr = gradeAt(S.x - TRAIN_LEN / 2);
     let a = S.aCmd - resist - (gr ? 9.81 * gr.permil / 1000 : 0);
     if (S.v <= 0 && a < 0) a = 0;
@@ -2965,6 +3047,7 @@
     '2-3': { pts: [G.SB, G.M2, G.MK].map((p) => off(p, 3)), col: '#c9a05a' },
     '2-1': { pts: [G.MK, G.T1, G.T2, G.TA], col: '#6fb36a' },
     '3-1': { pts: [G.S, G.C, G.P, G.K, G.W, G.B, G.KB, GEO(113.2, -7.3)].map((p) => off(p, -3)), col: '#ff9a5a' },
+    '3-2': { pts: [GEO(106.85, -6.2), GEO(107.25, -6.5), GEO(107.6, -6.9)], col: '#22b6d6' },
   };
   // [x, y, nama, label di atas(-1)/bawah(1)]
   const MAP_ST = [[...G.D, 'Depo', 1], [...G.S, 'Sukamaju', -1], [...G.A, '', 0], [...G.C, 'Cibening', 1], [...G.P, 'Pasar Lama', -1], [...G.K, 'Kali Jernih', 1], [...G.W, 'Watugede', -1], [...G.B, 'Krajan', 1], [...G.KB, 'Kedung Banteng', -1],
@@ -2982,6 +3065,7 @@
     '2-1': '<path d="M3 9h18l-3 8H6z"/><path d="M5 9l2.5-3 3 2 3-3 3 2.5L19 9"/><circle cx="8" cy="20" r="1.6"/><circle cx="16" cy="20" r="1.6"/>',
     '2-2': '<path d="M7 22V3"/><path d="M7 5l12-1.5v4L7 9z"/><circle cx="7" cy="13" r="1.6"/><path d="M4 22h6"/>',
     '2-3': '<ellipse cx="12" cy="12" rx="6" ry="9" transform="rotate(35 12 12)"/><path d="M8.6 17.4c3.2-3 .2-7.6 6.8-10.8"/>',
+    '3-2': '<path d="M2 15h13l7 3v1H2z"/><path d="M4 21h16M8 19v2M16 19v2"/><path d="M2 11h6M1 8h5"/>',
     '3-1': '<path d="M3 14h12l5 3v2H3z"/><path d="M5 14V10h9l3 4"/><path d="M2 21h20M18 9l3-2M18 12l4-1"/>',
     daily: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   };
@@ -3002,6 +3086,7 @@
     '2-3': skyG('b3', '#d9b48a', '#f2ead2') + '<path d="M0 36 L24 18 L44 32 L66 14 L92 30 L120 20 V70 H0z" fill="#7a8a6a"/><path d="M0 46 Q40 38 120 44 V70 H0z" fill="#5a7a42"/><g>' + [10, 28, 46, 98, 114].map((x) => `<circle cx="${x}" cy="54" r="7" fill="#3d6a32"/><circle cx="${x - 3}" cy="52" r="1.3" fill="#d83a2e"/><circle cx="${x + 2}" cy="56" r="1.3" fill="#d83a2e"/><circle cx="${x + 3}" cy="51" r="1.3" fill="#b02a22"/>`).join('') + '</g><rect x="56" y="44" width="34" height="14" rx="1.5" fill="#8a5a3a"/><g fill="#d9c09a"><rect x="59" y="38" width="9" height="7" rx="2"/><rect x="69" y="37" width="9" height="8" rx="2"/><rect x="79" y="38" width="9" height="7" rx="2"/></g><circle cx="62" cy="60" r="2.8" fill="#222"/><circle cx="84" cy="60" r="2.8" fill="#222"/>' + rails(62),
   };
   MIS_ART['3-1'] = skyG('c1', '#3a2f66', '#ffb46a') + '<circle cx="92" cy="40" r="11" fill="#ffe0a0"/><circle cx="92" cy="40" r="20" fill="#ffc070" opacity=".25"/><path d="M0 46 Q30 40 60 44 T120 42 V70 H0z" fill="#6a4a5a"/><rect x="0" y="50" width="120" height="20" fill="#3a2e3a"/>' + rails(52, '#1d1820') + '<g stroke="#fff3d8" stroke-width="1.2" opacity=".55" stroke-linecap="round"><path d="M2 58h22M10 63h30M30 60h18M60 64h26"/></g><path d="M18 38h70l12 8v6H18z" fill="#f3eee1"/><rect x="18" y="46" width="82" height="2" fill="#c8352b"/><g fill="#ffd88a">' + [24, 34, 44, 54, 64, 74].map((x) => `<rect x="${x}" y="40" width="7" height="4" rx=".8"/>`).join('') + '</g><path d="M88 38h4l8 8h-12z" fill="#1e2a33"/><circle cx="100" cy="49" r="1.6" fill="#fff6c4"/><path d="M101 49 L120 45 V53z" fill="#fff6c4" opacity=".35"/>';
+  MIS_ART['3-2'] = skyG('c2', '#6ab8ec', '#e2f4fa') + '<g fill="#8aa8c0" opacity=".7"><rect x="6" y="18" width="8" height="26"/><rect x="16" y="10" width="7" height="34"/><rect x="25" y="22" width="9" height="22"/></g><path d="M0 48 Q30 40 60 46 T120 42 V70 H0z" fill="#7fb85a"/><g stroke="#5f9a3a" stroke-width="1"><path d="M0 56 H120M0 62 H120M20 48 L10 70M50 48 L46 70M80 48 L84 70M108 46 L118 70"/></g><rect x="0" y="40" width="120" height="3" fill="#cfd4d8"/><g fill="#b9bec3">' + [8, 32, 56, 80, 104].map((x) => `<rect x="${x}" y="43" width="3" height="16"/>`).join('') + '</g><g stroke="#f5f7f9" stroke-width="1.4"><path d="M100 14 V40M100 14 l-6 -5M100 14 l7 -2M100 14 l-1 7"/></g><path d="M14 30h76l14 6v4H14z" fill="#ffffff"/><rect x="14" y="36" width="90" height="2.2" fill="#1567c4"/><rect x="18" y="32" width="66" height="2.6" fill="#22303c"/><path d="M90 30h4l10 6h-14z" fill="#11151b"/><g stroke="#fff" stroke-width="1" opacity=".7"><path d="M0 34h10M2 38h8"/></g>';
   const misArt = (id) => MIS_ART[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid slice">${MIS_ART[id]}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
   function dailyArt(base) {
@@ -3288,6 +3373,7 @@
   let expertOn = store.get('rn.expert') === '1';
   const expertAllowed = (m) => MISSION_ORDER.includes(m.id) && bestOf(m.id) > 0;
   function renderMissionList() {
+    if (titleMap.tab === 'missions' && $('titleTabLbl')) $('titleTabLbl').textContent = `${MISSION_ORDER.length} misi · ${RANKS[rankOf()].name}`;
     const nextId = nextMissionId();
     const today = new Date();
     MISSIONS.daily = buildDaily(today);
@@ -3338,7 +3424,7 @@
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
-      <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
+      <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst' ? 'Kilat Nusantara KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
@@ -3356,7 +3442,7 @@
     showScreen('brief');
   }
   function startMission() {
-    ROUTE._bb = null;
+    ROUTE._bb = null; initGauge();
     S = newState();
     textCache.clear();
     showScreen('play');
@@ -3854,7 +3940,7 @@
     tickCrossings(st, dt);
     const x0 = st.x - 1.5, EH = 3.4;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
-    const p = storm ? 0.6 : night ? 0.35 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1);
+    const p = storm ? 0.6 : night ? 0.35 : MIS.day ? 1 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1);
     const T = ROUTE.tunnel, inTun = !!T && x0 > T.from && x0 < T.to;
     const f = W * 0.8;
     const bob = REDUCE_MOTION ? 0 : Math.sin(st.t * (2 + st.v * 0.45)) * Math.min(1.4, st.v * 0.08) + (st.shake > 0 ? (Math.random() - 0.5) * st.shake * 5 : 0);
@@ -4544,7 +4630,7 @@
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
-    const p = storm ? 0.6 : night ? 0.35 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1); // fajar -> pagi (senja: matahari rendah)
+    const p = storm ? 0.6 : night ? 0.35 : MIS.day ? 1 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1); // fajar -> pagi (senja: matahari rendah)
     const T = ROUTE.tunnel;
     const xc = st.x - 12; // posisi kabin
     const tf = T ? smooth(T.from, T.from + 25, xc) * (1 - smooth(T.to, T.to + 25, xc)) : 0;
@@ -5865,7 +5951,7 @@
     if (!sawit) drawPaddyLife(V, yTop, rowY, at, i0, i1, cell, rows);
 
     // sungai di bawah jembatan, tanpa pilar tengah (jembatan busur bentang penuh)
-    if (onScreen) {
+    if (onScreen && !b.land) {
       const bank = [[bx0 - 4 * ppm, gy], [bx1 + 4 * ppm, gy], [V.Xn(bx1) + 3 * ppm, H], [V.Xn(bx0) - 3 * ppm, H]];
       c.fillStyle = mix('#5e4f3b', '#7b6a4e', p);
       c.beginPath(); bank.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fill();
@@ -6552,6 +6638,26 @@
     });
   }
 
+  // stasiun kereta cepat: atap kaca melengkung panjang bergaris rangka, dinding kaca, papan digital
+  function modernStation(V, s) {
+    const { c, ppm, gy, X } = V, x0 = X(s.x - 96), x1 = X(s.x + 22), top = gy - 9.5 * ppm, mid = (x0 + x1) / 2;
+    c.save();
+    // dinding kaca belakang
+    const wg = c.createLinearGradient(0, top, 0, gy); wg.addColorStop(0, 'rgba(140,190,220,0.55)'); wg.addColorStop(1, 'rgba(210,235,245,0.35)');
+    c.fillStyle = wg; c.fillRect(x0, gy - 6.5 * ppm, x1 - x0, 5.5 * ppm);
+    c.strokeStyle = 'rgba(255,255,255,0.45)'; c.lineWidth = 1; c.beginPath(); for (let m = s.x - 96; m < s.x + 22; m += 3) { c.moveTo(X(m), gy - 6.5 * ppm); c.lineTo(X(m), gy - 1 * ppm); } c.moveTo(x0, gy - 3.8 * ppm); c.lineTo(x1, gy - 3.8 * ppm); c.stroke();
+    // atap lengkung kaca dengan rusuk baja putih
+    c.fillStyle = 'rgba(230,242,250,0.5)'; c.beginPath(); c.moveTo(x0 - 3 * ppm, gy - 6.6 * ppm); c.quadraticCurveTo(mid, top - 4 * ppm, x1 + 3 * ppm, gy - 6.6 * ppm); c.lineTo(x1 + 3 * ppm, gy - 6.1 * ppm); c.quadraticCurveTo(mid, top - 3.3 * ppm, x0 - 3 * ppm, gy - 6.1 * ppm); c.closePath(); c.fill();
+    c.strokeStyle = '#f4f7f9'; c.lineWidth = Math.max(1.5, 0.22 * ppm); c.beginPath(); c.moveTo(x0 - 3 * ppm, gy - 6.6 * ppm); c.quadraticCurveTo(mid, top - 4 * ppm, x1 + 3 * ppm, gy - 6.6 * ppm); c.stroke();
+    c.lineWidth = Math.max(1, 0.1 * ppm); c.beginPath(); for (let k = 0; k <= 14; k++) { const t = k / 14, xx = (1 - t) * (1 - t) * (x0 - 3 * ppm) + 2 * (1 - t) * t * mid + t * t * (x1 + 3 * ppm), yy = (1 - t) * (1 - t) * (gy - 6.6 * ppm) + 2 * (1 - t) * t * (top - 4 * ppm) + t * t * (gy - 6.6 * ppm); c.moveTo(xx, yy); c.lineTo(xx, gy - 1.1 * ppm); } c.stroke();
+    // papan digital nama stasiun
+    const bx = X(s.x - 40), bw = 12 * ppm; c.fillStyle = '#0e1a2a'; roundRect(c, bx - bw / 2, gy - 8.2 * ppm, bw, 1.4 * ppm, 0.3 * ppm); c.fill();
+    c.fillStyle = '#7fe6e0'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.round(0.85 * ppm)}px "Big Shoulders Display", sans-serif`; c.fillText(s.name, bx, gy - 7.5 * ppm); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    // pintu tepi peron (platform screen door)
+    c.fillStyle = 'rgba(200,225,240,0.6)'; for (let m = s.x - 92; m < s.x + 18; m += 4.2) c.fillRect(X(m), gy - 2.9 * ppm, 3.4 * ppm, 1.9 * ppm);
+    c.fillStyle = '#1567c4'; c.fillRect(x0, gy - 3.0 * ppm, x1 - x0, 0.14 * ppm);
+    c.restore();
+  }
   // ---------- bangunan stasiun (detail & artistik) ----------
   function stationBuilding(V, cx, by, s) {
     const { c, ppm, st } = V, lit = V.lit || V.night, sum = MIS.id && MIS.id[0] === '2';
@@ -6701,8 +6807,8 @@
       const a = X(s.x - 95), b = X(s.x + 25);
       if (b < -50 || a > W + 50) return;
       // bangunan stasiun warisan: paviliun tengah berjam, sayap berjendela lengkung, atap joglo (Jawa) / gonjong (Sumatra)
-      stationBuilding(V, X(s.x - 48), gy - 1.0 * ppm, s);
-      stationCanopy(V, s);
+      if (s.modern) modernStation(V, s); else { stationBuilding(V, X(s.x - 48), gy - 1.0 * ppm, s);
+      stationCanopy(V, s); }
       if (MIS.lebaran) {
         // ketupat bergantung di kanopi dan spanduk Lebaran
         for (let k = 0; k < 14; k++) {
@@ -6804,7 +6910,7 @@
     if (!ROUTE.brakeBoards) return [];
     if (ROUTE._bb) return ROUTE._bb;
     const v1 = ROUTE.lineSpeed / 3.6, out = [];
-    const dist = (vt) => (v1 * v1 - vt * vt) / (2 * 0.55);
+    const dist = (vt) => (v1 * v1 - vt * vt) / (2 * (ROUTE.hst ? 0.75 : 0.55));
     ROUTE.zones.forEach((z) => { if (z.from > 400 && z.limit <= ROUTE.lineSpeed - 30) out.push({ x: z.from - dist(z.limit / 3.6), to: z.limit, kind: 'zone' }); });
     ROUTE.stations.slice(1).forEach((st2) => { out.push({ x: st2.x - 250 - dist(40 / 3.6), to: 0, kind: 'stop' }); });
     return (ROUTE._bb = out);
@@ -7626,7 +7732,7 @@
     c.restore();
 
     // ---- gerbong stainless ----
-    const ARGOC = MIS.loco === 'argo';
+    const ARGOC = MIS.loco === 'argo' || MIS.loco === 'hst', HSTC = MIS.loco === 'hst';
     const steel = ARGOC ? vgrad(4.85, 1.0, [[0, '#ffffff'], [0.35, '#efede9'], [0.8, '#c8cbd1'], [1, '#9aa0a8']]) : vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
     const glass = vgrad(4.35, 2.95, [[0, '#3b5263'], [0.5, '#1d2b36'], [1, '#121b23']]);
     const roofTop = vgrad(6.55, 6.05, [[0, '#f1f4f5'], [1, '#c7cfd3']]);
@@ -7680,7 +7786,7 @@
         const sx0 = (a, b) => Math.min(L(u(a)), L(u(b))), sw0 = (a, b) => Math.abs(L(u(a)) - L(u(b)));
         c.fillStyle = '#14181e'; roundRect(c, sx0(30, 210), Y(4.5), sw0(30, 210), 1.7 * ppm, 0.3 * ppm); c.fill();
         line([[u(210), 4.56], [u(30), 4.56]], '#d7dce2', lw(0.04));
-        const sg = c.createLinearGradient(sx0(0, 240), 0, sx0(0, 240) + sw0(0, 240), 0); sg.addColorStop(0, '#4a2e78'); sg.addColorStop(0.5, '#b4337a'); sg.addColorStop(1, '#f0743a');
+        const sg = c.createLinearGradient(sx0(0, 240), 0, sx0(0, 240) + sw0(0, 240), 0); if (HSTC) { sg.addColorStop(0, '#0b2f6e'); sg.addColorStop(0.5, '#1567c4'); sg.addColorStop(1, '#22b6d6'); } else { sg.addColorStop(0, '#4a2e78'); sg.addColorStop(0.5, '#b4337a'); sg.addColorStop(1, '#f0743a'); }
         c.fillStyle = sg; c.fillRect(sx0(0, 240), Y(2.75), sw0(0, 240), 0.75 * ppm);
         line([[u(240), 2.82], [u(0), 2.82]], '#e9c26a', lw(0.06));
         line([[u(240), 1.98], [u(0), 1.98]], 'rgba(255,255,255,0.55)', lw(0.03));
@@ -7689,7 +7795,7 @@
         c.fillStyle = '#ffd27a'; c.beginPath(); c.arc(lx, ly + rr * 0.35, rr, Math.PI, 0); c.fill();
         c.strokeStyle = '#ffd27a'; c.lineWidth = Math.max(1, 0.04 * ppm); c.beginPath(); for (let q = 0; q < 5; q++) { const a = Math.PI * (1.1 + q * 0.2); c.moveTo(lx + Math.cos(a) * rr * 1.35, ly + rr * 0.35 + Math.sin(a) * rr * 1.35); c.lineTo(lx + Math.cos(a) * rr * 1.75, ly + rr * 0.35 + Math.sin(a) * rr * 1.75); } c.stroke();
         c.fillStyle = '#fff6e6'; c.font = `italic 800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
-        c.fillText('ARGO SENJA · EKSEKUTIF', lx + rr * 2.2, ly + 0.02 * ppm);
+        c.fillText(HSTC ? 'KILAT NUSANTARA · BISNIS' : 'ARGO SENJA · EKSEKUTIF', lx + rr * 2.2, ly + 0.02 * ppm);
       } else {
         box(u(240), u(0), 2.27, 2.6, '#f2a516');
         box(u(240), u(0), 2.0, 2.22, '#1f6f6d');
@@ -7729,7 +7835,7 @@
       }
       c.fillStyle = '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.5 * ppm))}px "Plus Jakarta Sans", sans-serif`;
       c.textAlign = 'left'; c.textBaseline = 'middle';
-      c.fillText(ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
+      c.fillText(HSTC ? `KN · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
       if (rimOn) {
         c.save(); c.globalAlpha = V.rimA;
         line([[u(4), 6.06], [u(236), 6.06]], V.rim, lw(0.09));
@@ -7814,7 +7920,7 @@
     c.fillRect(L(15.85), Y(1.15), 15.7 * ppm, 0.7 * ppm);
 
     // ---- badan lokomotif diesel modern berbadan lebar (full-width carbody), moncong aerodinamis ----
-    const ARGO = (LOCO_FORCE || MIS.loco) === 'argo';
+    const LK = LOCO_FORCE || MIS.loco, ARGO = LK === 'argo' || LK === 'hst', HSTL = LK === 'hst';
     const red = ARGO ? vgrad(6.0, 1.85, [[0, '#ffffff'], [0.3, '#eeece8'], [0.75, '#c9ccd2'], [1, '#8f949c']]) : vgrad(6.0, 1.85, [[0, '#e5513f'], [0.35, '#c8322a'], [0.8, '#a1221b'], [1, '#7e1813']]);
     const roofG = vgrad(6.4, 6.0, [[0, '#8a939a'], [1, '#5a6268']]);
     const glass2 = vgrad(5.8, 4.0, [[0, '#56708a'], [0.5, '#1f2d38'], [1, '#111a22']]);
@@ -7991,14 +8097,14 @@
     if (ARGO) {
       // pita senja: sapuan jingga → magenta → ungu yang naik ke arah moncong, bergaris emas
       const sw = [[15.85, 1.8], [15.85, 2.6], [8.0, 2.85], [3.0, 3.25], [0.4, 3.4], [-0.62, 3.3], [-1.05, 2.75], [-1.25, 2.2], [-1.28, 1.8]];
-      const sg = c.createLinearGradient(L(15.85), 0, L(-1.12), 0); sg.addColorStop(0, '#4a2e78'); sg.addColorStop(0.45, '#b4337a'); sg.addColorStop(0.8, '#f0743a'); sg.addColorStop(1, '#ffb04a');
+      const sg = c.createLinearGradient(L(15.85), 0, L(-1.12), 0); if (HSTL) { sg.addColorStop(0, '#0b2f6e'); sg.addColorStop(0.5, '#1567c4'); sg.addColorStop(0.85, '#22b6d6'); sg.addColorStop(1, '#7fe6e0'); } else { sg.addColorStop(0, '#4a2e78'); sg.addColorStop(0.45, '#b4337a'); sg.addColorStop(0.8, '#f0743a'); sg.addColorStop(1, '#ffb04a'); }
       poly(sw, sg);
       line([[15.85, 2.67], [8.0, 2.92], [3.0, 3.32], [0.4, 3.47], [-0.6, 3.37]], '#e9c26a', lw(0.06));
       line([[15.85, 1.88], [-1.25, 1.88]], 'rgba(255,255,255,0.5)', lw(0.04));
       // rok samping menutupi rangka di antara bogie
       c.fillStyle = vgrad(1.7, 1.05, [[0, '#c9ccd2'], [1, '#7c828a']]); c.fillRect(L(12.2), Y(1.72), 8.6 * ppm, 0.62 * ppm); line([[12.2, 1.12], [3.6, 1.12]], 'rgba(0,0,0,0.25)', 1);
       c.fillStyle = '#fff6e6'; c.font = `italic 900 ${Math.max(6, Math.round(0.5 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText('AGRAVEDA', L(11.2), Y(2.26)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      c.fillText(HSTL ? 'KILAT NUSANTARA' : 'AGRAVEDA', L(HSTL ? 10.6 : 11.2), Y(2.26)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     }
     const band = ARGO ? null : SH === 'boxB' || SH === 'boxC' ? [[15.85, 2.45], [15.85, 3.72], [-0.85, 3.72], [-0.85, 2.45]] : BOXY ? [[15.85, 2.45], [15.85, 3.72], [-0.73, 3.72], [-0.83, 2.45]] : [[15.85, 2.45], [15.85, 3.72], [0.25, 3.72], [-0.48, 3.38], [-0.75, 3.0], [-0.75, 2.45]];
     if (band) {
@@ -8069,7 +8175,7 @@
     }
     c.fillStyle = cream; c.textAlign = 'left';
     c.font = `800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`;
-    if (!ARGO) c.fillText('RN 2001', L(15.2), Y(2.09)); else { c.fillStyle = '#3a3f46'; c.fillText('AV 3801', L(15.2), Y(1.72)); }
+    if (!ARGO) c.fillText('RN 2001', L(15.2), Y(2.09)); else { c.fillStyle = '#3a3f46'; c.fillText(HSTL ? 'KN 5001' : 'AV 3801', L(15.2), Y(1.72)); }
     // tangga kabin & pilot depan, kopling, selang udara
     c.strokeStyle = '#8d969b'; c.lineWidth = lw(0.05); c.beginPath();
     c.moveTo(L(4.85), Y(1.85)); c.lineTo(L(4.85), Y(0.55)); c.moveTo(L(4.25), Y(1.85)); c.lineTo(L(4.25), Y(0.55));
@@ -8542,8 +8648,9 @@
             const base = k * period - (off % period);
             for (let i = 0; i < n; i++) {
               const r = hash(i * 7.3 + par * 10), x = base + i * (period / n) + r * 20; if (x < -80 || x > W + 80) continue;
-              const bw = (5 + r * 7) * ppm * sc2, bh = ((sc.big ? 16 : 10) + hash(i * 2.1 + par) * (sc.big ? 26 : 14)) * ppm * sc2;
+              const gl = sc.glass ? 0.62 : 1, bw = (5 + r * 7) * ppm * sc2 * gl, bh = ((sc.big ? 16 : 10) + hash(i * 2.1 + par) * (sc.big ? 26 : 14)) * ppm * sc2 * gl;
               c.fillStyle = col; c.fillRect(x, yH - bh, bw, bh + 2 * ppm);
+              if (sc.glass) { const gg = c.createLinearGradient(x, 0, x + bw, 0); gg.addColorStop(0, 'rgba(170,215,240,0.55)'); gg.addColorStop(0.5, 'rgba(255,255,255,0.25)'); gg.addColorStop(1, 'rgba(120,170,210,0.45)'); c.fillStyle = gg; c.fillRect(x, yH - bh, bw, bh); if (hash(i + 9) < 0.3) { c.fillStyle = col; c.beginPath(); c.moveTo(x, yH - bh); c.lineTo(x + bw / 2, yH - bh - 3 * ppm * sc2); c.lineTo(x + bw, yH - bh); c.fill(); } continue; }
               if (hash(i + 4) < 0.25) { c.fillRect(x + bw * 0.45, yH - bh - 4 * ppm * sc2, Math.max(1, 0.3 * ppm), 4 * ppm * sc2); }
               c.fillStyle = night ? 'rgba(255,214,140,0.85)' : 'rgba(255,220,170,0.35)';
               for (let wy = yH - bh + 1.2 * ppm * sc2; wy < yH - 0.8 * ppm; wy += 1.6 * ppm * sc2) for (let wx = x + 0.8 * ppm * sc2; wx < x + bw - 0.8 * ppm * sc2; wx += 1.4 * ppm * sc2) if (hash(wx * 0.13 + wy * 0.71) < (night ? 0.55 : 0.3)) c.fillRect(wx, wy, 0.6 * ppm * sc2, 0.7 * ppm * sc2);
@@ -8582,6 +8689,37 @@
         if (sc.kind === 'salt') { // petak tambak garam berkilau & gundukan garam putih
           c.fillStyle = night ? 'rgba(160,170,210,0.35)' : 'rgba(255,236,214,0.6)';
           const off2 = pcOf(V) * 0.4; for (let x = -(off2 % 90); x < W; x += 90) { c.fillRect(x, yB - 0.4 * ppm, 70, 1.2 * ppm); c.fillStyle = '#fbf8f2'; c.beginPath(); c.moveTo(x + 74, yB + 0.8 * ppm); c.lineTo(x + 79, yB - 1.2 * ppm); c.lineTo(x + 84, yB + 0.8 * ppm); c.closePath(); c.fill(); c.fillStyle = night ? 'rgba(160,170,210,0.35)' : 'rgba(255,236,214,0.6)'; }
+        }
+      } else if (sc.kind === 'solar' || sc.kind === 'wind' || sc.kind === 'terrace') {
+        const tt = performance.now() / 1000;
+        if (sc.kind === 'terrace') { // sawah terasering di perbukitan jauh, garis pematang melengkung
+          for (const [par, h0, col, col2] of [[0.1, 9, '#9cc47e', '#86b26a'], [0.18, 5.5, '#86bb5e', '#73a64e']]) {
+            const off = pcOf(V) * par, period = 1400;
+            for (let k = -1; k < Math.ceil(W / period) + 2; k++) { const base = k * period - (off % period);
+              c.fillStyle = col; c.beginPath(); c.moveTo(base - 50, yH + 2 * ppm);
+              for (let x = 0; x <= period + 100; x += 50) c.lineTo(base - 50 + x, yH - (h0 + Math.sin((x / period) * Math.PI * 2 + par * 9) * h0 * 0.5) * ppm * 0.6);
+              c.lineTo(base + period + 50, yH + 2 * ppm); c.closePath(); c.fill();
+              c.save(); c.clip(); c.strokeStyle = col2; c.lineWidth = Math.max(1, 0.3 * ppm);
+              for (let r = 1; r < 9; r++) { c.beginPath(); for (let x = 0; x <= period + 100; x += 50) { const y = yH - (h0 + Math.sin((x / period) * Math.PI * 2 + par * 9) * h0 * 0.5) * ppm * 0.6 + r * 0.7 * ppm; x ? c.lineTo(base - 50 + x, y) : c.moveTo(base - 50 + x, y); } c.stroke(); }
+              c.fillStyle = 'rgba(200,230,255,0.25)'; for (let q = 0; q < 6; q++) c.fillRect(base + hash(q + k) * period, yH - 3 * ppm - q * 1.3 * ppm, 40, Math.max(1, 0.4 * ppm));
+              c.restore(); }
+          }
+        }
+        if (sc.kind === 'solar') { // ladang panel surya di antara sawah
+          const off = pcOf(V) * 0.45, gap = 26;
+          for (let x = -(off % gap) - gap; x < W + gap; x += gap) { const row = Math.round((x + off) / gap); if (hash(row * 0.7) < 0.2) continue;
+            c.fillStyle = '#1d3a5c'; c.beginPath(); c.moveTo(x, yH + 0.2 * ppm); c.lineTo(x + 20, yH + 0.2 * ppm); c.lineTo(x + 16, yH - 1.4 * ppm); c.lineTo(x - 4, yH - 1.4 * ppm); c.closePath(); c.fill();
+            c.strokeStyle = 'rgba(160,200,240,0.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(x + 3, yH - 0.6 * ppm); c.lineTo(x + 18, yH - 0.6 * ppm); c.stroke();
+            c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(x + 2, yH - 1.2 * ppm, 5, Math.max(1, 0.2 * ppm)); }
+        }
+        if (sc.kind === 'wind' || sc.kind === 'terrace') { // kincir angin modern di punggung bukit
+          const off = pcOf(V) * 0.22, period = 900;
+          for (let k = -1; k < Math.ceil(W / period) + 2; k++) { const base = k * period - (off % period);
+            for (let i = 0; i < (sc.kind === 'wind' ? 5 : 2); i++) { const x = base + 80 + i * 170 + hash(i + 1) * 40; if (x < -60 || x > W + 60) continue; const h = (sc.kind === 'wind' ? 20 : 15) * ppm * 0.7, ang = tt * 1.1 + i * 1.3, bl = 7.5 * ppm * 0.7;
+              c.strokeStyle = '#f2f4f6'; c.lineWidth = Math.max(1.5, 0.45 * ppm); c.beginPath(); c.moveTo(x, yH + ppm); c.lineTo(x, yH - h); c.stroke();
+              c.lineWidth = Math.max(1, 0.3 * ppm); c.beginPath(); for (let q = 0; q < 3; q++) { const a = ang + q * 2.094; c.moveTo(x, yH - h); c.lineTo(x + Math.cos(a) * bl, yH - h + Math.sin(a) * bl); } c.stroke();
+              c.fillStyle = '#d8dde2'; c.beginPath(); c.arc(x, yH - h, Math.max(1.5, 0.4 * ppm), 0, 7); c.fill(); }
+          }
         }
       } else if (sc.kind === 'teak') {
         // hutan jati Alas Roban: batang lurus tinggi, daun lebar, berlapis
@@ -8701,7 +8839,7 @@
     if (!w || !h) return;
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
     c.clearRect(0, 0, w, h);
-    const span = ROUTE.lineSpeed >= 100 ? 640 + clamp((S.v * 3.6 - 60) / 60, 0, 1) * 760 : 640;
+    const span = ROUTE.lineSpeed >= 100 ? 640 + clamp((S.v * 3.6 - 60) / 60, 0, 1) * 760 + (ROUTE.hst ? clamp((S.v * 3.6 - 120) / 130, 0, 1) * 2600 : 0) : 640;
     const x0 = S.x - 60, x1 = S.x + span;
     const M = (wx) => ((wx - x0) / (x1 - x0)) * w;
     const ly = Math.round(h * 0.6);

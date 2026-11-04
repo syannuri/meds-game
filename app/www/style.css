@@ -976,3 +976,8 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 /* tombol lokomotif baru di menu utama */
 #screenTitle .btn.newloco { border-color: rgba(255, 176, 74, 0.7); background: linear-gradient(90deg, rgba(74, 46, 120, 0.55), rgba(240, 116, 58, 0.45)); color: #fff3e0; gap: 6px; }
 #screenTitle .btn.newloco i { font-style: normal; font-size: 9px; font-weight: 900; letter-spacing: 0.08em; background: #ffb04a; color: #2a1405; padding: 1px 5px; border-radius: 999px; }
+.ticket.t-hst .stub { background: linear-gradient(180deg, #22b6d6, #0b2f6e); color: #eafcff; }
+.ticket.t-hst .tbody { background: #e8f4f8; color: #0e1a2a; }
+.ticket.t-hst .tbody small { color: #3a5a6a; }
+.ticket.t-hst .tnew { color: #1567c4; }
+#screenTitle .tickets { grid-template-columns: repeat(6, minmax(0, 1fr)); }
