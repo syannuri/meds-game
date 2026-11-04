@@ -602,6 +602,7 @@
         { from: 4900, to: 5500, limit: 80, label: 'Stasiun Jatiasri (langsung)' },
         { from: 6600, to: 7100, limit: 70, label: 'Tikungan Alas Roban', curve: true },
         { from: 10100, to: 10700, limit: 80, label: 'Stasiun Rancamaya (langsung)' },
+        { from: 7700, to: 7880, limit: 90, label: 'Jembatan rangka Kali Kuto' },
         { from: 11200, to: 11600, limit: 100, label: 'Jembatan Kali Kencana' },
         { from: 14250, to: 15150, limit: 40, label: 'area Stasiun Kota Kencana' },
       ],
@@ -623,6 +624,19 @@
       goats: [],
       fog: null,
       bridge: { from: 11200, to: 11600 },
+      bridges: [
+        { from: 2900, to: 3200, viaduct: true, name: 'Viaduk Kali Bodri' },
+        { from: 7700, to: 7880, truss: true, name: 'Jembatan Kali Kuto' },
+        { from: 11200, to: 11600, name: 'Jembatan Kali Kencana' },
+      ],
+      scenes: [
+        { from: -400, to: 1300, kind: 'city', name: 'Sukamaju' },
+        { from: 3400, to: 6300, kind: 'coast' },
+        { from: 6300, to: 7600, kind: 'teak' },
+        { from: 8600, to: 10000, kind: 'salt' },
+        { from: 12000, to: 13300, kind: 'coast' },
+        { from: 13300, to: 15600, kind: 'city', name: 'Kota Kencana', big: true },
+      ],
       tunnel: null,
       grades: [
         { from: 1800, to: 3200, permil: -6, label: 'Turunan Pantura' },
@@ -4437,9 +4451,15 @@
     const ph = (st.x % 25) / Math.max(1, st.v), d = Math.min(ph, ((st.x - 12.5 + 25) % 25) / Math.max(1, st.v));
     return Math.exp(-d * 18) * clamp((kmh - 15) / 60, 0, 1) * 1.6;
   }
+  function activeBridge(x) { // beberapa jembatan per rute: pakai yang terdekat dengan kereta/kamera
+    const L = ROUTE.bridges; if (!L || !L.length) return;
+    let best = L[0], bd = Infinity; for (const b of L) { const d = x < b.from ? b.from - x : x > b.to ? x - b.to : 0; if (d < bd) { bd = d; best = b; } }
+    ROUTE.bridge = best;
+  }
   function render(dtReal) {
     const c = ctx;
     const st = S || idleState;
+    activeBridge(st.x - TRAIN_LEN * 0.3);
     c.setTransform(DPR, 0, 0, DPR, 0, railBump(st) * DPR);
     // zoom-out lembut saat ada satwa di jalur di depan
     const E0 = ROUTE.elephants, st0 = S || idleState;
@@ -4557,6 +4577,7 @@
     drawLandmarks(V, true);
     drawRidges(V);
     drawFarLand(V);
+    drawScenes(V);
     drawLandmarks(V);
     drawPort(V);
     drawBackProps(V);
@@ -8291,6 +8312,8 @@
   }
   function drawBridge(V, layer) {
     if (ROUTE.bridge && ROUTE.bridge.wood) { drawTrestle(V, layer); return; }
+    if (ROUTE.bridge && ROUTE.bridge.truss) { drawTruss(V, layer); return; }
+    if (ROUTE.bridge && ROUTE.bridge.viaduct) { drawViaduct(V, layer); return; }
     const G = bridgeGeom(V);
     if (!G) return;
     const { c, X, ppm, gy } = V;
@@ -8365,8 +8388,125 @@
     }
     c.restore();
   }
+  // jembatan rangka baja (Pratt) dengan portal bertulang, rangka belakang lebih pudar
+  function drawTruss(V, layer) {
+    const b = ROUTE.bridge, { c, X, ppm, gy } = V;
+    const x0 = X(b.from), x1 = X(b.to); if (x1 < -40 || x0 > W + 40) return;
+    const far = layer === 'back', dx = far ? 0.9 * ppm : 0, dy = far ? -1.1 * ppm : 0, top = 7.6;
+    const col = far ? (V.night ? '#3e4658' : '#7a8288') : (V.night ? '#7d879a' : '#5f6b72'), lwM = (far ? 0.28 : 0.42) * ppm;
+    c.save(); c.strokeStyle = col; c.lineCap = 'round'; c.lineJoin = 'round';
+    const panels = Math.max(4, Math.round((b.to - b.from) / 9)), pw = (b.to - b.from) / panels;
+    const P = (m, h) => [X(m) + dx, gy - h * ppm + dy];
+    c.lineWidth = lwM; c.beginPath();
+    c.moveTo(...P(b.from, 0.2)); c.lineTo(...P(b.from + pw, top)); c.lineTo(...P(b.to - pw, top)); c.lineTo(...P(b.to, 0.2)); c.stroke();
+    c.lineWidth = lwM * 0.55; c.beginPath();
+    for (let k = 1; k < panels; k++) { const m = b.from + k * pw; c.moveTo(...P(m, 0.3)); c.lineTo(...P(m, top)); }
+    for (let k = 1; k < panels - 1; k++) { const m = b.from + k * pw, mid = panels / 2; if (k < mid) { c.moveTo(...P(m, top)); c.lineTo(...P(m + pw, 0.3)); } else { c.moveTo(...P(m + pw, top)); c.lineTo(...P(m, 0.3)); } }
+    c.stroke();
+    if (far) { c.lineWidth = Math.max(1, 0.14 * ppm); c.beginPath(); for (let k = 1; k < panels; k++) { const m = b.from + k * pw; c.moveTo(...P(m, top)); c.lineTo(X(m), gy - top * ppm); } c.stroke(); }
+    else {
+      c.fillStyle = col; c.fillRect(x0, gy + 0.15 * ppm, x1 - x0, 1.2 * ppm);
+      c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(x0, gy + 1.2 * ppm, x1 - x0, 0.15 * ppm);
+      c.fillStyle = V.night ? '#c9a24a' : '#e2b23a'; c.fillRect(X(b.from + pw) - 0.2 * ppm, gy - top * ppm - 0.5 * ppm, X(b.from + pw * 1.6) - X(b.from + pw), 0.5 * ppm);
+      c.fillStyle = '#1b1f24'; c.font = `800 ${Math.max(6, Math.round(0.4 * ppm))}px "Big Shoulders Display", sans-serif`; c.textBaseline = 'middle'; c.fillText('BH 214', X(b.from + pw), gy - top * ppm - 0.25 * ppm); c.textBaseline = 'alphabetic';
+      c.fillStyle = 'rgba(200,210,218,0.7)'; for (let k = 0; k <= panels; k++) { const sx = X(b.from + k * pw); c.beginPath(); c.arc(sx, gy - top * ppm, Math.max(1, 0.12 * ppm), 0, 7); c.fill(); c.beginPath(); c.arc(sx, gy - 0.3 * ppm, Math.max(1, 0.12 * ppm), 0, 7); c.fill(); }
+    }
+    c.restore();
+  }
+  // viaduk beton berlengkung banyak di atas lembah sungai
+  function drawViaduct(V, layer) {
+    const b = ROUTE.bridge, { c, X, ppm, gy } = V;
+    const x0 = X(b.from), x1 = X(b.to); if (x1 < -40 || x0 > W + 40) return;
+    if (layer === 'back') return;
+    const conc = V.night ? '#5a5f6a' : V.storm ? '#8d9296' : '#c9c2b4', concD = V.night ? '#3a3e48' : '#9a9285';
+    const span = 24, n = Math.round((b.to - b.from) / span), sp = (b.to - b.from) / n, deep = 11;
+    c.save();
+    // tiang & lengkung
+    for (let k = 0; k < n; k++) {
+      const a = X(b.from + k * sp), e = X(b.from + (k + 1) * sp), mid = (a + e) / 2, wHalf = (e - a) / 2;
+      c.fillStyle = conc; c.beginPath(); c.moveTo(a, gy + 1.4 * ppm); c.lineTo(e, gy + 1.4 * ppm); c.lineTo(e, gy + deep * ppm); c.lineTo(e - 0.9 * ppm, gy + deep * ppm);
+      c.lineTo(e - 0.9 * ppm, gy + 5.5 * ppm); c.ellipse(mid, gy + 5.5 * ppm, wHalf - 0.9 * ppm, 3.6 * ppm, 0, 0, Math.PI, true); c.lineTo(a + 0.9 * ppm, gy + deep * ppm); c.lineTo(a, gy + deep * ppm); c.closePath(); c.fill();
+      c.strokeStyle = concD; c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath(); c.ellipse(mid, gy + 5.5 * ppm, wHalf - 0.9 * ppm, 3.6 * ppm, 0, Math.PI, 0); c.stroke();
+      c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(e - 0.9 * ppm, gy + 5.5 * ppm, 0.9 * ppm, (deep - 5.5) * ppm);
+    }
+    // lantai & dinding pengaman berlampu
+    c.fillStyle = concD; c.fillRect(x0 - 0.5 * ppm, gy + 0.15 * ppm, x1 - x0 + ppm, 1.3 * ppm);
+    c.fillStyle = conc; c.fillRect(x0 - 0.5 * ppm, gy - 0.9 * ppm, x1 - x0 + ppm, 0.5 * ppm);
+    for (let m = b.from; m < b.to; m += 15) { const sx = X(m); c.fillStyle = '#5b646a'; c.fillRect(sx, gy - 3.2 * ppm, 0.12 * ppm, 2.4 * ppm); c.fillStyle = V.night || V.p < 0.3 ? '#fff0c0' : '#d8dde3'; c.fillRect(sx - 0.3 * ppm, gy - 3.3 * ppm, 0.6 * ppm, 0.15 * ppm); }
+    c.restore();
+  }
+  // ---------- pemandangan bervariasi per bagian rute (kota, pesisir, hutan jati, tambak garam) ----------
+  function sceneWeight(V, sc) { const cx = V.camX + W / (2 * V.ppm); return smooth(sc.from - 250, sc.from + 150, cx) * (1 - smooth(sc.to - 150, sc.to + 250, cx)); }
+  function drawScenes(V) {
+    const L = ROUTE.scenes; if (!L) return;
+    const { c, ppm, gy } = V, night = V.night || V.p < 0.16, yH = gy - 5 * ppm;
+    for (const sc of L) {
+      const w = sceneWeight(V, sc); if (w <= 0.01) continue;
+      c.save(); c.globalAlpha = w;
+      if (sc.kind === 'city') {
+        // siluet gedung berlapis (paralaks), jendela menyala saat senja, menara, jalan tol layang dengan mobil
+        for (const [par, sc2, col, n] of [[0.18, 0.55, night ? '#2a2440' : '#7a6a88', 26], [0.32, 0.8, night ? '#1d1a2e' : '#5a4a68', 22]]) {
+          const off = pcOf(V) * par, period = 2400;
+          for (let k = -1; k < Math.ceil(W / period) + 2; k++) {
+            const base = k * period - (off % period);
+            for (let i = 0; i < n; i++) {
+              const r = hash(i * 7.3 + par * 10), x = base + i * (period / n) + r * 20; if (x < -80 || x > W + 80) continue;
+              const bw = (5 + r * 7) * ppm * sc2, bh = ((sc.big ? 16 : 10) + hash(i * 2.1 + par) * (sc.big ? 26 : 14)) * ppm * sc2;
+              c.fillStyle = col; c.fillRect(x, yH - bh, bw, bh + 2 * ppm);
+              if (hash(i + 4) < 0.25) { c.fillRect(x + bw * 0.45, yH - bh - 4 * ppm * sc2, Math.max(1, 0.3 * ppm), 4 * ppm * sc2); }
+              c.fillStyle = night ? 'rgba(255,214,140,0.85)' : 'rgba(255,220,170,0.35)';
+              for (let wy = yH - bh + 1.2 * ppm * sc2; wy < yH - 0.8 * ppm; wy += 1.6 * ppm * sc2) for (let wx = x + 0.8 * ppm * sc2; wx < x + bw - 0.8 * ppm * sc2; wx += 1.4 * ppm * sc2) if (hash(wx * 0.13 + wy * 0.71) < (night ? 0.55 : 0.3)) c.fillRect(wx, wy, 0.6 * ppm * sc2, 0.7 * ppm * sc2);
+            }
+          }
+        }
+        // menara pemancar / landmark kota
+        { const off = pcOf(V) * 0.12, x = W * 0.72 - (off % (W * 1.6)) + W * 0.4; c.strokeStyle = night ? '#2a2440' : '#6a5a78'; c.lineWidth = Math.max(1, 0.35 * ppm); c.beginPath(); c.moveTo(x, yH); c.lineTo(x, yH - 32 * ppm * 0.6); c.stroke(); c.fillStyle = '#ff5a4a'; c.beginPath(); c.arc(x, yH - 32 * ppm * 0.6, Math.max(1.5, 0.35 * ppm), 0, 7); c.fill(); }
+        // jalan tol layang
+        const off = pcOf(V) * 0.5, yT = yH + 0.6 * ppm, pc = 30 * ppm;
+        c.fillStyle = night ? '#3a3648' : '#8f8a92'; c.fillRect(0, yT - 2.6 * ppm, W, 0.8 * ppm);
+        c.fillStyle = night ? '#2a2636' : '#6f6a74'; for (let x = -(off % pc); x < W; x += pc) c.fillRect(x, yT - 1.8 * ppm, 0.8 * ppm, 2.4 * ppm);
+        const tt = performance.now() / 1000;
+        for (let q = 0; q < 9; q++) { const x = ((q * 211 + tt * (q % 2 ? 90 : -70) - off) % (W + 200) + W + 200) % (W + 200) - 100; c.fillStyle = night ? (q % 2 ? '#ff6a5a' : '#fff4c8') : ['#c0392b', '#eef2f4', '#2e6db0', '#f2c230'][q % 4]; c.fillRect(x, yT - 3.1 * ppm, (q % 3 ? 2.4 : 4.5) * ppm, 0.6 * ppm); }
+      } else if (sc.kind === 'coast' || sc.kind === 'salt') {
+        // laut Pantura di cakrawala: kilau senja, perahu nelayan, mercusuar, kincir angin
+        const yS = yH - 0.6 * ppm, yB = yH + 2.2 * ppm;
+        const sg = c.createLinearGradient(0, yS, 0, yB); sg.addColorStop(0, night ? '#2a2c58' : '#e8907a'); sg.addColorStop(1, night ? '#161a36' : '#6a5a8a');
+        c.fillStyle = sg; c.fillRect(0, yS, W, yB - yS);
+        const sun = sunPos(V); c.fillStyle = 'rgba(255,214,150,0.55)';
+        for (let k = 0; k < 7; k++) { const ww = (30 - k * 3) * ppm * 0.3; c.fillRect(sun.x - ww / 2 + Math.sin(performance.now() / 700 + k) * 3, yS + (k + 0.5) * 0.3 * ppm, ww, Math.max(1, 0.12 * ppm)); }
+        const off = pcOf(V) * 0.25, period = 1800;
+        for (let k = -1; k < Math.ceil(W / period) + 2; k++) {
+          const base = k * period - (off % period);
+          for (let i = 0; i < 6; i++) { const x = base + i * 300 + hash(i + 3) * 120; if (x < -60 || x > W + 60) continue; const bob = Math.sin(performance.now() / 600 + i) * 0.15 * ppm;
+            c.fillStyle = night ? '#141626' : '#3a2a3a'; c.beginPath(); c.moveTo(x, yS + 0.6 * ppm + bob); c.lineTo(x + 3 * ppm, yS + 0.6 * ppm + bob); c.lineTo(x + 2.5 * ppm, yS + 1.1 * ppm + bob); c.lineTo(x + 0.4 * ppm, yS + 1.1 * ppm + bob); c.closePath(); c.fill();
+            c.fillRect(x + 1.4 * ppm, yS - 1.6 * ppm + bob, Math.max(1, 0.12 * ppm), 2.2 * ppm); c.beginPath(); c.moveTo(x + 1.5 * ppm, yS - 1.5 * ppm + bob); c.lineTo(x + 2.8 * ppm, yS + 0.3 * ppm + bob); c.lineTo(x + 1.5 * ppm, yS + 0.3 * ppm + bob); c.fill(); }
+          // kincir angin pembangkit listrik
+          for (let i = 0; i < 3; i++) { const x = base + 520 + i * 160; if (x < -60 || x > W + 60) continue; const h = 14 * ppm * 0.55, ang = performance.now() / 900 + i;
+            c.strokeStyle = night ? '#3a3c58' : '#e8e2ea'; c.lineWidth = Math.max(1, 0.3 * ppm); c.beginPath(); c.moveTo(x, yS + 0.4 * ppm); c.lineTo(x, yS - h); c.stroke();
+            c.lineWidth = Math.max(1, 0.2 * ppm); c.beginPath(); for (let q = 0; q < 3; q++) { const a = ang + q * 2.094; c.moveTo(x, yS - h); c.lineTo(x + Math.cos(a) * 5 * ppm * 0.55, yS - h + Math.sin(a) * 5 * ppm * 0.55); } c.stroke(); }
+          // mercusuar
+          { const x = base + 1350; if (x > -40 && x < W + 40) { c.fillStyle = night ? '#d8dde3' : '#f3eee1'; c.beginPath(); c.moveTo(x - 0.8 * ppm, yS + 0.5 * ppm); c.lineTo(x + 0.8 * ppm, yS + 0.5 * ppm); c.lineTo(x + 0.45 * ppm, yS - 7 * ppm); c.lineTo(x - 0.45 * ppm, yS - 7 * ppm); c.closePath(); c.fill(); c.fillStyle = '#c8352b'; c.fillRect(x - 0.6 * ppm, yS - 3.5 * ppm, 1.2 * ppm, 0.8 * ppm);
+            if (night || V.p < 0.25) { const a = performance.now() / 800; c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = 'rgba(255,240,190,0.35)'; c.beginPath(); c.moveTo(x, yS - 7.3 * ppm); c.lineTo(x + Math.cos(a) * 40 * ppm, yS - 7.3 * ppm - 2 * ppm); c.lineTo(x + Math.cos(a) * 40 * ppm, yS - 7.3 * ppm + 2 * ppm); c.closePath(); c.fill(); c.restore(); } } }
+        }
+        if (sc.kind === 'salt') { // petak tambak garam berkilau & gundukan garam putih
+          c.fillStyle = night ? 'rgba(160,170,210,0.35)' : 'rgba(255,236,214,0.6)';
+          const off2 = pcOf(V) * 0.4; for (let x = -(off2 % 90); x < W; x += 90) { c.fillRect(x, yB - 0.4 * ppm, 70, 1.2 * ppm); c.fillStyle = '#fbf8f2'; c.beginPath(); c.moveTo(x + 74, yB + 0.8 * ppm); c.lineTo(x + 79, yB - 1.2 * ppm); c.lineTo(x + 84, yB + 0.8 * ppm); c.closePath(); c.fill(); c.fillStyle = night ? 'rgba(160,170,210,0.35)' : 'rgba(255,236,214,0.6)'; }
+        }
+      } else if (sc.kind === 'teak') {
+        // hutan jati Alas Roban: batang lurus tinggi, daun lebar, berlapis
+        for (const [par, scl, col] of [[0.3, 0.38, night ? '#1a2a24' : '#6a7448'], [0.42, 0.52, night ? '#14201c' : '#4f5f34']]) {
+          const off = pcOf(V) * par, gap = 22 * ppm * scl;
+          for (let x = -(off % gap) - gap; x < W + gap; x += gap) { const r = hash(Math.round((x + off) / gap) * 1.7 + par), h = (16 + r * 7) * ppm * scl;
+            c.fillStyle = col; c.fillRect(x, yH - h, Math.max(1, 0.5 * ppm * scl), h + 2 * ppm);
+            c.beginPath(); c.ellipse(x, yH - h, 4.5 * ppm * scl, 2.6 * ppm * scl, 0, 0, 7); c.fill(); c.beginPath(); c.ellipse(x - 3 * ppm * scl, yH - h + 2 * ppm * scl, 3 * ppm * scl, 1.8 * ppm * scl, 0, 0, 7); c.fill(); c.beginPath(); c.ellipse(x + 3 * ppm * scl, yH - h + 2.6 * ppm * scl, 3 * ppm * scl, 1.8 * ppm * scl, 0, 0, 7); c.fill(); }
+        }
+      }
+      c.restore();
+    }
+  }
   // pantulan busur di permukaan sungai
   function drawBridgeReflection(V, waterTop, clip) {
+    if (ROUTE.bridge && (ROUTE.bridge.truss || ROUTE.bridge.viaduct)) return;
     const G = bridgeGeom(V);
     if (!G) return;
     const { c } = V;
