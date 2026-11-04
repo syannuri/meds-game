@@ -973,3 +973,6 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .ticket.t-dusk .tbody small { color: #6a4a50; }
 .ticket.t-dusk .tnew { color: #c2552a; }
 @media (max-width: 760px) { #screenTitle .tickets li:not(.daily) .ticket .tbody b { font-size: 9.5px; } #screenTitle .tickets li:not(.daily) .ticket .stub b { font-size: 13px; } }
+/* tombol lokomotif baru di menu utama */
+#screenTitle .btn.newloco { border-color: rgba(255, 176, 74, 0.7); background: linear-gradient(90deg, rgba(74, 46, 120, 0.55), rgba(240, 116, 58, 0.45)); color: #fff3e0; gap: 6px; }
+#screenTitle .btn.newloco i { font-style: normal; font-size: 9px; font-weight: 900; letter-spacing: 0.08em; background: #ffb04a; color: #2a1405; padding: 1px 5px; border-radius: 999px; }

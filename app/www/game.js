@@ -580,7 +580,7 @@
     tags: ['Ekspres 120 km/h', 'Lewat langsung', 'Senja'],
     loco: 'argo',
     speaker: { who: 'Bu Wulan, kepala stasiun', initials: 'BW' },
-    brief: 'Raka, mulai hari ini Cakra menarik Argo Senja, kereta eksekutif ke Kota Kencana. Lintas Pantura lurus dan baru, boleh sampai 120 km/h. Jatiasri dan Rancamaya dilewati langsung. Perhatikan papan REM kuning: dari 120, kereta butuh hampir satu kilometer untuk berhenti.',
+    brief: 'Raka, mulai hari ini lokomotif baru Agraveda menarik Argo Senja, kereta eksekutif ke Kota Kencana. Lintas Pantura lurus dan baru, boleh sampai 120 km/h. Jatiasri dan Rancamaya dilewati langsung. Perhatikan papan REM kuning: dari 120, kereta butuh hampir satu kilometer untuk berhenti.',
     weather: 'senja cerah',
     intro: 'Argo Senja siap berangkat. Tutup pintu, lalu bawa penumpang eksekutif ke Kota Kencana.',
     reward: '<strong>Terbuka:</strong> Lencana Masinis Ekspres. Penumpang eksekutif memuji perjalanan yang mulus.',
@@ -3097,7 +3097,7 @@
     TFX.bursts = TFX.bursts.filter((b) => b.t < 1);
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   }
-  const titleMap = { tab: 'missions', focus: null, t: 0 };
+  const titleMap = { tab: 'missions', focus: null, t: 0, loco: 'argo' };
   function islandPath(c, pts) {
     const n = pts.length, mid = (i) => [(pts[i][0] + pts[(i + 1) % n][0]) / 2, (pts[i][1] + pts[(i + 1) % n][1]) / 2];
     c.beginPath(); const m0 = mid(n - 1); c.moveTo(m0[0], m0[1]);
@@ -3184,15 +3184,20 @@
     const gy = h * 0.78, ppm = w / 24;
     c.fillStyle = '#2a2f33'; c.beginPath(); c.ellipse(w / 2, gy + 6, w * 0.46, h * 0.1, 0, 0, 7); c.fill();
     c.fillStyle = '#7d8487'; c.fillRect(w * 0.06, gy - 2, w * 0.88, 2); c.fillStyle = '#a3a9ab'; c.fillRect(w * 0.06, gy + 2, w * 0.88, 2);
-    // Cakra dari samping, digambar dengan fungsi kereta di game
+    // lokomotif terpilih dari samping, digambar dengan fungsi kereta di game
+    const AG = titleMap.loco === 'argo';
     const V = { c, ppm, gy, X: (wx) => w / 2 + (wx - 9) * ppm, st: { x: 18, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0, rimA: 0.35, rim: '#ffcf8a', refl: 0.15, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
-    const keep = [N_COACH]; N_COACH = 0;
-    try { drawTrain(V); } finally { N_COACH = keep[0]; }
+    const keep = [N_COACH]; N_COACH = 0; LOCO_FORCE = AG ? 'argo' : 'none';
+    try { drawTrain(V); } finally { N_COACH = keep[0]; LOCO_FORCE = null; }
     for (let i = 0; i < 30; i++) { const x = ((hash(i) * w + t * 5 * (hash(i + 2) - 0.5)) % w + w) % w, y = (hash(i + 5) * h * 0.7 + t * 3) % (h * 0.7) + h * 0.08; c.fillStyle = 'rgba(255,230,190,0.3)'; c.fillRect(x, y, 1.5, 1.5); }
-    c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(Math.min(h * 0.09, w * 0.055))}px "Big Shoulders Display", sans-serif`; c.fillText('CAKRA · RN 2001', w * 0.04, h * 0.14, w * 0.92);
+    c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(Math.min(h * 0.09, w * 0.055))}px "Big Shoulders Display", sans-serif`; c.fillText(AG ? 'AGRAVEDA · AV 3801' : 'CAKRA · RN 2001', w * 0.04, h * 0.14, w * 0.92);
     const done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
     c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(Math.min(h * 0.045, w * 0.026))}px "Plus Jakarta Sans", sans-serif`;
-    c.fillText(`${done}/${MISSION_ORDER.length} misi selesai · Diesel CC · Livery Dayak`, w * 0.04, h * 0.22, w * 0.92);
+    c.fillText(AG ? 'Ekspres 120 km/h · Livery Senja · Argo Senja (misi 3-1)' : `${done}/${MISSION_ORDER.length} misi selesai · Diesel CC · Livery Dayak`, w * 0.04, h * 0.22, w * 0.92);
+    // pilihan lokomotif: ketuk untuk berganti
+    { const bw2 = Math.min(150, w * 0.3), bh2 = Math.min(26, h * 0.075), bx = w * 0.04, by = h - bh2 - h * 0.05;
+      [['Cakra', false], ['Agraveda', true]].forEach(([nm, ag], i) => { const x = bx + i * (bw2 + 6), on = ag === AG; c.fillStyle = on ? '#f2a516' : 'rgba(255,255,255,0.08)'; roundRect(c, x, by, bw2, bh2, bh2 / 2); c.fill(); c.fillStyle = on ? '#1d1405' : '#d8d2c4'; c.font = `800 ${Math.round(bh2 * 0.5)}px "Plus Jakarta Sans", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(nm + (ag ? ' · BARU' : ''), x + bw2 / 2, by + bh2 / 2); });
+      c.textAlign = 'start'; c.textBaseline = 'alphabetic'; titleMap.locoBtn = { x: bx, y: by, w: bw2 * 2 + 6, h: bh2, bw: bw2 }; }
     // album kartu pos landmark
     const got = cardsGot(), n = LM_IDS.length, gap = w * 0.008, cw = (w * 0.92 - gap * (n - 1)) / n, ch = cw * 1.08, ay = h * 0.275;
     c.fillStyle = '#c9b48a'; c.font = `800 ${Math.round(h * 0.032)}px "Plus Jakarta Sans", sans-serif`;
@@ -3299,7 +3304,7 @@
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
-      <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `Cakra + ${N_COACH} gerbong penumpang${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
+      <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
@@ -3488,7 +3493,9 @@
     if (wide > col && col > 0) h.style.fontSize = (parseFloat(getComputedStyle(h).fontSize) * col / wide * 0.98).toFixed(1) + 'px';
   }
   window.addEventListener('resize', fitLogo); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitLogo); setTimeout(fitLogo, 300);
+  $('btnNewLoco').addEventListener('click', () => { titleMap.loco = 'argo'; document.querySelector('[data-maptab="garage"]').click(); });
   $('mapCv').addEventListener('click', (e) => {
+    if (titleMap.tab === 'garage') { titleMap.loco = titleMap.loco === 'argo' ? 'cakra' : 'argo'; return; }
     if (titleMap.tab !== 'map') return;
     const cvm = e.currentTarget, r = cvm.getBoundingClientRect(), w = r.width, h = r.height;
     const k = Math.min(w / 540, h / 370), ox = (w - 540 * k) / 2, oy = (h - 370 * k) / 2 - 8 * k;
@@ -4576,9 +4583,9 @@
     drawSky(V);
     drawLandmarks(V, true);
     drawRidges(V);
-    drawFarLand(V);
+    { const sw = seaWeight(V); if (sw < 0.99) { c.save(); c.globalAlpha = 1 - sw; drawFarLand(V); c.restore(); } }
     drawScenes(V);
-    drawLandmarks(V);
+    { const sw = seaWeight(V); if (sw < 0.99) { c.save(); c.globalAlpha = 1 - sw; drawLandmarks(V); c.restore(); } }
     drawPort(V);
     drawBackProps(V);
     drawTunnelHill(V);
@@ -5719,8 +5726,8 @@
     const slot = 13;
     for (let i = Math.floor(wx0 / slot) - 1; i < wx1 / slot + 1; i++) {
       const h = hash(i);
-      if (h > 0.5) continue;
       const tx = i * slot + hash(i + 0.37) * 9;
+      if (h > 0.5 || (ROUTE.scenes && h > 0.5 * (1 - 0.8 * seaAt(tx)))) continue; // pesisir: pepohonan jarang agar laut terlihat
       if (nearStation(tx) || inBridge(tx) || nearCrossing(tx, 12) || nearTunnel(tx)) continue;
       const sx = X(tx), base = gy - 1.2 * ppm - hash(i + 0.9) * 1.2 * ppm;
       const kind = hash(i + 0.11);
@@ -7417,6 +7424,7 @@
     c.restore();
   }
   let LOCO_ORN = 'dayak';
+  let LOCO_FORCE = null; // garasi: paksa gambar lokomotif tertentu
   let LOCO_SHAPE = 'boxC'; // 'boxC' moncong pendek (utama), 'box' kotak ramping, 'boxB' kabin tinggi, 'aero' aerodinamis
   function drawOrnament(c, kind, x0, x1, yTop, yBot, u, col) {
     const h = yBot - yTop, ym = (yTop + yBot) / 2;
@@ -7725,7 +7733,7 @@
     c.fillRect(L(15.85), Y(1.15), 15.7 * ppm, 0.7 * ppm);
 
     // ---- badan lokomotif diesel modern berbadan lebar (full-width carbody), moncong aerodinamis ----
-    const ARGO = MIS.loco === 'argo';
+    const ARGO = (LOCO_FORCE || MIS.loco) === 'argo';
     const red = ARGO ? vgrad(6.0, 1.85, [[0, '#ffffff'], [0.3, '#eeece8'], [0.75, '#c9ccd2'], [1, '#8f949c']]) : vgrad(6.0, 1.85, [[0, '#e5513f'], [0.35, '#c8322a'], [0.8, '#a1221b'], [1, '#7e1813']]);
     const roofG = vgrad(6.4, 6.0, [[0, '#8a939a'], [1, '#5a6268']]);
     const glass2 = vgrad(5.8, 4.0, [[0, '#56708a'], [0.5, '#1f2d38'], [1, '#111a22']]);
@@ -7909,7 +7917,7 @@
       // rok samping menutupi rangka di antara bogie
       c.fillStyle = vgrad(1.7, 1.05, [[0, '#c9ccd2'], [1, '#7c828a']]); c.fillRect(L(12.2), Y(1.72), 8.6 * ppm, 0.62 * ppm); line([[12.2, 1.12], [3.6, 1.12]], 'rgba(0,0,0,0.25)', 1);
       c.fillStyle = '#fff6e6'; c.font = `italic 900 ${Math.max(6, Math.round(0.5 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillText('ARGO SENJA', L(11.2), Y(2.26)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      c.fillText('AGRAVEDA', L(11.2), Y(2.26)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     }
     const band = ARGO ? null : SH === 'boxB' || SH === 'boxC' ? [[15.85, 2.45], [15.85, 3.72], [-0.85, 3.72], [-0.85, 2.45]] : BOXY ? [[15.85, 2.45], [15.85, 3.72], [-0.73, 3.72], [-0.83, 2.45]] : [[15.85, 2.45], [15.85, 3.72], [0.25, 3.72], [-0.48, 3.38], [-0.75, 3.0], [-0.75, 2.45]];
     if (band) {
@@ -7980,7 +7988,7 @@
     }
     c.fillStyle = cream; c.textAlign = 'left';
     c.font = `800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`;
-    if (!ARGO) c.fillText('RN 2001', L(15.2), Y(2.09)); else { c.fillStyle = '#3a3f46'; c.fillText('RN 3001', L(15.2), Y(1.72)); }
+    if (!ARGO) c.fillText('RN 2001', L(15.2), Y(2.09)); else { c.fillStyle = '#3a3f46'; c.fillText('AV 3801', L(15.2), Y(1.72)); }
     // tangga kabin & pilot depan, kopling, selang udara
     c.strokeStyle = '#8d969b'; c.lineWidth = lw(0.05); c.beginPath();
     c.moveTo(L(4.85), Y(1.85)); c.lineTo(L(4.85), Y(0.55)); c.moveTo(L(4.25), Y(1.85)); c.lineTo(L(4.25), Y(0.55));
@@ -8436,6 +8444,8 @@
     c.restore();
   }
   // ---------- pemandangan bervariasi per bagian rute (kota, pesisir, hutan jati, tambak garam) ----------
+  function seaAt(x) { let w = 0; for (const sc of ROUTE.scenes || []) if (sc.kind === 'coast' || sc.kind === 'salt') w = Math.max(w, smooth(sc.from - 250, sc.from + 150, x) * (1 - smooth(sc.to - 150, sc.to + 250, x))); return w; }
+  function seaWeight(V) { let w = 0; for (const sc of ROUTE.scenes || []) if (sc.kind === 'coast' || sc.kind === 'salt') w = Math.max(w, sceneWeight(V, sc)); return w; }
   function sceneWeight(V, sc) { const cx = V.camX + W / (2 * V.ppm); return smooth(sc.from - 250, sc.from + 150, cx) * (1 - smooth(sc.to - 150, sc.to + 250, cx)); }
   function drawScenes(V) {
     const L = ROUTE.scenes; if (!L) return;
