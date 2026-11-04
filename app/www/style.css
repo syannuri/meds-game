@@ -966,3 +966,10 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .bst.up { top: auto; bottom: calc(100% - 33px); flex-direction: column-reverse; }
 .bst.up em { margin: 0 0 3px; }
 @media (max-height: 460px) { .broute { height: 58px; } .brail { top: 24px; } .bst { top: 19px; } .bst.up { bottom: calc(100% - 31px); } }
+/* misi ke-11: kisi karcis 6 kolom; tema karcis senja */
+#screenTitle .tickets { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.ticket.t-dusk .stub { background: linear-gradient(180deg, #f08a4b, #6a3a6e); color: #fff3e0; }
+.ticket.t-dusk .tbody { background: #f6e6d6; color: #2a1a20; }
+.ticket.t-dusk .tbody small { color: #6a4a50; }
+.ticket.t-dusk .tnew { color: #c2552a; }
+@media (max-width: 760px) { #screenTitle .tickets li:not(.daily) .ticket .tbody b { font-size: 9.5px; } #screenTitle .tickets li:not(.daily) .ticket .stub b { font-size: 13px; } }
