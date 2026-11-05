@@ -10,7 +10,7 @@
   api.set = function (l) { try { localStorage.setItem('rn.lang', l); } catch (e) { /* storage blocked */ } location.reload(); };
   document.addEventListener('DOMContentLoaded', function () {
     var b = document.getElementById('btnLang'); if (!b) return;
-    b.textContent = LANG === 'en' ? '🌐 Bahasa Indonesia' : '🌐 English';
+    b.textContent = LANG === 'en' ? '🌐 Indonesia' : '🌐 English';
     b.setAttribute('aria-label', LANG === 'en' ? 'Ganti bahasa ke Indonesia' : 'Switch language to English');
     b.addEventListener('click', function () { api.set(LANG === 'en' ? 'id' : 'en'); });
   });
@@ -21,7 +21,7 @@
 "Langkah Pertama di Depo": "First Steps at the Depot",
 "Kenalan Cakra": "Meet Cakra",
 "Tuas": "Lever",
-"Berhenti": "Stopping",
+"Berhenti": "Stop",
 "Mamed, pensiunan masinis": "Mamed, retired driver",
 "Anett, sebelum membawa penumpang, kenali dulu Cakra. Bawa ia pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka. Mamed duduk di sebelahmu.": "Anett, before you carry passengers, get to know Cakra. Take her slowly from the depot to Platform 1 at Sukamaju and stop right on the marker. Mamed is sitting beside you.",
 "Sinyal depo sebentar lagi hijau. Tunggu aba-aba Mamed.": "The depot signal turns green shortly. Wait for Mamed's cue.",
@@ -602,7 +602,20 @@
 "belum": "not yet",
 "HARIAN": "DAILY",
 "Harian": "Daily",
-"Sukses": "Success"
+"Sukses": "Success",
+"Ganti bahasa ke Indonesia": "Switch language to Indonesian",
+"malam": "night",
+"kabut di lembah": "fog in the valley",
+"angin kencang di perbukitan": "strong wind in the hills",
+"pagi berkabut di pegunungan": "misty mountain morning",
+"angin lembah": "valley wind",
+"sore cerah keemasan": "clear golden afternoon",
+"hujan reda": "rain easing",
+"angin kencang": "strong wind",
+"petir": "thunder",
+"malam takbiran": "takbiran night",
+"cerah": "clear",
+"MISI": "MISSION"
 };
   var P = [
   [/^Pasir ditabur ke rel\. Cengkeraman roda pulih selama (\d+) detik\.$/, "Sand applied to the rails. Wheel grip restored for $1 seconds."],
