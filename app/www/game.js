@@ -49,10 +49,10 @@
       tutorial: true, startClosed: true, noDoors: true,
       tags: ['Tuas', 'Berhenti'],
       speaker: { who: 'Kakek, pensiunan masinis', initials: 'KK' },
-      brief: 'Raka, sebelum membawa penumpang, kenali dulu Cakra. Bawa ia pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka. Kakek duduk di sebelahmu.',
+      brief: 'Anett, sebelum membawa penumpang, kenali dulu Cakra. Bawa ia pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka. Kakek duduk di sebelahmu.',
       weather: 'cerah',
       intro: 'Sinyal depo sebentar lagi hijau. Tunggu aba-aba Kakek.',
-      reward: '<strong>Kakek:</strong> Bagus, Raka! Besok kita belajar membaca sinyal.',
+      reward: '<strong>Kakek:</strong> Bagus, Anett! Besok kita belajar membaca sinyal.',
       aboard: 0,
       route: {
         lineSpeed: 40,
@@ -76,7 +76,7 @@
       tutorial: true, startClosed: true, noDoors: true,
       tags: ['Sinyal', 'Batas kecepatan'],
       speaker: { who: 'Dimas, pengatur perjalanan', initials: 'DM' },
-      brief: 'Pagi, Raka. Bawa Cakra kosong ke Cibening. Di jalan ada papan batas kecepatan, sinyal kuning, dan sinyal merah. Baca warnanya; aku pandu lewat radio.',
+      brief: 'Pagi, Anett. Bawa Cakra kosong ke Cibening. Di jalan ada papan batas kecepatan, sinyal kuning, dan sinyal merah. Baca warnanya; aku pandu lewat radio.',
       weather: 'cerah',
       intro: 'Tunggu sinyal S1 hijau, lalu berangkat.',
       reward: '<strong>Dimas:</strong> Sinyal sudah kamu kuasai. Berikutnya, penumpang pertamamu.',
@@ -97,7 +97,7 @@
           { id: 'J1', x: 860, init: 'Y' },
           { id: 'S2', x: 1080, init: 'R' },
         ],
-        scripts: [{ type: 'hold', sig: 'S2', at: 600, near: 90, wait: 6, radio: 'Jalur aman, S2 hijau. Silakan jalan, Raka.' }],
+        scripts: [{ type: 'hold', sig: 'S2', at: 600, near: 90, wait: 6, radio: 'Jalur aman, S2 hijau. Silakan jalan, Anett.' }],
         crossings: [], goats: [], fog: null, bridge: null, tunnel: null, grades: [], switchX: null, hints: [],
         bufferStop: 1300,
       },
@@ -112,7 +112,7 @@
       tutorial: true,
       tags: ['Pintu', 'Kenyamanan', 'Klakson'],
       speaker: { who: 'Bu Wulan, kepala stasiun', initials: 'BW' },
-      brief: 'Raka, ini perjalanan pertamamu dengan penumpang. Berhenti di Halte Sumberrejo, buka pintu, tunggu semua naik, lalu antar ke Cibening. Jaga tarikan dan rem tetap halus.',
+      brief: 'Anett, ini perjalanan pertamamu dengan penumpang. Berhenti di Halte Sumberrejo, buka pintu, tunggu semua naik, lalu antar ke Cibening. Jaga tarikan dan rem tetap halus.',
       weather: 'cerah berawan',
       intro: 'Penumpang sudah naik. Tutup pintu untuk bersiap berangkat.',
       reward: '<strong>Bu Wulan:</strong> Penumpang senang. Kamu siap untuk pagi pertama di Pasar Minggu.',
@@ -149,9 +149,9 @@
       rain: false,
       tags: ['Kabut', 'Perlintasan', 'Kambing'],
       speaker: { who: 'Bu Wulan, kepala stasiun', initials: 'BW' },
-      brief: 'Raka, pedagang pasar sudah menunggu di Cibening. Jangan sampai sayur mereka layu! Pagi ini berkabut, jadi perhatikan sinyal di petak jembatan.',
+      brief: 'Anett, pedagang pasar sudah menunggu di Cibening. Jangan sampai sayur mereka layu! Pagi ini berkabut, jadi perhatikan sinyal di petak jembatan.',
       weather: 'kabut ringan',
-      intro: 'Selamat pagi, Masinis Raka! Tutup pintu untuk bersiap berangkat.',
+      intro: 'Selamat pagi, Masinis Anett! Tutup pintu untuk bersiap berangkat.',
       reward: '<strong>Terbuka:</strong> Kios Sarapan di Stasiun Cibening. Penumpang di Cibening bertambah di misi berikutnya.',
       aboard: 9,
       route: {
@@ -205,9 +205,9 @@
       rain: true,
       tags: ['Hujan', 'Tanjakan', 'Terowongan', 'Wesel'],
       speaker: { who: 'Dimas, mekanik depo', initials: 'DM' },
-      brief: 'Hujan deras sejak siang, Raka. Rel licin, jadi pakai P1–P2 waktu berangkat dan tabur pasir kalau roda selip. Satu lagi: semalam ada yang mengutak-atik wesel dekat Watu. Aku menunggu di sana.',
+      brief: 'Hujan deras sejak siang, Anett. Rel licin, jadi pakai P1–P2 waktu berangkat dan tabur pasir kalau roda selip. Satu lagi: semalam ada yang mengutak-atik wesel dekat Watu. Aku menunggu di sana.',
       weather: 'hujan deras, petir',
-      intro: 'Sore yang basah, Raka. Tutup pintu, lalu berangkat pelan-pelan.',
+      intro: 'Sore yang basah, Anett. Tutup pintu, lalu berangkat pelan-pelan.',
       reward: '<strong>Cerita:</strong> Di wesel Watu, Dimas menemukan bekas linggis berlogo TransKilat. Sinyal blok Watu kini dipasangi gembok baru.',
       aboard: 12,
       route: {
@@ -235,7 +235,7 @@
         scripts: [
           {
             type: 'inspect', sig: 'B2', at: 1840, near: 260, dur: 9,
-            radioRed: 'Raka, B2 kubuat merah. Wesel di depannya tidak terkunci! Berhenti sebelum sinyal, aku periksa dulu.',
+            radioRed: 'Anett, B2 kubuat merah. Wesel di depannya tidak terkunci! Berhenti sebelum sinyal, aku periksa dulu.',
             radioWork: 'Oke, kereta sudah berhenti. Aku kunci weselnya... tunggu sebentar.',
             radioDone: 'Wesel sudah terkunci. Ada bekas linggis, ini disengaja. Lanjut pelan, sinyal kuning.',
           },
@@ -272,7 +272,7 @@
     goal2: 'rival',
     tags: ['Malam', 'Balapan bus', 'Pemudik', 'Lewat langsung'],
     speaker: { who: 'Bu Wulan, kepala stasiun', initials: 'BW' },
-    brief: 'Pak Bram menantang kita, Raka. Siapa yang lebih dulu membawa pemudik dari Watugede ke Sukamaju malam ini, dialah yang dapat kontrak angkutan Lebaran. Bus Kilat 07 cepat di jalan raya, tapi bus wajib berhenti kalau palang perlintasan turun.',
+    brief: 'Pak Bram menantang kita, Anett. Siapa yang lebih dulu membawa pemudik dari Watugede ke Sukamaju malam ini, dialah yang dapat kontrak angkutan Lebaran. Bus Kilat 07 cepat di jalan raya, tapi bus wajib berhenti kalau palang perlintasan turun.',
     weather: 'malam takbiran, cerah',
     intro: 'Malam takbiran! Kereta penuh pemudik. Tutup pintu dan kalahkan bus Kilat 07.',
     rewardWin: '<strong>Menang!</strong> Kontrak angkutan Lebaran jatuh ke Depo Sukamaju. Pak Bram pergi tanpa sepatah kata, tapi Dimas yakin urusan wesel belum selesai.',
@@ -350,10 +350,10 @@
     ticket: 'jungle',
     tags: ['Kereta barang', 'Muat presisi', 'Gajah', 'Turunan panjang'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
-    brief: 'Selamat datang di Sumatra, Raka! Hari ini Cakra menarik empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Muat satu per satu tepat di bawah corong. Rangkaian penuh itu berat, jadi mulai mengerem jauh lebih awal, apalagi di turunan menuju pantai.',
+    brief: 'Selamat datang di Sumatra, Anett! Hari ini Cakra menarik empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Muat satu per satu tepat di bawah corong. Rangkaian penuh itu berat, jadi mulai mengerem jauh lebih awal, apalagi di turunan menuju pantai.',
     weather: 'pagi berkabut tipis',
     intro: 'Maju pelan ke corong muat. Hentikan gerbong 1 tepat di bawah corong.',
-    reward: '<strong>Cerita:</strong> Di dermaga, Sari menunjukkan peta tua milik kakek Raka: ada jalur cabang yang dulu ditutup menuju pedalaman Bukit Barisan. Babak 2 baru dimulai.',
+    reward: '<strong>Cerita:</strong> Di dermaga, Sari menunjukkan peta tua milik kakek Anett: ada jalur cabang yang dulu ditutup menuju pedalaman Bukit Barisan. Babak 2 baru dimulai.',
     aboard: 0,
     route: {
       lineSpeed: 60,
@@ -405,10 +405,10 @@
     rain: true,
     tags: ['Lintas tunggal', 'Persilangan', 'Pohon tumbang', 'Banjir'],
     speaker: { who: 'Dimas, mekanik depo', initials: 'DM' },
-    brief: 'Hujan mulai reda, Raka, tapi lintas selatan masih berantakan. Jalur ke Kedung Banteng hanya satu rel. Di Halte Krajan kita bersilang dengan KA 112 Lintas Selatan dari arah berlawanan: masuk sepur belok pelan, berhenti sebelum patok bebas, lalu tunggu dia lewat. Angin tadi siang menumbangkan pohon di beberapa tempat, dan ada rel yang tergenang.',
+    brief: 'Hujan mulai reda, Anett, tapi lintas selatan masih berantakan. Jalur ke Kedung Banteng hanya satu rel. Di Halte Krajan kita bersilang dengan KA 112 Lintas Selatan dari arah berlawanan: masuk sepur belok pelan, berhenti sebelum patok bebas, lalu tunggu dia lewat. Angin tadi siang menumbangkan pohon di beberapa tempat, dan ada rel yang tergenang.',
     weather: 'hujan reda, angin kencang',
     intro: 'Tutup pintu dan berangkat. Waspadai pohon tumbang setelah Watugede.',
-    reward: '<strong>Cerita:</strong> Masinis KA 112 membunyikan klakson dua kali saat bersilang, tanda hormat untuk Cakra. Di Kedung Banteng, kepala stasiun menyerahkan surat tugas baru: Raka diminta ke Sumatra.',
+    reward: '<strong>Cerita:</strong> Masinis KA 112 membunyikan klakson dua kali saat bersilang, tanda hormat untuk Cakra. Di Kedung Banteng, kepala stasiun menyerahkan surat tugas baru: Anett diminta ke Sumatra.',
     aboard: 10,
     route: {
       lineSpeed: 70,
@@ -470,7 +470,7 @@
     ticket: 'jungle',
     tags: ['Malam gelap', 'Sinyal semafor', 'Jembatan kayu', 'Kabut lembah'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
-    brief: 'Peta kakekmu benar, Raka. Jalur cabang ke pedalaman Bukit Barisan masih ada, hanya lama tidak dipakai. Malam ini kita jalankan kereta inspeksi, satu gerbong saja. Sinyalnya masih semafor tua: lengan mendatar berarti berhenti, lengan terangkat berarti aman. Jembatan kayu Lubuk Tua maksimal 15 km/h, dan rumput di antara rel membuat rem lebih lemah.',
+    brief: 'Peta kakekmu benar, Anett. Jalur cabang ke pedalaman Bukit Barisan masih ada, hanya lama tidak dipakai. Malam ini kita jalankan kereta inspeksi, satu gerbong saja. Sinyalnya masih semafor tua: lengan mendatar berarti berhenti, lengan terangkat berarti aman. Jembatan kayu Lubuk Tua maksimal 15 km/h, dan rumput di antara rel membuat rem lebih lemah.',
     weather: 'malam, kabut di lembah',
     intro: 'Kereta inspeksi siap. Tutup pintu; jalur di depan hanya diterangi lampu sorot.',
     reward: '<strong>Cerita:</strong> Di Simpang Barisan, Sari menemukan buku harian kepala stasiun tahun 1950-an: jalur ini dulu mengangkut kopi rakyat. Warga desa sudah menunggu di peron, membawa karung kopi.',
@@ -528,7 +528,7 @@
     ticket: 'jungle',
     tags: ['Menyambung gerbong', 'Hari pasar', 'Rangkaian lebih panjang'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
-    brief: 'Warga sepanjang jalur cabang minta tolong, Raka. Panen kopi harus sampai ke Muara Kelam pagi ini. Di Pasar Kopi Liwa, warga mendorong gerbong kopi ke belakang rangkaian. Setelah pintu ditutup, mundur pelan dan sambung: sentuh gerbong paling cepat 3 km/h, lalu tekan Sambung. Rangkaian jadi lebih panjang dan lebih berat.',
+    brief: 'Warga sepanjang jalur cabang minta tolong, Anett. Panen kopi harus sampai ke Muara Kelam pagi ini. Di Pasar Kopi Liwa, warga mendorong gerbong kopi ke belakang rangkaian. Setelah pintu ditutup, mundur pelan dan sambung: sentuh gerbong paling cepat 3 km/h, lalu tekan Sambung. Rangkaian jadi lebih panjang dan lebih berat.',
     weather: 'pagi berkabut tipis',
     intro: 'Hari pasar! Tutup pintu dan berangkat ke Pasar Kopi Liwa.',
     reward: '<strong>Cerita:</strong> Gerbong kopi tiba utuh di Muara Kelam. Pak Kades menitipkan sekarung kopi untuk Kakek, dan kabar bahwa jalur cabang akan dibuka lagi untuk umum.',
@@ -2112,6 +2112,7 @@
     if (Math.abs(dx - (parseFloat(el.dataset.dx) || 0)) > 1) { el.dataset.dx = dx; el.style.transform = `translateX(calc(-50% + ${dx.toFixed(0)}px))`; }
   }
   // ---------- potret karakter (SVG) untuk briefing, radio, dan petunjuk ----------
+  const DRIVER = { name: 'Anett', initials: 'AN' }; // masinis pemain di semua misi
   const ANETT_IMG = 'data:image/jpeg;base64,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';
   const PORTRAIT = (() => {
     const face = (skin, sh) => `<path d="M32 60c-10 0-17-7-17-19V35c0-10 7-17 17-17s17 7 17 17v6c0 12-7 19-17 19z" fill="${skin}"/><path d="M20 44c3 8 8 12 12 12s9-4 12-12c-2 9-6 14-12 14S22 53 20 44z" fill="${sh}" opacity=".35"/>`;
@@ -2176,7 +2177,7 @@
     };
     // Anett: masinis kereta cepat Guntur, memakai ilustrasi potret dari pemilik game
     P.AN = `<image href="${ANETT_IMG}" width="64" height="64" preserveAspectRatio="xMidYMid slice"/>`;
-    P.RK = P.DM;
+    P.RK = P.AN;
     return (id) => P[id] ? `<svg viewBox="0 0 64 64" aria-hidden="true">${P[id]}</svg>` : null;
   })();
   function setAvatar(el, id) { if (!el) return; const sv = PORTRAIT(id); if (sv) { el.innerHTML = sv; el.classList.add('pic'); } else { el.textContent = id; el.classList.remove('pic'); } }
@@ -2590,7 +2591,7 @@
         // kebablasan melewati corong: aktifkan mundur supaya gerbong bisa kembali ke bawah corong
         S.rev = true;
         toast(`Gerbong ${i + 1} lewat ${fmtM(d)} m dari corong. Mode MUNDUR: dorong tuas ke P untuk mundur pelan.`, 'warn', 4, null, 3);
-        radio(`Kebablasan, Raka. Mundur pelan sampai gerbong ${i + 1} tepat di bawah corong, lalu berhenti.`, 5.5, 'Sari', 'SR');
+        radio(`Kebablasan, Anett. Mundur pelan sampai gerbong ${i + 1} tepat di bawah corong, lalu berhenti.`, 5.5, 'Sari', 'SR');
       } else if (S.v === 0 && prevV === 0 && d <= -6 && d > -60 && S.rev) {
         S.rev = false;
         toast(`Terlalu jauh mundur. Mode MAJU lagi: maju pelan ${fmtM(-d)} m ke corong.`, 'warn', 3.2, null, 3);
@@ -2716,13 +2717,13 @@
         toast(`Berhenti ${fmtM(gap)} m sebelum pohon. Aman!`, 'good', 3, null, 3);
         S.moment = { kind: gap < 60 ? 'good' : 'ok', label: 'AMAN', t: 0, x: TR.x, coins: gap < 60 ? 30 : 10, sub: `berhenti ${fmtM(gap)} m sebelum pohon` };
         S.coins += gap < 60 ? 30 : 10;
-        setTimeout(() => { if (S && S.mode === 'play') radio('Bagus, Raka. Tim jalan rel sudah di lokasi; beri kami waktu memotong batangnya.', 5); }, 1200);
+        setTimeout(() => { if (S && S.mode === 'play') radio('Bagus, Anett. Tim jalan rel sudah di lokasi; beri kami waktu memotong batangnya.', 5); }, 1200);
       } else if (!TR.far) { TR.far = true; toast(`Masih ${Math.round(gap)} m dari pohon. Maju pelan sampai kurang dari 300 m.`, 'warn', 2.8, null, 2); }
     }
     if (S.v > 0.3) TR.far = false;
     if (TR.phase === 'work') {
       TR.t += dt;
-      if (TR.t > 18) { TR.phase = 'clear'; radio('Jalur sudah bersih. Lanjut, Raka, tetap waspada.', 5); Sound.signalChime(); }
+      if (TR.t > 18) { TR.phase = 'clear'; radio('Jalur sudah bersih. Lanjut, Anett, tetap waspada.', 5); Sound.signalChime(); }
     }
     if (TR.phase !== 'clear' && gap <= 1.5) fail('Kereta menabrak pohon tumbang. Begitu ada peringatan radio, langsung rem darurat.');
   }
@@ -3091,7 +3092,7 @@
     if (r.failed) Sound.failSting(); else Sound.stars(r.stars);
     $('resTitle').textContent = r.failed ? 'Misi gagal' : 'Misi selesai';
     const mid = MIS.daily ? `Rute Harian ${MIS.daily.label}` : `Misi ${MIS.id}`;
-    $('resEyebrow').textContent = (r.failed ? `${mid} · ${MIS.title}` : `${mid} · tiba ${fmtClock(S.clock)}`) + (MIS.driver ? ` · Masinis ${MIS.driver.name}` : '') + (S.expert ? ' · Masinis Ahli' : '');
+    $('resEyebrow').textContent = (r.failed ? `${mid} · ${MIS.title}` : `${mid} · tiba ${fmtClock(S.clock)}`) + ` · Masinis ${(MIS.driver || DRIVER).name}` + (S.expert ? ' · Masinis Ahli' : '');
     renderResStars(r.stars, r.failed);
     $('resStars').setAttribute('aria-label', `${r.stars} dari 3 bintang`);
     const fr = $('resFail');
@@ -3508,7 +3509,7 @@
   function renderMissionList() {
     if (titleMap.tab === 'missions' && $('titleTabLbl')) $('titleTabLbl').textContent = `${MISSION_ORDER.length} misi · 3 babak`;
     { const n = totalStars(), ri = rankOf(n), nx = RANKS[ri + 1], pr = nx ? (n - RANKS[ri].min) / (nx.min - RANKS[ri].min) : 1, done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
-      const pc = $('profileChip'); if (pc) pc.innerHTML = `<span class="pbadge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" fill="url(#pbg)"/><defs><linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset=".5" stop-color="#e2a93b"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><text x="12" y="15.5" text-anchor="middle" font-size="9" font-weight="900" fill="#2a1a05" font-family="sans-serif">${ri + 1}</text></svg></span><span class="pinfo"><b>Raka · ${RANKS[ri].name}</b><span class="pbar"><i style="width:${Math.round(clamp(pr, 0, 1) * 100)}%"></i></span></span><span class="pstat"><b>★ ${n}</b><small>${done}/${MISSION_ORDER.length} misi</small></span>`; }
+      const pc = $('profileChip'); if (pc) pc.innerHTML = `<span class="pbadge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" fill="url(#pbg)"/><defs><linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset=".5" stop-color="#e2a93b"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><text x="12" y="15.5" text-anchor="middle" font-size="9" font-weight="900" fill="#2a1a05" font-family="sans-serif">${ri + 1}</text></svg></span><span class="pinfo"><b>Anett · ${RANKS[ri].name}</b><span class="pbar"><i style="width:${Math.round(clamp(pr, 0, 1) * 100)}%"></i></span></span><span class="pstat"><b>★ ${n}</b><small>${done}/${MISSION_ORDER.length} misi</small></span>`; }
     const nextId = nextMissionId();
     const today = new Date();
     MISSIONS.daily = buildDaily(today);
@@ -3559,7 +3560,7 @@
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
-      ${m.driver ? `<dt>Masinis</dt><dd class="drv"><span class="drvpic">${PORTRAIT(m.driver.initials) || ''}</span>${m.driver.name}</dd>` : ''}<dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat Nusantara KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
+      ${(() => { const d = m.driver || DRIVER; return `<dt>Masinis</dt><dd class="drv"><span class="drvpic">${PORTRAIT(d.initials) || ''}</span>${d.name}</dd>`; })()}<dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat Nusantara KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
