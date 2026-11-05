@@ -16,7 +16,6 @@ on:
         default: '1.0.0'
   push:
     tags: ['v*']
-    branches: ['claude/mobile-train-game-app-drz1r9']  # SEMENTARA: uji build, dihapus sebelum merge
 
 permissions:
   contents: read
