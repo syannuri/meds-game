@@ -28,6 +28,8 @@
   const LOCO_LEN = 16, COACH_LEN = 20, WAGON_LEN = 12, GAP = 1.2;
   const VS = 0.54, VPIV = 1.05; // skala tinggi badan kereta (atap sekitar 4,1 m)
   const trainH = (h) => (h <= VPIV ? h : VPIV + (h - VPIV) * VS);
+  const ELEC = () => MIS.loco === 'hst2' || MIS.loco === 'hst'; // kereta cepat bertenaga listrik (pantograf)
+  const WIRE_H = 4.42; // tinggi kawat aliran atas di layar samping (meter terskala, tepat di kepala pantograf)
   // susunan rangkaian berubah per misi: 3 gerbong penumpang atau N gerbong batu bara
   let N_COACH = 3, CAR_LEN = COACH_LEN;
   let TRAIN_LEN = LOCO_LEN + N_COACH * (CAR_LEN + GAP);
@@ -957,6 +959,29 @@
           o.connect(gn); o2.connect(g2).connect(gn); gn.connect(engine); o.start(); o2.start();
           L.motor = { o, o2, g: gn };
         }
+        // ---- kereta listrik (Guntur/Kilat): inverter VVVF, motor traksi, trafo, kipas pendingin, angin ----
+        {
+          // inverter: nada pembawa bertingkat (berbunyi seperti tangga nada saat berangkat) lewat bandpass sempit
+          const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 700; f.Q.value = 6;
+          const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 700;
+          const o2 = ac.createOscillator(); o2.type = 'square'; o2.frequency.value = 1050;
+          const g2 = g(0.25), out = g(0);
+          o.connect(f); o2.connect(g2).connect(f); f.connect(out).connect(engine); o.start(); o2.start();
+          L.vvvf = { o, o2, f, g: out };
+          // raungan motor traksi asinkron: dua harmonik yang naik mulus mengikuti kecepatan
+          const m1 = ac.createOscillator(); m1.type = 'triangle'; m1.frequency.value = 120;
+          const m2 = ac.createOscillator(); m2.type = 'sine'; m2.frequency.value = 240;
+          const mg = g(0), m2g = g(0.5), mf = ac.createBiquadFilter(); mf.type = 'lowpass'; mf.frequency.value = 2400;
+          m1.connect(mf); m2.connect(m2g).connect(mf); mf.connect(mg).connect(engine); m1.start(); m2.start();
+          L.whine = { m1, m2, g: mg };
+          // dengung trafo traksi 100 Hz + harmonik
+          const t1 = ac.createOscillator(); t1.type = 'sine'; t1.frequency.value = 100;
+          const t2 = ac.createOscillator(); t2.type = 'sine'; t2.frequency.value = 300;
+          const tg = g(0), t2g = g(0.3); t1.connect(tg); t2.connect(t2g).connect(tg); tg.connect(engine); t1.start(); t2.start();
+          L.xfmr = { g: tg };
+        }
+        L.fan = loop(white, 'bandpass', 700, 0.6, engine);       // kipas pendingin traksi
+        L.wind = loop(white, 'bandpass', 900, 0.5, engine);      // desau angin di badan aerodinamis
         // rem: gesekan blok rem pada tapak roda, berdenyut mengikuti putaran roda
         L.grind = loop(white, 'bandpass', 1400, 0.9, brake);
         {
@@ -1274,21 +1299,39 @@
       turboS += (rpm - turboS) * Math.min(1, dtA * 0.5);            // turbo menyusul belakangan
       const load = run && power > 0 ? rpm : 0;
       const fr = 16 + rpm * 34;
+      const ele = !!info.electric, dz = ele ? 0 : 1; // kereta listrik: semua lapisan diesel dibungkam
       L.diesel.o1.frequency.setTargetAtTime(fr, t, 0.08);
       L.diesel.o2.frequency.setTargetAtTime(fr * 1.006, t, 0.08);
       L.diesel.o3.frequency.setTargetAtTime(fr / 2, t, 0.08);
       L.diesel.puls.frequency.setTargetAtTime(fr / 4, t, 0.08);
       L.diesel.f.frequency.setTargetAtTime(200 + rpm * 800 + load * 300, t, 0.2);
-      set(L.diesel.g.gain, scene ? 0.02 + rpm * 0.07 : 0, 0.25);
+      set(L.diesel.g.gain, scene ? (0.02 + rpm * 0.07) * dz : 0, 0.25);
       L.comb.mod.frequency.setTargetAtTime(6 + rpm * 22, t, 0.1);
       L.comb.bp.frequency.setTargetAtTime(200 + rpm * 160, t, 0.2);
-      set(L.comb.g.gain, scene ? 0.05 + rpm * 0.05 + load * 0.04 : 0, 0.25);
-      set(L.grit.g.gain, scene ? load * 0.022 : 0, 0.3);
+      set(L.comb.g.gain, scene ? (0.05 + rpm * 0.05 + load * 0.04) * dz : 0, 0.25);
+      set(L.grit.g.gain, scene ? load * 0.022 * dz : 0, 0.3);
       L.turbo.o.frequency.setTargetAtTime(700 + turboS * 2600, t, 0.2);
-      set(L.turbo.g.gain, scene ? turboS * turboS * 0.009 : 0, 0.3);
+      set(L.turbo.g.gain, scene ? turboS * turboS * 0.009 * dz : 0, 0.3);
       L.turboAir.f.frequency.setTargetAtTime(1300 + turboS * 1400, t, 0.4);
-      set(L.turboAir.g.gain, scene ? turboS * turboS * 0.012 : 0, 0.6);
-      set(L.exhaust.g.gain, scene ? 0.008 + rpm * 0.045 + load * 0.02 : 0, 0.3);
+      set(L.turboAir.g.gain, scene ? turboS * turboS * 0.012 * dz : 0, 0.6);
+      set(L.exhaust.g.gain, scene ? (0.008 + rpm * 0.045 + load * 0.02) * dz : 0, 0.3);
+      {
+        // inverter VVVF: di bawah ±60 km/h nada pembawa naik bertingkat (tangga nada), lalu hilang;
+        // motor traksi meraung mulus; saat mengerem regeneratif nadanya turun kembali
+        const drive = run && ele ? Math.max(power, clamp(brakeF / 1.2, 0, 1) * (v > 1 ? 1 : 0)) : 0;
+        const STEPS = [262, 294, 330, 349, 392, 440, 494, 523, 587, 659, 698, 784];
+        const si = clamp(Math.floor(v / 1.5), 0, STEPS.length - 1), car = v < 17 ? STEPS[si] * (1 + (v % 1.5) / 1.5 * 0.02) : 1200 + v * 6;
+        L.vvvf.o.frequency.setTargetAtTime(car, t, 0.03); L.vvvf.o2.frequency.setTargetAtTime(car * 1.5, t, 0.03); L.vvvf.f.frequency.setTargetAtTime(car, t, 0.05);
+        set(L.vvvf.g.gain, drive * clamp(1 - (v - 12) / 8, 0, 1) * clamp(v / 0.6, 0, 1) * 0.02, 0.12);
+        const mf = 60 + v * 11;
+        L.whine.m1.frequency.setTargetAtTime(mf, t, 0.1); L.whine.m2.frequency.setTargetAtTime(mf * 2.02, t, 0.1);
+        set(L.whine.g.gain, run && ele ? (0.004 + drive * 0.016) * clamp(v / 3, 0, 1) : 0, 0.25);
+        set(L.xfmr.g.gain, scene && ele ? 0.004 + power * 0.004 : 0, 0.5);
+        set(L.fan.g.gain, scene && ele ? 0.006 + power * 0.01 : 0, 0.8);
+        L.fan.f.frequency.setTargetAtTime(600 + power * 300, t, 0.8);
+        set(L.wind.g.gain, run && ele ? Math.pow(clamp(v / 70, 0, 1), 2) * 0.05 * (info.tunnel ? 1.6 : 1) : 0, 0.6);
+        L.wind.f.frequency.setTargetAtTime(500 + v * 14, t, 0.6);
+      }
       // desis rel & decit flens di tikungan
       set(L.railHiss.g.gain, run ? Math.pow(Math.min(v, 22) / 22, 2) * 0.008 * (info.tunnel ? 1.4 : 1) : 0, 0.8);
       L.railHiss.f.frequency.setTargetAtTime(1900 + Math.min(v, 22) * 40, t, 0.8);
@@ -1306,7 +1349,7 @@
       const mv = info.slip ? v + 9 : v;
       L.motor.o.frequency.setTargetAtTime(90 + mv * 34, t, 0.15);
       L.motor.o2.frequency.setTargetAtTime((90 + mv * 34) * 3, t, 0.15);
-      set(L.motor.g.gain, run && (power > 0 || brakeF > 0.3) ? clamp(mv / 2, 0, 1) * 0.012 : 0, 0.3);
+      set(L.motor.g.gain, run && !ele && (power > 0 || brakeF > 0.3) ? clamp(mv / 2, 0, 1) * 0.012 : 0, 0.3);
       set(L.rumble.g.gain, run ? Math.min(0.32, v * 0.018) * (info.onBridge ? 1.6 : 1) * (info.tunnel ? 1.5 : 1) : 0, 0.25);
       L.rumble.f.frequency.setTargetAtTime(100 + v * 9 + (info.onBridge ? 70 : 0) + (info.tunnel ? 90 : 0), t, 0.25);
       set(L.hiss.g.gain, scene ? (v < 0.4 ? 0.0022 : 0.0008) : 0, 0.8);
@@ -1328,7 +1371,7 @@
         }
       } else lastGirder = null;
       // sambungan rel: setiap gandar berbunyi sesuai jaraknya
-      if (run && v > 0.5) {
+      if (run && v > 0.5 && !ele) {
         const j = Math.floor(info.x / 25);
         if (lastJoint === null) lastJoint = j;
         if (j !== lastJoint && onDeck) lastJoint = j;
@@ -1359,7 +1402,7 @@
       set(L.creak.g.gain, creakK * 0.02, 0.05);
       L.creak.f.frequency.setTargetAtTime(info.slip ? 1700 + Math.sin(t * 9) * 200 : 2200 + Math.sin(t * 3) * 250, t, 0.08);
       // pompa udara terdengar saat lokomotif diam
-      if (scene && v < 0.3 && t >= nextPump) { pump(t + 0.02); nextPump = t + 1.8 + Math.random() * 0.5; }
+      if (scene && v < 0.3 && t >= nextPump && !ele) { pump(t + 0.02); nextPump = t + 1.8 + Math.random() * 0.5; }
       // gema terowongan
       set(engineSend.gain, info.tunnel ? 0.45 : 0.12, 0.4);
       set(brakeSend.gain, info.tunnel ? 0.5 : 0.15, 0.4);
@@ -1431,6 +1474,11 @@
 
     return {
       init, update, announce,
+      arc() { // percik pantograf: letik listrik pendek bernada tinggi
+        if (!ac || muted) return;
+        const t = ac.currentTime;
+        nz(t, 'highpass', 3800, 0.8, 0.02, 0.05, engine, 0.002); nz(t + 0.03, 'bandpass', 6000, 2, 0.012, 0.04, engine, 0.002);
+      },
       tick() { // detent tuas
         if (!ac || muted) return;
         const t = ac.currentTime;
@@ -2543,8 +2591,14 @@
     const power = S.notch > 0 && !powerLocked ? S.notch / 4 : 0;
     S.burst = Math.max(0, (S.burst || 0) - dt);
     const rateSmoke = 4 + power * 12 + S.v * 0.35;
-    if (Math.random() < rateSmoke * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), power, false));
-    if ((S.burst > 0 || S.slip) && Math.random() < 11 * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), 1, true));
+    if (!ELEC()) {
+      if (Math.random() < rateSmoke * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), power, false));
+      if ((S.burst > 0 || S.slip) && Math.random() < 11 * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), 1, true));
+    } else {
+      // kereta listrik: tanpa asap; sesekali percik biru di sepatu pantograf saat melaju kencang
+      S.arc = Math.max(0, (S.arc || 0) - dt);
+      if (S.v > 18 && Math.random() < (0.25 + power * 0.5) * dt) { S.arc = 0.09 + Math.random() * 0.08; Sound.arc(); }
+    }
     if (S.sandT > 0 && Math.random() < 25 * dt) S.smoke.push(sandPuff(S.x - 7 - Math.random() * 4));
     for (const p of S.smoke) {
       p.life += dt; p.x += p.vx * dt + (p.sw !== undefined ? Math.sin(p.sw + p.life * 3.1) * 0.35 * dt : 0); p.y += p.vy * dt; p.vy *= 0.993; p.vx *= 0.995; p.r += p.grow * dt * (1 - p.life / (p.max * 1.6));
@@ -4072,7 +4126,20 @@
     const add = (d, fn) => { if (d > 1 && d <= FAR + 1) items.push({ d, fn }); };
     if (!inTun) {
       const dMax = Math.min(FAR, 420);
-      for (let wd = Math.ceil(x0 / 40) * 40; wd < x0 + dMax; wd += 40) if (!inBrW(wd, 3)) add(wd - x0, () => {
+      if (ELEC()) {
+        // kawat kontak tepat di atas jalur, berzig-zag kecil antar tiang (stagger) seperti LAA sungguhan
+        const HW = 5.6, stag = (wd) => 0.25 * Math.sin((wd / 50) * Math.PI);
+        let prev = null; c.strokeStyle = night ? 'rgba(170,185,210,0.7)' : 'rgba(40,46,54,0.8)';
+        for (let d = 2; d < Math.min(FAR, 420); d += Math.max(2, d * 0.06)) { const q = W3(d, stag(x0 + d), HW); if (q && prev) { c.lineWidth = Math.max(0.8, 0.02 * q.k); c.beginPath(); c.moveTo(prev.x, prev.y); c.lineTo(q.x, q.y); c.stroke(); } prev = q; }
+        prev = null;
+        for (let d = 2; d < Math.min(FAR, 420); d += Math.max(2, d * 0.06)) { const ph2 = ((x0 + d) % 50) / 50, q = W3(d, 0.4, HW + 1.1 - Math.sin(ph2 * Math.PI) * 0.9); if (q && prev) { c.lineWidth = Math.max(0.6, 0.015 * q.k); c.beginPath(); c.moveTo(prev.x, prev.y); c.lineTo(q.x, q.y); c.stroke(); } prev = q; }
+        for (let wd = Math.ceil(x0 / 50) * 50; wd < x0 + dMax; wd += 50) if (!inBrW(wd, 3)) add(wd - x0, () => {
+          const d = wd - x0, b = W3(d, 3.4, 0), t = W3(d, 3.4, HW + 1.5), a0 = W3(d, 0, HW + 1.3), a1 = W3(d, stag(wd), HW);
+          if (!b || !t) return; const col = night ? '#6a7484' : '#8c969e';
+          c.strokeStyle = col; c.lineWidth = Math.min(W * 0.02, Math.max(1, 0.25 * b.k)); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+          if (a0 && a1) { c.lineWidth = Math.min(W * 0.012, Math.max(1, 0.1 * b.k)); c.beginPath(); c.moveTo(t.x, t.y); c.lineTo(a0.x, a0.y); c.moveTo(W3(d, 3.4, HW).x, W3(d, 3.4, HW).y); c.lineTo(a1.x, a1.y); c.stroke(); }
+        });
+      } else for (let wd = Math.ceil(x0 / 40) * 40; wd < x0 + dMax; wd += 40) if (!inBrW(wd, 3)) add(wd - x0, () => {
         const d = wd - x0, b = W3(d, 3.6, 0), t = W3(d, 3.6, 7.2), arm = W3(d, 3.6, 6.8);
         if (!b || !t) return;
         c.strokeStyle = '#5b4a3a'; c.lineWidth = Math.max(1, 0.22 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
@@ -4653,6 +4720,18 @@
       c.fillStyle = '#fff'; c.beginPath(); c.moveTo(tx + ph * 0.07, ly); c.lineTo(tx - ph * 0.05, ly - ph * 0.05); c.lineTo(tx - ph * 0.05, ly + ph * 0.05); c.closePath(); c.fill();
       c.textBaseline = 'middle';
       c.fillStyle = '#eafaff'; c.font = BIG(ph * 0.2); c.fillText(fmtClock(st.clock), x + w * 0.06, py + ph * 0.18);
+      // meter daya: kanan = traksi (biru), kiri = rem regeneratif mengembalikan listrik ke jaringan (hijau)
+      {
+        const mx0 = x + w * 0.34, mw = w * 0.42, my = py + ph * 0.14, mh = ph * 0.09, mid = mx0 + mw * 0.42;
+        const pw = st.notch > 0 ? st.notch / 4 : 0, rg = st.notch < 0 && st.v > 1 ? clamp(-(st.aCmd || 0) / 1.2, 0, 1) : 0;
+        c.fillStyle = 'rgba(255,255,255,0.08)'; roundRect(c, mx0, my, mw, mh, mh / 2); c.fill();
+        if (pw > 0) { c.fillStyle = CY; roundRect(c, mid, my, (mx0 + mw - mid) * pw, mh, mh / 2); c.fill(); }
+        if (rg > 0) { c.fillStyle = '#5fd08a'; roundRect(c, mid - (mid - mx0) * rg, my, (mid - mx0) * rg, mh, mh / 2); c.fill(); }
+        c.fillStyle = '#eafaff'; c.fillRect(mid - 0.5, my - 2, 1, mh + 4);
+        c.font = FONT(800, ph * 0.085); c.fillStyle = rg > 0 ? '#5fd08a' : 'rgba(234,250,255,0.5)'; c.fillText('REGEN', mx0, my + mh + ph * 0.09);
+        c.textAlign = 'right'; c.fillStyle = pw > 0 ? CY : 'rgba(234,250,255,0.5)'; c.fillText(`${Math.round(pw * 9600 - rg * 7200)} kW`, mx0 + mw, my + mh + ph * 0.09); c.textAlign = 'start';
+        c.fillStyle = '#ffd24a'; c.font = FONT(900, ph * 0.1); c.textAlign = 'right'; c.fillText('⚡25 kV', x + w * 0.96, py + ph * 0.18); c.textAlign = 'start';
+      }
       // ikon status: ATP, traksi, rem, pintu
       const chips = [['ATP', true, '#5fd08a'], ['TRAKSI', st.notch > 0, CY], ['REM', st.notch < 0, AMB], ['PINTU', st.doors === 'open', '#ff6a5a']];
       const cw2 = (w * 0.88) / 4;
@@ -6002,13 +6081,36 @@
     if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.1 * ppm); c.beginPath(); c.arc(sx + 0.1 * cr, cy - 0.1 * cr, cr * 0.75, Math.PI * 1.35, Math.PI * 1.95); c.stroke(); c.restore(); }
   }
 
+  // kawat aliran atas 25 kV: tiang baja tiap 50 m, lengan kantilever, kawat penggantung melengkung & kawat kontak lurus
+  function drawCatenary(V) {
+    const { c, ppm, gy, X, wx0, wx1 } = V, night = V.night || V.p < 0.16;
+    const hc = gy - trainH(7.3) * ppm, hm = hc - 1.25 * ppm, top = hm - 0.5 * ppm, SP = 50;
+    const first = Math.floor(wx0 / SP) * SP + 10;
+    const steel = night ? '#5a6474' : '#8c969e', wire = night ? 'rgba(150,170,200,0.75)' : 'rgba(52,58,66,0.85)';
+    for (let px = first - SP; px < wx1 + SP; px += SP) {
+      const sx = X(px), nx = X(px + SP);
+      if (nx < -20 || sx > W + 20) continue;
+      // kawat penggantung (messenger) melengkung + dropper
+      c.strokeStyle = wire; c.lineWidth = 1; c.beginPath(); c.moveTo(sx, hm); c.quadraticCurveTo((sx + nx) / 2, hm + 1.2 * ppm, nx, hm); c.stroke();
+      c.beginPath(); for (let q = 1; q < 5; q++) { const t = q / 5, x = sx + (nx - sx) * t, y = hm + 1.2 * ppm * 2 * t * (1 - t); c.moveTo(x, y); c.lineTo(x, hc); } c.lineWidth = 0.7; c.stroke();
+      if (!nearTunnel(px) && !inBridge(px) && !nearStation(px)) {
+        // tiang H-beam di belakang rel + lengan ke atas jalur
+        c.fillStyle = steel; c.fillRect(sx - 0.18 * ppm, top, 0.36 * ppm, gy - 0.9 * ppm - top);
+        c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(sx + 0.06 * ppm, top, 0.12 * ppm, gy - 0.9 * ppm - top);
+        c.strokeStyle = steel; c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath(); c.moveTo(sx, top + 0.15 * ppm); c.lineTo(sx + 1.6 * ppm, top + 0.15 * ppm); c.moveTo(sx, hc + 0.2 * ppm); c.lineTo(sx + 1.6 * ppm, hc); c.stroke();
+        c.fillStyle = night ? '#7a6a8a' : '#a8743e'; c.fillRect(sx + 0.3 * ppm, hc - 0.05 * ppm, 0.3 * ppm, 0.3 * ppm); // isolator
+      }
+    }
+    c.strokeStyle = wire; c.lineWidth = Math.max(1.3, 0.09 * ppm); c.beginPath(); c.moveTo(-10, hc); c.lineTo(W + 10, hc); c.stroke(); // kawat kontak
+  }
   function drawBackProps(V) {
     const { c, ppm, gy, X, wx0, wx1, p } = V;
     // tiang telegraf dan kabel
     const poleY = gy - 1.4 * ppm;
     const first = Math.floor(wx0 / 50) * 50 + 20;
     c.strokeStyle = 'rgba(40,36,30,0.75)'; c.lineWidth = 1;
-    for (let px = first; px < wx1 + 50; px += 50) {
+    if (ELEC()) drawCatenary(V);
+    else for (let px = first; px < wx1 + 50; px += 50) {
       if (inBridge(px) || nearTunnel(px)) continue;
       const sx = X(px), top = poleY - 7 * ppm;
       if (V.sunShadow > 0.01) { c.fillStyle = `rgba(0,0,0,${0.18 * V.sunShadow})`; c.beginPath(); c.moveTo(sx, poleY); c.lineTo(sx - 4 * ppm, poleY + 0.9 * ppm); c.lineTo(sx - 3.6 * ppm, poleY + 1.0 * ppm); c.lineTo(sx + 0.3 * ppm, poleY); c.closePath(); c.fill(); }
@@ -8168,6 +8270,8 @@
       c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = 'rgba(255,230,170,0.35)'; c.beginPath(); c.ellipse(L(-0.6), Y(1.95), 1.0 * ppm, 0.3 * ppm, 0, 0, 7); c.fill(); c.restore();
       // pantograf ramping
       c.strokeStyle = '#4a525a'; c.lineWidth = lw(0.06); c.beginPath(); c.moveTo(...P(11.5, 6.12)); c.lineTo(...P(12.6, 6.75)); c.lineTo(...P(11.2, 7.25)); c.moveTo(...P(10.6, 7.25)); c.lineTo(...P(11.9, 7.25)); c.stroke();
+      if (!LOCO_FORCE && st.arc > 0) { const [ax, ay] = P(11.25, 7.25); c.save(); c.globalCompositeOperation = 'lighter'; const rg = c.createRadialGradient(ax, ay, 0, ax, ay, 1.6 * ppm); rg.addColorStop(0, 'rgba(235,245,255,0.95)'); rg.addColorStop(0.3, 'rgba(120,190,255,0.6)'); rg.addColorStop(1, 'rgba(80,140,255,0)'); c.fillStyle = rg; c.beginPath(); c.arc(ax, ay, 1.6 * ppm, 0, 7); c.fill();
+        c.strokeStyle = 'rgba(210,235,255,0.9)'; c.lineWidth = 1; c.beginPath(); c.moveTo(ax, ay); for (let q = 1; q < 4; q++) c.lineTo(ax + (Math.random() - 0.3) * ppm * 0.9, ay - q * 0.25 * ppm + (Math.random() - 0.5) * 0.3 * ppm); c.stroke(); c.restore(); }
       c.fillStyle = '#c9ced4'; c.fillRect(L(13.6), Y(6.24), 3.2 * ppm, 0.16 * ppm);
       // logo kecil
       c.fillStyle = '#d4202b'; c.font = `italic 900 ${Math.max(6, Math.round(0.48 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
@@ -9276,7 +9380,7 @@
     const tunnel = inTunnel(st.x - 12);
     return { title, 
       scene, running, v: st.v, x: st.x, onBridge, river, crowd, bell,
-      power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0,
+      power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0, electric: !!S && ELEC(),
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
       rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
