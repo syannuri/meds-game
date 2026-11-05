@@ -1045,3 +1045,8 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 /* hint musik: pil kecil di tengah atas agar tidak menutupi tombol */
 #tapHint.tap-hint { top: calc(4px + env(safe-area-inset-top, 0px)); bottom: auto; left: 50%; transform: translateX(-50%); font-size: 11px; padding: 4px 12px; }
 #tapHint.tap-hint.gone { transform: translate(-50%, -8px); }
+
+/* tombol pantograf kereta listrik */
+.act.panto { color: #bfe9ff; }
+.act.panto.cue { border-color: rgba(79, 227, 255, 0.8); background: rgba(79, 227, 255, 0.16); color: #dff7ff; }
+.act.panto.up { opacity: 0.55; }
