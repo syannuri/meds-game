@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "description": "Rel Nusantara: game simulasi masinis kereta api Jawa & Sumatra",
+  "author": "Prismatix Lab",
+  "license": "SEE LICENSE IN ../LICENSE",
   "scripts": {
     "serve": "npx --yes http-server www -p 8080 -c-1",
     "android": "npx cap sync android && npx cap open android",

@@ -50,7 +50,8 @@ Bila secret belum diisi, workflow hanya membuat `app-debug.apk` untuk dicoba di 
 ## 4. Siapkan Google Play Console
 
 1. Daftar di <https://play.google.com/console> (biaya pendaftaran sekali bayar, verifikasi identitas).
-2. **Buat aplikasi**: nama *Rel Nusantara*, bahasa default Indonesia, jenis **Game**, **Gratis**.
+2. **Nama pengembang** di akun Play Console: **Prismatix Lab**.
+   **Buat aplikasi**: nama *Rel Nusantara*, bahasa default Indonesia, jenis **Game**, **Gratis**.
 3. Aktifkan **Play App Signing** (disarankan). Google menyimpan kunci aplikasi; kunci Anda menjadi
    *upload key*, sehingga bila kunci hilang bisa diganti lewat dukungan Google.
 4. Lengkapi **App content**:

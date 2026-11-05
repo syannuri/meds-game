@@ -1,0 +1,21 @@
+Rel Nusantara
+Hak cipta © 2026 Prismatix Lab. Semua hak dilindungi.
+Copyright © 2026 Prismatix Lab. All rights reserved.
+
+Seluruh kode sumber, grafis, audio, teks, cerita, nama tokoh, dan aset lain dalam repositori ini
+adalah milik Prismatix Lab dan dilindungi oleh Undang-Undang Nomor 28 Tahun 2014 tentang Hak Cipta
+serta perjanjian hak cipta internasional.
+
+Repositori ini dapat dilihat secara publik hanya untuk keperluan peninjauan. Tanpa izin tertulis dari
+Prismatix Lab, Anda tidak diperkenankan menyalin, mengubah, mendistribusikan, menerbitkan ulang,
+menjual, atau membuat karya turunan dari sebagian maupun seluruh isi repositori ini.
+
+All source code, artwork, audio, text, story, character names and other assets in this repository are
+the property of Prismatix Lab. The repository is publicly visible for review purposes only. No part of it
+may be copied, modified, distributed, republished, sold, or used to create derivative works without
+prior written permission from Prismatix Lab.
+
+Pengecualian / Third-party components:
+- Font "Big Shoulders Display" dan "Plus Jakarta Sans" (app/www/fonts) dilisensikan di bawah
+  SIL Open Font License 1.1; lihat file lisensi di folder tersebut.
+- Capacitor dan pustaka Android/Gradle tetap tunduk pada lisensi masing-masing (MIT / Apache 2.0).
