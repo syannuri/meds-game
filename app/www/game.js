@@ -7747,7 +7747,7 @@
       // bellow sambungan antargerbong (lipatan akordeon), ikut merenggang & merapat
       const gd = gapD(k + 1);
       if (HST2C) { // penutup sambungan menyatu ala kereta cepat Eropa
-        box(F - GAP - gd, F, 1.25, 4.75, '#e9ebee'); box(F - GAP - gd, F, 3.0, 4.45, '#0c0f13'); box(F - GAP - gd, F, 2.52, 2.72, '#d4202b');
+        box(F - GAP - gd, F, 0.32, 4.75, '#e9ebee'); box(F - GAP - gd, F, 3.0, 4.45, '#0c0f13'); box(F - GAP - gd, F, 2.52, 2.72, '#d4202b');
       } else box(F - GAP - gd, F, 1.25, 4.6, '#1b1e21');
       c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
       for (let q = 0.2; q < GAP + gd; q += 0.3) { c.moveTo(L(F - q), Y(4.5)); c.lineTo(L(F - q), Y(1.35)); }
@@ -7794,7 +7794,10 @@
         const gx0 = sx0(0, 240) - GAP * ppm; if (k < N_COACH - 1) { c.fillStyle = vgrad(4.85, 1.0, [[0, '#f4f5f7'], [1, '#a9afb6']]); c.fillRect(gx0, Y(4.85), GAP * ppm + 1, 3.85 * ppm);
         c.fillStyle = '#0c0f13'; c.fillRect(gx0, Y(4.55), GAP * ppm + 1, 1.7 * ppm); c.fillStyle = '#d4202b'; c.fillRect(gx0, Y(2.72), GAP * ppm + 1, 0.2 * ppm);
         c.strokeStyle = 'rgba(80,88,96,0.35)'; c.lineWidth = 1; c.beginPath(); c.moveTo(gx0, Y(4.85)); c.lineTo(gx0, Y(1.0)); c.moveTo(gx0 + GAP * ppm, Y(4.85)); c.lineTo(gx0 + GAP * ppm, Y(1.0)); c.stroke(); }
-        c.fillStyle = vgrad(1.7, 1.0, [[0, '#d5d9de'], [1, '#8c939b']]); c.fillRect(sx0(0, 240), Y(1.55), sw0(0, 240), 0.5 * ppm);
+        // rok bogie penuh: roda hampir tak terlihat, rangkaian tampak mulus
+        c.fillStyle = vgrad(1.7, 0.32, [[0, '#e4e7eb'], [0.7, '#aab0b8'], [1, '#6c737b']]); c.fillRect(sx0(0, 240), Y(1.7), sw0(0, 240), 1.38 * ppm);
+        c.fillStyle = 'rgba(20,24,28,0.28)'; [[30, 82], [158, 210]].forEach(([a, b]) => c.fillRect(sx0(a, b), Y(0.95), sw0(a, b), 0.5 * ppm));
+        line([[u(240), 1.0], [u(0), 1.0]], 'rgba(90,98,106,0.45)', 1);
       } else if (ARGOC) {
         // gerbong eksekutif Argo Senja: pita kaca gelap menyatu, pita senja bergaris emas, logo matahari terbenam
         const sx0 = (a, b) => Math.min(L(u(a)), L(u(b))), sw0 = (a, b) => Math.abs(L(u(a)) - L(u(b)));
@@ -7968,7 +7971,11 @@
       c.strokeStyle = '#8a959f'; c.lineWidth = lw(0.06); c.beginPath(); c.moveTo(...P(15.85, 2.9)); c.lineTo(...P(4.0, 2.9)); c.bezierCurveTo(...P(1.2, 2.9), ...P(-0.5, 2.82), ...P(-1.55, 2.5)); c.stroke();
       c.lineCap = 'butt';
       // rok samping menutup bogie sebagian, lampu LED sipit di hidung
-      c.fillStyle = vgrad(1.7, 1.0, [[0, '#d5d9de'], [1, '#8c939b']]); c.fillRect(L(15.6), Y(1.72), 15.0 * ppm, 0.38 * ppm);
+      // rok bogie penuh (gaya KCIC/Whoosh): menutup roda, hanya tepi bawah roda terlihat
+      { const sk = () => { c.beginPath(); c.moveTo(L(15.85), Y(1.72)); c.lineTo(L(15.85), Y(0.32)); c.lineTo(L(-0.2), Y(0.32)); c.quadraticCurveTo(L(-1.1), Y(0.35), L(-1.55), Y(1.2)); c.lineTo(L(-1.85), Y(1.72)); c.closePath(); };
+        sk(); c.fillStyle = vgrad(1.72, 0.32, [[0, '#e4e7eb'], [0.7, '#aab0b8'], [1, '#6c737b']]); c.fill();
+        c.fillStyle = 'rgba(20,24,28,0.28)'; [[13.2, 10.6], [5.0, 2.4]].forEach(([a, b]) => { c.fillRect(L(a), Y(0.95), (a - b) * ppm, 0.5 * ppm); });
+        c.strokeStyle = 'rgba(90,98,106,0.45)'; c.lineWidth = 1; c.beginPath(); c.moveTo(L(15.85), Y(1.0)); c.lineTo(L(-0.6), Y(1.0)); c.stroke(); }
       c.fillStyle = '#0c0f13'; c.beginPath(); c.moveTo(...P(-1.05, 2.0)); c.lineTo(...P(0.1, 2.08)); c.lineTo(...P(0.05, 1.92)); c.lineTo(...P(-1.2, 1.82)); c.closePath(); c.fill();
       c.fillStyle = '#fff6d8'; c.beginPath(); c.moveTo(...P(-0.95, 1.97)); c.lineTo(...P(-0.15, 2.03)); c.lineTo(...P(-0.18, 1.95)); c.lineTo(...P(-1.05, 1.88)); c.closePath(); c.fill();
       c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = 'rgba(255,230,170,0.35)'; c.beginPath(); c.ellipse(L(-0.6), Y(1.95), 1.0 * ppm, 0.3 * ppm, 0, 0, 7); c.fill(); c.restore();
@@ -8228,6 +8235,7 @@
     c.font = `800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`;
     if (!ARGO) c.fillText('RN 2001', L(15.2), Y(2.09)); else if (!HST2) { c.fillStyle = '#3a3f46'; c.fillText(HSTL ? 'KN 5001' : 'AV 3801', L(15.2), Y(1.72)); }
     // tangga kabin & pilot depan, kopling, selang udara
+    if (!HST2) {
     c.strokeStyle = '#8d969b'; c.lineWidth = lw(0.05); c.beginPath();
     c.moveTo(L(4.85), Y(1.85)); c.lineTo(L(4.85), Y(0.55)); c.moveTo(L(4.25), Y(1.85)); c.lineTo(L(4.25), Y(0.55));
     for (let q = 0.7; q < 1.8; q += 0.38) { c.moveTo(L(4.85), Y(q)); c.lineTo(L(4.25), Y(q)); }
@@ -8239,6 +8247,7 @@
     box(-1.1, 0.15, 1.15, 1.45, '#2a2f33');
     line([[-0.55, 1.1], [-0.7, 0.7]], '#d0392b', lw(0.06));
     line([[-0.25, 1.1], [-0.35, 0.7]], '#f2c230', lw(0.06));
+    }
     // cahaya tepi (sinar dari belakang-kanan)
     if (rimOn) {
       c.save(); c.globalAlpha = V.rimA;
