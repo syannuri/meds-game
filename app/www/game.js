@@ -662,14 +662,14 @@
     id: '3-2',
     chapter: 'Babak 3 · Ekspres Jawa',
     title: 'Guntur di Atas Sawah', nick: 'Guntur',
-    startClock: 9 * 3600 + 10 * 60,
-    sky: 'dawn', day: true,
+    startClock: 15 * 3600 + 40 * 60,
+    sky: 'dawn', golden: true, // sore keemasan: matahari rendah & hangat
     rain: false,
     tags: ['Kereta cepat 250 km/h', 'Jalur layang', 'Sawah & kota modern'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
     driver: { name: 'Anett', initials: 'AN' }, // masinis kereta cepat Guntur
     brief: 'Anett, hari ini kamu dipercaya membawa Guntur, kereta cepat pertama kita. Jalurnya melayang di atas sawah dari Kencana Hub ke Kota Halimun, boleh sampai 250 km/h. Ingat: dari 250, kereta butuh lebih dari 3 km untuk berhenti. Ikuti papan REM dan sinyal kabin. Di Padi Raya kita berhenti sebentar menjemput petani dan pelajar.',
-    weather: 'pagi cerah, angin kencang di perbukitan',
+    weather: 'sore cerah keemasan, angin kencang di perbukitan',
     intro: 'Masinis Anett, Guntur siap. Tutup pintu dan rasakan 250 km/h di atas sawah.',
     reward: '<strong>Terbuka:</strong> Lencana Masinis Kereta Cepat. Warga Padi Raya kini bisa ke kota dalam 10 menit.',
     aboard: 20,
@@ -745,7 +745,8 @@
     '1-7': { storm: ['#34434e', '#62798a', '#a7b8bd'], grade: ['rgba(80,125,140,0.2)', 'rgba(60,100,90,0.16)'] },
     '2-2': { night: ['#0d1634', '#26355f', '#475683'], grade: ['rgba(90,120,190,0.2)', 'rgba(40,70,90,0.14)'], mist: true },
     '2-3': { sky: [['#5a6a7e', '#8aa0aa'], ['#d9b48a', '#e6d8b8'], ['#f0d29a', '#f2ead2']], grade: ['rgba(230,180,110,0.2)', 'rgba(120,80,40,0.16)'], mist: true },
-    '3-2': { sky: [['#5aa8e0', '#cfeaf5'], ['#62b0e6', '#d8f0f8'], ['#6ab8ec', '#e2f4fa']], grade: ['rgba(255,240,210,0.1)', 'rgba(120,200,160,0.1)'] },
+    // 3-2: sore keemasan — langit atas biru lembut, tengah amber, cakrawala emas hangat
+    '3-2': { sky: [['#5d73ad', '#86a6d4'], ['#f2a868', '#f7cf98'], ['#ffc873', '#ffe4ae']], grade: ['rgba(255,165,80,0.2)', 'rgba(255,205,125,0.14)'] },
     '3-1': { sky: [['#2e2a5e', '#e8875a'], ['#3a2f66', '#f09a5a'], ['#4a3570', '#ffb46a']], grade: ['rgba(255,140,70,0.26)', 'rgba(255,190,110,0.18)'] },
     '2-1': { sky: [['#4a6a6e', '#6a9aa6'], ['#b9b08a', '#cfd9c0'], ['#ead6a4', '#f0ead2']], grade: ['rgba(200,215,170,0.2)', 'rgba(160,70,40,0.2)'], mist: true },
   };
@@ -4078,7 +4079,7 @@
     tickCrossings(st, dt);
     const x0 = st.x - 1.5, EH = 3.4;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
-    const p = storm ? 0.6 : night ? 0.35 : MIS.day ? 1 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1);
+    const p = storm ? 0.6 : night ? 0.35 : MIS.golden ? clamp(0.3 - st.clock / 40000, 0.2, 0.3) : MIS.day ? 1 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1);
     const T = ROUTE.tunnel, inTun = !!T && x0 > T.from && x0 < T.to;
     const f = W * 0.8;
     // kereta cepat: rel las panjang + suspensi udara, kabin hanya mengapung pelan (tanpa getar)
@@ -4734,14 +4735,14 @@
     for (const cl of HCLOUD) {
       const w0 = W * 0.16 * cl.s, cx = ((cl.u * (W + w0 * 2) - pan * 0.08 - tt * 3 - x0 * 0.004) % (W + w0 * 2) + W + w0 * 2) % (W + w0 * 2) - w0, cy = hy - H * (0.12 + cl.v * 0.2);
       const base = cy + w0 * 0.12;
-      c.fillStyle = night ? 'rgba(70,78,110,0.6)' : mix('#c9c6d8', '#dfe3ee', p); c.beginPath();
+      c.fillStyle = night ? 'rgba(70,78,110,0.6)' : MIS.golden ? '#d8a8a0' : mix('#c9c6d8', '#dfe3ee', p); c.beginPath();
       for (let k = 0; k < cl.n; k++) { const t = k / (cl.n - 1) - 0.5, r = w0 * (0.2 + 0.16 * Math.cos(t * Math.PI) + hash(k + cl.u * 9) * 0.06); c.moveTo(cx + t * w0 * 1.2 + r, base); c.arc(cx + t * w0 * 1.2, base - r * 0.6, r, 0, Math.PI, true); }
       c.fill();
-      c.fillStyle = night ? 'rgba(110,120,150,0.5)' : 'rgba(255,255,255,0.85)'; c.beginPath();
+      c.fillStyle = night ? 'rgba(110,120,150,0.5)' : MIS.golden ? 'rgba(255,226,190,0.92)' : 'rgba(255,255,255,0.85)'; c.beginPath();
       for (let k = 0; k < cl.n; k++) { const t = k / (cl.n - 1) - 0.5, r = w0 * (0.2 + 0.16 * Math.cos(t * Math.PI) + hash(k + cl.u * 9) * 0.06) * 0.82; c.moveTo(cx + t * w0 * 1.2 + w0 * 0.04 + r, base - r * 0.55); c.arc(cx + t * w0 * 1.2 + w0 * 0.04, base - r * 1.05, r, 0, Math.PI * 2); }
       c.fill();
       // tepi menghadap matahari berkilau hangat
-      c.fillStyle = 'rgba(255,228,180,0.35)'; c.beginPath(); c.ellipse(cx + w0 * 0.25, base - w0 * 0.42, w0 * 0.22, w0 * 0.12, -0.3, 0, 7); c.fill();
+      c.fillStyle = MIS.golden ? 'rgba(255,200,120,0.55)' : 'rgba(255,228,180,0.35)'; c.beginPath(); c.ellipse(cx + w0 * 0.25, base - w0 * 0.42, w0 * 0.22, w0 * 0.12, -0.3, 0, 7); c.fill();
       c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(cx - w0 * 0.7, base, w0 * 1.4, Math.max(1, w0 * 0.02));
     }
     // gunung berlapis: gunung api jauh (Halimun), punggung bukit tengah, perbukitan dekat
@@ -4779,7 +4780,7 @@
         if (hash(i + 5) < 0.35) { c.fillStyle = g; c.beginPath(); c.moveTo(x, y - bh); c.lineTo(x + bw / 2, y - bh - H * 0.03); c.lineTo(x + bw, y - bh); c.fill(); } }
       c.restore(); }
     // kabut cakrawala hangat (perspektif udara)
-    { const hz = c.createLinearGradient(0, hy - H * 0.09, 0, hy + H * 0.03); hz.addColorStop(0, 'rgba(255,244,226,0)'); hz.addColorStop(0.7, night ? 'rgba(80,90,120,0.25)' : 'rgba(255,240,220,0.45)'); hz.addColorStop(1, 'rgba(255,240,220,0)'); c.fillStyle = hz; c.fillRect(0, hy - H * 0.09, W, H * 0.12); }
+    { const hz = c.createLinearGradient(0, hy - H * 0.09, 0, hy + H * 0.03); hz.addColorStop(0, 'rgba(255,244,226,0)'); hz.addColorStop(0.7, night ? 'rgba(80,90,120,0.25)' : MIS.golden ? 'rgba(255,200,130,0.5)' : 'rgba(255,240,220,0.45)'); hz.addColorStop(1, 'rgba(255,240,220,0)'); c.fillStyle = hz; c.fillRect(0, hy - H * 0.09, W, H * 0.12); }
     // sawah berpetak dalam perspektif: padi muda, padi menguning, petak berair memantulkan langit
     {
       const g0 = c.createLinearGradient(0, hy, 0, H); g0.addColorStop(0, night ? '#1d2c22' : mix('#a3c48a', '#b5d39a', p)); g0.addColorStop(1, night ? '#0f1a12' : mix('#4f8a3e', '#62a04a', p));
@@ -5081,7 +5082,7 @@
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
-    const p = storm ? 0.6 : night ? 0.35 : MIS.day ? 1 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1); // fajar -> pagi (senja: matahari rendah)
+    const p = storm ? 0.6 : night ? 0.35 : MIS.golden ? clamp(0.3 - st.clock / 40000, 0.2, 0.3) : MIS.day ? 1 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1); // fajar -> pagi (senja: matahari rendah)
     const T = ROUTE.tunnel;
     const xc = st.x - 12; // posisi kabin
     const tf = T ? smooth(T.from, T.from + 25, xc) * (1 - smooth(T.to, T.to + 25, xc)) : 0;
