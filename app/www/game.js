@@ -7747,7 +7747,12 @@
       // bellow sambungan antargerbong (lipatan akordeon), ikut merenggang & merapat
       const gd = gapD(k + 1);
       if (HST2C) { // penutup sambungan menyatu ala kereta cepat Eropa
-        box(F - GAP - gd, F, 0.32, 4.75, '#e9ebee'); box(F - GAP - gd, F, 3.0, 4.45, '#0c0f13'); box(F - GAP - gd, F, 2.52, 2.72, '#d4202b');
+        { const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0, mid = (g0 + g1) / 2;
+          c.fillStyle = '#d4202b'; c.fillRect(g0, Y(4.85), gw, 4.5 * ppm); // ujung merah menyambung hampir rapat
+          const sw = Math.max(3, 0.34 * ppm), cg = c.createLinearGradient(mid - sw / 2, 0, mid + sw / 2, 0);
+          cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
+          c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(4.6)); c.quadraticCurveTo(mid, Y(5.15), mid + sw / 2, Y(4.6)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
+          c.fillStyle = '#1a1d21'; c.fillRect(mid - sw * 0.7, Y(0.85), sw * 1.4, 0.55 * ppm); }
       } else box(F - GAP - gd, F, 1.25, 4.6, '#1b1e21');
       c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
       for (let q = 0.2; q < GAP + gd; q += 0.3) { c.moveTo(L(F - q), Y(4.5)); c.lineTo(L(F - q), Y(1.35)); }
@@ -7844,8 +7849,18 @@
           c.fillStyle = `rgba(255,236,190,${0.16 * op})`; c.fillRect(dx + 0.15 * ppm, Y(4.4), dw - 0.3 * ppm, 0.8 * ppm);
         }
         const lx = dx - op * dw * 0.95;
+        if (HST2C) { // ujung gerbong merah (gaya KCIC): panel merah dari pintu sampai ujung, jendela pintu lonjong
+          const ex = d0 < 120 ? L(u(0)) : L(u(240)), ax = Math.min(ex, dx), bx2 = Math.max(ex, dx + dw);
+          const rg = c.createLinearGradient(ax, 0, bx2, 0); rg.addColorStop(0, '#c41c26'); rg.addColorStop(0.5, '#ec3a3f'); rg.addColorStop(1, '#c41c26');
+          c.fillStyle = rg; c.fillRect(ax, Y(4.85), bx2 - ax, 4.5 * ppm);
+          c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(ax, Y(1.3), bx2 - ax, 0.95 * ppm);
+          c.fillStyle = '#d4202b'; c.fillRect(lx, Y(4.55), dw, 3.4 * ppm);
+          c.fillStyle = '#10141a'; c.beginPath(); c.ellipse(lx + dw / 2, Y(3.55), dw * 0.16, 0.75 * ppm, 0, 0, 7); c.fill();
+          c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 1; c.strokeRect(lx + 0.12 * ppm, Y(4.45), dw - 0.24 * ppm, 3.2 * ppm);
+        } else {
         c.fillStyle = steel; c.fillRect(lx, Y(4.55), dw, 3.4 * ppm);
         c.fillStyle = glass; roundRect(c, lx + 0.3 * ppm, Y(4.2), dw - 0.6 * ppm, 1.2 * ppm, 0.15 * ppm); c.fill();
+        }
         c.strokeStyle = '#7d878d'; c.lineWidth = 1; c.strokeRect(dx, Y(4.55), dw, 3.4 * ppm);
         if (op < 0.01) line([[u(d0 + 10), 4.5], [u(d0 + 10), 1.2]], 'rgba(90,100,108,0.6)', 1);
         box(u(d0 + 18), u(d0 + 2), 0.75, 0.95, '#3a4045');
