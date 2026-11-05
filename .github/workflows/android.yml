@@ -26,9 +26,18 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION_CODE: ${{ github.run_number }}
-      VERSION_NAME: ${{ github.event.inputs.version_name || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Tentukan nama versi
+        env:
+          IN_VER: ${{ github.event.inputs.version_name }}
+        run: |
+          v="$IN_VER"
+          if [ -z "$v" ] && [ "$GITHUB_REF_TYPE" = "tag" ]; then v="${GITHUB_REF_NAME#v}"; fi
+          [ -n "$v" ] || v="1.0.0"
+          v=$(printf '%s' "$v" | tr -c 'A-Za-z0-9._-' '-')
+          echo "VERSION_NAME=$v" >> "$GITHUB_ENV"
 
       - uses: actions/setup-java@v4
         with:
