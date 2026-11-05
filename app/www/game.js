@@ -3073,6 +3073,16 @@
     $('resStars').classList.toggle('three', !failed && n === 3);
     if (!failed && n === 3) setTimeout(() => confetti(), 1150);
   }
+  // kartu hasil selalu muat satu layar: perkecil skala huruf sampai tidak perlu digulir
+  function fitResult() {
+    const card = $('resCard'); if (!card) return;
+    const scr = ui.screens.result;
+    const go = () => { const cs = getComputedStyle(scr), avail = window.innerHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 12;
+      card.style.maxHeight = (window.innerWidth > 640 ? avail : 9999) + 'px';
+      for (let k = 1; k >= 0.6; k -= 0.04) { card.style.setProperty('--rk', k.toFixed(2)); if (card.scrollHeight <= card.clientHeight + 1) break; } };
+    requestAnimationFrame(() => { go(); requestAnimationFrame(go); });
+  }
+  window.addEventListener('resize', () => { if (mode === 'result') fitResult(); });
   function showResult() {
     // kereta listrik: bonus koin untuk masinis hemat energi (rem regeneratif mengembalikan ≥ 20% energi)
     const regenPct = ELEC() && S.kwh > 1 ? Math.round((S.regen / S.kwh) * 100) : 0;
@@ -3121,16 +3131,18 @@
     if (next) btnNext.textContent = `Lanjut ke Misi ${next}`;
     const missed = r.goals.find((g) => g.state !== 'ok' && g.tip);
     const goalList = `<ul class="rgoals">${r.goals.map((g) => `<li class="${g.state === 'ok' ? 'ok' : 'miss'}"><i>★</i><span>${g.label}</span><small>${g.value || (g.state === 'ok' ? 'tercapai' : 'belum')}</small></li>`).join('')}</ul>${!r.failed && missed ? `<p class="rtip">Tips: ${missed.tip}</p>` : ''}`;
+    const tiles = [
+      [MIS.freight ? 'MUATAN' : 'NYAMAN', `${Math.round(S.comfort)}%`, S.comfort >= 80 ? 'ok' : 'warn'],
+      ['KOIN', `${r.total}`, 'gold', `misi ${r.base} + henti ${S.coins} + nyaman ${r.comfortBonus}${r.penalty ? ` − ${r.penalty}` : ''}${S.expert ? ' ×1,5' : ''}`],
+    ];
+    if (ELEC()) tiles.push(['ENERGI', `${Math.round(S.kwh)} kWh`, ecoBonus ? 'ok' : '', `regen ${Math.round(S.regen)} kWh (${regenPct}%)${ecoBonus ? ' · +80 hemat' : ' · target 20%'}`]);
     $('resCard').innerHTML = `${goalList}
       <table class="rtable">
         <thead><tr><th>Stasiun</th><th>Berhenti</th><th>Tiba / jadwal</th></tr></thead>
-        <tbody>${loadRows}${rows}
-          ${rivalRow}
-          <tr><td>${MIS.freight ? 'Muatan utuh' : 'Kenyamanan'}</td><td colspan="2">${Math.round(S.comfort)}%${S.comfort >= 80 ? '' : ' (target 80%)'}</td></tr>
-          ${ELEC() ? `<tr><td>Energi listrik</td><td colspan="2">dipakai <strong>${Math.round(S.kwh)} kWh</strong> · dikembalikan rem regeneratif <strong>${Math.round(S.regen)} kWh</strong> (${regenPct}%)${ecoBonus ? ' · <span class="ontime">Masinis Hemat Energi +80 koin</span>' : ' · <span style="color:var(--muted)">target 20% untuk bonus</span>'}</td></tr>` : ''}
-          <tr><td>Koin</td><td colspan="2"><strong>${r.total}</strong> <span style="color:var(--muted)">(misi ${r.base} + berhenti ${S.coins} + nyaman ${r.comfortBonus} − pelanggaran ${r.penalty}${S.expert ? ', ×1,5 Masinis Ahli' : ''})</span></td></tr>
-        </tbody>
-      </table>${viol}${extra}${reward}`;
+        <tbody>${loadRows}${rows}${rivalRow}</tbody>
+      </table>
+      <div class="rtiles">${tiles.map(([l, v, cls, sub]) => `<div class="rtile ${cls}"><small>${l}</small><b>${v}</b>${sub ? `<em>${sub}</em>` : ''}</div>`).join('')}</div>${viol}${extra}${reward}`;
+    fitResult();
     showScreen('result');
   }
 
@@ -10007,8 +10019,8 @@
     if (mode !== 'pause') updateWeather(dt, (S || idleState).v);
     // jaga agar ukuran gambar canvas selalu sama dengan ukuran tampilnya (mencegah kereta tampak gepeng)
     if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(2, window.devicePixelRatio || 1) !== DPR) resize();
-    // saat daftar misi digeser: latar menu digambar setengah laju agar swipe tetap ringan
-    const swiping = mode === 'title' && ui.screens.title.querySelector('.tickets.scrolling'); frame.skip = swiping ? !frame.skip : false;
+    // saat daftar misi digeser: latar menu tidak digambar ulang agar swipe licin
+    const swiping = mode === 'title' && ui.screens.title.querySelector('.tickets.scrolling'); frame.skip = !!swiping; // latar membeku sesaat selama jari menggeser, lalu lanjut
     if (W && H && !frame.skip) render(dt);
     if (mode === 'title' && !frame.skip) { drawTitleMap(dt); drawTitleFx(dt); }
     Sound.update(audioInfo());
