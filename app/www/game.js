@@ -1863,7 +1863,7 @@
   let W = 0, H = 0, DPR = 1, SW = 0, SH = 0;
   let mode = 'title';
   let radioDur = 1, trainScr = null;
-  let camFast = 0; const camPrev = { x: 0, ppm: 1 };
+  let camFast = 0;
   let radioTimer = 0, camLead = 0, camZoom = 1, camZoomV = 0;
   let viewMode = store.get('rn.view') === 'cab' ? 'cab' : 'side'; // 'side' (2.5D) atau 'cab' (kabin masinis)
   let rotateSkipped = false;
@@ -3585,7 +3585,7 @@
     $('rivalPanel').hidden = !ROUTE.rival;
     document.querySelectorAll('.cluster .coins').forEach((el) => { el.hidden = !!ROUTE.rival; });
     ui.rivalSep.hidden = !ROUTE.rival;
-    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1; camZoomV = 0; camRoll = 0; sparks.length = 0; crowds.clear(); goalSig = '';
+    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1; camZoomV = 0; camFast = 0; camRoll = 0; sparks.length = 0; crowds.clear(); goalSig = '';
     resetCrossings();
     const thisRun = S;
     if (ROUTE.rival) setTimeout(() => { if (S === thisRun && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
@@ -5055,14 +5055,13 @@
     const pivotStn = S && st === S && S.phase === 'dwell' && !MIS.freight && !(S.dwell.step === 'couple');
     // poros zoom = titik dunia di tengah layar saat kereta berhenti, sehingga kamera mendekat lurus
     // tanpa menggeser peron/pemandangan ke samping
-    if (pivotStn) { if (!S.pivotPpm) { S.pivotPpm = ppm; S.pivotW = camPrev.x + W / (2 * camPrev.ppm); } lead = S.pivotW - st.x + (W * anchor - W / 2) / ppm; } else if (S && st === S) S.pivotPpm = 0;
+    if (pivotStn) { if (!S.pivotPpm) { S.pivotPpm = ppm; S.pivotW = st.x - (W * anchor) / ppm + camLead + W / (2 * ppm); } lead = S.pivotW - st.x + (W * anchor - W / 2) / ppm; } else if (S && st === S) S.pivotPpm = 0;
     if (treeNear && TR0.x - st.x < 200) {
       const base = st.x - (W * anchor) / ppm;
       lead = clamp(TR0.x + 14 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
     }
     if (pivotStn) camLead = lead; else camLead += (lead - camLead) * Math.min(1, (dtReal || 0.016) * 1.4);
     const camX = st.x - (W * anchor) / ppm + camLead;
-    camPrev.x = camX; camPrev.ppm = ppm;
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
