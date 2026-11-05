@@ -1140,3 +1140,10 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 #screenTitle .tickets.glass { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: linear-gradient(180deg, rgba(20, 25, 33, 0.94), rgba(9, 12, 17, 0.96)) !important; }
 #screenTitle .tickets li > .ticket { box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 4px 10px rgba(0,0,0,0.35); transform: translateZ(0); }
 #screenTitle .tickets.scrolling li > .ticket.next { animation: none; }
+
+/* kartu pos lebih ringkas; posisinya dipilih otomatis agar tidak menutupi kereta */
+#postcard { width: 214px; gap: 8px; padding: 6px 10px 6px 6px; transition: left 0.35s ease, top 0.35s ease; }
+#postcard canvas { width: 46px; height: 58px; }
+#postcard b { font-size: 15px; }
+#postcard span, #postcard em { font-size: 10px; }
+#postcard .pc-stamp { width: 22px; height: 26px; font-size: 8px; }
