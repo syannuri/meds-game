@@ -4737,6 +4737,7 @@
     const amp = pw * 1250 * clamp(1.15 - st.v / 34, 0.25, 1) + (st.slip ? 300 : 0), bp = 5.0 - brk * 1.4, bc = brk * 3.8;
     const FNT = (wgt, px) => `${wgt} ${Math.max(8, Math.round(px))}px "Plus Jakarta Sans", sans-serif`, BIGF = (px) => `900 ${Math.max(9, Math.round(px))}px "Big Shoulders Display", sans-serif`;
     const px0 = W * 0.1, px1 = W * 0.645, pt = dy0 + H * 0.004, phd = H * 0.168;
+    if (MIS.loco === 'argo') { drawArgoDigital(c, st, { kmh, lim, nl, ns, brk, pw, amp, bp, bc, px0, px1, pt, phd, FNT, BIGF, night }); return; }
     c.fillStyle = 'rgba(20,25,30,0.96)'; roundRect(c, px0, pt, px1 - px0, phd, H * 0.025); c.fill();
     c.strokeStyle = 'rgba(255,255,255,0.1)'; c.lineWidth = 1; c.stroke();
     // pengukur bulat dengan angka skala
@@ -4913,6 +4914,51 @@
     // pantulan dasbor tipis di kaca bawah (ciri kaca kokpit)
     const rg = c.createLinearGradient(0, H * 0.56, 0, H * 0.66); rg.addColorStop(0, 'rgba(120,200,255,0)'); rg.addColorStop(1, 'rgba(120,200,255,0.07)'); c.fillStyle = rg; c.fillRect(0, H * 0.56, W, H * 0.1);
   }
+
+  // ---------- panel full digital Agraveda (diesel modern): layar kaca hitam bertema senja ----------
+  function drawArgoDigital(c, st, o) {
+    const { kmh, lim, nl, ns, amp, bp, bc, px0, px1, pt, phd, FNT, BIGF } = o, AMB = '#ffb547', OR = '#ff7a3c', WH = '#fff3e4', DIM = 'rgba(255,243,228,0.45)';
+    const tt = performance.now() / 1000;
+    const scr = (x, y, w, h) => { c.fillStyle = '#07090c'; roundRect(c, x, y, w, h, h * 0.1); c.fill(); c.strokeStyle = 'rgba(255,150,80,0.4)'; c.lineWidth = 1; c.stroke();
+      const g = c.createLinearGradient(0, y, 0, y + h * 0.5); g.addColorStop(0, 'rgba(255,255,255,0.06)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; roundRect(c, x + 1, y + 1, w - 2, h * 0.5, h * 0.1); c.fill(); };
+    const ph = phd * 0.86, y0 = pt + phd * 0.05;
+    // layar 1: kecepatan digital besar + bilah kecepatan dengan penanda batas
+    { const x = px0 + W * 0.005, w = W * 0.255; scr(x, y0, w, ph);
+      const over = kmh > lim + 2;
+      c.textBaseline = 'middle'; c.textAlign = 'right'; c.fillStyle = over ? '#ff6a5a' : WH; c.font = BIGF(ph * 0.5); c.fillText(String(Math.round(kmh)), x + w * 0.42, y0 + ph * 0.38);
+      c.textAlign = 'left'; c.fillStyle = DIM; c.font = FNT(800, ph * 0.13); c.fillText('km/h', x + w * 0.44, y0 + ph * 0.46);
+      c.fillStyle = DIM; c.font = FNT(800, ph * 0.12); c.fillText('BATAS', x + w * 0.66, y0 + ph * 0.2);
+      c.fillStyle = AMB; c.font = BIGF(ph * 0.32); c.fillText(String(lim), x + w * 0.66, y0 + ph * 0.43);
+      if (nl) { c.fillStyle = WH; c.font = FNT(800, ph * 0.11); c.fillText(`▸ ${nl.limit} · ${Math.round(nl.from - st.x)} m`, x + w * 0.66, y0 + ph * 0.6, w * 0.32); }
+      // bilah kecepatan bersegmen
+      const bx = x + w * 0.06, bw = w * 0.88, by = y0 + ph * 0.76, bh = ph * 0.12, nseg = 30;
+      for (let q = 0; q < nseg; q++) { const v = (q + 1) / nseg * GMAX, on = kmh >= v - GMAX / nseg * 0.5, sx = bx + q * bw / nseg;
+        c.fillStyle = on ? (v > lim ? '#ff5a4a' : v > lim * 0.9 ? AMB : '#ffd9a8') : 'rgba(255,255,255,0.07)'; c.fillRect(sx, by, bw / nseg - 1.5, bh); }
+      const lx = bx + bw * clamp(lim / GMAX, 0, 1); c.fillStyle = AMB; c.beginPath(); c.moveTo(lx, by - 2); c.lineTo(lx - 4, by - 7); c.lineTo(lx + 4, by - 7); c.closePath(); c.fill();
+      c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
+    // layar 2: bilah RPM, arus, pipa utama, silinder rem + lampu status + stasiun
+    { const x = px0 + W * 0.268, w = px1 - x - W * 0.005; scr(x, y0, w, ph);
+      const bars = [['RPM', st.engRpm, 1200, `${Math.round(st.engRpm)}`, 1050], ['ARUS', amp, 1500, `${Math.round(amp)} A`, 1200], ['PIPA UTAMA', bp, 10, `${bp.toFixed(1).replace('.', ',')} bar`], ['SIL. REM', bc, 10, `${bc.toFixed(1).replace('.', ',')} bar`]];
+      const cw = (w - W * 0.02) / bars.length;
+      bars.forEach(([lab, v, max, txt, warn], i) => {
+        const cx = x + W * 0.01 + i * cw, bx = cx + cw * 0.08, bw = cw * 0.84, by = y0 + ph * 0.5, bh = ph * 0.12, k = clamp(v / max, 0, 1);
+        c.fillStyle = DIM; c.font = FNT(800, ph * 0.1); c.textBaseline = 'middle'; c.fillText(lab, bx, y0 + ph * 0.14, bw);
+        c.fillStyle = WH; c.font = BIGF(ph * 0.22); c.fillText(txt, bx, y0 + ph * 0.33, bw);
+        c.fillStyle = 'rgba(255,255,255,0.08)'; roundRect(c, bx, by, bw, bh, bh / 2); c.fill();
+        const g = c.createLinearGradient(bx, 0, bx + bw, 0); g.addColorStop(0, OR); g.addColorStop(1, AMB); c.fillStyle = warn && v > warn ? '#ff5a4a' : g; roundRect(c, bx, by, Math.max(bh, bw * k), bh, bh / 2); c.fill();
+        c.textBaseline = 'alphabetic';
+      });
+      // lampu status digital
+      const chips = [['PINTU', st.doors === 'open', '#f2c94c'], ['TRAKSI', st.notch > 0, '#5fd08a'], ['REM', st.notch < 0, AMB], ['SELIP', !!st.slip, '#ff5a4a']];
+      const chw = (w * 0.62) / 4;
+      chips.forEach(([t, on, col], i) => { const cx = x + W * 0.012 + i * chw, cy = y0 + ph * 0.72;
+        c.fillStyle = on ? col : 'rgba(255,255,255,0.06)'; roundRect(c, cx, cy, chw - 4, ph * 0.18, ph * 0.05); c.fill();
+        c.fillStyle = on ? '#140b05' : DIM; c.font = FNT(900, ph * 0.1); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(t, cx + (chw - 4) / 2, cy + ph * 0.09); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; });
+      if (ns) { const dist = Math.max(0, ns.x - st.x); c.fillStyle = WH; c.font = FNT(800, ph * 0.11); c.textAlign = 'right'; c.textBaseline = 'middle';
+        c.fillText(titleCase(ns.name), x + w - W * 0.01, y0 + ph * 0.75, w * 0.3); c.fillStyle = AMB; c.font = BIGF(ph * 0.17); c.fillText(dist >= 1000 ? `${(dist / 1000).toFixed(1).replace('.', ',')} km` : `${Math.round(dist)} m`, x + w - W * 0.01, y0 + ph * 0.9);
+        c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
+    }
+  }
   const drvImgs = {};
   function driverImg(id) { // potret SVG masinis sebagai gambar untuk kanvas kokpit
     if (drvImgs[id]) return drvImgs[id];
@@ -4968,8 +5014,25 @@
     // ---- layar DMI kiri: busur kecepatan, batas, jarak target ----
     {
       const x = W * 0.08, w = W * 0.4; panel(x, py, w, ph);
-      const r = ph * 0.4, gx = x + ph * 0.55, gy2 = py + ph * 0.52;
+      const r = ph * 0.4, gx = x + ph * (MIS.loco === 'hst' ? 0.58 : 0.55), gy2 = py + ph * 0.52;
       const A0 = Math.PI * 0.8, SW = Math.PI * 1.4, ang = (v) => A0 + SW * clamp(v / GMAX, 0, 1);
+      if (MIS.loco === 'hst') { // Kilat G1: perpaduan analog (jarum & skala berangka) dan digital
+        const rr = ph * 0.46, gyA = py + ph * 0.5;
+        const bz = c.createLinearGradient(gx - rr, gyA - rr, gx + rr, gyA + rr); bz.addColorStop(0, '#e8eef2'); bz.addColorStop(0.5, '#7d8890'); bz.addColorStop(1, '#d4dbe0');
+        c.fillStyle = bz; c.beginPath(); c.arc(gx, gyA, rr, 0, 7); c.fill();
+        c.fillStyle = '#0b1218'; c.beginPath(); c.arc(gx, gyA, rr * 0.9, 0, 7); c.fill();
+        c.strokeStyle = 'rgba(255,90,74,0.9)'; c.lineWidth = rr * 0.08; c.beginPath(); c.arc(gx, gyA, rr * 0.78, ang(lim), A0 + SW); c.stroke();
+        c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = FONT(800, Math.max(7, rr * 0.17));
+        for (let v = 0; v <= GMAX; v += GMAX >= 300 ? 25 : 10) { const a2 = ang(v), maj = v % (GMAX >= 300 ? 50 : 20) === 0; c.strokeStyle = maj ? '#eafaff' : 'rgba(234,250,255,0.45)'; c.lineWidth = maj ? 1.6 : 1;
+          c.beginPath(); c.moveTo(gx + Math.cos(a2) * rr * (maj ? 0.66 : 0.72), gyA + Math.sin(a2) * rr * (maj ? 0.66 : 0.72)); c.lineTo(gx + Math.cos(a2) * rr * 0.84, gyA + Math.sin(a2) * rr * 0.84); c.stroke();
+          if (maj && v % (GMAX >= 300 ? 100 : 40) === 0) { c.fillStyle = '#eafaff'; c.fillText(String(v), gx + Math.cos(a2) * rr * 0.5, gyA + Math.sin(a2) * rr * 0.5); } }
+        const na = ang(kmh); c.save(); c.shadowColor = '#ff8a3c'; c.shadowBlur = 6; c.strokeStyle = '#ff8a3c'; c.lineWidth = Math.max(2, rr * 0.06); c.beginPath(); c.moveTo(gx - Math.cos(na) * rr * 0.12, gyA - Math.sin(na) * rr * 0.12); c.lineTo(gx + Math.cos(na) * rr * 0.8, gyA + Math.sin(na) * rr * 0.8); c.stroke(); c.restore();
+        c.fillStyle = '#20282e'; c.beginPath(); c.arc(gx, gyA, rr * 0.2, 0, 7); c.fill(); c.strokeStyle = '#8a959c'; c.lineWidth = 1; c.stroke();
+        // jendela digital di dalam jam
+        c.fillStyle = '#02060a'; roundRect(c, gx - rr * 0.34, gyA + rr * 0.3, rr * 0.68, rr * 0.3, rr * 0.06); c.fill();
+        c.fillStyle = kmh > lim + 2 ? '#ff6a5a' : CY; c.font = BIG(rr * 0.27); c.fillText(String(Math.round(kmh)), gx, gyA + rr * 0.46);
+        c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      } else {
       c.lineCap = 'round';
       c.strokeStyle = 'rgba(255,255,255,0.1)'; c.lineWidth = r * 0.16; c.beginPath(); c.arc(gx, gy2, r, A0, A0 + SW); c.stroke();
       c.strokeStyle = 'rgba(255,181,71,0.9)'; c.beginPath(); c.arc(gx, gy2, r, ang(lim) - 0.02, Math.min(A0 + SW, ang(lim) + 0.1)); c.stroke();
@@ -4981,8 +5044,9 @@
       c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillStyle = over ? '#ff8a7a' : '#eafaff'; c.font = BIG(r * 0.78); c.fillText(String(Math.round(kmh)), gx, gy2 - r * 0.05);
       c.fillStyle = 'rgba(234,250,255,0.55)'; c.font = FONT(700, r * 0.24); c.fillText('km/h', gx, gy2 + r * 0.5);
+      }
       // kolom info
-      const ix = gx + r * 1.55, iw = x + w - ix - ph * 0.15; c.textAlign = 'start';
+      const ix = gx + (MIS.loco === 'hst' ? ph * 0.62 : r * 1.55), iw = x + w - ix - ph * 0.15; c.textAlign = 'start';
       c.fillStyle = 'rgba(234,250,255,0.5)'; c.font = FONT(800, ph * 0.11); c.fillText('BATAS', ix, py + ph * 0.2);
       c.fillStyle = AMB; c.font = BIG(ph * 0.24); c.fillText(String(lim), ix, py + ph * 0.38);
       if (nl) { c.fillStyle = 'rgba(234,250,255,0.75)'; c.font = FONT(700, ph * 0.1); c.fillText(`▸ ${nl.limit} dalam ${Math.round(nl.from - st.x)} m`, ix + iw * 0.35, py + ph * 0.38, iw * 0.65); }
