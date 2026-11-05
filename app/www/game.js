@@ -4778,30 +4778,35 @@
     const { x0, hy, f, pan, p, P, night } = o, tt = performance.now() / 1000;
     const SC = cabScene(x0 + 300), sun = o.sun;
     const sky = (k) => mix('#a9c4d8', '#cfe2ec', p * k);
-    // awan kumulus lembut: gumpalan bergradasi radial tanpa tepi keras, dasar menyatu ke langit,
-    // sisi menghadap matahari hangat & terang, sisi lain sedikit keunguan; makin jauh makin pudar
-    const cTop = night ? [120, 130, 160] : MIS.golden ? [255, 232, 205] : [255, 255, 255];
-    const cShade = night ? [70, 78, 110] : MIS.golden ? [214, 160, 150] : mix('#c9c6d8', '#dfe3ee', p).match(/\w\w/g).map((h) => parseInt(h, 16));
+    // awan senja di kejauhan: lapisan awan pipih memanjang dekat cakrawala (di belakang gunung),
+    // disinari matahari rendah dari bawah: dasar jingga keemasan, badan merah muda-ungu, tepi emas
     const rgba = (cc, a) => `rgba(${cc[0] | 0},${cc[1] | 0},${cc[2] | 0},${a.toFixed(3)})`;
-    for (const cl of HCLOUD) {
-      const w0 = W * 0.16 * cl.s, cx = ((cl.u * (W + w0 * 2) - pan * 0.08 - tt * 3 - x0 * 0.004) % (W + w0 * 2) + W + w0 * 2) % (W + w0 * 2) - w0, cy = hy - H * (0.12 + cl.v * 0.2);
-      const far = clamp((cy - (hy - H * 0.34)) / (H * 0.22), 0, 1), A = 0.92 - far * 0.45, base = cy + w0 * 0.1;
-      const toSun = Math.sign(sun.x - cx) || 1, np = cl.n + 3;
-      const puffs = [];
+    const warmSky = MIS.golden || MIS.dusk || p < 0.5;
+    const cBody = night ? [90, 96, 130] : warmSky ? [214, 150, 160] : [236, 238, 246];
+    const cLit = night ? [130, 140, 170] : warmSky ? [255, 186, 120] : [255, 250, 240];
+    const cRim = warmSky ? [255, 222, 150] : [255, 255, 255];
+    for (const [ci, cl] of HCLOUD.entries()) {
+      if (ci % 3 === 2) continue; // langit lebih lega: hanya sebagian gumpalan
+      const w0 = W * (0.08 + 0.06 * cl.s), cx = ((cl.u * (W + w0 * 2) - pan * 0.05 - tt * 1.6 - x0 * 0.002) % (W + w0 * 2) + W + w0 * 2) % (W + w0 * 2) - w0;
+      const cy = hy - H * (0.07 + cl.v * 0.16), far = 1 - clamp((hy - cy) / (H * 0.24), 0, 1), A = 1 - far * 0.3, flat = 0.42;
+      const dSun = Math.abs(cx - sun.x) / W, glow = clamp(1 - dSun * 1.6, 0, 1);
+      c.save(); c.translate(cx, cy); c.scale(1, flat);
+      const np = cl.n + 4, puffs = [];
       for (let k = 0; k < np; k++) { const t = k / (np - 1) - 0.5, hh = Math.cos(t * Math.PI);
-        puffs.push([cx + t * w0 * 1.35 + (hash(k * 3.3 + cl.u * 7) - 0.5) * w0 * 0.12, base - w0 * (0.1 + 0.32 * hh + hash(k + cl.v * 5) * 0.1), w0 * (0.17 + 0.2 * hh + hash(k * 1.7 + cl.u) * 0.07)]); }
-      // 1) bayangan bawah lembut (keunguan), sedikit di bawah
-      for (const [px, py, r] of puffs) { const g = c.createRadialGradient(px, py + r * 0.35, 0, px, py + r * 0.35, r * 1.15); g.addColorStop(0, rgba(cShade, 0.32 * A)); g.addColorStop(1, rgba(cShade, 0)); c.fillStyle = g; c.beginPath(); c.arc(px, py + r * 0.35, r * 1.15, 0, 7); c.fill(); }
-      // 2) badan awan terang, pusat sedikit digeser ke arah matahari
-      for (const [px, py, r] of puffs) { const ox = px + toSun * r * 0.18, oy = py - r * 0.15, g = c.createRadialGradient(ox, oy, 0, px, py, r);
-        g.addColorStop(0, rgba(cTop, 1 * A)); g.addColorStop(0.6, rgba(cTop, 0.85 * A)); g.addColorStop(1, rgba(cTop, 0)); c.fillStyle = g; c.beginPath(); c.arc(px, py, r, 0, 7); c.fill(); }
-      // 3) kilau hangat di tepi menghadap matahari
-      if (!night) { const sp = puffs[toSun > 0 ? np - 2 : 1], g = c.createRadialGradient(sp[0] + toSun * sp[2] * 0.3, sp[1] - sp[2] * 0.2, 0, sp[0], sp[1], sp[2] * 1.1);
-        g.addColorStop(0, `rgba(255,214,150,${(0.4 * A).toFixed(3)})`); g.addColorStop(1, 'rgba(255,214,150,0)'); c.fillStyle = g; c.beginPath(); c.arc(sp[0], sp[1], sp[2] * 1.1, 0, 7); c.fill(); }
+        puffs.push([t * w0 * 1.8 + (hash(k * 3.3 + cl.u * 7) - 0.5) * w0 * 0.15, -w0 * (0.08 + 0.22 * hh + hash(k + cl.v * 5) * 0.08), w0 * (0.14 + 0.16 * hh + hash(k * 1.7 + cl.u) * 0.06)]); }
+      // badan awan
+      for (const [px, py, r] of puffs) { const g = c.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, rgba(cBody, 0.9 * A)); g.addColorStop(0.6, rgba(cBody, 0.7 * A)); g.addColorStop(1, rgba(cBody, 0)); c.fillStyle = g; c.beginPath(); c.arc(px, py, r, 0, 7); c.fill(); }
+      // dasar disinari matahari rendah dari bawah (khas senja), makin terang dekat matahari
+      for (const [px, py, r] of puffs) { const g = c.createRadialGradient(px, py + r * 0.55, 0, px, py + r * 0.55, r * 0.85); g.addColorStop(0, rgba(cLit, (0.55 + 0.4 * glow) * A)); g.addColorStop(1, rgba(cLit, 0)); c.fillStyle = g; c.beginPath(); c.arc(px, py + r * 0.55, r * 0.85, 0, 7); c.fill(); }
+      // cahaya emas lembut di sisi awan yang dekat matahari
+      if (!night && glow > 0.05) { const g = c.createRadialGradient(0, 0, 0, 0, 0, w0); g.addColorStop(0, rgba(cRim, 0.3 * glow * A)); g.addColorStop(1, rgba(cRim, 0)); c.fillStyle = g; c.beginPath(); c.arc(0, 0, w0, 0, 7); c.fill(); }
+      c.restore();
     }
-    // awan tipis memanjang (cirrus) menyatu dengan langit
-    if (!night) for (let i = 0; i < 4; i++) { const yy = hy - H * (0.42 + i * 0.05), xx = ((i * W * 0.37 - tt * 1.5 - pan * 0.04) % (W * 1.6) + W * 1.6) % (W * 1.6) - W * 0.3, ww = W * (0.35 + hash(i) * 0.2);
-      c.save(); c.translate(xx + ww / 2, yy); c.scale(1, 0.07); const g = c.createRadialGradient(0, 0, 0, 0, 0, ww / 2); g.addColorStop(0, rgba(cTop, 0.22)); g.addColorStop(1, rgba(cTop, 0)); c.fillStyle = g; c.beginPath(); c.arc(0, 0, ww / 2, 0, 7); c.fill(); c.restore(); }
+    // garis awan tipis memanjang (altostratus) bercahaya senja, menyatu dengan langit
+    if (!night) for (let i = 0; i < 6; i++) { const yy = hy - H * (0.05 + i * 0.045 + hash(i * 2.1) * 0.03), xx = ((i * W * 0.31 - tt * 0.8 - pan * 0.03) % (W * 1.7) + W * 1.7) % (W * 1.7) - W * 0.35, ww = W * (0.3 + hash(i) * 0.3);
+      const nearSun = clamp(1 - Math.abs(xx + ww / 2 - sun.x) / (W * 0.5), 0, 1);
+      c.save(); c.translate(xx + ww / 2, yy); c.scale(1, 0.045); const g = c.createRadialGradient(0, 0, 0, 0, 0, ww / 2);
+      g.addColorStop(0, rgba(nearSun > 0.3 ? cLit : cBody, 0.2 + 0.25 * nearSun)); g.addColorStop(1, rgba(cBody, 0)); c.fillStyle = g; c.beginPath(); c.arc(0, 0, ww / 2, 0, 7); c.fill(); c.restore(); }
     // gunung berlapis: gunung api jauh (Halimun), punggung bukit tengah, perbukitan dekat
     const ridge = (amp, fq, par, ph, top, bot, seed) => {
       const g = c.createLinearGradient(0, hy - amp, 0, hy); g.addColorStop(0, top); g.addColorStop(1, bot);
