@@ -1710,6 +1710,10 @@
         else if (kind === 'confirm') { tick(); bell(1047, 0.06, 0.6); bell(1319, 0.06, 0.6, 0.09); bell(1568, 0.065, 0.95, 0.18); bell(2093, 0.03, 0.8, 0.27); nz(ac.currentTime, 'bandpass', 900, 0.6, 0.03, 0.35, sfx, 0.12); }
         else if (kind === 'back') { tick(); tone(880, 0.05, 0.12, { bus: sfx, to: 640, glide: 0.1, type: 'triangle' }); bell(587, 0.04, 0.25, 0.08); }
         else if (kind === 'tab') { nz(ac.currentTime, 'bandpass', 1100, 0.7, 0.05, 0.18, sfx, 0.06); tone(520, 0.06, 0.16, { bus: sfx, to: 820, glide: 0.1, type: 'triangle' }); bell(1319, 0.03, 0.2, 0.08); }
+        else if (kind === 'pause') { tick(); tone(660, 0.06, 0.12, { bus: sfx, type: 'triangle' }); tone(440, 0.06, 0.18, { bus: sfx, delay: 0.09, type: 'triangle' }); }
+        else if (kind === 'deny') { tone(150, 0.07, 0.12, { bus: sfx, type: 'square' }); tone(140, 0.06, 0.14, { bus: sfx, delay: 0.13, type: 'square' }); }
+        else if (kind === 'equip') { tick(); bell(988, 0.05, 0.25); bell(1480, 0.05, 0.35, 0.07); nz(ac.currentTime + 0.02, 'bandpass', 2400, 0.8, 0.03, 0.2, sfx); }
+        else if (kind === 'dismiss') { tone(900, 0.035, 0.08, { bus: sfx, to: 600, glide: 0.07, type: 'triangle' }); }
         else if (kind === 'toggle') { tick(); tone(1046, 0.06, 0.09, { bus: sfx, type: 'triangle' }); tone(1568, 0.055, 0.12, { bus: sfx, delay: 0.06, type: 'triangle' }); }
         else { tick(); tone(1320, 0.07, 0.1, { bus: sfx, type: 'triangle' }); bell(1760, 0.03, 0.18, 0.03); }
       },
@@ -3374,7 +3378,9 @@
   let expertOn = store.get('rn.expert') === '1';
   const expertAllowed = (m) => MISSION_ORDER.includes(m.id) && bestOf(m.id) > 0;
   function renderMissionList() {
-    if (titleMap.tab === 'missions' && $('titleTabLbl')) $('titleTabLbl').textContent = `${MISSION_ORDER.length} misi · ${RANKS[rankOf()].name}`;
+    if (titleMap.tab === 'missions' && $('titleTabLbl')) $('titleTabLbl').textContent = `${MISSION_ORDER.length} misi · 3 babak`;
+    { const n = totalStars(), ri = rankOf(n), nx = RANKS[ri + 1], pr = nx ? (n - RANKS[ri].min) / (nx.min - RANKS[ri].min) : 1, done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
+      const pc = $('profileChip'); if (pc) pc.innerHTML = `<span class="pbadge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" fill="url(#pbg)"/><defs><linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset=".5" stop-color="#e2a93b"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><text x="12" y="15.5" text-anchor="middle" font-size="9" font-weight="900" fill="#2a1a05" font-family="sans-serif">${ri + 1}</text></svg></span><span class="pinfo"><b>Raka · ${RANKS[ri].name}</b><span class="pbar"><i style="width:${Math.round(clamp(pr, 0, 1) * 100)}%"></i></span></span><span class="pstat"><b>★ ${n}</b><small>${done}/${MISSION_ORDER.length} misi</small></span>`; }
     const nextId = nextMissionId();
     const today = new Date();
     MISSIONS.daily = buildDaily(today);
@@ -3590,14 +3596,14 @@
     document.querySelectorAll('[data-maptab]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     // tab Misi: daftar karcis; tab Peta/Garasi: kanvas mengisi ruang yang sama (layar judul muat satu halaman)
     $('mapBox').hidden = titleMap.tab === 'missions'; $('missionList').hidden = titleMap.tab !== 'missions';
-    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? `${MISSION_ORDER.length} misi · ${RANKS[rankOf()].name}` : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
+    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? `${MISSION_ORDER.length} misi · 3 babak` : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
   }));
   titleFxInit();
-  $('radio').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); $('radio').hidden = true; radioTimer = 0; });
+  $('radio').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); $('radio').hidden = true; radioTimer = 0; Sound.ui('dismiss'); });
   // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
   const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
     btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
-    btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
+    btnPause: 'pause', btnNewLoco: 'select', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
   document.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('button, .ticket'); if (!el || el.disabled) return;
     if (el.classList.contains('act')) return;
@@ -3618,9 +3624,9 @@
   $('mapCv').addEventListener('click', (e) => {
     if (titleMap.tab === 'garage') {
       const r0 = e.currentTarget.getBoundingClientRect(), gx = e.clientX - r0.left, gy0 = e.clientY - r0.top, inR = (b) => b && gx >= b.x && gx <= b.x + b.w && gy0 >= b.y && gy0 <= b.y + b.h;
-      for (const b of titleMap.livBtns || []) if (inR(b)) { if (b.open) { LOCO_ORN = b.liv; store.set('rn.livery', b.liv); } else toast && 0; return; }
-      const lb = titleMap.locoBtn, ORD = ['cakra', 'argo', 'hst', 'hst2']; if (inR(lb)) { titleMap.loco = ORD[clamp(Math.floor((gx - lb.x) / (lb.bw + 6)), 0, 3)]; return; }
-      titleMap.loco = ORD[(ORD.indexOf(titleMap.loco) + 1) % 4]; return;
+      for (const b of titleMap.livBtns || []) if (inR(b)) { Sound.init(); if (b.open) { LOCO_ORN = b.liv; store.set('rn.livery', b.liv); Sound.ui('equip'); } else Sound.ui('deny'); return; }
+      const lb = titleMap.locoBtn, ORD = ['cakra', 'argo', 'hst', 'hst2']; if (inR(lb)) { Sound.init(); Sound.ui('select'); titleMap.loco = ORD[clamp(Math.floor((gx - lb.x) / (lb.bw + 6)), 0, 3)]; return; }
+      Sound.init(); Sound.ui('select'); titleMap.loco = ORD[(ORD.indexOf(titleMap.loco) + 1) % 4]; return;
     }
     if (titleMap.tab !== 'map') return;
     const cvm = e.currentTarget, r = cvm.getBoundingClientRect(), w = r.width, h = r.height;
@@ -3629,7 +3635,7 @@
     let best = null, bd = 22;
     Object.entries(MAP_ROUTES).forEach(([id, m]) => m.pts.forEach(([px, py]) => { const d = Math.hypot(px - x, py - y); if (d < bd) { bd = d; best = id; } }));
     if (!best) return;
-    if (titleMap.focus === best) { Sound.init(); selectMission(best); showBrief(); } else titleMap.focus = best;
+    Sound.init(); if (titleMap.focus === best) { Sound.ui('confirm'); selectMission(best); showBrief(); } else { Sound.ui('select'); titleMap.focus = best; }
   });
   $('missionList').addEventListener('click', (e) => {
     const b = e.target.closest('.ticket');
