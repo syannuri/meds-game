@@ -3334,9 +3334,49 @@
     '2-3': skyG('b3', '#d9b48a', '#f2ead2') + '<path d="M0 36 L24 18 L44 32 L66 14 L92 30 L120 20 V70 H0z" fill="#7a8a6a"/><path d="M0 46 Q40 38 120 44 V70 H0z" fill="#5a7a42"/><g>' + [10, 28, 46, 98, 114].map((x) => `<circle cx="${x}" cy="54" r="7" fill="#3d6a32"/><circle cx="${x - 3}" cy="52" r="1.3" fill="#d83a2e"/><circle cx="${x + 2}" cy="56" r="1.3" fill="#d83a2e"/><circle cx="${x + 3}" cy="51" r="1.3" fill="#b02a22"/>`).join('') + '</g><rect x="56" y="44" width="34" height="14" rx="1.5" fill="#8a5a3a"/><g fill="#d9c09a"><rect x="59" y="38" width="9" height="7" rx="2"/><rect x="69" y="37" width="9" height="8" rx="2"/><rect x="79" y="38" width="9" height="7" rx="2"/></g><circle cx="62" cy="60" r="2.8" fill="#222"/><circle cx="84" cy="60" r="2.8" fill="#222"/>' + rails(62),
   };
   MIS_ART['3-1'] = skyG('c1', '#3a2f66', '#ffb46a') + '<circle cx="92" cy="40" r="11" fill="#ffe0a0"/><circle cx="92" cy="40" r="20" fill="#ffc070" opacity=".25"/><path d="M0 46 Q30 40 60 44 T120 42 V70 H0z" fill="#6a4a5a"/><rect x="0" y="50" width="120" height="20" fill="#3a2e3a"/>' + rails(52, '#1d1820') + '<g stroke="#fff3d8" stroke-width="1.2" opacity=".55" stroke-linecap="round"><path d="M2 58h22M10 63h30M30 60h18M60 64h26"/></g><path d="M18 38h70l12 8v6H18z" fill="#f3eee1"/><rect x="18" y="46" width="82" height="2" fill="#c8352b"/><g fill="#ffd88a">' + [24, 34, 44, 54, 64, 74].map((x) => `<rect x="${x}" y="40" width="7" height="4" rx=".8"/>`).join('') + '</g><path d="M88 38h4l8 8h-12z" fill="#1e2a33"/><circle cx="100" cy="49" r="1.6" fill="#fff6c4"/><path d="M101 49 L120 45 V53z" fill="#fff6c4" opacity=".35"/>';
-  MIS_ART['3-3'] = skyG('c3', '#7f9fb4', '#e8eee6') + '<path d="M0 44 L14 26 L26 36 L40 18 L56 34 L70 22 L86 36 L100 20 L120 34 V70 H0z" fill="#7f96ac"/><path d="M0 50 L18 36 L34 44 L52 32 L70 44 L90 34 L120 46 V70 H0z" fill="#557a68"/><rect x="0" y="44" width="120" height="6" fill="#e8eee6" opacity=".55"/><path d="M0 56 Q30 50 60 54 T120 52 V70 H0z" fill="#2f5a3c"/><rect x="0" y="40" width="120" height="3" fill="#cfd4d8"/><g fill="#b9bec3">' + [10, 34, 58, 82, 106].map((x) => `<rect x="${x}" y="43" width="3" height="20"/>`).join('') + '</g><path d="M30 33h54l10 4v3H30z" fill="#f4f7fa"/><rect x="30" y="37" width="64" height="2" fill="#1567c4"/><rect x="34" y="34" width="44" height="2" fill="#22303c"/>';
-  MIS_ART['3-2'] = skyG('c2', '#6ab8ec', '#e2f4fa') + '<g fill="#8aa8c0" opacity=".7"><rect x="6" y="18" width="8" height="26"/><rect x="16" y="10" width="7" height="34"/><rect x="25" y="22" width="9" height="22"/></g><path d="M0 48 Q30 40 60 46 T120 42 V70 H0z" fill="#7fb85a"/><g stroke="#5f9a3a" stroke-width="1"><path d="M0 56 H120M0 62 H120M20 48 L10 70M50 48 L46 70M80 48 L84 70M108 46 L118 70"/></g><rect x="0" y="40" width="120" height="3" fill="#cfd4d8"/><g fill="#b9bec3">' + [8, 32, 56, 80, 104].map((x) => `<rect x="${x}" y="43" width="3" height="16"/>`).join('') + '</g><g stroke="#f5f7f9" stroke-width="1.4"><path d="M100 14 V40M100 14 l-6 -5M100 14 l7 -2M100 14 l-1 7"/></g><path d="M14 30h76l14 6v4H14z" fill="#ffffff"/><rect x="14" y="36" width="90" height="2.2" fill="#1567c4"/><rect x="18" y="32" width="66" height="2.6" fill="#22303c"/><path d="M90 30h4l10 6h-14z" fill="#11151b"/><g stroke="#fff" stroke-width="1" opacity=".7"><path d="M0 34h10M2 38h8"/></g>';
-  const misArt = (id) => MIS_ART[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid slice">${MIS_ART[id]}</svg></span>` : '';
+    // kartu Guntur & Kilat: latar SVG tegak 80x100 + kereta asli dari fungsi gambar game (lihat trainCardImg)
+  const cardSky = (k, stops) => `<defs><linearGradient id="sk${k}" x1="0" y1="0" x2="0" y2="1">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient></defs><rect width="80" height="100" fill="url(#sk${k})"/>`;
+  const cardDeck = (k, top, side, pier) => `<rect x="0" y="60.2" width="80" height="2.6" fill="${top}"/><rect x="0" y="62.8" width="80" height="2.2" fill="${side}"/>`
+    + [6, 40, 74].map((x) => `<rect x="${x - 2.2}" y="65" width="4.4" height="40" fill="${pier}"/><rect x="${x - 2.2}" y="65" width="1.2" height="40" fill="#fff" opacity=".12"/>`).join('');
+  const CARD_BG = {
+    '3-2': cardSky('tg', [[0, '#2c2a5c'], [0.38, '#7a4f78'], [0.62, '#f08a52'], [0.8, '#ffc27a']])
+      + '<circle cx="24" cy="47" r="22" fill="#ffd08a" opacity=".22"/><circle cx="24" cy="47" r="12" fill="#ffd8a0" opacity=".45"/><circle cx="24" cy="47" r="6.5" fill="#fff1cf"/>'
+      + '<g fill="#5b4466" opacity=".85">' + [[34, 30, 6, 22], [41, 22, 7, 30], [49, 34, 5, 18], [55, 18, 8, 34], [64, 28, 6, 24], [71, 36, 9, 16], [0, 38, 6, 14], [7, 33, 5, 19]].map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join('') + '<rect x="58.5" y="12" width=".8" height="6"/></g>'
+      + '<g fill="#ffcf85" opacity=".55">' + [[43, 26], [43, 31], [45, 36], [57, 22], [59, 28], [57, 34], [66, 32], [36, 34]].map(([x, y]) => `<rect x="${x}" y="${y}" width="1.3" height=".9"/>`).join('') + '</g>'
+      + '<rect x="0" y="52" width="80" height="48" fill="#6f7a3a"/>'
+      + '<g fill="#ffcf85" opacity=".5"><rect x="8" y="55" width="30" height=".7"/><rect x="12" y="57.5" width="22" height=".6"/><rect x="16" y="68" width="18" height=".8"/><rect x="2" y="74" width="30" height="1"/></g>'
+      + '<g stroke="#56622c" stroke-width=".5"><path d="M0 54.5H80M0 57H80M0 66H80M0 71H80M0 78H80M0 88H80"/></g>'
+      + cardDeck('g', '#c9c3bd', '#8a7d78', '#9c8f88'),
+    '3-3': cardSky('tk', [[0, '#3f86c8'], [0.5, '#8cc2e4'], [0.66, '#e3f0f2']])
+      + '<circle cx="62" cy="16" r="14" fill="#fff6d8" opacity=".35"/><circle cx="62" cy="16" r="4.5" fill="#fffbea"/>'
+      + '<path d="M0 44 L8 34 L16 38 L28 20 L38 33 L48 26 L58 36 L70 24 L80 31 V56 H0z" fill="#8aa0b6"/><path d="M25 24 L28 20 L31.5 24.6 L29 23.4 L27 25z" fill="#eef4f7"/>'
+      + '<path d="M0 48 L12 40 L24 45 L36 37 L50 45 L62 39 L80 46 V58 H0z" fill="#557f6a"/>'
+      + '<path d="M0 52 Q20 47 40 51 T80 50 V60 H0z" fill="#2f5e3c"/>'
+      + '<g>' + [[4, 52, 0.42], [18, 51, 0.36], [33, 52, 0.4], [50, 51, 0.34], [66, 52, 0.44], [78, 51, 0.38]].map(([x, y, k]) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 0 V-12" stroke="#4a3a26" stroke-width="1.8"/><path d="M0 -12 q-8 -1 -11 4 M0 -12 q8 -1 11 4 M0 -12 q-6 -6 -10 -5 M0 -12 q6 -6 10 -5 M0 -12 q0 -7 1 -9" stroke="#24552c" stroke-width="2" fill="none" stroke-linecap="round"/></g>`).join('') + '</g>'
+      + '<rect x="0" y="58" width="80" height="42" fill="#3d6e36"/><g stroke="#336030" stroke-width=".6"><path d="M0 70H80M0 80H80M0 92H80"/></g>'
+      + cardDeck('k', '#d6dbdf', '#8f989f', '#a3abb2'),
+  };
+  // kereta asli (lokomotif + gerbong) digambar sekali ke kanvas transparan 480x600, moncong ke kanan
+  const TRAIN_CARD = { '3-2': 'hst2', '3-3': 'hst' }, trainCardCache = {};
+  function trainCardImg(loco) {
+    if (trainCardCache[loco]) return trainCardCache[loco];
+    const cw = 480, ch = 600, cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const c = cv.getContext('2d'), ppm = cw / 14, gy = ch * 0.602, kw = W, kh = H, keep = N_COACH;
+    const V = { c, ppm, gy, X: (wx) => cw * 0.72 + wx * ppm, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0,
+      rimA: loco === 'hst2' ? 0.55 : 0.3, rim: loco === 'hst2' ? '#ffc27a' : '#fff4d8', refl: 0, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
+    // listrik aliran atas: tiang, kawat penggantung & kawat kontak setinggi kepala pantograf
+    const yC = gy - (VPIV + (7.25 - VPIV) * VS) * ppm + 1, yM = yC - 0.85 * ppm;
+    c.fillStyle = '#7b848c'; for (const mx of [cw * 0.1, cw * 1.02]) { c.fillRect(mx - 4, yM - 0.8 * ppm, 8, gy - yM + 0.8 * ppm); c.fillStyle = '#6a737b'; c.fillRect(mx - 4, yM - 0.2 * ppm, cw * 0.14, 4); c.fillStyle = '#7b848c'; }
+    c.strokeStyle = 'rgba(28,32,38,0.9)'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(0, yC); c.lineTo(cw, yC); c.stroke();
+    c.lineWidth = 1.2; c.beginPath(); c.moveTo(0, yM - 6); c.quadraticCurveTo(cw * 0.55, yM + 8, cw, yM - 6); c.stroke();
+    c.lineWidth = 0.8; c.beginPath(); for (let x = cw * 0.06; x < cw; x += cw * 0.11) { const t = x / cw, yy = (1 - t) * (1 - t) * (yM - 6) + 2 * t * (1 - t) * (yM + 8) + t * t * (yM - 6); c.moveTo(x, yy); c.lineTo(x, yC); } c.stroke();
+    W = cw; H = ch; N_COACH = 2; LOCO_FORCE = loco;
+    try { drawTrain(V); } catch (e) { /* gambar kartu opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; }
+    return (trainCardCache[loco] = cv.toDataURL('image/png'));
+  }
+  const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100' };
+  const cardArt = (id) => TRAIN_CARD[id] ? CARD_BG[id] + `<image href="${trainCardImg(TRAIN_CARD[id])}" x="0" y="0" width="80" height="100" preserveAspectRatio="none"/>` : MIS_ART[id];
+  const misArt = (id) => MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
   function dailyArt(base) {
     const night = base === '1-6' || base === '2-2', storm = base === '1-5' || base === '1-7', sum = base[0] === '2';
@@ -8658,7 +8698,7 @@
 
     // ---- gerbong stainless ----
     // Kilat G1 memakai bentuk rangkaian Guntur (rok bogie penuh, sambungan rapat) dengan warna biru toska khasnya
-    const HST2C = MIS.loco === 'hst2' || MIS.loco === 'hst', ARGOC = MIS.loco === 'argo' || HST2C, HSTC = MIS.loco === 'hst', SENJAC = MIS.loco === 'argo';
+    const CL = LOCO_FORCE || MIS.loco, HST2C = CL === 'hst2' || CL === 'hst', ARGOC = CL === 'argo' || HST2C, HSTC = CL === 'hst', SENJAC = CL === 'argo';
     let ACC = HSTC ? '#1567c4' : '#d4202b', ACC2 = HSTC ? '#22b6d6' : null;
     const steel = ARGOC ? vgrad(4.85, 1.0, [[0, '#ffffff'], [0.35, '#efede9'], [0.8, '#c8cbd1'], [1, '#9aa0a8']]) : vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
     const glass = vgrad(4.35, 2.95, [[0, '#3b5263'], [0.5, '#1d2b36'], [1, '#121b23']]);
