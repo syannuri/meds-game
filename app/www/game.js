@@ -3637,7 +3637,7 @@
     const nextId = nextMissionId();
     const today = new Date();
     MISSIONS.daily = buildDaily(today);
-    const D = MISSIONS.daily, best = dailyScores()[D.daily.key], streak = dailyStreak(), bm = MISSIONS[D.base];
+    const D = MISSIONS.daily, best = Math.max(0, Math.floor(Number(dailyScores()[D.daily.key]) || 0)), streak = dailyStreak(), bm = MISSIONS[D.base];
     const dailyLi = `<li class="daily"><button class="ticket t-daily" data-id="daily">
         <span class="stub"><small>HARIAN</small><b>${D.daily.label}</b><small>${D.daily.hari}</small></span>
         <span class="tbody"><b>Harian · ${bm.nick || bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik <strong>${best}</strong>` : 'Rute baru tiap hari'}${streak ? ` · 🔥 ${streak} hari` : ''}</span></span>${dailyArt(D.base)}

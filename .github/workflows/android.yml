@@ -1,0 +1,103 @@
+# Membangun aplikasi Android Rel Nusantara (Capacitor) dari app/www.
+# - Dijalankan manual (Actions → "Bangun aplikasi Android" → Run workflow) atau saat tag v* dipush.
+# - Bila secret keystore sudah diisi: menghasilkan file .aab bertanda tangan untuk Google Play
+#   dan .apk rilis untuk dipasang langsung. Bila belum: hanya .apk debug untuk dicoba di HP.
+# Secret yang dibutuhkan (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64  isi file upload-keystore.jks dalam base64
+#   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+name: Bangun aplikasi Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Nama versi (mis. 1.0.0)'
+        required: false
+        default: '1.0.0'
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Tentukan nama versi
+        env:
+          IN_VER: ${{ github.event.inputs.version_name }}
+        run: |
+          v="$IN_VER"
+          if [ -z "$v" ] && [ "$GITHUB_REF_TYPE" = "tag" ]; then v="${GITHUB_REF_NAME#v}"; fi
+          [ -n "$v" ] || v="1.0.0"
+          v=$(printf '%s' "$v" | tr -c 'A-Za-z0-9._-' '-')
+          echo "VERSION_NAME=$v" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Pasang Capacitor & salin game ke proyek Android
+        working-directory: app
+        run: |
+          npm ci
+          npx cap sync android
+
+      - name: Siapkan keystore (bila ada)
+        id: ks
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload-keystore.jks" >> "$GITHUB_ENV"
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Secret ANDROID_KEYSTORE_BASE64 belum diisi: hanya APK debug yang dibuat."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bangun AAB & APK rilis bertanda tangan
+        if: steps.ks.outputs.signed == 'true'
+        working-directory: app/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease assembleRelease
+
+      - name: Bangun APK debug
+        if: steps.ks.outputs.signed != 'true'
+        working-directory: app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Hapus keystore sementara
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload-keystore.jks"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rel-nusantara-android-${{ env.VERSION_NAME }}-${{ github.run_number }}
+          path: |
+            app/android/app/build/outputs/bundle/release/*.aab
+            app/android/app/build/outputs/apk/release/*.apk
+            app/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

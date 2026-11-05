@@ -193,21 +193,23 @@ ikon Rel Nusantara (layar penuh, posisi mendatar). Suara menyala setelah layar d
 Di Android: buka di Chrome → menu ⋮ → **Instal aplikasi** / Tambahkan ke layar utama.
 
 ## Build aplikasi Android & iOS
-Prasyarat: Node 18+, Android Studio (Android), Xcode di macOS (iOS).
+**Google Play:** proyek Android sudah ada di `app/android` dan dibangun otomatis oleh workflow
+`.github/workflows/android.yml` (file `.aab` bertanda tangan). Langkah lengkap, teks toko, dan gambar
+ada di [`docs/PLAY_STORE.md`](../docs/PLAY_STORE.md).
+
+Build lokal: Node 22+, JDK 21, Android Studio (Android), Xcode di macOS (iOS).
 ```bash
 cd app
 npm install
-npx cap add android
-npx cap add ios
+npx cap add ios      # proyek android sudah ada di repo
 npm run android      # membuka Android Studio → Run / Build APK/AAB
 npm run ios          # membuka Xcode → Run / Archive
 ```
 Kunci orientasi landscape:
-- **Android**: `android/app/src/main/AndroidManifest.xml`, di tag `<activity>` tambahkan `android:screenOrientation="sensorLandscape"`.
+- **Android**: sudah diatur (`sensorLandscape`, layar penuh imersif).
 - **iOS**: di Xcode → target → General → Device Orientation, centang hanya *Landscape Left/Right*.
 
-Font diambil dari Google Fonts; jika offline, game memakai font cadangan sistem.
-Untuk rilis, unduh font (Big Shoulders Display, Plus Jakarta Sans) ke `www/fonts/` agar tampil sama tanpa internet.
+Font (Big Shoulders Display, Plus Jakarta Sans; SIL OFL) disimpan di `www/fonts/` sehingga game tampil sama tanpa internet.
 
 ## Struktur
 ```
