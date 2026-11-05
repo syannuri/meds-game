@@ -4285,7 +4285,7 @@
       });
       const sawit = MIS.land === 'sawit';
       for (let i = Math.ceil(x0 / 9); i * 9 < x0 + dMax; i++) {
-        const side = hash(i * 1.3) < 0.5 ? -1 : 1, o = side * (8 + hash(i * 2.1) * 26), ht = 5 + hash(i * 3.7) * 6;
+        const side = hash(i * 1.3) < 0.5 ? -1 : 1, o = side * (8 + hash(i * 2.1) * 26), ht = sawit ? 8 + hash(i * 3.7) * 3 : 5 + hash(i * 3.7) * 6;
         const wd = i * 9 + hash(i) * 5;
         if (nearStation(wd) && side < 0 && Math.abs(o) < 22) continue;
         if (inBrW(wd, 12)) continue;
@@ -6595,7 +6595,7 @@
     for (let i = Math.floor(wx0 / slot) - 1; i < wx1 / slot + 1; i++) {
       const h = hash(i);
       const tx = i * slot + hash(i + 0.37) * 9;
-      if (h > 0.5 || (ROUTE.scenes && h > 0.5 * (1 - 0.8 * seaAt(tx)))) continue; // pesisir: pepohonan jarang agar laut terlihat
+      if (h > (MIS.land === 'sawit' ? 0.78 : 0.5) || (ROUTE.scenes && h > 0.5 * (1 - 0.8 * seaAt(tx)))) continue; // pesisir: pepohonan jarang agar laut terlihat; kebun sawit rapat
       if (nearStation(tx) || inBridge(tx) || nearCrossing(tx, 12) || nearTunnel(tx)) continue;
       const sx = X(tx), base = gy - 1.2 * ppm - hash(i + 0.9) * 1.2 * ppm;
       const kind = hash(i + 0.11);
@@ -6603,11 +6603,12 @@
       if (MIS.land === 'sawit') {
         if (V.sunShadow > 0.01) { c.fillStyle = `rgba(0,0,0,${0.2 * V.sunShadow})`; c.beginPath(); c.ellipse(sx - 1.2 * ppm, base + 0.2 * ppm, 2.4 * ppm, 0.35 * ppm, 0, 0, 7); c.fill(); }
         if (kind < 0.7) { // pohon sawit: batang pendek kasar, tajuk lebat
-          const ht = (4.5 + hash(i + 2) * 2.5) * ppm;
-          c.fillStyle = mix('#3e3022', '#55422e', p); c.fillRect(sx - 0.35 * ppm, base - ht, 0.7 * ppm, ht);
-          c.strokeStyle = col2; c.lineWidth = 0.36 * ppm; c.lineCap = 'round';
-          for (let f = 0; f < 11; f++) {
-            const a = -Math.PI / 2 + (f - 5) * 0.32, len = 3.6 * ppm;
+          const ht = trainH(8 + hash(i + 2) * 3) * ppm; // sawit dewasa 8–11 m (skala sama dengan kereta & kokpit)
+          c.fillStyle = mix('#3e3022', '#55422e', p); c.fillRect(sx - 0.4 * ppm, base - ht, 0.8 * ppm, ht);
+          c.fillStyle = 'rgba(0,0,0,0.18)'; for (let q = 1; q < 6; q++) c.fillRect(sx - 0.4 * ppm, base - ht * q / 6, 0.8 * ppm, Math.max(1, 0.12 * ppm)); // bekas pelepah di batang
+          c.strokeStyle = col2; c.lineWidth = 0.4 * ppm; c.lineCap = 'round';
+          for (let f = 0; f < 13; f++) {
+            const a = -Math.PI / 2 + (f - 6) * 0.27, len = 4.4 * ppm;
             c.beginPath(); c.moveTo(sx, base - ht);
             c.quadraticCurveTo(sx + Math.cos(a) * len * 0.6, base - ht - 1.2 * ppm + Math.abs(f - 5) * 0.15 * ppm, sx + Math.cos(a) * len, base - ht + Math.sin(a) * len * 0.45 + 1.5 * ppm);
             c.stroke();
@@ -6658,12 +6659,13 @@
         for (let i = i0; i < i1; i++) {
           const x = at(X((i + 0.5) * cell), t);
           if (x < -3 * sc || x > W + 3 * sc) continue;
-          c.fillStyle = mix('#3c2a1a', '#4e3824', p); c.fillRect(x - 0.18 * sc, y - 1.1 * sc, 0.36 * sc, 1.1 * sc);
-          c.strokeStyle = mix('#24452a', '#356a36', p); c.lineWidth = Math.max(1, 0.22 * sc); c.lineCap = 'round';
-          for (let f = 0; f < 8; f++) {
-            const a = -Math.PI / 2 + (f - 3.5) * 0.42;
-            c.beginPath(); c.moveTo(x, y - 1.1 * sc);
-            c.quadraticCurveTo(x + Math.cos(a) * 1.1 * sc, y - 1.1 * sc + Math.sin(a) * 0.9 * sc - 0.4 * sc, x + Math.cos(a) * 1.9 * sc, y - 1.1 * sc + Math.sin(a) * 0.7 * sc + 0.4 * sc);
+          const tk = 2.2 * sc; // batang sawit kebun (dipotong oleh tepi bawah layar seperti dilihat dari atas tanggul)
+          c.fillStyle = mix('#3c2a1a', '#4e3824', p); c.fillRect(x - 0.22 * sc, y - tk, 0.44 * sc, tk);
+          c.strokeStyle = mix('#24452a', '#356a36', p); c.lineWidth = Math.max(1, 0.26 * sc); c.lineCap = 'round';
+          for (let f = 0; f < 10; f++) {
+            const a = -Math.PI / 2 + (f - 4.5) * 0.34;
+            c.beginPath(); c.moveTo(x, y - tk);
+            c.quadraticCurveTo(x + Math.cos(a) * 2.0 * sc, y - tk + Math.sin(a) * 1.4 * sc - 0.7 * sc, x + Math.cos(a) * 3.4 * sc, y - tk + Math.sin(a) * 1.0 * sc + 0.8 * sc);
             c.stroke();
           }
           c.lineCap = 'butt';
