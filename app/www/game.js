@@ -1780,7 +1780,7 @@
   let W = 0, H = 0, DPR = 1, SW = 0, SH = 0;
   let mode = 'title';
   let radioDur = 1, trainScr = null;
-  let camFast = 0;
+  let camFast = 0; const camPrev = { x: 0, ppm: 1 };
   let radioTimer = 0, camLead = 0, camZoom = 1, camZoomV = 0;
   let viewMode = store.get('rn.view') === 'cab' ? 'cab' : 'side'; // 'side' (2.5D) atau 'cab' (kabin masinis)
   let rotateSkipped = false;
@@ -4771,7 +4771,8 @@
     const gy = Math.round(H * 0.64);
     const shake = st.shake > 0 ? (Math.random() - 0.5) * st.shake * (MIS.loco === 'hst2' || MIS.loco === 'hst' ? 3 : 7) : 0;
     const fast = S && st === S && S.phase === 'run' && !REDUCE_MOTION ? clamp((S.v * 3.6 - 75) / 45, 0, 1) : 0;
-    camFast += (fast - camFast) * Math.min(1, (dtReal || 0.016) * 0.8);
+    // geser jangkar kamera hanya selama kereta bergerak: setelah berhenti kamera diam total
+    camFast += (fast - camFast) * Math.min(1, (dtReal || 0.016) * 0.8 * clamp(st.v / 6, 0, 1));
     const anchor = mode === 'play' || mode === 'pause' ? 0.6 - camFast * 0.13 : 0.78;
     // kamera melirik ke depan saat ada satwa di jalur, supaya pemain bisa melihatnya
     let lead = 0;
@@ -4785,13 +4786,16 @@
     // zoom stasiun: titik fokus ke tengah rangkaian & peron
     // berhenti di stasiun: zoom berporos di titik tetap (tengah rangkaian), kamera tidak bergeser
     const pivotStn = S && st === S && S.phase === 'dwell' && !MIS.freight && !(S.dwell.step === 'couple');
-    if (pivotStn) { if (!S.pivotPpm) S.pivotPpm = ppm; lead = -TRAIN_LEN * 0.42 * (1 - S.pivotPpm / ppm); } else if (S && st === S) S.pivotPpm = 0;
+    // poros zoom = titik dunia di tengah layar saat kereta berhenti, sehingga kamera mendekat lurus
+    // tanpa menggeser peron/pemandangan ke samping
+    if (pivotStn) { if (!S.pivotPpm) { S.pivotPpm = ppm; S.pivotW = camPrev.x + W / (2 * camPrev.ppm); } lead = S.pivotW - st.x + (W * anchor - W / 2) / ppm; } else if (S && st === S) S.pivotPpm = 0;
     if (treeNear && TR0.x - st.x < 200) {
       const base = st.x - (W * anchor) / ppm;
       lead = clamp(TR0.x + 14 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
     }
     if (pivotStn) camLead = lead; else camLead += (lead - camLead) * Math.min(1, (dtReal || 0.016) * 1.4);
     const camX = st.x - (W * anchor) / ppm + camLead;
+    camPrev.x = camX; camPrev.ppm = ppm;
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
@@ -4802,7 +4806,10 @@
     const ppmB = clamp(H / 44, 3.4, 13);
     if (window.__rnDebug) window.__rnCam = { camX, ppm, camLead, pc: (camX + W / (2 * ppm)) * ppmB - W / 2, old: camX * ppm };
     trainScr = { x0: X(st.x - TRAIN_LEN), x1: X(st.x), top: gy - 6.6 * ppm, bottom: gy };
-    const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2, ppmB, pc: (camX + W / (2 * ppm)) * ppmB - W / 2 };
+    // paralaks latar hanya mengikuti posisi kereta (bukan zoom/geser kamera), jadi saat mengerem
+    // dan berhenti di stasiun pemandangan jauh tidak ikut 'berlari' ketika kamera mendekat
+    const pcTrain = st.x * ppmB - W * 0.6;
+    const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2, ppmB, pc: mode === 'play' || mode === 'pause' ? pcTrain : (camX + W / (2 * ppm)) * ppmB - W / 2 };
     // cahaya tepi (rim light), pantulan kaca, lampu kabin per suasana
     if (night) Object.assign(V, { rim: '#9fb4ff', rimA: 0.5, refl: 0.05, cabA: 0.9, haze: '#4b3d6b', hazeA: 0.3, water: '#3a3f74' });
     else if (storm) Object.assign(V, { rim: '#d5dde4', rimA: 0.3, refl: 0.14, cabA: 0.6, haze: '#8b97a1', hazeA: 0.45, water: '#a3aeb7' });
@@ -9020,12 +9027,13 @@
     // tiang pagar/patok paling dekat kamera: paralaks 2,6x, memanjang (kabur gerak) saat cepat
     if (S && V.st === S) {
       const kmh = S.v * 3.6, blur = clamp((kmh - 40) / 70, 0, 1), k2 = 2.6, slot2 = 9;
-      const camC = V.camX + W / (2 * ppm), lo2 = Math.floor((camC - W / ppm) / slot2), hi2 = Math.ceil((camC + W / ppm) / slot2);
+      // patok terdekat: bergerak hanya mengikuti laju kereta, tidak bergeser saat kamera zoom
+      const pB = V.ppmB || ppm, camC = S.x - 0.1 * W / pB, lo2 = Math.floor((camC - W / pB) / slot2), hi2 = Math.ceil((camC + W / pB) / slot2);
       c.save();
       for (let i = lo2; i < hi2; i++) {
         if (hash(i * 3.3) > 0.55) continue;
         const wx = i * slot2 + hash(i * 1.9) * 4; if (inBridge(wx) || nearStation(wx) || nearCrossing(wx, 10)) continue;
-        const sx = W / 2 + (wx - camC) * ppm * k2, ph = (1.8 + hash(i) * 0.9) * ppm * 1.6, top = H - ph - (H - gy) * 0.08;
+        const sx = W / 2 + (wx - camC) * pB * k2, ph = (1.8 + hash(i) * 0.9) * ppm * 1.6, top = H - ph - (H - gy) * 0.08;
         if (sx < -60 || sx > W + 60) continue;
         const wdt = Math.max(2, 0.28 * ppm * 1.6) + blur * 36;
         const g2 = c.createLinearGradient(sx - wdt / 2, 0, sx + wdt / 2, 0); const col = mix('#2a2018', '#3e3022', p);
