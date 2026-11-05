@@ -666,9 +666,10 @@
     rain: false,
     tags: ['Kereta cepat 250 km/h', 'Jalur layang', 'Sawah & kota modern'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
-    brief: 'Raka, hari ini kamu dipercaya membawa Guntur, kereta cepat pertama kita. Jalurnya melayang di atas sawah dari Kencana Hub ke Kota Halimun, boleh sampai 250 km/h. Ingat: dari 250, kereta butuh lebih dari 3 km untuk berhenti. Ikuti papan REM dan sinyal kabin. Di Padi Raya kita berhenti sebentar menjemput petani dan pelajar.',
+    driver: { name: 'Anett', initials: 'AN' }, // masinis kereta cepat Guntur
+    brief: 'Anett, hari ini kamu dipercaya membawa Guntur, kereta cepat pertama kita. Jalurnya melayang di atas sawah dari Kencana Hub ke Kota Halimun, boleh sampai 250 km/h. Ingat: dari 250, kereta butuh lebih dari 3 km untuk berhenti. Ikuti papan REM dan sinyal kabin. Di Padi Raya kita berhenti sebentar menjemput petani dan pelajar.',
     weather: 'pagi cerah, angin kencang di perbukitan',
-    intro: 'Guntur siap. Tutup pintu dan rasakan 250 km/h di atas sawah.',
+    intro: 'Masinis Anett, Guntur siap. Tutup pintu dan rasakan 250 km/h di atas sawah.',
     reward: '<strong>Terbuka:</strong> Lencana Masinis Kereta Cepat. Warga Padi Raya kini bisa ke kota dalam 10 menit.',
     aboard: 20,
     ticket: 'hst',
@@ -2137,7 +2138,10 @@
         + `<path d="M21.8 34.4q3.8-2.4 7.6-.9M34.6 33.5q3.8-1.5 7.6.9" stroke="#4a2c1c" stroke-width="1.05" fill="none" stroke-linecap="round"/>`
         + `<path d="M32 43.2q-1.1 2.6.2 3.3" stroke="rgba(120,70,45,.45)" stroke-width="1.1" fill="none" stroke-linecap="round"/>`
         + `<ellipse cx="21" cy="47" rx="3.2" ry="1.8" fill="#f07a7a" opacity=".32"/><ellipse cx="43" cy="47" rx="3.2" ry="1.8" fill="#f07a7a" opacity=".32"/>`
-        + `<path d="M28.4 50.4q1.8-1 3.6-.2 1.8-.8 3.6.2-1.4 1-3.6 1-2.2 0-3.6-1z" fill="${o.lip}" opacity=".9"/><path d="M28.4 50.6q3.6 3.2 7.2 0q-3.6 1.2-7.2 0z" fill="${o.lip}"/><path d="M27.6 50.2q.5.6 1 .5M36.4 50.2q-.5.6-1 .5" stroke="rgba(120,60,45,.5)" stroke-width=".7" fill="none" stroke-linecap="round"/><path d="M31 52.3q1 .4 2 0" stroke="#fff" stroke-width=".55" opacity=".5" fill="none"/>`
+        + (o.grin
+          ? `<path d="M26.6 49.4q5.4 6.4 10.8 0q-5.4 1.4-10.8 0z" fill="#7a2626"/><path d="M27.5 49.8q4.5 1.5 9 0l-.5 1.2q-4 1.2-8 0z" fill="#fff"/><path d="M29.2 53.2q2.8 1.4 5.6 0q-2.8-.9-5.6 0z" fill="#e77a7a"/><path d="M26.6 49.4q5.4 6.4 10.8 0" stroke="${o.lip}" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M25.6 48.8q.6.4 1 .6M38.4 48.8q-.6.4-1 .6" stroke="rgba(120,60,45,.55)" stroke-width=".8" fill="none" stroke-linecap="round"/>`
+            + `<path d="M22.6 42.6q3 1.2 6 0M35.4 42.6q3 1.2 6 0" stroke="rgba(150,80,60,.18)" stroke-width=".7" fill="none" stroke-linecap="round"/>`
+          : `<path d="M28.4 50.4q1.8-1 3.6-.2 1.8-.8 3.6.2-1.4 1-3.6 1-2.2 0-3.6-1z" fill="${o.lip}" opacity=".9"/><path d="M28.4 50.6q3.6 3.2 7.2 0q-3.6 1.2-7.2 0z" fill="${o.lip}"/><path d="M27.6 50.2q.5.6 1 .5M36.4 50.2q-.5.6-1 .5" stroke="rgba(120,60,45,.5)" stroke-width=".7" fill="none" stroke-linecap="round"/><path d="M31 52.3q1 .4 2 0" stroke="#fff" stroke-width=".55" opacity=".5" fill="none"/>`)
         + (o.mature ? `<path d="M23.5 44.3q2 .9 4 0M36.5 44.3q2 .9 4 0" stroke="rgba(120,70,45,.25)" stroke-width=".8" fill="none"/>` : '')
         + `<circle cx="32" cy="60.2" r="2.1" fill="${o.brooch}"/><circle cx="32" cy="60.2" r="1" fill="#fff6d0" opacity=".9"/>`;
     };
@@ -2168,6 +2172,11 @@
         + `<path d="M20 35.5l9 .5M35 36l9-.5" stroke="#141210" stroke-width="2.4" stroke-linecap="round"/><path d="M19.5 37.5h10.5v3.6q-5.3 3-10.5 0zM34 37.5h10.5v3.6q-5.2 3-10.5 0z" fill="#121418"/><path d="M30 38.4h4" stroke="#121418" stroke-width="1.6"/><path d="M21.5 38.6l3 0" stroke="#fff" stroke-width=".9" opacity=".6"/>`
         + nose(46) + `<path d="M23 49q4.5-3.6 9-1.2 4.5-2.4 9 1.2-3.6 2.2-9 1.2-5.4 1-9-1.2z" fill="#141210"/><path d="M29 53.4q3 .9 6 0" stroke="#6a3020" stroke-width="1.3" fill="none" stroke-linecap="round"/>`,
     };
+    // Anett: masinis muda kereta cepat Guntur. Wajah bulat, kerudung biru muda berlipit, senyum lebar ceria,
+    // baju kotak-kotak biru tua bergaris krem, latar biru seperti pas foto, lencana petir Guntur di dada
+    P.AN = bg('#3f6fd0', '#1c3a8a') + `<defs><pattern id="plaidAN" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#e6dcc2"/><rect width="3.2" height="6" fill="#23408a"/><rect width="6" height="2.2" y="3.4" fill="#23408a" opacity=".85"/><rect x="4.2" width=".7" height="6" fill="#f6f0dc" opacity=".8"/></pattern></defs>`
+      + fem({ skin: '#efc6a3', sh: '#b98462', veil: '#4f8fd0', veilD: '#2f679f', veilL: '#7fb4e6', lip: '#d8606e', iris: '#3a2418', brooch: '#cfe6ff', top: 'url(#plaidAN)', grin: true })
+      + `<path d="M50.5 60.2l-2 3h1.6l-1 2.8 2.8-3.6h-1.6l1.2-2.2z" fill="#f2c94c" stroke="#8a6a20" stroke-width=".4"/>`;
     P.RK = P.DM;
     return (id) => P[id] ? `<svg viewBox="0 0 64 64" aria-hidden="true">${P[id]}</svg>` : null;
   })();
@@ -3083,7 +3092,7 @@
     if (r.failed) Sound.failSting(); else Sound.stars(r.stars);
     $('resTitle').textContent = r.failed ? 'Misi gagal' : 'Misi selesai';
     const mid = MIS.daily ? `Rute Harian ${MIS.daily.label}` : `Misi ${MIS.id}`;
-    $('resEyebrow').textContent = (r.failed ? `${mid} · ${MIS.title}` : `${mid} · tiba ${fmtClock(S.clock)}`) + (S.expert ? ' · Masinis Ahli' : '');
+    $('resEyebrow').textContent = (r.failed ? `${mid} · ${MIS.title}` : `${mid} · tiba ${fmtClock(S.clock)}`) + (MIS.driver ? ` · Masinis ${MIS.driver.name}` : '') + (S.expert ? ' · Masinis Ahli' : '');
     renderResStars(r.stars, r.failed);
     $('resStars').setAttribute('aria-label', `${r.stars} dari 3 bintang`);
     const fr = $('resFail');
@@ -3551,7 +3560,7 @@
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
-      <dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat Nusantara KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
+      ${m.driver ? `<dt>Masinis</dt><dd class="drv"><span class="drvpic">${PORTRAIT(m.driver.initials) || ''}</span>${m.driver.name}</dd>` : ''}<dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat Nusantara KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
@@ -4819,6 +4828,13 @@
     // pantulan dasbor tipis di kaca bawah (ciri kaca kokpit)
     const rg = c.createLinearGradient(0, H * 0.56, 0, H * 0.66); rg.addColorStop(0, 'rgba(120,200,255,0)'); rg.addColorStop(1, 'rgba(120,200,255,0.07)'); c.fillStyle = rg; c.fillRect(0, H * 0.56, W, H * 0.1);
   }
+  const drvImgs = {};
+  function driverImg(id) { // potret SVG masinis sebagai gambar untuk kanvas kokpit
+    if (drvImgs[id]) return drvImgs[id];
+    const sv = PORTRAIT(id); if (!sv) return null;
+    const im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(sv.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" '));
+    return (drvImgs[id] = im);
+  }
   // ---------- kokpit kereta cepat (Guntur / Kilat): kaca panorama, layar DMI, tuas samping ----------
   function drawHstCab(c, st, night, inTun) {
     const kmh = st.v * 3.6, { lim } = currentLimit(), nl = nextLimitAhead(), ns = nextStation();
@@ -4907,7 +4923,11 @@
       c.fillStyle = `rgba(79,227,255,${(0.25 + pulse * 0.3).toFixed(2)})`; c.beginPath(); c.arc(tx, ly, ph * 0.1, 0, 7); c.fill();
       c.fillStyle = '#fff'; c.beginPath(); c.moveTo(tx + ph * 0.07, ly); c.lineTo(tx - ph * 0.05, ly - ph * 0.05); c.lineTo(tx - ph * 0.05, ly + ph * 0.05); c.closePath(); c.fill();
       c.textBaseline = 'middle';
-      c.fillStyle = '#eafaff'; c.font = BIG(ph * 0.2); c.fillText(fmtClock(st.clock), x + w * 0.06, py + ph * 0.18);
+      // kartu masinis kecil: foto + nama (jam sudah ada di HUD atas)
+      const drv = MIS.driver, im = drv && driverImg(drv.initials);
+      if (im && im.complete && im.naturalWidth) { const r = ph * 0.13, ix = x + w * 0.06 + r, iy = py + ph * 0.18; c.save(); c.beginPath(); c.arc(ix, iy, r, 0, 7); c.clip(); c.drawImage(im, ix - r, iy - r, r * 2, r * 2); c.restore(); c.strokeStyle = 'rgba(233,185,73,.8)'; c.lineWidth = 1; c.beginPath(); c.arc(ix, iy, r, 0, 7); c.stroke();
+        c.fillStyle = 'rgba(234,250,255,0.5)'; c.font = FONT(800, ph * 0.07); c.fillText('MASINIS', ix + r + 5, iy - ph * 0.035); c.fillStyle = '#eafaff'; c.font = FONT(900, ph * 0.1); c.fillText(drv.name.toUpperCase(), ix + r + 5, iy + ph * 0.075); }
+      else { c.fillStyle = '#eafaff'; c.font = BIG(ph * 0.2); c.fillText(fmtClock(st.clock), x + w * 0.06, py + ph * 0.18); }
       // meter daya: kanan = traksi (biru), kiri = rem regeneratif mengembalikan listrik ke jaringan (hijau)
       {
         const mx0 = x + w * 0.34, mw = w * 0.42, my = py + ph * 0.14, mh = ph * 0.09, mid = mx0 + mw * 0.42;
