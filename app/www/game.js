@@ -3334,60 +3334,49 @@
     '2-3': skyG('b3', '#d9b48a', '#f2ead2') + '<path d="M0 36 L24 18 L44 32 L66 14 L92 30 L120 20 V70 H0z" fill="#7a8a6a"/><path d="M0 46 Q40 38 120 44 V70 H0z" fill="#5a7a42"/><g>' + [10, 28, 46, 98, 114].map((x) => `<circle cx="${x}" cy="54" r="7" fill="#3d6a32"/><circle cx="${x - 3}" cy="52" r="1.3" fill="#d83a2e"/><circle cx="${x + 2}" cy="56" r="1.3" fill="#d83a2e"/><circle cx="${x + 3}" cy="51" r="1.3" fill="#b02a22"/>`).join('') + '</g><rect x="56" y="44" width="34" height="14" rx="1.5" fill="#8a5a3a"/><g fill="#d9c09a"><rect x="59" y="38" width="9" height="7" rx="2"/><rect x="69" y="37" width="9" height="8" rx="2"/><rect x="79" y="38" width="9" height="7" rx="2"/></g><circle cx="62" cy="60" r="2.8" fill="#222"/><circle cx="84" cy="60" r="2.8" fill="#222"/>' + rails(62),
   };
   MIS_ART['3-1'] = skyG('c1', '#3a2f66', '#ffb46a') + '<circle cx="92" cy="40" r="11" fill="#ffe0a0"/><circle cx="92" cy="40" r="20" fill="#ffc070" opacity=".25"/><path d="M0 46 Q30 40 60 44 T120 42 V70 H0z" fill="#6a4a5a"/><rect x="0" y="50" width="120" height="20" fill="#3a2e3a"/>' + rails(52, '#1d1820') + '<g stroke="#fff3d8" stroke-width="1.2" opacity=".55" stroke-linecap="round"><path d="M2 58h22M10 63h30M30 60h18M60 64h26"/></g><path d="M18 38h70l12 8v6H18z" fill="#f3eee1"/><rect x="18" y="46" width="82" height="2" fill="#c8352b"/><g fill="#ffd88a">' + [24, 34, 44, 54, 64, 74].map((x) => `<rect x="${x}" y="40" width="7" height="4" rx=".8"/>`).join('') + '</g><path d="M88 38h4l8 8h-12z" fill="#1e2a33"/><circle cx="100" cy="49" r="1.6" fill="#fff6c4"/><path d="M101 49 L120 45 V53z" fill="#fff6c4" opacity=".35"/>';
-    // kartu Guntur & Kilat: kereta tampak 3/4 dalam bingkai tegak 80x100
-  function cardTrain(o){
-    const NX=34, NT=60, NB=88, FX=65, FT=41, FB=47;
-    const yN=(f)=>NT+(NB-NT)*f, yF=(f)=>FT+(FB-FT)*f;
-    const band=(f0,f1,fill)=>`<path d="M${NX} ${yN(f0)} L${FX} ${yF(f0)} L${FX} ${yF(f1)} L${NX} ${yN(f1)}z" fill="${fill}"/>`;
-    const at=(x,f)=>{const t=(x-NX)/(FX-NX);return yN(f)+(yF(f)-yN(f))*t;};
-    return `
-    <defs>
-     <linearGradient id="bd${o.k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="${o.body}"/><stop offset="1" stop-color="#aeb8c2"/></linearGradient>
-     <linearGradient id="ns${o.k}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d1da"/></linearGradient>
-     <linearGradient id="bn${o.k}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${o.acc}"/><stop offset="1" stop-color="${o.acc2}"/></linearGradient>
-     <radialGradient id="hl${o.k}"><stop offset="0" stop-color="#fffbe6"/><stop offset=".35" stop-color="#fff1b8" stop-opacity=".75"/><stop offset="1" stop-color="#fff1b8" stop-opacity="0"/></radialGradient>
-    </defs>
-    <g transform="translate(63 31) scale(.78) translate(-66 -47)">
-    <path d="M6 93 L${FX+2} 47.6 L${FX+2} 50.2 L6 99z" fill="#d5d9dd"/>
-    <path d="M6 99 L${FX+2} 50.2 L${FX+2} 51.4 L6 103z" fill="#8f979f"/>
-    <g fill="#a9b0b7">${[[18,95,7,30],[44,74,4,18],[58,58,2.4,10]].map(([x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join('')}</g>
-    <g stroke="#7f8790" stroke-linecap="round"><path d="M72 104 V18" stroke-width="1.3"/><path d="M72 22 H48" stroke-width="1"/><path d="M69 47 V33" stroke-width=".7"/><path d="M69 34.5 H62" stroke-width=".6"/></g>
-    <path d="M48 23.4 L${FX} 37" stroke="#4d545c" stroke-width=".4"/>
-    <path d="M${NX-2} ${NT-.3} L${FX} ${FT-.8} L${FX} ${FT} L${NX} ${NT}z" fill="#e3e8ed"/>
-    <path d="M${NX} ${NT} L${FX} ${FT} L${FX} ${FB} L${NX} ${NB}z" fill="url(#bd${o.k})"/>
-    ${band(.12,.32,o.win)}
-    <g stroke="${o.body}" stroke-width=".45">${[38,42.5,46.5,50,53,55.8,58.3,60.5,62.5].map(x=>`<path d="M${x} ${at(x,.12)} L${x} ${at(x,.32)}"/>`).join('')}</g>
-    ${band(.55,.64,`url(#bn${o.k})`)}
-    ${o.gold?band(.67,.7,o.gold):''}
-    ${band(.93,1,'#2a3038')}
-    <g stroke="#97a1ab" stroke-width=".4">${[47,57.5,62].map(x=>`<path d="M${x} ${at(x,0)} L${x} ${at(x,.93)}"/>`).join('')}</g>
-    <path d="M42 ${at(42,0)} l3.5 -6 l3 4.6 M43.8 ${at(42,0)-6} h4.6" stroke="#3a4048" stroke-width=".7" fill="none"/>
-    <text x="49" y="${at(49,.47)}" font-size="2.4" font-weight="800" font-family="sans-serif" fill="${o.acc}" transform="rotate(-31.5 49 ${at(49,.47)})">${o.label}</text>
-    <path d="M${NX} ${NT} C24 61 13 69 8.5 80 C6.6 85 9 90.5 16 91.2 L${NX} ${NB}z" fill="url(#ns${o.k})"/>
-    <path d="M${NX} ${NT} C26 61.4 18 66 14 72.6 C20 70.4 27 68.6 ${NX} ${yN(.32)}z" fill="${o.win}"/>
-    <path d="M31 61.4 C25 62.6 20.6 65.6 17.6 69.2" stroke="#fff" stroke-width=".6" opacity=".5" fill="none"/>
-    <path d="M8.6 81.4 C15 78.6 24 76.6 ${NX} ${yN(.55)} L${NX} ${yN(.64)} C24 79.4 15 81.6 9.2 84.4z" fill="url(#bn${o.k})"/>
-    ${o.gold?`<path d="M9.6 85.6 C15.6 83.2 24 81.4 ${NX} ${yN(.685)}" stroke="${o.gold}" stroke-width=".85" fill="none"/>`:''}
-    <path d="M10.4 88.4 C14 90 22 88.6 ${NX} ${yN(.93)} L${NX} ${NB} L16 91.2 C12.6 91 10.8 90 10.4 88.4z" fill="#2a3038"/>
-    <circle cx="12.2" cy="85.6" r="1.3" fill="#fffbe6"/><circle cx="12.2" cy="85.6" r="8" fill="url(#hl${o.k})"/>
-    <g stroke="#fff" stroke-width=".7" stroke-linecap="round" opacity=".6"><path d="M0 68 h7"/><path d="M0 74 h4"/><path d="M0 97 h6"/></g>
-    </g>`;
+    // kartu Guntur & Kilat: latar SVG tegak 80x100 + kereta asli dari fungsi gambar game (lihat trainCardImg)
+  const cardSky = (k, stops) => `<defs><linearGradient id="sk${k}" x1="0" y1="0" x2="0" y2="1">${stops.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join('')}</linearGradient></defs><rect width="80" height="100" fill="url(#sk${k})"/>`;
+  const cardDeck = (k, top, side, pier) => `<rect x="0" y="60.2" width="80" height="2.6" fill="${top}"/><rect x="0" y="62.8" width="80" height="2.2" fill="${side}"/>`
+    + [6, 40, 74].map((x) => `<rect x="${x - 2.2}" y="65" width="4.4" height="40" fill="${pier}"/><rect x="${x - 2.2}" y="65" width="1.2" height="40" fill="#fff" opacity=".12"/>`).join('');
+  const CARD_BG = {
+    '3-2': cardSky('tg', [[0, '#2c2a5c'], [0.38, '#7a4f78'], [0.62, '#f08a52'], [0.8, '#ffc27a']])
+      + '<circle cx="24" cy="47" r="22" fill="#ffd08a" opacity=".22"/><circle cx="24" cy="47" r="12" fill="#ffd8a0" opacity=".45"/><circle cx="24" cy="47" r="6.5" fill="#fff1cf"/>'
+      + '<g fill="#5b4466" opacity=".85">' + [[34, 30, 6, 22], [41, 22, 7, 30], [49, 34, 5, 18], [55, 18, 8, 34], [64, 28, 6, 24], [71, 36, 9, 16], [0, 38, 6, 14], [7, 33, 5, 19]].map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join('') + '<rect x="58.5" y="12" width=".8" height="6"/></g>'
+      + '<g fill="#ffcf85" opacity=".55">' + [[43, 26], [43, 31], [45, 36], [57, 22], [59, 28], [57, 34], [66, 32], [36, 34]].map(([x, y]) => `<rect x="${x}" y="${y}" width="1.3" height=".9"/>`).join('') + '</g>'
+      + '<rect x="0" y="52" width="80" height="48" fill="#6f7a3a"/>'
+      + '<g fill="#ffcf85" opacity=".5"><rect x="8" y="55" width="30" height=".7"/><rect x="12" y="57.5" width="22" height=".6"/><rect x="16" y="68" width="18" height=".8"/><rect x="2" y="74" width="30" height="1"/></g>'
+      + '<g stroke="#56622c" stroke-width=".5"><path d="M0 54.5H80M0 57H80M0 66H80M0 71H80M0 78H80M0 88H80"/></g>'
+      + cardDeck('g', '#c9c3bd', '#8a7d78', '#9c8f88'),
+    '3-3': cardSky('tk', [[0, '#3f86c8'], [0.5, '#8cc2e4'], [0.66, '#e3f0f2']])
+      + '<circle cx="62" cy="16" r="14" fill="#fff6d8" opacity=".35"/><circle cx="62" cy="16" r="4.5" fill="#fffbea"/>'
+      + '<path d="M0 44 L8 34 L16 38 L28 20 L38 33 L48 26 L58 36 L70 24 L80 31 V56 H0z" fill="#8aa0b6"/><path d="M25 24 L28 20 L31.5 24.6 L29 23.4 L27 25z" fill="#eef4f7"/>'
+      + '<path d="M0 48 L12 40 L24 45 L36 37 L50 45 L62 39 L80 46 V58 H0z" fill="#557f6a"/>'
+      + '<path d="M0 52 Q20 47 40 51 T80 50 V60 H0z" fill="#2f5e3c"/>'
+      + '<g>' + [[4, 52, 0.42], [18, 51, 0.36], [33, 52, 0.4], [50, 51, 0.34], [66, 52, 0.44], [78, 51, 0.38]].map(([x, y, k]) => `<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 0 V-12" stroke="#4a3a26" stroke-width="1.8"/><path d="M0 -12 q-8 -1 -11 4 M0 -12 q8 -1 11 4 M0 -12 q-6 -6 -10 -5 M0 -12 q6 -6 10 -5 M0 -12 q0 -7 1 -9" stroke="#24552c" stroke-width="2" fill="none" stroke-linecap="round"/></g>`).join('') + '</g>'
+      + '<rect x="0" y="58" width="80" height="42" fill="#3d6e36"/><g stroke="#336030" stroke-width=".6"><path d="M0 70H80M0 80H80M0 92H80"/></g>'
+      + cardDeck('k', '#d6dbdf', '#8f989f', '#a3abb2'),
+  };
+  // kereta asli (lokomotif + gerbong) digambar sekali ke kanvas transparan 480x600, moncong ke kanan
+  const TRAIN_CARD = { '3-2': 'hst2', '3-3': 'hst' }, trainCardCache = {};
+  function trainCardImg(loco) {
+    if (trainCardCache[loco]) return trainCardCache[loco];
+    const cw = 480, ch = 600, cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const c = cv.getContext('2d'), ppm = cw / 14, gy = ch * 0.602, kw = W, kh = H, keep = N_COACH;
+    const V = { c, ppm, gy, X: (wx) => cw * 0.72 + wx * ppm, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0,
+      rimA: loco === 'hst2' ? 0.55 : 0.3, rim: loco === 'hst2' ? '#ffc27a' : '#fff4d8', refl: 0, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
+    // listrik aliran atas: tiang, kawat penggantung & kawat kontak setinggi kepala pantograf
+    const yC = gy - (VPIV + (7.25 - VPIV) * VS) * ppm + 1, yM = yC - 0.85 * ppm;
+    c.fillStyle = '#7b848c'; for (const mx of [cw * 0.1, cw * 1.02]) { c.fillRect(mx - 4, yM - 0.8 * ppm, 8, gy - yM + 0.8 * ppm); c.fillStyle = '#6a737b'; c.fillRect(mx - 4, yM - 0.2 * ppm, cw * 0.14, 4); c.fillStyle = '#7b848c'; }
+    c.strokeStyle = 'rgba(28,32,38,0.9)'; c.lineWidth = 2.2; c.beginPath(); c.moveTo(0, yC); c.lineTo(cw, yC); c.stroke();
+    c.lineWidth = 1.2; c.beginPath(); c.moveTo(0, yM - 6); c.quadraticCurveTo(cw * 0.55, yM + 8, cw, yM - 6); c.stroke();
+    c.lineWidth = 0.8; c.beginPath(); for (let x = cw * 0.06; x < cw; x += cw * 0.11) { const t = x / cw, yy = (1 - t) * (1 - t) * (yM - 6) + 2 * t * (1 - t) * (yM + 8) + t * t * (yM - 6); c.moveTo(x, yy); c.lineTo(x, yC); } c.stroke();
+    W = cw; H = ch; N_COACH = 2; LOCO_FORCE = loco;
+    try { drawTrain(V); } catch (e) { /* gambar kartu opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; }
+    return (trainCardCache[loco] = cv.toDataURL('image/png'));
   }
-  function cardSky(k,a,b){return `<defs><linearGradient id="sk${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="80" height="100" fill="url(#sk${k})"/>`;}
-  MIS_ART['3-2'] = cardSky('tg','#6c7bb8','#ffc98a')
-   + '<circle cx="22" cy="20" r="12" fill="#ffd28a" opacity=".35"/><circle cx="22" cy="20" r="5" fill="#fff0c8"/>'
-   + '<g transform="translate(0 -16)"><g fill="#8f8fb4" opacity=".75"><rect x="38" y="20" width="7" height="28"/><rect x="46" y="27" width="6" height="21"/><rect x="53" y="16" width="8" height="32"/><rect x="62" y="24" width="6" height="24"/><rect x="69" y="30" width="7" height="18"/><rect x="56" y="12" width="1" height="4"/></g>'
-   + '<g fill="#ffe1a8" opacity=".5">'+[[40,24],[40,30],[55,20],[55,28],[63,28],[47,32]].map(([x,y])=>`<rect x="${x}" y="${y}" width="1.6" height="1"/>`).join('')+'</g></g>'
-   + '<rect x="0" y="31" width="80" height="69" fill="#8fae52"/><g stroke="#ffd896" stroke-width=".8" opacity=".55"><path d="M0 33.5 H80M0 37 H80M0 42 H80M0 49 H80M0 59 H80M0 73 H80M0 91 H80"/></g><g stroke="#6f9440" stroke-width=".6" opacity=".7"><path d="M63 31 L-40 100M63 31 L-5 100M63 31 L30 100M63 31 L95 100M63 31 L140 100"/></g>'
-   + cardTrain({k:'tg',body:'#eef1f4',acc:'#d4202b',acc2:'#e8484f',win:'#1b2733',label:'GUNTUR',gold:'#e2b04a'});
-  MIS_ART['3-3'] = cardSky('tk','#5aa0d8','#e4f1f6')
-   + '<g transform="translate(0 -16)"><path d="M0 40 L10 26 L20 34 L32 16 L44 32 L54 22 L66 34 L80 24 V50 H0z" fill="#7f96ac"/><path d="M28 21 L32 16 L36 21.5z" fill="#eef3f6"/>'
-   + '<path d="M0 46 L12 36 L26 43 L40 33 L56 43 L70 35 L80 40 V52 H0z" fill="#4f7a62"/></g>'
-   + '<rect x="0" y="31" width="80" height="69" fill="#5d8a3e"/>'
-   + '<g>'+[[5,38,.5],[30,34,.32],[56,35,.36],[76,52,.8],[4,56,.7]].map(([x,y,s])=>`<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 0 V-10" stroke="#5a4630" stroke-width="1.6"/><path d="M0 -10 q-7 -1 -10 3 M0 -10 q7 -1 10 3 M0 -10 q-5 -5 -9 -5 M0 -10 q5 -5 9 -5 M0 -10 q0 -6 1 -8" stroke="#2f6a34" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>`).join('')+'</g>'
-   + cardTrain({k:'tk',body:'#f2f6fa',acc:'#1567c4',acc2:'#22b6d6',win:'#13263a',label:'KILAT'});
   const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100' };
-  const misArt = (id) => MIS_ART[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${MIS_ART[id]}</svg></span>` : '';
+  const cardArt = (id) => TRAIN_CARD[id] ? CARD_BG[id] + `<image href="${trainCardImg(TRAIN_CARD[id])}" x="0" y="0" width="80" height="100" preserveAspectRatio="none"/>` : MIS_ART[id];
+  const misArt = (id) => MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
   function dailyArt(base) {
     const night = base === '1-6' || base === '2-2', storm = base === '1-5' || base === '1-7', sum = base[0] === '2';
@@ -8709,7 +8698,7 @@
 
     // ---- gerbong stainless ----
     // Kilat G1 memakai bentuk rangkaian Guntur (rok bogie penuh, sambungan rapat) dengan warna biru toska khasnya
-    const HST2C = MIS.loco === 'hst2' || MIS.loco === 'hst', ARGOC = MIS.loco === 'argo' || HST2C, HSTC = MIS.loco === 'hst', SENJAC = MIS.loco === 'argo';
+    const CL = LOCO_FORCE || MIS.loco, HST2C = CL === 'hst2' || CL === 'hst', ARGOC = CL === 'argo' || HST2C, HSTC = CL === 'hst', SENJAC = CL === 'argo';
     let ACC = HSTC ? '#1567c4' : '#d4202b', ACC2 = HSTC ? '#22b6d6' : null;
     const steel = ARGOC ? vgrad(4.85, 1.0, [[0, '#ffffff'], [0.35, '#efede9'], [0.8, '#c8cbd1'], [1, '#9aa0a8']]) : vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
     const glass = vgrad(4.35, 2.95, [[0, '#3b5263'], [0.5, '#1d2b36'], [1, '#121b23']]);
