@@ -7748,7 +7748,8 @@
       const gd = gapD(k + 1);
       if (HST2C) { // penutup sambungan menyatu ala kereta cepat Eropa
         { const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0, mid = (g0 + g1) / 2;
-          c.fillStyle = '#d4202b'; c.fillRect(g0, Y(4.85), gw, 4.5 * ppm); // ujung merah menyambung hampir rapat
+          c.fillStyle = vgrad(4.85, 0.35, [[0, '#f4f5f7'], [0.8, '#b9bfc6'], [1, '#8c939b']]); c.fillRect(g0, Y(4.85), gw, 4.5 * ppm); // ujung menyambung hampir rapat
+          c.fillStyle = '#0c0f13'; c.fillRect(g0, Y(4.55), gw, 1.7 * ppm); c.fillStyle = '#d4202b'; c.fillRect(g0, Y(2.72), gw, 0.2 * ppm);
           const sw = Math.max(3, 0.34 * ppm), cg = c.createLinearGradient(mid - sw / 2, 0, mid + sw / 2, 0);
           cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
           c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(4.6)); c.quadraticCurveTo(mid, Y(5.15), mid + sw / 2, Y(4.6)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
@@ -7851,12 +7852,11 @@
         const lx = dx - op * dw * 0.95;
         if (HST2C) { // ujung gerbong merah (gaya KCIC): panel merah dari pintu sampai ujung, jendela pintu lonjong
           const ex = d0 < 120 ? L(u(0)) : L(u(240)), ax = Math.min(ex, dx), bx2 = Math.max(ex, dx + dw);
-          const rg = c.createLinearGradient(ax, 0, bx2, 0); rg.addColorStop(0, '#c41c26'); rg.addColorStop(0.5, '#ec3a3f'); rg.addColorStop(1, '#c41c26');
-          c.fillStyle = rg; c.fillRect(ax, Y(4.85), bx2 - ax, 4.5 * ppm);
-          c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(ax, Y(1.3), bx2 - ax, 0.95 * ppm);
-          c.fillStyle = '#d4202b'; c.fillRect(lx, Y(4.55), dw, 3.4 * ppm);
+          c.fillStyle = steel; c.fillRect(lx, Y(4.55), dw, 3.4 * ppm);
+          c.fillStyle = '#0c0f13'; c.fillRect(lx, Y(4.55), dw, 0.05 * ppm);
           c.fillStyle = '#10141a'; c.beginPath(); c.ellipse(lx + dw / 2, Y(3.55), dw * 0.16, 0.75 * ppm, 0, 0, 7); c.fill();
-          c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 1; c.strokeRect(lx + 0.12 * ppm, Y(4.45), dw - 0.24 * ppm, 3.2 * ppm);
+          c.fillStyle = '#d4202b'; c.fillRect(lx, Y(2.72), dw, 0.2 * ppm);
+          c.strokeStyle = 'rgba(90,98,106,0.45)'; c.lineWidth = 1; c.strokeRect(lx + 0.06 * ppm, Y(4.5), dw - 0.12 * ppm, 3.3 * ppm);
         } else {
         c.fillStyle = steel; c.fillRect(lx, Y(4.55), dw, 3.4 * ppm);
         c.fillStyle = glass; roundRect(c, lx + 0.3 * ppm, Y(4.2), dw - 0.6 * ppm, 1.2 * ppm, 0.15 * ppm); c.fill();
