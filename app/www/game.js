@@ -2174,9 +2174,30 @@
     };
     // Anett: masinis muda kereta cepat Guntur. Wajah bulat, kerudung biru muda berlipit, senyum lebar ceria,
     // baju kotak-kotak biru tua bergaris krem, latar biru seperti pas foto, lencana petir Guntur di dada
-    P.AN = bg('#3f6fd0', '#1c3a8a') + `<defs><pattern id="plaidAN" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#e6dcc2"/><rect width="3.2" height="6" fill="#23408a"/><rect width="6" height="2.2" y="3.4" fill="#23408a" opacity=".85"/><rect x="4.2" width=".7" height="6" fill="#f6f0dc" opacity=".8"/></pattern></defs>`
-      + fem({ skin: '#efc6a3', sh: '#b98462', veil: '#4f8fd0', veilD: '#2f679f', veilL: '#7fb4e6', lip: '#d8606e', iris: '#3a2418', brooch: '#cfe6ff', top: 'url(#plaidAN)', grin: true })
-      + `<path d="M50.5 60.2l-2 3h1.6l-1 2.8 2.8-3.6h-1.6l1.2-2.2z" fill="#f2c94c" stroke="#8a6a20" stroke-width=".4"/>`;
+    P.AN = bg('#3f6fd0', '#1c3a8a') + `<defs><pattern id="plaidAN" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#e6dcc2"/><rect width="3.2" height="6" fill="#23408a"/><rect width="6" height="2.2" y="3.4" fill="#23408a" opacity=".85"/><rect x="4.2" width=".7" height="6" fill="#f6f0dc" opacity=".8"/></pattern>`
+      + `<clipPath id="eyAN1"><path d="M22.4 40.2Q25.6 37.2 29 39.8Q25.8 42.2 22.4 40.2Z"/></clipPath><clipPath id="eyAN2"><path d="M35 39.8Q38.4 37.2 41.6 40.2Q38.2 42.2 35 39.8Z"/></clipPath></defs>`
+      // baju kotak-kotak di bahu, kerudung lebar menjuntai menutup dada (seperti foto)
+      + `<path d="M2 64c1-7 6-11 14-12h32c8 1 13 5 14 12z" fill="url(#plaidAN)"/>`
+      + `<path d="M7.5 58c0-7 2.8-11 6.5-14-2-5-3-8.5-3-13.5 0-12 9-19.5 21-19.5s21 7.5 21 19.5c0 5-1 8.5-3 13.5 3.7 3 6.5 7 6.5 14q-24.5 7.5-49 0z" fill="#5296d6"/>`
+      + `<path d="M13 47q6 8 19 10q13-2 19-10" stroke="#3a78b6" stroke-width="1.4" fill="none" opacity=".8"/><path d="M10.5 55.5q5-3.5 9-3.5M53.5 55.5q-5-3.5-9-3.5" stroke="#3a78b6" stroke-width="1.2" fill="none" opacity=".7"/><path d="M7.5 58q24.5 7.5 49 0" stroke="#3a78b6" stroke-width="1.1" fill="none"/>`
+      + `<path d="M15 26q17-14 34 0" stroke="#86bdea" stroke-width="1.6" fill="none" opacity=".8"/>`
+      // wajah bulat lebar, pipi berisi, dagu membulat
+      + `<path d="M18.6 38.5C18.6 30.5 24.4 26.8 32 26.8S45.4 30.5 45.4 38.5C45.4 49.5 39.8 56.6 32 56.6S18.6 49.5 18.6 38.5Z" fill="#f0c9a6"/>`
+      + `<path d="M19.6 44c2.4 7.6 7 11.6 12.4 11.6s10-4 12.4-11.6c-1.6 8.4-6.4 12.6-12.4 12.6S21.2 52.4 19.6 44z" fill="#b98462" opacity=".18"/>`
+      // tepi kerudung menutup dahi, lipatan di bawah dagu
+      + `<path d="M17.2 37.5c.4-8.6 6.4-13.8 14.8-13.8s14.4 5.2 14.8 13.8c-3.4-5.6-8.6-8-14.8-8s-11.4 2.4-14.8 8z" fill="#5296d6"/><path d="M19.5 33.2q12.5-7.4 25 0" stroke="#3a78b6" stroke-width="1" fill="none" opacity=".6"/>`
+      + `<path d="M23 55.4q9 5 18 0q-2 4.4-9 4.6-7-.2-9-4.6z" fill="#4384c4"/>`
+      // mata sipit kecil berbinar, alis tipis
+      + `<path d="M22.4 40.2Q25.6 37.2 29 39.8Q25.8 42.2 22.4 40.2Z" fill="#fffaf4"/><g clip-path="url(#eyAN1)"><circle cx="25.8" cy="39.9" r="1.9" fill="#3a2418"/><circle cx="25.8" cy="39.9" r=".9" fill="#140c08"/><circle cx="26.5" cy="39.2" r=".6" fill="#fff"/></g>`
+      + `<path d="M35 39.8Q38.4 37.2 41.6 40.2Q38.2 42.2 35 39.8Z" fill="#fffaf4"/><g clip-path="url(#eyAN2)"><circle cx="38.2" cy="39.9" r="1.9" fill="#3a2418"/><circle cx="38.2" cy="39.9" r=".9" fill="#140c08"/><circle cx="38.9" cy="39.2" r=".6" fill="#fff"/></g>`
+      + `<path d="M22.3 40.2Q25.6 37 29.1 39.7M34.9 39.7Q38.4 37 41.7 40.2" stroke="#1a100c" stroke-width="1.05" fill="none" stroke-linecap="round"/>`
+      + `<path d="M22.6 35.8q3-1.4 6-.4M35.4 35.4q3-1 6 .4" stroke="#5a3a26" stroke-width=".9" fill="none" stroke-linecap="round" opacity=".75"/>`
+      // hidung kecil, pipi merona, senyum lebar ceria
+      + `<path d="M32 42.6q-1.2 2.6.3 3.2" stroke="rgba(120,70,45,.45)" stroke-width="1.05" fill="none" stroke-linecap="round"/>`
+      + `<ellipse cx="22.2" cy="46.2" rx="3.4" ry="2" fill="#f07a7a" opacity=".34"/><ellipse cx="41.8" cy="46.2" rx="3.4" ry="2" fill="#f07a7a" opacity=".34"/>`
+      + `<path d="M27 48.8q5 6 10 0q-5 1.3-10 0z" fill="#7a2626"/><path d="M27.8 49.2q4.2 1.4 8.4 0l-.5 1.1q-3.7 1.1-7.4 0z" fill="#fff"/><path d="M29.4 52.4q2.6 1.3 5.2 0q-2.6-.8-5.2 0z" fill="#e77a7a"/><path d="M27 48.8q5 6 10 0" stroke="#cf5d68" stroke-width="1" fill="none" stroke-linecap="round"/><path d="M26.1 48.3q.5.4.9.5M37.9 48.3q-.5.4-.9.5" stroke="rgba(120,60,45,.5)" stroke-width=".8" fill="none" stroke-linecap="round"/>`
+      + `<circle cx="32" cy="58.6" r="1.7" fill="#cfe6ff"/><circle cx="32" cy="58.6" r=".75" fill="#fff" opacity=".9"/>`
+      + `<path d="M48.6 60.2l-2 3h1.6l-1 2.8 2.8-3.6h-1.6l1.2-2.2z" fill="#f2c94c" stroke="#8a6a20" stroke-width=".4"/>`;
     P.RK = P.DM;
     return (id) => P[id] ? `<svg viewBox="0 0 64 64" aria-hidden="true">${P[id]}</svg>` : null;
   })();
