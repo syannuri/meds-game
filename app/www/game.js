@@ -2178,9 +2178,9 @@
       + `<clipPath id="eyAN1"><path d="M23.4 40.2Q26.2 38 29.1 39.9Q26.2 41.6 23.4 40.2Z"/></clipPath><clipPath id="eyAN2"><path d="M34.9 39.9Q37.8 38 40.6 40.2Q37.8 41.6 34.9 39.9Z"/></clipPath></defs>`
       // baju kotak-kotak di bahu, kerudung lebar menjuntai menutup dada (seperti foto)
       + `<path d="M6 64c1-7 5.5-11 12.5-12h27c7 1 11.5 5 12.5 12z" fill="url(#plaidAN)"/>`
-      + `<path d="M10.5 58C10.5 52.4 13.2 49 17.4 46.6C16.4 43 16.2 39.6 16.2 35.4C16.2 22.8 23.4 13 32 13S47.8 22.8 47.8 35.4C47.8 39.6 47.6 43 46.6 46.6C50.8 49 53.5 52.4 53.5 58Q32 64.8 10.5 58Z" fill="#5296d6"/>`
+      + `<path d="M10.5 58C10.5 52.4 13.2 49 17.4 46.6C16.4 43 16.2 39.6 16.2 35.4C16.2 24.2 23.2 15.4 32 15.4S47.8 24.2 47.8 35.4C47.8 39.6 47.6 43 46.6 46.6C50.8 49 53.5 52.4 53.5 58Q32 64.8 10.5 58Z" fill="#5296d6"/>`
       + `<path d="M17.5 47q4.5 8 14.5 10q10-2 14.5-10" stroke="#3a78b6" stroke-width="1.4" fill="none" opacity=".8"/><path d="M13 55.5q4.5-3.2 8-3.2M51 55.5q-4.5-3.2-8-3.2" stroke="#3a78b6" stroke-width="1.2" fill="none" opacity=".7"/><path d="M10.5 58q21.5 6.8 43 0" stroke="#3a78b6" stroke-width="1.1" fill="none"/>`
-      + `<path d="M20 25.5q12-12.8 24 0" stroke="#86bdea" stroke-width="1.6" fill="none" opacity=".8"/>`
+      + `<path d="M20.4 26.6q11.6-11.2 23.2 0" stroke="#86bdea" stroke-width="1.6" fill="none" opacity=".8"/>`
       // wajah bulat lebar, pipi berisi, dagu membulat
       + `<path d="M21.8 38.2C21.8 30.8 26.4 27 32 27S42.2 30.8 42.2 38.2C42.2 45.8 39.6 51.8 35.9 55C34.6 56.2 33.3 56.9 32 56.9S29.4 56.2 28.1 55C24.4 51.8 21.8 45.8 21.8 38.2Z" fill="#f0c9a6"/>`
       + `<path d="M22.6 44.5c2 6.2 5.4 10.4 9.4 10.4s7.4-4.2 9.4-10.4c-1.2 7.2-4.6 11.8-9.4 11.8s-8.2-4.6-9.4-11.8z" fill="#b98462" opacity=".18"/><path d="M23.6 44.8q1.6 3.4 3.6 5.2M40.4 44.8q-1.6 3.4-3.6 5.2" stroke="#c99476" stroke-width=".7" fill="none" opacity=".35"/>`
