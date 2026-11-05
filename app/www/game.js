@@ -7750,9 +7750,10 @@
         { const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0, mid = (g0 + g1) / 2;
           c.fillStyle = vgrad(4.85, 0.35, [[0, '#f4f5f7'], [0.8, '#b9bfc6'], [1, '#8c939b']]); c.fillRect(g0, Y(4.85), gw, 4.5 * ppm); // ujung menyambung hampir rapat
           c.fillStyle = '#0c0f13'; c.fillRect(g0, Y(4.55), gw, 1.7 * ppm); c.fillStyle = '#d4202b'; c.fillRect(g0, Y(2.72), gw, 0.2 * ppm);
+          c.fillStyle = vgrad(6.08, 4.85, [[0, '#eef0f2'], [1, '#b4bac1']]); c.fillRect(g0 - 0.6 * ppm, Y(6.08), gw + 1.2 * ppm, 1.25 * ppm); // atap menyambung tanpa celah
           const sw = Math.max(3, 0.34 * ppm), cg = c.createLinearGradient(mid - sw / 2, 0, mid + sw / 2, 0);
           cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
-          c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(4.6)); c.quadraticCurveTo(mid, Y(5.15), mid + sw / 2, Y(4.6)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
+          c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(5.75)); c.quadraticCurveTo(mid, Y(6.12), mid + sw / 2, Y(5.75)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
           c.fillStyle = '#1a1d21'; c.fillRect(mid - sw * 0.7, Y(0.85), sw * 1.4, 0.55 * ppm); }
       } else box(F - GAP - gd, F, 1.25, 4.6, '#1b1e21');
       c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
@@ -7871,7 +7872,7 @@
       if (rimOn) {
         c.save(); c.globalAlpha = V.rimA;
         line([[u(4), 6.06], [u(236), 6.06]], V.rim, lw(0.09));
-        c.fillStyle = V.rim; c.fillRect(L(u(239)), Y(4.8), Math.max(1.5, 0.12 * ppm), 3.6 * ppm);
+        if (!HST2C) { c.fillStyle = V.rim; c.fillRect(L(u(239)), Y(4.8), Math.max(1.5, 0.12 * ppm), 3.6 * ppm); }
         c.restore();
       }
       c.restore();
