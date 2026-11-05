@@ -4716,37 +4716,6 @@
     dg.addColorStop(0, night ? '#1d232a' : '#2e363e'); dg.addColorStop(1, night ? '#0b0e12' : '#151a1f');
     c.fillStyle = dg; c.beginPath(); c.moveTo(0, dy0 + H * 0.03); c.quadraticCurveTo(W * 0.5, dy0 - H * 0.03, W, dy0 + H * 0.03); c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.fill();
     c.fillStyle = 'rgba(255,255,255,0.06)'; c.fillRect(0, dy0 + H * 0.01, W, 1.5);
-    // pengukur tekanan udara (pipa utama & silinder rem) di tengah dasbor
-    const gauge = (gx, val, label) => {
-      const r = Math.min(W, H) * 0.042, gy2 = dy0 + H * 0.066;
-      c.fillStyle = '#e9e5da'; c.beginPath(); c.arc(gx, gy2, r, 0, 7); c.fill();
-      c.strokeStyle = '#2a2f33'; c.lineWidth = 2; c.stroke();
-      const a = Math.PI * (0.75 + 1.5 * clamp(val, 0, 1));
-      c.strokeStyle = '#c0392b'; c.lineWidth = Math.max(1.5, r * 0.08); c.beginPath(); c.moveTo(gx, gy2); c.lineTo(gx + Math.cos(a) * r * 0.8, gy2 + Math.sin(a) * r * 0.8); c.stroke();
-      c.fillStyle = '#2a2f33'; c.font = `700 ${Math.max(7, Math.round(r * 0.32))}px "Plus Jakarta Sans", sans-serif`; c.textAlign = 'center'; c.fillText(label, gx, gy2 + r * 0.55); c.textAlign = 'start';
-    };
-    // panel instrumen: speedometer jarum dengan papan batas kecepatan (menggantikan speedometer HUD di kabin)
-    c.fillStyle = 'rgba(32,39,46,0.95)'; roundRect(c, W * 0.12, dy0 + H * 0.01, W * 0.62, H * 0.115, H * 0.03); c.fill();
-    c.strokeStyle = 'rgba(255,255,255,0.08)'; c.lineWidth = 1; c.stroke();
-    {
-      const kmh = st.v * 3.6, { lim } = currentLimit(), nl = nextLimitAhead();
-      const r = Math.min(W, H) * 0.052, gx = W * 0.2, gy2 = dy0 + H * 0.066;
-      c.fillStyle = '#efeadf'; c.beginPath(); c.arc(gx, gy2, r, 0, 7); c.fill(); c.strokeStyle = '#3a4046'; c.lineWidth = 3; c.stroke();
-      c.strokeStyle = '#2a2f33'; c.lineWidth = 1;
-      for (let i = 0; i <= 12; i++) { const a = Math.PI * (0.75 + 1.5 * i / 12); c.beginPath(); c.moveTo(gx + Math.cos(a) * r * 0.76, gy2 + Math.sin(a) * r * 0.76); c.lineTo(gx + Math.cos(a) * r * 0.92, gy2 + Math.sin(a) * r * 0.92); c.stroke(); }
-      const la = Math.PI * (0.75 + 1.5 * clamp(lim / GMAX, 0, 1));
-      c.strokeStyle = '#e5483b'; c.lineWidth = 3; c.beginPath(); c.arc(gx, gy2, r * 0.86, la - 0.04, la + 0.04); c.stroke();
-      const a = Math.PI * (0.75 + 1.5 * clamp(kmh / GMAX, 0, 1));
-      c.strokeStyle = kmh > lim + 2 ? '#e5483b' : '#c0392b'; c.lineWidth = Math.max(2, r * 0.07); c.beginPath(); c.moveTo(gx, gy2); c.lineTo(gx + Math.cos(a) * r * 0.82, gy2 + Math.sin(a) * r * 0.82); c.stroke();
-      c.fillStyle = '#2a2f33'; c.beginPath(); c.arc(gx, gy2, r * 0.08, 0, 7); c.fill();
-      c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.font = `900 ${Math.round(r * 0.36)}px "Big Shoulders Display", sans-serif`; c.fillText(String(Math.round(kmh)), gx, gy2 + r * 0.45);
-      const lr = r * 0.32, lx = gx + r * 1.35, ly = gy2 - r * 0.35;
-      c.fillStyle = '#fff'; c.beginPath(); c.arc(lx, ly, lr, 0, 7); c.fill(); c.strokeStyle = '#e5483b'; c.lineWidth = lr * 0.22; c.stroke();
-      c.fillStyle = '#111'; c.font = `900 ${Math.round(lr * 0.95)}px "Big Shoulders Display", sans-serif`; c.fillText(String(lim), lx, ly);
-      if (nl) { c.fillStyle = '#ffd98a'; c.font = `700 ${Math.max(8, Math.round(r * 0.22))}px "Plus Jakarta Sans", sans-serif`; c.fillText(`${nl.limit} · ${Math.round(nl.from - st.x)} m`, lx, ly + lr * 2.1); }
-      c.textAlign = 'start'; c.textBaseline = 'alphabetic';
-    }
     // tuas notch (pengendali utama) dan tuas rem ikut bergerak
     {
       const bx = W * 0.68, top = dy0 + H * 0.015, hgt = H * 0.1, n = st.notch;
@@ -4761,10 +4730,50 @@
       c.fillStyle = '#d8392b'; c.beginPath(); c.arc(0, -hgt * 0.78, Math.max(4, hgt * 0.1), 0, 7); c.fill();
       c.restore();
     }
-    const brk = clamp(-(st.aCmd || 0) / 1.2, 0, 1);
-    gauge(W * 0.44, 0.7 - brk * 0.3, 'BP'); gauge(W * 0.56, brk, 'BC');
-    const lamp = (lx, on, col) => { c.fillStyle = on ? col : 'rgba(120,120,120,0.35)'; c.beginPath(); c.arc(lx, dy0 + H * 0.035, Math.max(2, H * 0.008), 0, 7); c.fill(); };
-    lamp(W * 0.36, st.doors === 'open', '#f2c94c'); lamp(W * 0.38, st.notch > 0, '#5fd08a'); lamp(W * 0.6, st.notch < 0, '#f2c94c'); lamp(W * 0.62, !!st.slip, '#ef5b4c');
+    // ---- panel instrumen diesel: angka & tulisan jelas ----
+    const kmh = st.v * 3.6, { lim } = currentLimit(), nl = nextLimitAhead(), ns = nextStation();
+    const brk = clamp(-(st.aCmd || 0) / 1.2, 0, 1), pw = st.notch > 0 && st.doors !== 'open' ? st.notch / 4 : 0;
+    st.engRpm = lerp(st.engRpm || 400, 400 + pw * 650 + (st.slip ? 250 : 0), Math.min(1, (dtReal || 0.016) * (pw * 650 + 400 > (st.engRpm || 400) ? 0.8 : 1.6)));
+    const amp = pw * 1250 * clamp(1.15 - st.v / 34, 0.25, 1) + (st.slip ? 300 : 0), bp = 5.0 - brk * 1.4, bc = brk * 3.8;
+    const FNT = (wgt, px) => `${wgt} ${Math.max(8, Math.round(px))}px "Plus Jakarta Sans", sans-serif`, BIGF = (px) => `900 ${Math.max(9, Math.round(px))}px "Big Shoulders Display", sans-serif`;
+    const px0 = W * 0.1, px1 = W * 0.645, pt = dy0 + H * 0.004, phd = H * 0.168;
+    c.fillStyle = 'rgba(20,25,30,0.96)'; roundRect(c, px0, pt, px1 - px0, phd, H * 0.025); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.1)'; c.lineWidth = 1; c.stroke();
+    // pengukur bulat dengan angka skala
+    const dial = (gx, gy2, r, val, max, step, label, unit, digits, warnAt) => {
+      c.fillStyle = '#f3efe4'; c.beginPath(); c.arc(gx, gy2, r, 0, 7); c.fill(); c.strokeStyle = '#4a5157'; c.lineWidth = Math.max(2, r * 0.07); c.stroke();
+      const A0 = Math.PI * 0.75, SW = Math.PI * 1.5, ang = (v) => A0 + SW * clamp(v / max, 0, 1);
+      if (warnAt !== undefined) { c.strokeStyle = 'rgba(200,50,40,0.85)'; c.lineWidth = r * 0.1; c.beginPath(); c.arc(gx, gy2, r * 0.84, ang(warnAt), A0 + SW); c.stroke(); }
+      c.strokeStyle = '#2a2f33'; c.fillStyle = '#1c2024'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = FNT(900, Math.max(8, r * 0.3));
+      let qi = 0; for (let v = 0; v <= max + 1e-6; v += step, qi++) { const a2 = ang(v), major = qi % 2 === 0; c.lineWidth = major ? 1.8 : 1; c.beginPath(); c.moveTo(gx + Math.cos(a2) * r * (major ? 0.7 : 0.78), gy2 + Math.sin(a2) * r * (major ? 0.7 : 0.78)); c.lineTo(gx + Math.cos(a2) * r * 0.92, gy2 + Math.sin(a2) * r * 0.92); c.stroke();
+        if (major && digits === 'num') c.fillText(String(Math.round(v)), gx + Math.cos(a2) * r * 0.52, gy2 + Math.sin(a2) * r * 0.52); }
+      const na = ang(val); c.strokeStyle = '#c0392b'; c.lineWidth = Math.max(2, r * 0.07); c.beginPath(); c.moveTo(gx, gy2); c.lineTo(gx + Math.cos(na) * r * 0.82, gy2 + Math.sin(na) * r * 0.82); c.stroke();
+      c.fillStyle = '#2a2f33'; c.beginPath(); c.arc(gx, gy2, r * 0.09, 0, 7); c.fill();
+      // nilai digital & label di bawah pengukur
+      c.fillStyle = '#ffd98a'; c.font = BIGF(H * 0.036); c.fillText(unit, gx, gy2 + r + H * 0.02);
+      c.fillStyle = '#c9d3da'; c.font = FNT(800, H * 0.02); c.fillText(label, gx, gy2 + r + H * 0.044);
+      c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    };
+    const gy0 = pt + H * 0.068;
+    // speedometer besar + papan batas
+    { const r = H * 0.062, gx = W * 0.165; dial(gx, gy0, r, kmh, GMAX, GMAX > 100 ? 20 : 10, '', `${Math.round(kmh)} km/h`, 'num', lim);
+      const lr = H * 0.028, lx = gx + r + lr + W * 0.01, ly = gy0 - r * 0.45;
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(lx, ly, lr, 0, 7); c.fill(); c.strokeStyle = '#e5483b'; c.lineWidth = lr * 0.22; c.stroke();
+      c.fillStyle = '#111'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = BIGF(lr * 1.05); c.fillText(String(lim), lx, ly);
+      c.fillStyle = '#c9d3da'; c.font = FNT(800, H * 0.022); c.fillText('BATAS', lx, ly + lr + H * 0.018);
+      if (nl) { c.fillStyle = '#ffd98a'; c.font = FNT(800, H * 0.024); c.fillText(`▸${nl.limit}`, lx, ly + lr + H * 0.045); c.font = FNT(700, H * 0.021); c.fillText(`${Math.round(nl.from - st.x)} m`, lx, ly + lr + H * 0.068); }
+      c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
+    // RPM mesin diesel, arus traksi, tekanan udara
+    dial(W * 0.305, gy0 + H * 0.008, H * 0.042, st.engRpm, 1200, 200, 'RPM MESIN', `${Math.round(st.engRpm)}`, 'k', 1050);
+    dial(W * 0.395, gy0 + H * 0.008, H * 0.042, amp, 1500, 300, 'ARUS TRAKSI', `${Math.round(amp)} A`, 'k', 1200);
+    dial(W * 0.485, gy0 + H * 0.008, H * 0.042, bp, 10, 2, 'PIPA UTAMA', `${bp.toFixed(1).replace('.', ',')} bar`);
+    dial(W * 0.575, gy0 + H * 0.008, H * 0.042, bc, 10, 2, 'SILINDER REM', `${bc.toFixed(1).replace('.', ',')} bar`);
+    // lampu indikator berlabel
+    const lampL = (lx, on, col, t) => { const ly = pt + H * 0.016; c.fillStyle = on ? col : 'rgba(120,120,120,0.35)'; c.beginPath(); c.arc(lx, ly, H * 0.009, 0, 7); c.fill();
+      if (on) { c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = col; c.globalAlpha = 0.35; c.beginPath(); c.arc(lx, ly, H * 0.02, 0, 7); c.fill(); c.restore(); }
+      c.fillStyle = on ? '#fff' : 'rgba(220,226,230,0.55)'; c.font = FNT(800, H * 0.02); c.fillText(t, lx + H * 0.014, ly + H * 0.007); };
+    lampL(W * 0.255, st.doors === 'open', '#f2c94c', 'PINTU'); lampL(W * 0.33, st.notch > 0, '#5fd08a', 'TRAKSI'); lampL(W * 0.41, st.notch < 0, '#f2c94c', 'REM'); lampL(W * 0.475, !!st.slip, '#ef5b4c', 'SELIP');
+    if (ns) { const dist = Math.max(0, ns.x - st.x); c.fillStyle = '#c9d3da'; c.font = FNT(800, H * 0.021); c.textAlign = 'right'; c.fillText(`${titleCase(ns.name)} · ${dist >= 1000 ? (dist / 1000).toFixed(1).replace('.', ',') + ' km' : Math.round(dist) + ' m'}`, px1 - W * 0.008, pt + H * 0.023); c.textAlign = 'start'; }
   }
 
 
@@ -5026,6 +5035,29 @@
         c.fillStyle = on ? '#04121a' : 'rgba(234,250,255,0.4)'; c.font = FONT(800, ph * 0.1); c.textAlign = 'center'; c.fillText(t, cx2 + (cw2 - 4) / 2, cy2 + ph * 0.1, cw2 - 8); c.textAlign = 'start';
       });
       c.textBaseline = 'alphabetic';
+    }
+    // ---- strip indikator: landai, sinyal kabin, jadwal, tegangan, rem, kenyamanan ----
+    {
+      const sh = H * 0.052, sy = py - sh - H * 0.014, sx0 = W * 0.08, sx1 = W * 0.765, n = 6, tw = (sx1 - sx0 - (n - 1) * 5) / n;
+      const gr = gradeAt(st.x), pm = gr ? gr.permil : 0;
+      const sig = ROUTE.signals.filter((q) => q.x > st.x).sort((a2, b2) => a2.x - b2.x)[0], asp = sig ? (st.sig ? st.sig[sig.id] : 'G') : null;
+      const late = ns ? Math.round(st.clock - ns.sched) : 0, brkP = clamp(-(st.aCmd || 0) / 1.2, 0, 1) * 3.8;
+      const kv = st.panto >= 1 && !st.inNeutral ? 25 + Math.sin(tt * 0.7) * 0.15 + Math.sin(tt * 2.3) * 0.05 : 0;
+      const tiles = [
+        ['LANDAI', pm ? `${pm > 0 ? '↗' : '↘'} ${Math.abs(pm)}‰` : 'DATAR', pm > 6 ? AMB : '#eafaff'],
+        ['SINYAL', sig ? `${sig.id} · ${Math.round(sig.x - st.x)} m` : '—', asp === 'R' ? '#ff6a5a' : asp === 'Y' ? AMB : '#5fd08a', asp],
+        ['JADWAL', ns ? (late > 20 ? `+${fmtDur(late)}` : `tiba ${fmtClock(ns.sched)}`) : '—', late > 20 ? '#ff6a5a' : '#eafaff'],
+        ['TEGANGAN', kv ? `${kv.toFixed(1).replace('.', ',')} kV` : st.inNeutral ? 'NETRAL' : 'TURUN', kv ? '#ffd24a' : '#ff6a5a'],
+        ['REM', `${brkP.toFixed(1).replace('.', ',')} bar`, brkP > 0.1 ? AMB : '#eafaff'],
+        ['NYAMAN', `${Math.round(st.comfort)}%`, st.comfort >= 80 ? '#5fd08a' : AMB],
+      ];
+      tiles.forEach(([lab, val, col, dot], i) => {
+        const tx = sx0 + i * (tw + 5);
+        c.fillStyle = 'rgba(5,10,16,0.72)'; roundRect(c, tx, sy, tw, sh, sh * 0.22); c.fill(); c.strokeStyle = 'rgba(79,227,255,0.35)'; c.lineWidth = 1; c.stroke();
+        c.fillStyle = 'rgba(234,250,255,0.55)'; c.font = FONT(800, sh * 0.27); c.textBaseline = 'middle'; c.fillText(lab, tx + sh * 0.22, sy + sh * 0.3);
+        if (dot) { c.fillStyle = col; c.beginPath(); c.arc(tx + tw - sh * 0.25, sy + sh * 0.3, sh * 0.12, 0, 7); c.fill(); }
+        c.fillStyle = col; c.font = FONT(900, sh * 0.36); c.fillText(val, tx + sh * 0.22, sy + sh * 0.7, tw - sh * 0.3); c.textBaseline = 'alphabetic';
+      });
     }
     // ---- tuas samping (sidestick) dengan penunjuk notch digital ----
     {
