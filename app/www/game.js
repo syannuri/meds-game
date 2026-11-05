@@ -3530,9 +3530,11 @@
       const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BARU</span>';
       return `<li${m.tutorial ? ' class="tut"' : ''} style="--i:${ix + 1}"><button class="ticket t-${m.ticket || m.sky}${m.tutorial ? ' t-tut' : ''}${id === nextId ? ' next' : ''}" data-id="${id}">
         <span class="stub"><small>MISI</small><b>${id}</b></span>
-        ${misArt(id)}<span class="tbody"><b title="${m.title}">${m.nick || m.title}</b><small>${m.title} · ${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
+        ${misArt(id)}<span class="tbody"><em class="tbab">${(m.chapter || '').replace(/^Babak (\d) · /, 'Babak $1 · ')}</em><b title="${m.title}">${m.nick || m.title}</b><small>${m.title} · ${route}</small>${stars}${ahli.includes(id) ? '<span class="tahli" title="Masinis Ahli">AHLI</span>' : ''}</span>
       </button></li>`;
     }).join('');
+    // carousel: geser ke misi berikutnya agar langsung terlihat
+    requestAnimationFrame(() => { const L = $('missionList'), nx = L && L.querySelector('.ticket.next'); if (L && nx && L.scrollWidth > L.clientWidth) { const li = nx.closest('li'); L.scrollLeft = Math.max(0, li.offsetLeft - L.clientWidth * 0.35); } });
     const anyPlayed = MISSION_ORDER.some((id) => bestOf(id) > 0);
     $('continueLbl').textContent = `${anyPlayed ? 'Lanjut' : 'Mulai'} ${nextId}`;
   }

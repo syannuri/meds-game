@@ -1055,3 +1055,47 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .drv { display: flex; align-items: center; gap: 8px; font-weight: 800; }
 .drvpic { width: 30px; height: 30px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; box-shadow: 0 0 0 2px rgba(233,185,73,.7); }
 .drvpic svg { width: 100%; height: 100%; display: block; }
+
+/* ===== KARTU MISI BESAR: carousel 2 baris, kartu landscape bergambar penuh ===== */
+#screenTitle .tickets { display: grid; grid-template-columns: repeat(7, clamp(150px, 31%, 230px)); grid-template-rows: repeat(2, minmax(0, 1fr)); grid-auto-flow: row; gap: 10px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-padding: 10px;
+  overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); padding-right: 28px; }
+#screenTitle .tickets::-webkit-scrollbar { display: none; }
+#screenTitle .tickets li, #screenTitle .tickets li.tut { grid-column: auto; grid-row: auto; display: flex; min-height: 0; scroll-snap-align: start; }
+#screenTitle .tickets li.daily { grid-row: auto; grid-column: auto; }
+#screenTitle .tickets li > .ticket, #screenTitle .tickets li.daily > .ticket { position: relative; display: block; width: 100%; height: 100%; flex: 1 1 auto; border-radius: 14px; overflow: hidden; padding: 0; }
+/* gambar penuh */
+#screenTitle .tickets li .ticket .tart { position: absolute !important; inset: 0; flex: none !important; display: block; }
+#screenTitle .tickets li .ticket .tart svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+#screenTitle .tickets li.daily .ticket .tart::before { display: none; }
+#screenTitle .tickets li.daily .ticket .tart::after { display: none; }
+#screenTitle .tickets li.daily .ticket .stub small:last-child { display: none !important; }
+/* nomor misi: lencana di pojok kiri atas */
+#screenTitle .tickets li .ticket .stub { position: absolute; z-index: 3; left: 8px; top: 8px; width: auto !important; flex: none !important; padding: 3px 9px !important; border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35); display: flex; flex-direction: row !important; align-items: baseline; gap: 5px; }
+#screenTitle .tickets li .ticket .stub b { font-size: clamp(15px, 4.6vh, 20px) !important; line-height: 1; }
+#screenTitle .tickets li .ticket .stub small { display: inline !important; font-size: 8px !important; letter-spacing: 0.14em; opacity: 0.85; }
+/* teks di bawah di atas gradasi gelap */
+#screenTitle .tickets li .ticket .tbody { position: absolute !important; z-index: 2; left: 0; right: 0; bottom: 0; padding: 26px 10px 8px !important; gap: 1px !important;
+  background: linear-gradient(180deg, rgba(8,10,14,0) 0%, rgba(8,10,14,0.55) 40%, rgba(8,10,14,0.88) 100%) !important; color: #fff !important; display: flex !important; flex-direction: column; min-height: 0 !important; }
+#screenTitle .tickets li .ticket .tbody b { color: #fff; font-size: clamp(13px, 4vh, 17px) !important; line-height: 1.02 !important; text-shadow: 0 1px 3px rgba(0,0,0,0.6); -webkit-line-clamp: 2 !important; }
+#screenTitle .tickets li .ticket .tbody .tbab { font-style: normal; font-size: 8.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 226, 166, 0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#screenTitle .tickets li:not(.daily) .ticket .tbody small { display: none !important; }
+#screenTitle .tickets li .ticket .tstars { color: #ffd25a !important; font-size: 13px !important; margin-top: 2px !important; }
+#screenTitle .tickets li .ticket .tstars i { color: rgba(255,255,255,0.3) !important; }
+#screenTitle .tickets li .ticket .tnew { color: #1b1305 !important; background: #f2c45a; align-self: flex-start; padding: 1px 6px; border-radius: 5px; font-size: 8.5px !important; margin-top: 3px !important; }
+#screenTitle .tickets li .ticket .tahli { position: absolute; right: 8px; top: 8px; z-index: 3; }
+/* kartu harian: poster tinggi-lebar dengan info */
+#screenTitle .tickets li.daily { grid-column: span 1; }
+#screenTitle .tickets li.daily .ticket .tbody b { -webkit-line-clamp: 1 !important; white-space: normal !important; display: -webkit-box !important; -webkit-box-orient: vertical; overflow: hidden; }
+#screenTitle .tickets li.daily .ticket .tbody small { display: block !important; color: rgba(255,255,255,0.8) !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; font-size: 9.5px !important; }
+#screenTitle .tickets li.daily .ticket .dline { color: #8ff0e2 !important; font-size: 10.5px !important; }
+#screenTitle .tickets li.daily .ticket .dline strong { color: #ffd25a !important; }
+#screenTitle .tickets li.daily .ticket .ticon { display: none; }
+#screenTitle .tickets li .ticket .ticon { display: none; }
+/* misi berikutnya: bingkai emas berdenyut */
+#screenTitle .tickets li .ticket.next { box-shadow: 0 0 0 2px var(--gold2, #f2c45a), 0 0 20px rgba(242,196,90,0.5), 0 10px 22px rgba(0,0,0,0.45); }
+/* petunjuk geser */
+#screenTitle .title-right { position: relative; }
+#screenTitle .title-right::after { content: '›'; position: absolute; right: 6px; bottom: 46%; z-index: 4; pointer-events: none; font: 900 26px/1 var(--display, sans-serif); color: rgba(255,226,166,0.75); text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+#screenTitle .title-right:has(#missionList[hidden])::after { display: none; }
+@media (max-height: 400px) { #screenTitle .tickets { gap: 8px; grid-template-columns: repeat(7, clamp(140px, 30%, 210px)); } }
