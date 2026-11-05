@@ -8293,7 +8293,16 @@
       c.save(); carXform(k + 1);
       // bellow sambungan antargerbong (lipatan akordeon), ikut merenggang & merapat
       const gd = gapD(k + 1);
-      if (HST2C) { // penutup sambungan menyatu ala kereta cepat Eropa
+      const DIESELC = !HST2C && !HSTC;
+      if (k === 0 && DIESELC && !MIS.freight) { // lokomotif diesel ke gerbong: kopling otomatis & selang udara terlihat, tanpa penutup
+        const g0 = L(F), g1 = L(F - GAP - gd), mid = (g0 + g1) / 2;
+        c.fillStyle = '#1b1e21'; c.fillRect(g0 - 0.3 * ppm, Y(1.42), g1 - g0 + 0.6 * ppm, 0.26 * ppm);
+        c.fillStyle = vgrad(1.62, 1.08, [[0, '#5a6168'], [1, '#26292d']]); roundRect(c, mid - 0.38 * ppm, Y(1.62), 0.76 * ppm, 0.54 * ppm, 0.1 * ppm); c.fill();
+        c.strokeStyle = 'rgba(0,0,0,0.6)'; c.lineWidth = 1; c.beginPath(); c.moveTo(mid, Y(1.62)); c.lineTo(mid, Y(1.08)); c.stroke();
+        c.lineWidth = Math.max(1.5, 0.09 * ppm); c.lineCap = 'round';
+        [['#b8352b', 1.25, 0.38], ['#1d2024', 1.18, 0.5]].forEach(([col, h, sag]) => { c.strokeStyle = col; c.beginPath(); c.moveTo(g0 + 0.05 * ppm, Y(h)); c.quadraticCurveTo(mid, Y(h - sag), g1 - 0.05 * ppm, Y(h)); c.stroke(); });
+        c.lineCap = 'butt';
+      } else if (HST2C) { // penutup sambungan menyatu ala kereta cepat Eropa
         { const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0, mid = (g0 + g1) / 2;
           c.fillStyle = vgrad(4.85, 0.35, [[0, '#f4f5f7'], [0.8, '#b9bfc6'], [1, '#8c939b']]); c.fillRect(g0, Y(4.85), gw, 4.5 * ppm); // ujung menyambung hampir rapat
           c.fillStyle = '#0c0f13'; c.fillRect(g0, Y(4.55), gw, 1.7 * ppm); c.fillStyle = '#d4202b'; c.fillRect(g0, Y(2.72), gw, 0.2 * ppm);
@@ -8309,7 +8318,7 @@
         c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1; c.beginPath(); for (let q = 0.1; q < GAP + gd; q += 0.2) { c.moveTo(L(F - q), Y(4.75)); c.lineTo(L(F - q), Y(0.85)); } c.stroke();
         c.fillStyle = '#f0743a'; c.fillRect(g0 - 0.25 * ppm, Y(2.75), gw + 0.5 * ppm, 0.12 * ppm);
       } else box(F - GAP - gd, F, 1.25, 4.6, '#1b1e21');
-      if (!SENJAC) { c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
+      if (!SENJAC && !(k === 0 && DIESELC && !MIS.freight)) { c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
       for (let q = 0.2; q < GAP + gd; q += 0.3) { c.moveTo(L(F - q), Y(4.5)); c.lineTo(L(F - q), Y(1.35)); }
       c.stroke(); }
       // rangka bawah, peralatan, bogie
@@ -8513,7 +8522,7 @@
     const glass2 = vgrad(5.8, 4.0, [[0, '#56708a'], [0.5, '#1f2d38'], [1, '#111a22']]);
     const gold = '#e9b949', cream = '#f6e3b0', bandBg = LOCO_ORN === 'dayak' ? '#160e0d' : '#6e1510', mask = '#1b1416';
     const SH = HST2 ? 'hst2' : ARGO ? 'argo' : LOCO_SHAPE, BOXY = SH.startsWith('box');
-    const argoBody = [[15.85, 1.85], [15.85, 5.7], [15.6, 6.0], [3.0, 6.0], [1.9, 5.93], [0.95, 5.5], [0.1, 4.68], [-0.5, 3.85], [-0.92, 3.05], [-1.12, 2.45], [-1.12, 1.85]];
+    const argoBody = [[15.85, 1.85], [15.85, 5.2], [15.8, 5.56], [15.62, 5.83], [15.28, 6.0], [3.0, 6.0], [1.9, 5.93], [0.95, 5.5], [0.1, 4.68], [-0.5, 3.85], [-0.92, 3.05], [-1.12, 2.45], [-1.12, 1.85]];
     if (SH === 'hst2') {
       // ---- Guntur: kereta cepat bergaya Eropa (rangkaian menyatu), hidung panjang terpahat, kaca kokpit hitam, garis merah ramping ----
       const P = (m, h) => [L(m), Y(h)];
@@ -8562,7 +8571,7 @@
       // ---- Argo Senja generasi baru: moncong peluru melengkung mulus, kaca visor menyatu, atap & bogie tertutup fairing ----
       const P = (m, h) => [L(m), Y(h)];
       const bodyPath = () => {
-        c.beginPath(); c.moveTo(...P(15.85, 1.7)); c.lineTo(...P(15.85, 5.55)); c.quadraticCurveTo(...P(15.85, 6.2), ...P(15.2, 6.22));
+        c.beginPath(); c.moveTo(...P(15.7, 1.7)); c.quadraticCurveTo(...P(15.85, 1.72), ...P(15.85, 1.95)); c.lineTo(...P(15.85, 5.0)); c.quadraticCurveTo(...P(15.85, 6.22), ...P(14.75, 6.22));
         c.lineTo(...P(5.2, 6.22)); c.bezierCurveTo(...P(2.2, 6.2), ...P(0.2, 5.2), ...P(-0.75, 3.6));
         c.bezierCurveTo(...P(-1.15, 2.9), ...P(-1.3, 2.3), ...P(-1.3, 1.85)); c.lineTo(...P(-1.2, 1.7)); c.closePath();
       };
@@ -8600,11 +8609,11 @@
       }
     } else if (SH === 'boxB') {
       // ---- kotak B: muka tegak penuh, kabin lebih tinggi dari badan (bertingkat) ----
-      poly([[15.6, 6.0], [4.35, 6.0], [4.6, 6.4], [15.35, 6.4]], roofG);
+      poly([[15.25, 6.0], [4.35, 6.0], [4.6, 6.4], [14.95, 6.4]], roofG);
       poly([[4.15, 6.4], [-0.6, 6.4], [-0.35, 6.74], [4.4, 6.74]], roofG);
-      poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [4.35, 6.0], [4.15, 6.4], [-0.6, 6.4], [-0.85, 6.18], [-0.85, 1.85]], red);
+      poly([[15.85, 1.85], [15.85, 5.2], [15.8, 5.56], [15.62, 5.83], [15.28, 6.0], [4.35, 6.0], [4.15, 6.4], [-0.6, 6.4], [-0.85, 6.18], [-0.85, 1.85]], red);
       poly([[4.15, 6.4], [-0.6, 6.4], [-0.85, 6.18], [-0.85, 5.92], [4.15, 5.92]], '#2a1a1b');
-      poly([[15.62, 6.0], [4.35, 6.0], [4.35, 5.78], [15.85, 5.78]], '#2a1a1b');
+      poly([[15.28, 6.0], [4.35, 6.0], [4.35, 5.78], [15.68, 5.78]], '#2a1a1b');
       line([[4.1, 6.38], [-0.58, 6.38]], 'rgba(255,255,255,0.3)', 1);
       poly([[-0.85, 6.18], [-0.85, 2.08], [-1.12, 1.98], [-1.12, 6.08]], vgrad(6.2, 2.0, [[0, '#d24237'], [1, '#7e1813']]));
       poly([[-0.6, 6.4], [-0.85, 6.18], [-1.12, 6.08], [-0.87, 6.3]], '#3a2324');
@@ -8620,14 +8629,14 @@
       for (let k = 0; k < 3; k++) line([[-0.86, 4.3 - k * 0.12], [-1.11, 4.24 - k * 0.12]], 'rgba(30,10,10,0.55)', lw(0.04));
     } else if (SH === 'boxC') {
       // ---- kotak C: kabin bermuka miring di belakang moncong pendek bertingkat (gaya lokomotif barang modern) ----
-      poly([[15.6, 6.0], [1.25, 6.0], [1.5, 6.4], [15.35, 6.4]], roofG);
+      poly([[15.25, 6.0], [1.25, 6.0], [1.5, 6.4], [14.95, 6.4]], roofG);
       // badan + kabin + moncong
-      poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [1.25, 6.0], [0.93, 6.12], [0.47, 4.32], [0.35, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]], red);
-      bodySheen(c, V, L(15.85), Y(6.12), 16.7 * ppm, 4.27 * ppm, () => { c.beginPath(); [[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [1.25, 6.0], [0.93, 6.12], [0.47, 4.32], [0.35, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]].forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); }, 0.75);
+      poly([[15.85, 1.85], [15.85, 5.2], [15.8, 5.56], [15.62, 5.83], [15.28, 6.0], [1.25, 6.0], [0.93, 6.12], [0.47, 4.32], [0.35, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]], red);
+      bodySheen(c, V, L(15.85), Y(6.12), 16.7 * ppm, 4.27 * ppm, () => { c.beginPath(); [[15.85, 1.85], [15.85, 5.2], [15.8, 5.56], [15.62, 5.83], [15.28, 6.0], [1.25, 6.0], [0.93, 6.12], [0.47, 4.32], [0.35, 4.26], [-0.25, 4.26], [-0.62, 3.98], [-0.85, 3.55], [-0.85, 1.85]].forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); }, 0.75);
       // visor atap kabin (menjorok ke depan) dengan lampu sorot LED ganda
       poly([[4.2, 6.12], [0.93, 6.12], [0.7, 6.22], [0.77, 6.34], [4.2, 6.34]], '#2a1a1b');
-      poly([[15.62, 6.0], [4.2, 6.0], [4.2, 5.78], [15.85, 5.78]], '#2a1a1b');
-      line([[15.6, 5.98], [1.25, 5.98]], 'rgba(255,255,255,0.3)', 1);
+      poly([[15.28, 6.0], [4.2, 6.0], [4.2, 5.78], [15.68, 5.78]], '#2a1a1b');
+      line([[15.25, 5.98], [1.25, 5.98]], 'rgba(255,255,255,0.3)', 1);
       // muka kabin miring: topeng hitam, kaca depan dua panel, papan nomor menyala
       poly([[0.93, 6.12], [0.47, 4.32], [0.18, 4.3], [0.63, 6.06]], mask);
       poly([[0.85, 5.86], [0.55, 4.66], [0.38, 4.64], [0.67, 5.82]], glass2);
@@ -8653,11 +8662,11 @@
       line([[-0.7, 3.9], [-0.7, 2.9]], '#f2c230', lw(0.05)); line([[-0.42, 4.15], [-0.42, 3.2]], '#f2c230', lw(0.05));
         } else if (BOXY) {
       // ---- versi kotak modern: muka depan hampir tegak, sudut tegas, kaca membungkus sudut kabin ----
-      poly([[15.6, 6.0], [0.05, 6.0], [0.3, 6.4], [15.35, 6.4]], roofG);
-      poly([[15.85, 1.85], [15.85, 5.78], [15.62, 6.0], [0.05, 6.0], [-0.52, 5.9], [-0.82, 2.08], [-0.86, 1.85]], red);
+      poly([[15.25, 6.0], [0.05, 6.0], [0.3, 6.4], [14.95, 6.4]], roofG);
+      poly([[15.85, 1.85], [15.85, 5.2], [15.8, 5.56], [15.62, 5.83], [15.28, 6.0], [0.05, 6.0], [-0.52, 5.9], [-0.82, 2.08], [-0.86, 1.85]], red);
       // atap dua warna: lis gelap di bahu atap
-      poly([[15.62, 6.0], [0.05, 6.0], [-0.52, 5.9], [-0.55, 5.62], [15.85, 5.62], [15.85, 5.78]], '#2a1a1b');
-      line([[15.6, 5.98], [0.06, 5.98], [-0.5, 5.88]], 'rgba(255,255,255,0.3)', 1);
+      poly([[15.28, 6.0], [0.05, 6.0], [-0.52, 5.9], [-0.55, 5.62], [15.79, 5.62], [15.68, 5.78]], '#2a1a1b');
+      line([[15.25, 5.98], [0.06, 5.98], [-0.5, 5.88]], 'rgba(255,255,255,0.3)', 1);
       // muka depan 3/4: bidang tegak dengan sudut tegas
       poly([[-0.52, 5.9], [-0.82, 2.08], [-1.12, 1.98], [-0.84, 5.82]], vgrad(5.9, 2.0, [[0, '#d24237'], [1, '#7e1813']]));
       poly([[-0.52, 5.9], [-0.84, 5.82], [-0.55, 6.02], [0.05, 6.0]], '#3a2324');
@@ -8676,12 +8685,12 @@
       line([[1.4, 5.58], [-0.5, 5.58]], '#fff2c4', lw(0.06));
     } else {
     // atap datar: muka atas sedikit terlihat
-      poly([[15.55, 6.0], [1.2, 6.0], [1.5, 6.38], [15.3, 6.38]], roofG);
+      poly([[15.25, 6.0], [1.2, 6.0], [1.5, 6.38], [14.95, 6.38]], roofG);
       // siluet badan: ujung belakang menyudut, moncong miring ke kaca depan lebar
-      const bodyPts = [[15.85, 1.85], [15.85, 5.65], [15.55, 6.0], [1.2, 6.0], [0.75, 5.78], [-0.3, 3.98], [-0.62, 3.45], [-0.75, 3.0], [-0.75, 1.85]];
+      const bodyPts = [[15.85, 1.85], [15.85, 5.2], [15.8, 5.56], [15.62, 5.83], [15.28, 6.0], [1.2, 6.0], [0.75, 5.78], [-0.3, 3.98], [-0.62, 3.45], [-0.75, 3.0], [-0.75, 1.85]];
       poly(bodyPts, red);
       // sorotan lengkung di bahu atap
-      line([[15.5, 5.93], [1.25, 5.93]], 'rgba(255,255,255,0.35)', 1);
+      line([[15.25, 5.93], [1.25, 5.93]], 'rgba(255,255,255,0.35)', 1);
       // muka depan 3/4 (sedikit terlihat)
       poly([[-0.75, 3.0], [-1.02, 2.88], [-1.02, 1.85], [-0.75, 1.85]], vgrad(3.0, 1.85, [[0, '#b52a22'], [1, '#6e1510']]));
       poly([[-0.62, 3.45], [-0.9, 3.3], [-1.02, 2.88], [-0.75, 3.0]], '#d4473a');
@@ -8752,6 +8761,10 @@
     c.save(); c.beginPath(); band.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); c.clip();
     drawOrnament(c, LOCO_ORN, L(16), L(-1), Y(3.72), Y(2.45), 1.3 * ppm, gold);
     c.restore();
+    }
+    if (!HST2 && LK !== 'hst') { // ujung belakang lokomotif diesel membulat: bayangan lengkung & kilau tepi
+      const eg = c.createLinearGradient(L(15.85), 0, L(15.0), 0); eg.addColorStop(0, 'rgba(0,0,0,0.32)'); eg.addColorStop(0.45, 'rgba(0,0,0,0.08)'); eg.addColorStop(0.7, 'rgba(255,255,255,0.12)'); eg.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = eg; c.fillRect(L(15.85), Y(5.15), 0.85 * ppm, 3.25 * ppm);
     }
     if (ARGO) { /* pita senja sudah digambar */ } else if (SH === 'boxB' || SH === 'boxC') { line([[15.85, 3.79], [-0.85, 3.79]], cream, lw(0.07)); poly([[-0.85, 3.72], [-0.85, 2.45], [-1.12, 2.35], [-1.12, 3.63]], '#160e0d'); }
     else if (BOXY) { line([[15.85, 3.79], [-0.72, 3.79]], cream, lw(0.07)); poly([[-0.73, 3.72], [-0.83, 2.45], [-1.11, 2.35], [-1.01, 3.64]], '#160e0d'); line([[-0.72, 3.79], [-1.0, 3.71]], cream, lw(0.07)); }
