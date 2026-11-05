@@ -6616,9 +6616,15 @@
           c.lineCap = 'butt';
         } else { // pohon hutan besar bertajuk lebar
           const ht = (11 + hash(i + 2) * 6) * ppm;
-          c.fillStyle = mix('#4a3a2c', '#5e4a36', p); c.fillRect(sx - 0.3 * ppm, base - ht * 0.7, 0.6 * ppm, ht * 0.7);
+          // batang menyambung sampai ke dalam tajuk, cabang menopang gumpalan daun (tidak melayang)
+          const bark = mix('#4a3a2c', '#5e4a36', p), ty = base - ht;
+          c.fillStyle = bark; c.beginPath(); c.moveTo(sx - 0.45 * ppm, base); c.lineTo(sx - 0.22 * ppm, ty + 0.6 * ppm); c.lineTo(sx + 0.22 * ppm, ty + 0.6 * ppm); c.lineTo(sx + 0.45 * ppm, base); c.closePath(); c.fill();
+          c.strokeStyle = bark; c.lineWidth = 0.22 * ppm; c.lineCap = 'round'; c.beginPath();
+          c.moveTo(sx, ty + 2.2 * ppm); c.lineTo(sx - 2.4 * ppm, ty + 0.9 * ppm); c.moveTo(sx, ty + 1.8 * ppm); c.lineTo(sx + 2.6 * ppm, ty + 0.8 * ppm); c.stroke(); c.lineCap = 'butt';
+          c.fillStyle = mix('#1c3420', '#28482a', p);
+          [[0, 0.9, 4.0], [-2.6, 1.3, 2.6], [2.8, 1.2, 2.8]].forEach(([dx, dy, r]) => { c.beginPath(); c.ellipse(sx + dx * ppm, ty + dy * ppm, r * ppm, r * 0.5 * ppm, 0, 0, 7); c.fill(); });
           c.fillStyle = col;
-          [[0, 0, 4.2], [-2.6, 0.9, 2.8], [2.8, 0.8, 3]].forEach(([dx, dy, r]) => { c.beginPath(); c.ellipse(sx + dx * ppm, base - ht + dy * ppm, r * ppm, r * 0.62 * ppm, 0, 0, 7); c.fill(); });
+          [[0, 0, 4.2], [-2.6, 0.9, 2.8], [2.8, 0.8, 3]].forEach(([dx, dy, r]) => { c.beginPath(); c.ellipse(sx + dx * ppm, ty + dy * ppm, r * ppm, r * 0.62 * ppm, 0, 0, 7); c.fill(); });
           if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.1 * ppm); c.beginPath(); c.ellipse(sx, base - ht, 4.2 * ppm, 2.6 * ppm, 0, Math.PI * 1.2, Math.PI * 1.9); c.stroke(); c.restore(); }
         }
         continue;
