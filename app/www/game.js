@@ -3277,7 +3277,7 @@
     const scr = $('screenTitle');
     scr.addEventListener('pointermove', (e) => {
       const r = scr.getBoundingClientRect(); TFX.px = e.clientX - r.left; TFX.py = e.clientY - r.top; TFX.near = 1;
-      scr.style.setProperty('--px', ((TFX.px / r.width) * 2 - 1).toFixed(3)); scr.style.setProperty('--py', ((TFX.py / r.height) * 2 - 1).toFixed(3));
+      if (e.pointerType === 'mouse') { scr.style.setProperty('--px', ((TFX.px / r.width) * 2 - 1).toFixed(3)); scr.style.setProperty('--py', ((TFX.py / r.height) * 2 - 1).toFixed(3)); } // paralaks panel hanya untuk mouse (sentuhan: swipe tetap ringan)
     });
     scr.addEventListener('pointerleave', () => { TFX.near = 0; scr.style.setProperty('--px', 0); scr.style.setProperty('--py', 0); });
     scr.addEventListener('pointerdown', (e) => {
@@ -3299,7 +3299,15 @@
     // karcis miring mengikuti jari/kursor, kilau mengikuti posisi
     const list = $('missionList'); let cur = null;
     const untilt = () => { if (cur) { cur.classList.remove('tilt'); cur = null; } };
+    // carousel: geser halus, animasi kartu dijeda saat digeser, tombol panah menggeser satu halaman
+    const cPrev = $('carPrev'), cNext = $('carNext'); let scT = 0;
+    const carUpd = () => { const mx = list.scrollWidth - list.clientWidth - 2; cPrev.classList.toggle('off', list.hidden || list.scrollLeft < 4); cNext.classList.toggle('off', list.hidden || list.scrollLeft > mx); };
+    list.addEventListener('scroll', () => { if (!list.classList.contains('scrolling')) { list.classList.add('scrolling'); untilt(); } clearTimeout(scT); scT = setTimeout(() => list.classList.remove('scrolling'), 140); carUpd(); }, { passive: true });
+    const page = (d) => { const li = list.querySelector('li'); const step = li ? (li.getBoundingClientRect().width + 10) * Math.max(1, Math.floor(list.clientWidth / (li.getBoundingClientRect().width + 10))) : list.clientWidth; list.scrollBy({ left: d * step, behavior: 'smooth' }); };
+    cPrev.addEventListener('click', () => page(-1)); cNext.addEventListener('click', () => page(1));
+    window.addEventListener('resize', carUpd); setInterval(carUpd, 600);
     list.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || list.classList.contains('scrolling')) return; // miring hanya untuk mouse; sentuhan dibiarkan menggeser dengan ringan
       const t = e.target.closest('.ticket'); if (t !== cur) { untilt(); if (t) { cur = t; t.classList.add('tilt'); if (e.pointerType === 'mouse') Sound.uiHover(MISSION_ORDER.indexOf(t.dataset.id) + 1); } }
       if (!t) return; const r = t.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
       t.style.setProperty('--ry', ((nx - 0.5) * 14).toFixed(2) + 'deg'); t.style.setProperty('--rx', ((0.5 - ny) * 10).toFixed(2) + 'deg');
@@ -3741,7 +3749,7 @@
   // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
   const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
     btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
-    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
+    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
   document.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('button, .ticket'); if (!el || el.disabled) return;
     if (el.classList.contains('act')) return;
@@ -9999,8 +10007,10 @@
     if (mode !== 'pause') updateWeather(dt, (S || idleState).v);
     // jaga agar ukuran gambar canvas selalu sama dengan ukuran tampilnya (mencegah kereta tampak gepeng)
     if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(2, window.devicePixelRatio || 1) !== DPR) resize();
-    if (W && H) render(dt);
-    if (mode === 'title') { drawTitleMap(dt); drawTitleFx(dt); }
+    // saat daftar misi digeser: latar menu digambar setengah laju agar swipe tetap ringan
+    const swiping = mode === 'title' && ui.screens.title.querySelector('.tickets.scrolling'); frame.skip = swiping ? !frame.skip : false;
+    if (W && H && !frame.skip) render(dt);
+    if (mode === 'title' && !frame.skip) { drawTitleMap(dt); drawTitleFx(dt); }
     Sound.update(audioInfo());
     if (S && (mode === 'play' || mode === 'pause')) { updateHud(); updateGoalChips(); updateHudFocus(); renderStrip(); }
     if (S && mode === 'play') updateTutorial(dt); else if (ui.coach) ui.coach.hidden = true;
