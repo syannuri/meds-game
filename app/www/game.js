@@ -735,7 +735,80 @@
       bufferStop: 24100,
     },
   };
-  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-1', '2-2', '2-3', '3-1', '3-2'];
+  // Babak 3: kereta cepat generasi pertama Kilat G1 menembus Bukit Barisan, Sumatra
+  MISSIONS['3-3'] = {
+    id: '3-3',
+    chapter: 'Babak 3 · Kereta Cepat Sumatra',
+    title: 'Kilat di Bukit Barisan', nick: 'Kilat Barisan',
+    startClock: 8 * 3600 + 20 * 60,
+    sky: 'dawn', day: true,
+    rain: false,
+    land: 'sawit',
+    tags: ['Kilat G1 · 200 km/h', 'Ngarai & terowongan', 'Kabut pegunungan'],
+    speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
+    driver: { name: 'Anett', initials: 'AN' },
+    brief: 'Anett, jalur kereta cepat pertama di Sumatra dibuka hari ini. Guntur masih bertugas di Jawa, jadi kita bawa Kilat G1, kereta cepat generasi pertama. Ia lebih tua: tarikannya lebih lambat, remnya lebih panjang, dan rem regeneratifnya lebih lemah. Batasnya 200 km/h. Jalurnya menembus Bukit Barisan, melintasi ngarai tinggi dan terowongan panjang. Jemput warga di Lembah Sikai.',
+    weather: 'pagi berkabut di pegunungan, angin lembah',
+    intro: 'Masinis Anett, Kilat G1 siap. Naikkan pantograf dan tutup pintu: Bukit Barisan menunggu.',
+    reward: '<strong>Terbuka:</strong> Lencana Perintis Kereta Cepat Sumatra. Kota Barisan kini 15 menit dari pantai.',
+    aboard: 16,
+    ticket: 'hst',
+    loco: 'hst',
+    route: {
+      lineSpeed: 200,
+      stations: [
+        { name: 'MUARA KELAM BARU', elev: '+40 m', x: 0, sched: 0, waiting: 0, modern: true },
+        { name: 'LEMBAH SIKAI', elev: '+380 m', x: 9800, sched: 1700, waiting: 14, modern: true, travelers: true },
+        { name: 'KOTA BARISAN', elev: '+720 m', x: 22000, sched: 3720, waiting: 10, final: true, modern: true },
+      ],
+      zones: [
+        { from: -120, to: 400, limit: 60, label: 'area Muara Kelam Baru' },
+        { from: 400, to: 1400, limit: 140, label: 'keluar kota' },
+        { from: 4200, to: 5600, limit: 160, label: 'Ngarai Anai · angin lembah', curve: true },
+        { from: 8700, to: 10200, limit: 60, label: 'area Stasiun Lembah Sikai' },
+        { from: 10200, to: 11200, limit: 140, label: 'keluar Lembah Sikai' },
+        { from: 16400, to: 17600, limit: 150, label: 'Lengkung Barisan', curve: true },
+        { from: 20700, to: 22150, limit: 60, label: 'area Kota Barisan' },
+      ],
+      signals: [
+        { id: 'S1', x: 60, start: 0, init: 'R' },
+        { id: 'J1', x: 8600, init: 'G' },
+        { id: 'S2', x: 9860, start: 1, init: 'R' },
+        { id: 'B3', x: 15200, init: 'G' },
+        { id: 'J3', x: 20600, init: 'G' },
+      ],
+      scripts: [
+        { type: 'timed', sig: 'B3', at: 12800, red: 10, yellow: 14, msg: 'Sinyal kabin: B3 MERAH! Ada tanah longsor kecil di lereng, tim sedang memeriksa. Kurangi kecepatan.', yellowMsg: 'B3 kuning. Lewati maks 40 km/h, lalu kembali ke 200.' },
+      ],
+      crossings: [],
+      goats: [],
+      fog: { from: 12200, to: 14600 },
+      bridge: { from: 4300, to: 5500, viaduct: true, name: 'Viaduk Ngarai Anai' },
+      bridges: [
+        { from: 4300, to: 5500, viaduct: true, name: 'Viaduk Ngarai Anai' },
+        { from: 7400, to: 7620, truss: true, name: 'Jembatan Batang Sikai' },
+        { from: 18200, to: 19600, viaduct: true, name: 'Viaduk Lembah Barisan' },
+      ],
+      scenes: [
+        { from: -500, to: 1400, kind: 'city', glass: true },
+        { from: 20600, to: 22600, kind: 'city', glass: true },
+      ],
+      tunnel: { from: 14800, to: 16200, name: 'BARISAN', year: '2032', modern: true },
+      grades: [{ from: 11200, to: 20600, permil: 9, label: 'Tanjakan Barisan' }],
+      switchX: null,
+      brakeBoards: true,
+      hst: true,
+      neutral: [{ from: 6400, to: 6540 }, { from: 15400, to: 15540 }],
+      hints: [
+        { at: 1200, msg: 'Kilat G1 lebih tua dari Guntur: mulai mengerem lebih awal dan ikuti papan REM.' },
+        { at: 3900, msg: 'Viaduk Ngarai Anai di depan: angin lembah kencang, maks 160 km/h.', kind: 'warn' },
+        { at: 11800, msg: 'Kabut pegunungan di depan. Perhatikan sinyal kabin.', kind: 'warn' },
+        { at: 14500, msg: 'Terowongan Barisan 1,4 km. Ada seksi netral di dalamnya: tuas ke N.' },
+      ],
+      bufferStop: 22100,
+    },
+  };
+  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3'];
   // palet khas tiap misi: warna langit (fajar → siang, atau gelap/mendung), dan gradasi warna akhir
   // (soft-light) yang diterapkan ke seluruh dunia game, ditambah kabut lembap untuk Sumatra
   const PALETTES = {
@@ -746,6 +819,7 @@
     '2-2': { night: ['#0d1634', '#26355f', '#475683'], grade: ['rgba(90,120,190,0.2)', 'rgba(40,70,90,0.14)'], mist: true },
     '2-3': { sky: [['#5a6a7e', '#8aa0aa'], ['#d9b48a', '#e6d8b8'], ['#f0d29a', '#f2ead2']], grade: ['rgba(230,180,110,0.2)', 'rgba(120,80,40,0.16)'], mist: true },
     // 3-2: sore keemasan — langit atas biru lembut, tengah amber, cakrawala emas hangat
+    '3-3': { sky: [['#5f7f9a', '#8fb4c8'], ['#b9c6c0', '#d8e4e0'], ['#e9e2c6', '#f2efe0']], grade: ['rgba(140,200,170,0.14)', 'rgba(60,110,80,0.16)'], mist: true },
     '3-2': { sky: [['#5d73ad', '#86a6d4'], ['#f2a868', '#f7cf98'], ['#ffc873', '#ffe4ae']], grade: ['rgba(255,165,80,0.2)', 'rgba(255,205,125,0.14)'] },
     '3-1': { sky: [['#2e2a5e', '#e8875a'], ['#3a2f66', '#f09a5a'], ['#4a3570', '#ffb46a']], grade: ['rgba(255,140,70,0.26)', 'rgba(255,190,110,0.18)'] },
     '2-1': { sky: [['#4a6a6e', '#6a9aa6'], ['#b9b08a', '#cfd9c0'], ['#ead6a4', '#f0ead2']], grade: ['rgba(200,215,170,0.2)', 'rgba(160,70,40,0.2)'], mist: true },
@@ -2492,7 +2566,7 @@
     if (ELEC()) {
       // energi: daya tarik (kW) dan rem regeneratif yang mengembalikan listrik ke jaringan
       if (n > 0 && !powerLocked) S.kwh += (n / 4) * 9600 * clamp(S.v / 8, 0.15, 1) * dt / 3600;
-      if (n < 0 && n > -5 && S.v > 1 && !inNeutral) S.regen += clamp(-(S.aCmd || 0) / 1.2, 0, 1) * 7200 * clamp(S.v / 10, 0, 1) * dt / 3600;
+      if (n < 0 && n > -5 && S.v > 1 && !inNeutral) S.regen += clamp(-(S.aCmd || 0) / 1.2, 0, 1) * (MIS.loco === 'hst' ? 5200 : 7200) * clamp(S.v / 10, 0, 1) * dt / 3600;
     }
     const wet = MIS.rain && !inTunnel(S.x - LOCO_LEN);
     if (S.sandT > 0) S.sandT = Math.max(0, S.sandT - dt);
@@ -2502,10 +2576,11 @@
     // lintas ekspres: kurva daya diesel (tenaga konstan) supaya bisa mencapai 120 km/h; lintas biasa tetap seperti semula
     const EXP = ROUTE.lineSpeed >= 100;
     const HST = !!ROUTE.hst;
-    if (n > 0) target = powerLocked ? 0 : (n * 0.26 * (HST ? Math.min(1.25, 46 / Math.max(1, S.v)) : EXP ? Math.min(1, 14 / Math.max(1, S.v)) : Math.max(0, 1 - S.v / 26))) / massF * (S.wetMotor ? 0.6 : 1);
+    const KIL = MIS.loco === 'hst' ? 0.85 : 1; // Kilat G1 generasi pertama: tarikan & rem 15% lebih lemah
+    if (n > 0) target = powerLocked ? 0 : (n * 0.26 * KIL * (HST ? Math.min(1.25, 46 / Math.max(1, S.v)) : EXP ? Math.min(1, 14 / Math.max(1, S.v)) : Math.max(0, 1 - S.v / 26))) / massF * (S.wetMotor ? 0.6 : 1);
     else if (n === 0) target = 0;
     else if (n === -5) target = (-1.6 * grip) / brakeF;
-    else target = (n * (HST ? 0.3 : 0.25) * grip) / brakeF;
+    else target = (n * (HST ? 0.3 * (KIL < 1 ? 0.88 : 1) : 0.25) * grip) / brakeF;
     // roda selip: tenaga besar di kecepatan rendah saat rel basah
     S.slip = wet && S.sandT <= 0 && n > 0 && !powerLocked && S.v < 6 && target > 0.6;
     if (S.slip) {
@@ -3219,6 +3294,7 @@
     '2-1': { pts: [G.MK, G.T1, G.T2, G.TA], col: '#6fb36a' },
     '3-1': { pts: [G.S, G.C, G.P, G.K, G.W, G.B, G.KB, GEO(113.2, -7.3)].map((p) => off(p, -3)), col: '#ff9a5a' },
     '3-2': { pts: [GEO(106.85, -6.2), GEO(107.25, -6.5), GEO(107.6, -6.9)], col: '#22b6d6' },
+    '3-3': { pts: [G.MK, GEO(103.0, -3.2), GEO(102.35, -2.6)].map((p) => off(p, -3)), col: '#4fd2e8' },
   };
   // [x, y, nama, label di atas(-1)/bawah(1)]
   const MAP_ST = [[...G.D, 'Depo', 1], [...G.S, 'Sukamaju', -1], [...G.A, '', 0], [...G.C, 'Cibening', 1], [...G.P, 'Pasar Lama', -1], [...G.K, 'Kali Jernih', 1], [...G.W, 'Watugede', -1], [...G.B, 'Krajan', 1], [...G.KB, 'Kedung Banteng', -1],
@@ -3237,6 +3313,7 @@
     '2-2': '<path d="M7 22V3"/><path d="M7 5l12-1.5v4L7 9z"/><circle cx="7" cy="13" r="1.6"/><path d="M4 22h6"/>',
     '2-3': '<ellipse cx="12" cy="12" rx="6" ry="9" transform="rotate(35 12 12)"/><path d="M8.6 17.4c3.2-3 .2-7.6 6.8-10.8"/>',
     '3-2': '<path d="M2 15h13l7 3v1H2z"/><path d="M4 21h16M8 19v2M16 19v2"/><path d="M2 11h6M1 8h5"/>',
+    '3-3': '<path d="M2 20l5-8 4 5 4-9 7 12z"/><path d="M3 16h12l5 2v1H3z"/>',
     '3-1': '<path d="M3 14h12l5 3v2H3z"/><path d="M5 14V10h9l3 4"/><path d="M2 21h20M18 9l3-2M18 12l4-1"/>',
     daily: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   };
@@ -3257,6 +3334,7 @@
     '2-3': skyG('b3', '#d9b48a', '#f2ead2') + '<path d="M0 36 L24 18 L44 32 L66 14 L92 30 L120 20 V70 H0z" fill="#7a8a6a"/><path d="M0 46 Q40 38 120 44 V70 H0z" fill="#5a7a42"/><g>' + [10, 28, 46, 98, 114].map((x) => `<circle cx="${x}" cy="54" r="7" fill="#3d6a32"/><circle cx="${x - 3}" cy="52" r="1.3" fill="#d83a2e"/><circle cx="${x + 2}" cy="56" r="1.3" fill="#d83a2e"/><circle cx="${x + 3}" cy="51" r="1.3" fill="#b02a22"/>`).join('') + '</g><rect x="56" y="44" width="34" height="14" rx="1.5" fill="#8a5a3a"/><g fill="#d9c09a"><rect x="59" y="38" width="9" height="7" rx="2"/><rect x="69" y="37" width="9" height="8" rx="2"/><rect x="79" y="38" width="9" height="7" rx="2"/></g><circle cx="62" cy="60" r="2.8" fill="#222"/><circle cx="84" cy="60" r="2.8" fill="#222"/>' + rails(62),
   };
   MIS_ART['3-1'] = skyG('c1', '#3a2f66', '#ffb46a') + '<circle cx="92" cy="40" r="11" fill="#ffe0a0"/><circle cx="92" cy="40" r="20" fill="#ffc070" opacity=".25"/><path d="M0 46 Q30 40 60 44 T120 42 V70 H0z" fill="#6a4a5a"/><rect x="0" y="50" width="120" height="20" fill="#3a2e3a"/>' + rails(52, '#1d1820') + '<g stroke="#fff3d8" stroke-width="1.2" opacity=".55" stroke-linecap="round"><path d="M2 58h22M10 63h30M30 60h18M60 64h26"/></g><path d="M18 38h70l12 8v6H18z" fill="#f3eee1"/><rect x="18" y="46" width="82" height="2" fill="#c8352b"/><g fill="#ffd88a">' + [24, 34, 44, 54, 64, 74].map((x) => `<rect x="${x}" y="40" width="7" height="4" rx=".8"/>`).join('') + '</g><path d="M88 38h4l8 8h-12z" fill="#1e2a33"/><circle cx="100" cy="49" r="1.6" fill="#fff6c4"/><path d="M101 49 L120 45 V53z" fill="#fff6c4" opacity=".35"/>';
+  MIS_ART['3-3'] = skyG('c3', '#7f9fb4', '#e8eee6') + '<path d="M0 44 L14 26 L26 36 L40 18 L56 34 L70 22 L86 36 L100 20 L120 34 V70 H0z" fill="#7f96ac"/><path d="M0 50 L18 36 L34 44 L52 32 L70 44 L90 34 L120 46 V70 H0z" fill="#557a68"/><rect x="0" y="44" width="120" height="6" fill="#e8eee6" opacity=".55"/><path d="M0 56 Q30 50 60 54 T120 52 V70 H0z" fill="#2f5a3c"/><rect x="0" y="40" width="120" height="3" fill="#cfd4d8"/><g fill="#b9bec3">' + [10, 34, 58, 82, 106].map((x) => `<rect x="${x}" y="43" width="3" height="20"/>`).join('') + '</g><path d="M30 33h54l10 4v3H30z" fill="#f4f7fa"/><rect x="30" y="37" width="64" height="2" fill="#1567c4"/><rect x="34" y="34" width="44" height="2" fill="#22303c"/>';
   MIS_ART['3-2'] = skyG('c2', '#6ab8ec', '#e2f4fa') + '<g fill="#8aa8c0" opacity=".7"><rect x="6" y="18" width="8" height="26"/><rect x="16" y="10" width="7" height="34"/><rect x="25" y="22" width="9" height="22"/></g><path d="M0 48 Q30 40 60 46 T120 42 V70 H0z" fill="#7fb85a"/><g stroke="#5f9a3a" stroke-width="1"><path d="M0 56 H120M0 62 H120M20 48 L10 70M50 48 L46 70M80 48 L84 70M108 46 L118 70"/></g><rect x="0" y="40" width="120" height="3" fill="#cfd4d8"/><g fill="#b9bec3">' + [8, 32, 56, 80, 104].map((x) => `<rect x="${x}" y="43" width="3" height="16"/>`).join('') + '</g><g stroke="#f5f7f9" stroke-width="1.4"><path d="M100 14 V40M100 14 l-6 -5M100 14 l7 -2M100 14 l-1 7"/></g><path d="M14 30h76l14 6v4H14z" fill="#ffffff"/><rect x="14" y="36" width="90" height="2.2" fill="#1567c4"/><rect x="18" y="32" width="66" height="2.6" fill="#22303c"/><path d="M90 30h4l10 6h-14z" fill="#11151b"/><g stroke="#fff" stroke-width="1" opacity=".7"><path d="M0 34h10M2 38h8"/></g>';
   const misArt = (id) => MIS_ART[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid slice">${MIS_ART[id]}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
@@ -3464,7 +3542,7 @@
     c.fillStyle = '#2a2f33'; c.beginPath(); c.ellipse(w / 2, gy + 6, w * 0.46, h * 0.1, 0, 0, 7); c.fill();
     c.fillStyle = '#7d8487'; c.fillRect(w * 0.06, gy - 2, w * 0.88, 2); c.fillStyle = '#a3a9ab'; c.fillRect(w * 0.06, gy + 2, w * 0.88, 2);
     // lokomotif terpilih dari samping, digambar dengan fungsi kereta di game
-    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Ekspres 120 km/h · Livery Senja · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · Livery Biru Toska · katalog'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'] };
+    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Ekspres 120 km/h · Livery Senja · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · 200 km/h · misi 3-3'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'] };
     const AG = titleMap.loco !== 'cakra';
     const V = { c, ppm, gy, X: (wx) => w / 2 + (wx - 9) * ppm, st: { x: 18, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0, rimA: 0.35, rim: '#ffcf8a', refl: 0.15, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
     const keep = [N_COACH]; N_COACH = 0; LOCO_FORCE = AG ? titleMap.loco : 'none';
@@ -3608,7 +3686,7 @@
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
-      ${(() => { const d = m.driver || DRIVER; return `<dt>Masinis</dt><dd class="drv"><span class="drvpic">${PORTRAIT(d.initials) || ''}</span>${d.name}</dd>`; })()}<dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat Nusantara KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
+      ${(() => { const d = m.driver || DRIVER; return `<dt>Masinis</dt><dd class="drv"><span class="drvpic">${PORTRAIT(d.initials) || ''}</span>${d.name}</dd>`; })()}<dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat G1 KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
@@ -7719,7 +7797,7 @@
     if (!ROUTE.brakeBoards) return [];
     if (ROUTE._bb) return ROUTE._bb;
     const v1 = ROUTE.lineSpeed / 3.6, out = [];
-    const dist = (vt) => (v1 * v1 - vt * vt) / (2 * (ROUTE.hst ? 0.75 : 0.55));
+    const dist = (vt) => (v1 * v1 - vt * vt) / (2 * (ROUTE.hst ? (MIS.loco === 'hst' ? 0.66 : 0.75) : 0.55));
     ROUTE.zones.forEach((z) => { if (z.from > 400 && z.limit <= ROUTE.lineSpeed - 30) out.push({ x: z.from - dist(z.limit / 3.6), to: z.limit, kind: 'zone' }); });
     ROUTE.stations.slice(1).forEach((st2) => { out.push({ x: st2.x - 250 - dist(40 / 3.6), to: 0, kind: 'stop' }); });
     return (ROUTE._bb = out);
