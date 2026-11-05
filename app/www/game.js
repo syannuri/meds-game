@@ -2095,6 +2095,27 @@
   }
 
   // radio di langit atas, tersusun di bawah toast/panel henti presisi agar tidak menutupi kereta
+  // kartu pos: pilih posisi yang tidak menutupi kereta, chip sasaran, radio atau tombol
+  function placePostcard() {
+    const el = $('postcard'); if (!el || el.hidden) return;
+    const w = el.offsetWidth, h = el.offsetHeight, top0 = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0), M = 10;
+    const blocks = [];
+    if (trainScr && viewMode !== 'cab') blocks.push({ l: trainScr.x0 - 8, r: trainScr.x1 + 8, t: trainScr.top - 14, b: trainScr.bottom + 8 });
+    for (const q of [$('goalChips'), $('radio'), document.querySelector('.hud-top'), document.querySelector('.cluster'), $('lever'), ui.toast]) {
+      if (!q || q.hidden || q.offsetParent === null) continue; const r = q.getBoundingClientRect(); if (r.width && r.height) blocks.push({ l: r.left - 6, r: r.right + 6, t: r.top - 6, b: r.bottom + 6 });
+    }
+    const lv = $('lever'), rx = lv && lv.offsetParent !== null ? lv.getBoundingClientRect().left - 8 : window.innerWidth - 96;
+    const cands = [[rx - w, 58 + top0], [rx - w, (trainScr ? trainScr.top : H * 0.45) - h - 16], [W * 0.5 - w / 2, 58 + top0], [M + 2, (trainScr ? trainScr.top : H * 0.45) - h - 16], [rx - w, H * 0.36]];
+    let best = null, bestA = Infinity;
+    for (const [x, y] of cands) {
+      const R = { l: x, r: x + w, t: Math.max(top0 + 4, y), b: Math.max(top0 + 4, y) + h };
+      let a = 0; for (const B of blocks) a += Math.max(0, Math.min(R.r, B.r) - Math.max(R.l, B.l)) * Math.max(0, Math.min(R.b, B.b) - Math.max(R.t, B.t));
+      if (a < bestA - 1) { bestA = a; best = R; } if (a === 0) break;
+    }
+    if (!best) return;
+    const lx = Math.round(best.l) + 'px', ly = Math.round(best.t) + 'px';
+    if (el.style.left !== lx || el.style.top !== ly) { el.style.left = lx; el.style.top = ly; el.style.right = 'auto'; }
+  }
   function placeRadio() {
     const el = $('radio'), top0 = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0);
     let y = 54 + top0;
@@ -10073,7 +10094,7 @@
       for (const pp of idleState.smoke) { pp.life += dt; pp.x += pp.vx * dt; pp.y += pp.vy * dt; pp.r += pp.grow * dt; }
       idleState.smoke = idleState.smoke.filter((pp) => pp.life < pp.max);
     }
-    if (pcTimer > 0) { pcTimer -= dt; const pc = $('postcard'); if (pcTimer <= 0.5) pc.classList.add('out'); if (pcTimer <= 0 || mode !== 'play') { pc.hidden = true; pcTimer = 0; } }
+    if (pcTimer > 0) { placePostcard(); pcTimer -= dt; const pc = $('postcard'); if (pcTimer <= 0.5) pc.classList.add('out'); if (pcTimer <= 0 || mode !== 'play') { pc.hidden = true; pcTimer = 0; } }
     if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) ui.toast.className = ''; }
     if (radioTimer > 0 && mode === 'play') { radioTimer -= dt; if (radioTimer <= 0) $('radio').hidden = true; }
     if (!$('radio').hidden) {
