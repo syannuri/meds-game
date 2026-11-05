@@ -4178,10 +4178,18 @@
     for (let d = 1.2; d < FAR; d += Math.max(0.6, d * 0.035)) steps.push(d);
     steps.push(FAR);
     const onB = (d) => inBrW(x0 + d);
+    const brAt = (d) => CAB_BRS.find((b) => x0 + d > b.from && x0 + d < b.to);
+    // lebar lantai jembatan sampai ke dinding/rangka: tidak ada celah ke sungai/sawah di sisi rel
+    const deckW = (b) => !b ? 2.3 : b.viaduct ? 2.95 : b.truss ? 3.4 : b.wood ? 2.5 : 4.0;
     for (let i = steps.length - 2; i >= 0; i--) {
       const a = steps[i], b = steps[i + 1];
-      const deck = onB((a + b) / 2);
+      const Bk = brAt((a + b) / 2), deck = !!Bk, dw = deckW(Bk);
       const col = inTun ? '#24221f' : deck ? (night ? '#2a3038' : '#4a535a') : mix('#8d8275', '#a59a8c', p);
+      if (deck) { // lantai beton/baja jembatan selebar struktur, dengan lis tepi terang
+        quad(W3(a, -dw, -0.05), W3(a, dw, -0.05), W3(b, dw, -0.05), W3(b, -dw, -0.05), Bk.viaduct ? (night ? '#4a4e58' : mix('#a39e94', '#bdb8ae', p)) : Bk.truss ? (night ? '#3a414a' : '#5a646c') : (night ? '#3a3f48' : '#8a9096'));
+        quad(W3(a, -dw, -0.04), W3(a, -dw + 0.18, -0.04), W3(b, -dw + 0.18, -0.04), W3(b, -dw, -0.04), 'rgba(255,255,255,0.18)');
+        quad(W3(a, dw - 0.18, -0.04), W3(a, dw, -0.04), W3(b, dw, -0.04), W3(b, dw - 0.18, -0.04), 'rgba(255,255,255,0.18)');
+      }
       quad(W3(a, -2.3, 0), W3(a, 2.3, 0), W3(b, 2.3, 0), W3(b, -2.3, 0), col);
     }
     // tekstur batu balas yang bergerak mendekat
@@ -4442,7 +4450,7 @@
         // viaduk beton: dinding pengaman rendah di kedua sisi + tiang lampu, tanpa struktur di atas
         for (let wx = Br.to; wx > Br.from; wx -= 6) {
           const d = wx - x0, e = Math.max(1.2, d - 6); if (d < 1.5 || d > FAR) continue;
-          add(d, () => [-2.7, 2.7].forEach((o) => {
+          add(d, () => [-2.95, 2.95].forEach((o) => {
             const a0 = W3(d, o, 0), a1 = W3(d, o, 1.0), b1 = W3(e, o, 1.0), b0 = W3(e, o, 0);
             quad(a0, a1, b1, b0, night ? '#4a4e58' : mix('#a9a49a', '#cfcac0', p));
             if (a1 && b1) { c.strokeStyle = night ? '#6a6e78' : '#e6e1d6'; c.lineWidth = capW(a1.k, 0.12); c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(b1.x, b1.y); c.stroke(); }
@@ -4457,14 +4465,14 @@
           const k = Math.round((wx - Br.from) / P);
           add(d, () => {
             const col = night ? '#5b6676' : '#7d8a94';
-            [-3.2, 3.2].forEach((o) => {
-              const e0 = W3(Math.max(1.2, e), o, 0.6), e1 = W3(Math.max(1.2, e), o, TH), d0 = W3(d, o, 0.6), d1 = W3(d, o, TH);
+            [-3.35, 3.35].forEach((o) => {
+              const e0 = W3(Math.max(1.2, e), o, 0.0), e1 = W3(Math.max(1.2, e), o, TH), d0 = W3(d, o, 0.0), d1 = W3(d, o, TH);
               if (!d0 || !d1) return; c.strokeStyle = col; c.lineWidth = capW(d0.k, 0.28);
               c.beginPath(); c.moveTo(d0.x, d0.y); c.lineTo(d1.x, d1.y); // tiang tegak
               if (e0 && e1) { c.moveTo(d1.x, d1.y); c.lineTo(e1.x, e1.y); c.moveTo(d0.x, d0.y); c.lineTo(e0.x, e0.y); if (k % 2) { c.moveTo(d0.x, d0.y); c.lineTo(e1.x, e1.y); } else { c.moveTo(d1.x, d1.y); c.lineTo(e0.x, e0.y); } }
               c.stroke();
             });
-            const l = W3(d, -3.2, TH), r = W3(d, 3.2, TH);
+            const l = W3(d, -3.35, TH), r = W3(d, 3.35, TH);
             if (l && r) { c.strokeStyle = night ? '#4a5462' : '#6c7882'; c.lineWidth = capW(l.k, 0.22); c.beginPath(); c.moveTo(l.x, l.y); c.lineTo(r.x, r.y); c.stroke(); }
           });
         }
