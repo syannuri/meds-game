@@ -8213,6 +8213,21 @@
     c.save(); c.beginPath(); c.rect(-60, -H, W + 120, yP + H); c.clip();
     c.translate(0, yP); c.scale(1, VS); c.translate(0, -yP); drawTrainRaw(Object.assign({}, V, { upper: true })); c.restore();
   }
+  // rok bogie grafit Argo Senja: panel gelap bergaris jingga senja, kisi ventilasi motor traksi,
+  // tepi bawah melengkung di atas tiap bogie sehingga separuh bawah roda tetap terlihat
+  function senjaSkirt(c, x, w, Y, ppm, bogies, loco) {
+    const top = Y(1.72), bot = Y(loco ? 0.72 : 0.66);
+    const g = c.createLinearGradient(0, top, 0, bot); g.addColorStop(0, '#4a4f57'); g.addColorStop(0.55, '#2c3036'); g.addColorStop(1, '#1b1e22');
+    c.fillStyle = g; c.beginPath(); c.moveTo(x, top); c.lineTo(x + w, top); c.lineTo(x + w, bot);
+    const bs = bogies.slice().sort((a, b) => b[0] - a[0]);
+    for (const [bx, bw] of bs) { c.lineTo(bx + bw + 0.2 * ppm, bot); c.quadraticCurveTo(bx + bw / 2, bot - 0.32 * ppm, bx - 0.2 * ppm, bot); }
+    c.lineTo(x, bot); c.closePath(); c.fill();
+    c.fillStyle = '#f0743a'; c.fillRect(x, top, w, Math.max(1, 0.1 * ppm));
+    c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(x, top + 0.1 * ppm, w, 1);
+    c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1; c.beginPath();
+    for (const [bx, bw] of bogies) for (let q = 0.25; q < bw / ppm - 0.2; q += 0.28) { c.moveTo(bx + q * ppm, top + 0.3 * ppm); c.lineTo(bx + q * ppm, top + 0.62 * ppm); }
+    c.stroke();
+  }
   function drawTrainRaw(V) {
     const { c, ppm, gy, X, st } = V;
     const fx = X(st.x);
@@ -8264,7 +8279,7 @@
     c.restore();
 
     // ---- gerbong stainless ----
-    const HST2C = MIS.loco === 'hst2', ARGOC = MIS.loco === 'argo' || MIS.loco === 'hst' || HST2C, HSTC = MIS.loco === 'hst';
+    const HST2C = MIS.loco === 'hst2', ARGOC = MIS.loco === 'argo' || MIS.loco === 'hst' || HST2C, HSTC = MIS.loco === 'hst', SENJAC = MIS.loco === 'argo';
     const steel = ARGOC ? vgrad(4.85, 1.0, [[0, '#ffffff'], [0.35, '#efede9'], [0.8, '#c8cbd1'], [1, '#9aa0a8']]) : vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
     const glass = vgrad(4.35, 2.95, [[0, '#3b5263'], [0.5, '#1d2b36'], [1, '#121b23']]);
     const roofTop = vgrad(6.55, 6.05, [[0, '#f1f4f5'], [1, '#c7cfd3']]);
@@ -8286,10 +8301,16 @@
           cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
           c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(5.75)); c.quadraticCurveTo(mid, Y(6.12), mid + sw / 2, Y(5.75)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
           c.fillStyle = '#1a1d21'; c.fillRect(mid - sw * 0.7, Y(0.85), sw * 1.4, 0.55 * ppm); }
+      } else if (SENJAC) { // sambungan karet berlipat setinggi badan (gaya kereta diesel ekspres): rapat, tapi tetap terlihat berlipat
+        const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0;
+        c.fillStyle = vgrad(4.85, 0.7, [[0, '#3a3e44'], [0.5, '#24272b'], [1, '#16181b']]); c.fillRect(g0 - 0.25 * ppm, Y(4.85), gw + 0.5 * ppm, 4.15 * ppm);
+        c.fillStyle = vgrad(6.08, 4.85, [[0, '#d9dde2'], [1, '#9aa0a8']]); c.fillRect(g0 - 0.4 * ppm, Y(6.05), gw + 0.8 * ppm, 1.2 * ppm);
+        c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1; c.beginPath(); for (let q = 0.1; q < GAP + gd; q += 0.2) { c.moveTo(L(F - q), Y(4.75)); c.lineTo(L(F - q), Y(0.85)); } c.stroke();
+        c.fillStyle = '#f0743a'; c.fillRect(g0 - 0.25 * ppm, Y(2.75), gw + 0.5 * ppm, 0.12 * ppm);
       } else box(F - GAP - gd, F, 1.25, 4.6, '#1b1e21');
-      c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
+      if (!SENJAC) { c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
       for (let q = 0.2; q < GAP + gd; q += 0.3) { c.moveTo(L(F - q), Y(4.5)); c.lineTo(L(F - q), Y(1.35)); }
-      c.stroke();
+      c.stroke(); }
       // rangka bawah, peralatan, bogie
       box(u(220), u(20), 0.62, 1.02, '#191c1f');
       c.fillStyle = vgrad(1.02, 0.3, [[0, '#30363b'], [1, '#1d2125']]);
@@ -8351,6 +8372,7 @@
         c.strokeStyle = '#ffd27a'; c.lineWidth = Math.max(1, 0.04 * ppm); c.beginPath(); for (let q = 0; q < 5; q++) { const a = Math.PI * (1.1 + q * 0.2); c.moveTo(lx + Math.cos(a) * rr * 1.35, ly + rr * 0.35 + Math.sin(a) * rr * 1.35); c.lineTo(lx + Math.cos(a) * rr * 1.75, ly + rr * 0.35 + Math.sin(a) * rr * 1.75); } c.stroke();
         c.fillStyle = '#fff6e6'; c.font = `italic 800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
         c.fillText(HSTC ? 'KILAT NUSANTARA · BISNIS' : 'ARGO SENJA · EKSEKUTIF', lx + rr * 2.2, ly + 0.02 * ppm);
+        if (SENJAC) senjaSkirt(c, sx0(0, 240), sw0(0, 240), Y, ppm, [[30, 82], [158, 210]].map(([a, b]) => [sx0(a, b), sw0(a, b)]));
       } else {
         box(u(240), u(0), 2.27, 2.6, '#f2a516');
         box(u(240), u(0), 2.0, 2.22, '#1f6f6d');
@@ -8397,7 +8419,7 @@
         if (op < 0.01) line([[u(d0 + 10), 4.5], [u(d0 + 10), 1.2]], 'rgba(90,100,108,0.6)', 1);
         box(u(d0 + 18), u(d0 + 2), 0.75, 0.95, '#3a4045');
       }
-      c.fillStyle = '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.5 * ppm))}px "Plus Jakarta Sans", sans-serif`;
+      c.fillStyle = SENJAC ? '#e9c26a' : '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.5 * ppm))}px "Plus Jakarta Sans", sans-serif`;
       c.textAlign = 'left'; c.textBaseline = 'middle';
       c.fillText(HST2C ? `GT · 0${k + 1}` : HSTC ? `KN · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
       if (rimOn) {
@@ -8566,6 +8588,15 @@
       // garis LED tipis mengikuti lengkung bawah visor (lampu siang)
       c.strokeStyle = '#fff4d2'; c.lineWidth = lw(0.06); c.beginPath(); c.moveTo(...P(-0.5, 3.45)); c.bezierCurveTo(...P(0.4, 3.55), ...P(1.6, 3.9), ...P(2.6, 4.12)); c.stroke();
       c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(255,220,150,0.3)'; c.lineWidth = lw(0.22); c.beginPath(); c.moveTo(...P(-0.5, 3.45)); c.bezierCurveTo(...P(0.4, 3.55), ...P(1.6, 3.9), ...P(2.6, 4.12)); c.stroke(); c.restore();
+      if (LK === 'argo') {
+        // ciri diesel: kisi radiator berlapis di sisi belakang ruang mesin
+        const gx = L(14.6), gw = 3.1 * ppm, gy0 = Y(4.75), gh = 1.05 * ppm;
+        c.fillStyle = '#1a1d21'; roundRect(c, gx, gy0, gw, gh, 0.12 * ppm); c.fill();
+        c.strokeStyle = 'rgba(190,198,206,0.55)'; c.lineWidth = 1; c.beginPath(); for (let q = 0.12; q < 3.05; q += 0.16) { c.moveTo(gx + q * ppm, gy0 + 0.1 * ppm); c.lineTo(gx + q * ppm, gy0 + gh - 0.1 * ppm); } c.stroke();
+        c.strokeStyle = '#d8dde3'; c.lineWidth = lw(0.03); roundRect(c, gx, gy0, gw, gh, 0.12 * ppm); c.stroke();
+        // rok bogie grafit: menutup bagian atas roda, roda bawah tetap terlihat (berbeda dari Guntur yang tertutup penuh)
+        senjaSkirt(c, L(15.6), 16.3 * ppm, Y, ppm, [[L(15.0), 5.7 * ppm], [L(6.4), 5.7 * ppm]], true);
+      }
     } else if (SH === 'boxB') {
       // ---- kotak B: muka tegak penuh, kabin lebih tinggi dari badan (bertingkat) ----
       poly([[15.6, 6.0], [4.35, 6.0], [4.6, 6.4], [15.35, 6.4]], roofG);
@@ -8729,6 +8760,11 @@
       // atap bersih: fairing aerodinamis menutup AC, knalpot, dan kipas
       c.fillStyle = vgrad(6.6, 6.18, [[0, '#f4f5f7'], [1, '#b8bdc4']]); c.beginPath(); c.moveTo(L(15.0), Y(6.2)); c.lineTo(L(15.0), Y(6.42)); c.quadraticCurveTo(L(14.6), Y(6.62), L(13.8), Y(6.62)); c.lineTo(L(7.6), Y(6.62)); c.quadraticCurveTo(L(6.2), Y(6.6), L(5.4), Y(6.2)); c.closePath(); c.fill();
       line([[14.0, 6.6], [7.6, 6.6]], 'rgba(255,255,255,0.8)', lw(0.03)); c.fillStyle = '#1b1f24'; c.fillRect(L(9.4), Y(6.66), 0.7 * ppm, 0.08 * ppm);
+      if (LK === 'argo') { // cerobong knalpot diesel menonjol dari fairing atap, sedikit gosong
+        c.fillStyle = vgrad(6.95, 6.6, [[0, '#2a2e33'], [1, '#4a5057']]); roundRect(c, L(8.75), Y(6.95), 0.9 * ppm, 0.38 * ppm, 0.12 * ppm); c.fill();
+        c.fillStyle = '#0b0c0e'; c.beginPath(); c.ellipse(L(8.3), Y(6.95), 0.36 * ppm, 0.09 * ppm, 0, 0, 7); c.fill();
+        c.fillStyle = 'rgba(40,36,34,0.35)'; c.beginPath(); c.ellipse(L(8.3), Y(6.62), 1.0 * ppm, 0.07 * ppm, 0, 0, 7); c.fill();
+      }
     } else {
     // perlengkapan atap: unit AC kabin, klakson, cerobong knalpot diesel, kipas radiator, antena
     { const acY = SH === 'boxB' ? 0.36 : 0; if (SH === 'boxC') { c.fillStyle = vgrad(6.75, 6.4, [[0, '#a3abb1'], [1, '#6a7378']]); roundRect(c, L(6.6), Y(6.75), 1.8 * ppm, 0.35 * ppm, 0.1 * ppm); c.fill(); } else c.fillStyle = vgrad(6.85 + acY, 6.38 + acY, [[0, '#a3abb1'], [1, '#6a7378']]); roundRect(c, L(3.9), Y(6.8 + acY), 2.2 * ppm, 0.45 * ppm, 0.12 * ppm); c.fill(); }
