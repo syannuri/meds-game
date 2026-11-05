@@ -120,7 +120,7 @@ Gambar ada di `docs/play-store/`:
 > Rute baru setiap hari, raih bintang untuk naik pangkat dari Asisten Masinis hingga Masinis Utama, dan
 > buka livery batik untuk Cakra.
 >
-> Tanpa iklan, tanpa pembelian dalam aplikasi, dan bisa dimainkan tanpa internet.
+> Tersedia dalam Bahasa Indonesia dan bahasa Inggris. Tanpa iklan, tanpa pembelian dalam aplikasi, dan bisa dimainkan tanpa internet.
 
 **Kategori**: Game → Simulasi · **Tag**: Kereta, Simulasi, Mengemudi
 
@@ -128,6 +128,56 @@ Gambar ada di `docs/play-store/`:
 
 > Rilis perdana Rel Nusantara: 13 misi di Jawa dan Sumatra, kereta diesel hingga kereta cepat, tampilan
 > kabin, rute harian, dan kartu pos Nusantara.
+
+### Terjemahan bahasa Inggris (en-US)
+
+Di Play Console: **Main store listing → Manage translations → Add your own translations → English (United States)**.
+
+**App name**
+
+> Rel Nusantara: Train Driver
+
+**Short description**
+
+> Drive diesel locomotives up to 250 km/h high-speed trains across Java & Sumatra.
+
+**Full description**
+
+> Become a train driver on Rel Nusantara! Take Cakra, a beloved diesel locomotive, through rice fields, forests and
+> towns across Java and Sumatra, then work your way up to driving the 250 km/h Guntur high-speed train.
+>
+> 🚆 13 STORY MISSIONS
+> From your first steps at the depot to a high-speed line through the Bukit Barisan mountains. Carry market traders
+> on a foggy morning, battle heavy rain and wet points, race the homecoming bus, haul coal in Sumatra, and speed along
+> an elevated line above the rice fields.
+>
+> 🎛️ DRIVE LIKE A REAL TRAIN DRIVER
+> Work the power and brake lever, read signals and speed boards, sound the horn at level crossings, and stop right
+> on the platform marker. Keep your passengers comfortable: smooth acceleration and braking matter.
+>
+> ⚡ FIVE TRAINS, FIVE FEELS
+> • Cakra, a CC diesel with batik liveries
+> • Agraveda, the 120 km/h Argo Senja express locomotive
+> • Guntur GT 6001, a 250 km/h electric high-speed train
+> • Kilat G1, Sumatra's first-generation high-speed train
+> Electric trains have a pantograph, neutral sections and regenerative braking that feeds energy back.
+>
+> 👁️ TWO POINTS OF VIEW
+> A cinematic side view or the full driver's cab with analogue and digital dashboards and a HUD.
+>
+> 🌅 A LIVING NUSANTARA
+> Dawn, golden dusk, starry nights, rain and fog. Heritage stations, rumah gadang, temples, volcanoes, oil palm
+> estates and modern cities. Collect postcards from the places you pass.
+>
+> 🏅 DAILY ROUTES & DRIVER RANKS
+> A new route every day. Earn stars to rise from Assistant Driver to Chief Driver and unlock batik liveries for Cakra.
+>
+> Available in English and Bahasa Indonesia. No ads, no in-app purchases, and fully playable offline.
+
+**Release notes 1.0.0**
+
+> First release of Rel Nusantara: 13 missions across Java and Sumatra, diesel to high-speed trains, cab view, daily
+> routes, Nusantara postcards, in English and Bahasa Indonesia.
 
 ## Memperbarui aplikasi
 

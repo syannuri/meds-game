@@ -1,3 +1,4 @@
+if (window.RN_i18n) window.RN_i18n.walk(document.getElementById('splash'));
 (function(){ // layar pembuka: kemajuan muat + ketuk untuk mulai
   var P=0, msgs=['Membuka depo Sukamaju…','Memanaskan mesin Cakra…','Memeriksa sinyal…','Menyiapkan rute…'];
   window.__splash={set:function(p,m){P=Math.max(P,p);var f=document.querySelector('#splash .sp-fill'),t=document.querySelector('#splash .sp-train'),g=document.querySelector('#splash .sp-msg');
