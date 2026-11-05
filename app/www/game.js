@@ -8657,7 +8657,9 @@
     c.restore();
 
     // ---- gerbong stainless ----
-    const HST2C = MIS.loco === 'hst2', ARGOC = MIS.loco === 'argo' || MIS.loco === 'hst' || HST2C, HSTC = MIS.loco === 'hst', SENJAC = MIS.loco === 'argo';
+    // Kilat G1 memakai bentuk rangkaian Guntur (rok bogie penuh, sambungan rapat) dengan warna biru toska khasnya
+    const HST2C = MIS.loco === 'hst2' || MIS.loco === 'hst', ARGOC = MIS.loco === 'argo' || HST2C, HSTC = MIS.loco === 'hst', SENJAC = MIS.loco === 'argo';
+    let ACC = HSTC ? '#1567c4' : '#d4202b', ACC2 = HSTC ? '#22b6d6' : null;
     const steel = ARGOC ? vgrad(4.85, 1.0, [[0, '#ffffff'], [0.35, '#efede9'], [0.8, '#c8cbd1'], [1, '#9aa0a8']]) : vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
     const glass = vgrad(4.35, 2.95, [[0, '#3b5263'], [0.5, '#1d2b36'], [1, '#121b23']]);
     const roofTop = vgrad(6.55, 6.05, [[0, '#f1f4f5'], [1, '#c7cfd3']]);
@@ -8682,7 +8684,7 @@
       } else if (HST2C) { // penutup sambungan menyatu ala kereta cepat Eropa
         { const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0, mid = (g0 + g1) / 2;
           c.fillStyle = vgrad(4.85, 0.35, [[0, '#f4f5f7'], [0.8, '#b9bfc6'], [1, '#8c939b']]); c.fillRect(g0, Y(4.85), gw, 4.5 * ppm); // ujung menyambung hampir rapat
-          c.fillStyle = '#0c0f13'; c.fillRect(g0, Y(4.55), gw, 1.7 * ppm); c.fillStyle = '#d4202b'; c.fillRect(g0, Y(2.72), gw, 0.2 * ppm);
+          c.fillStyle = '#0c0f13'; c.fillRect(g0, Y(4.55), gw, 1.7 * ppm); c.fillStyle = ACC; c.fillRect(g0, Y(2.72), gw, 0.2 * ppm);
           c.fillStyle = vgrad(6.08, 4.85, [[0, '#eef0f2'], [1, '#b4bac1']]); c.fillRect(g0 - 0.6 * ppm, Y(6.08), gw + 1.2 * ppm, 1.25 * ppm); // atap menyambung tanpa celah
           const sw = Math.max(3, 0.34 * ppm), cg = c.createLinearGradient(mid - sw / 2, 0, mid + sw / 2, 0);
           cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
@@ -8735,10 +8737,16 @@
         const sx0 = (a, b) => Math.min(L(u(a)), L(u(b))), sw0 = (a, b) => Math.abs(L(u(a)) - L(u(b)));
         c.fillStyle = '#0c0f13'; c.fillRect(sx0(0, 240), Y(4.55), sw0(0, 240), 1.7 * ppm);
         line([[u(240), 4.6], [u(0), 4.6]], 'rgba(215,220,226,0.8)', lw(0.03));
-        c.fillStyle = '#d4202b'; c.fillRect(sx0(0, 240), Y(2.72), sw0(0, 240), 0.2 * ppm);
+        c.fillStyle = ACC; c.fillRect(sx0(0, 240), Y(2.72), sw0(0, 240), 0.2 * ppm);
+        if (ACC2) { // Kilat: pita biru → toska lebar bergaris tipis dan tulisan, warna asli Kilat G1
+          const kg = c.createLinearGradient(sx0(0, 240), 0, sx0(0, 240) + sw0(0, 240), 0); kg.addColorStop(0, '#0b2f6e'); kg.addColorStop(0.5, '#1567c4'); kg.addColorStop(1, '#22b6d6');
+          c.fillStyle = kg; c.fillRect(sx0(0, 240), Y(2.7), sw0(0, 240), 0.72 * ppm);
+          c.fillStyle = 'rgba(255,255,255,0.55)'; c.fillRect(sx0(0, 240), Y(1.98), sw0(0, 240), Math.max(1, 0.04 * ppm));
+          c.fillStyle = '#eafcff'; c.font = `italic 800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
+          c.fillText('KILAT NUSANTARA · BISNIS', sx0(0, 240) + sw0(0, 240) * 0.34, Y(2.34)); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
         c.fillStyle = '#8a959f'; c.fillRect(sx0(0, 240), Y(3.0), sw0(0, 240), 0.06 * ppm);
         const gx0 = sx0(0, 240) - GAP * ppm; if (k < N_COACH - 1) { c.fillStyle = vgrad(4.85, 1.0, [[0, '#f4f5f7'], [1, '#a9afb6']]); c.fillRect(gx0, Y(4.85), GAP * ppm + 1, 3.85 * ppm);
-        c.fillStyle = '#0c0f13'; c.fillRect(gx0, Y(4.55), GAP * ppm + 1, 1.7 * ppm); c.fillStyle = '#d4202b'; c.fillRect(gx0, Y(2.72), GAP * ppm + 1, 0.2 * ppm);
+        c.fillStyle = '#0c0f13'; c.fillRect(gx0, Y(4.55), GAP * ppm + 1, 1.7 * ppm); c.fillStyle = ACC; c.fillRect(gx0, Y(2.72), GAP * ppm + 1, 0.2 * ppm);
         c.strokeStyle = 'rgba(80,88,96,0.35)'; c.lineWidth = 1; c.beginPath(); c.moveTo(gx0, Y(4.85)); c.lineTo(gx0, Y(1.0)); c.moveTo(gx0 + GAP * ppm, Y(4.85)); c.lineTo(gx0 + GAP * ppm, Y(1.0)); c.stroke(); }
         // rok bogie penuh: roda hampir tak terlihat, rangkaian tampak mulus
         c.fillStyle = vgrad(1.7, 0.32, [[0, '#e4e7eb'], [0.7, '#aab0b8'], [1, '#6c737b']]); c.fillRect(sx0(0, 240), Y(1.7), sw0(0, 240), 1.38 * ppm);
@@ -8796,7 +8804,7 @@
           c.fillStyle = steel; c.fillRect(lx, Y(4.55), dw, 3.4 * ppm);
           c.fillStyle = '#0c0f13'; c.fillRect(lx, Y(4.55), dw, 0.05 * ppm);
           c.fillStyle = '#10141a'; c.beginPath(); c.ellipse(lx + dw / 2, Y(3.55), dw * 0.16, 0.75 * ppm, 0, 0, 7); c.fill();
-          c.fillStyle = '#d4202b'; c.fillRect(lx, Y(2.72), dw, 0.2 * ppm);
+          c.fillStyle = ACC; c.fillRect(lx, Y(2.72), dw, 0.2 * ppm);
           c.strokeStyle = 'rgba(90,98,106,0.45)'; c.lineWidth = 1; c.strokeRect(lx + 0.06 * ppm, Y(4.5), dw - 0.12 * ppm, 3.3 * ppm);
         } else {
         c.fillStyle = steel; c.fillRect(lx, Y(4.55), dw, 3.4 * ppm);
@@ -8808,7 +8816,7 @@
       }
       c.fillStyle = SENJAC ? '#e9c26a' : '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.5 * ppm))}px "Plus Jakarta Sans", sans-serif`;
       c.textAlign = 'left'; c.textBaseline = 'middle';
-      c.fillText(HST2C ? `GT · 0${k + 1}` : HSTC ? `KN · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
+      c.fillText(HSTC ? `KN · 0${k + 1}` : HST2C ? `GT · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
       if (rimOn) {
         c.save(); c.globalAlpha = V.rimA;
         line([[u(4), 6.06], [u(236), 6.06]], V.rim, lw(0.09));
@@ -8893,7 +8901,8 @@
     c.fillRect(L(15.85), Y(1.15), 15.7 * ppm, 0.7 * ppm);
 
     // ---- badan lokomotif diesel modern berbadan lebar (full-width carbody), moncong aerodinamis ----
-    const LK = LOCO_FORCE || MIS.loco, HST2 = LK === 'hst2', ARGO = LK === 'argo' || LK === 'hst' || HST2, HSTL = LK === 'hst';
+    const LK = LOCO_FORCE || MIS.loco, HSTL = LK === 'hst', HST2 = LK === 'hst2' || HSTL, ARGO = LK === 'argo' || HST2;
+    ACC = HSTL ? '#1567c4' : '#d4202b'; ACC2 = HSTL ? '#22b6d6' : null; // warna aksen: merah Guntur / biru toska Kilat
     const red = ARGO ? vgrad(6.0, 1.85, [[0, '#ffffff'], [0.3, '#eeece8'], [0.75, '#c9ccd2'], [1, '#8f949c']]) : vgrad(6.0, 1.85, [[0, '#e5513f'], [0.35, '#c8322a'], [0.8, '#a1221b'], [1, '#7e1813']]);
     const roofG = vgrad(6.4, 6.0, [[0, '#8a939a'], [1, '#5a6268']]);
     const glass2 = vgrad(5.8, 4.0, [[0, '#56708a'], [0.5, '#1f2d38'], [1, '#111a22']]);
@@ -8923,7 +8932,12 @@
       line([[7.4, 5.12], [15.85, 5.12]], 'rgba(215,220,226,0.8)', lw(0.03));
       // garis merah tipis ganda menyapu dari badan ke ujung hidung
       c.lineCap = 'round';
-      c.strokeStyle = '#d4202b'; c.lineWidth = lw(0.2); c.beginPath(); c.moveTo(...P(15.85, 2.62)); c.lineTo(...P(4.0, 2.62)); c.bezierCurveTo(...P(1.4, 2.62), ...P(-0.6, 2.55), ...P(-1.72, 2.2)); c.stroke();
+      c.strokeStyle = ACC; c.lineWidth = lw(0.2); c.beginPath(); c.moveTo(...P(15.85, 2.62)); c.lineTo(...P(4.0, 2.62)); c.bezierCurveTo(...P(1.4, 2.62), ...P(-0.6, 2.55), ...P(-1.72, 2.2)); c.stroke();
+      if (ACC2) { // Kilat: sapuan biru → toska menyapu ke hidung, seperti livery aslinya
+        const kg = c.createLinearGradient(L(15.85), 0, L(-1.7), 0); kg.addColorStop(0, '#0b2f6e'); kg.addColorStop(0.55, '#1567c4'); kg.addColorStop(1, '#22b6d6');
+        c.fillStyle = kg; c.beginPath(); c.moveTo(...P(15.85, 2.66)); c.lineTo(...P(4.0, 2.66)); c.bezierCurveTo(...P(1.4, 2.66), ...P(-0.6, 2.6), ...P(-1.74, 2.24));
+        c.lineTo(...P(-1.5, 1.74)); c.bezierCurveTo(...P(-0.6, 1.78), ...P(1.4, 1.76), ...P(4.0, 1.76)); c.lineTo(...P(15.85, 1.76)); c.closePath(); c.fill();
+        c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = lw(0.03); c.beginPath(); c.moveTo(...P(15.85, 2.7)); c.lineTo(...P(4.0, 2.7)); c.bezierCurveTo(...P(1.4, 2.7), ...P(-0.6, 2.64), ...P(-1.74, 2.28)); c.stroke(); }
       c.strokeStyle = '#8a959f'; c.lineWidth = lw(0.06); c.beginPath(); c.moveTo(...P(15.85, 2.9)); c.lineTo(...P(4.0, 2.9)); c.bezierCurveTo(...P(1.2, 2.9), ...P(-0.5, 2.82), ...P(-1.55, 2.5)); c.stroke();
       c.lineCap = 'butt';
       // rok samping menutup bogie sebagian, lampu LED sipit di hidung
@@ -8942,8 +8956,8 @@
         c.strokeStyle = 'rgba(210,235,255,0.9)'; c.lineWidth = 1; c.beginPath(); c.moveTo(ax, ay); for (let q = 1; q < 4; q++) c.lineTo(ax + (Math.random() - 0.3) * ppm * 0.9, ay - q * 0.25 * ppm + (Math.random() - 0.5) * 0.3 * ppm); c.stroke(); c.restore(); }
       c.fillStyle = '#c9ced4'; c.fillRect(L(13.6), Y(6.24), 3.2 * ppm, 0.16 * ppm);
       // logo kecil
-      c.fillStyle = '#d4202b'; c.font = `italic 900 ${Math.max(6, Math.round(0.48 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
-      c.fillText('GUNTUR', L(8.2), Y(3.45)); c.fillStyle = '#5a6470'; c.font = `800 ${Math.max(5, Math.round(0.3 * ppm))}px "Big Shoulders Display", sans-serif`; c.fillText('GT 6001', L(8.2), Y(3.05)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      c.fillStyle = ACC; c.font = `italic 900 ${Math.max(6, Math.round(0.48 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
+      c.fillText(HSTL ? 'KILAT NUSANTARA' : 'GUNTUR', L(8.2), Y(3.45)); c.fillStyle = '#5a6470'; c.font = `800 ${Math.max(5, Math.round(0.3 * ppm))}px "Big Shoulders Display", sans-serif`; c.fillText(HSTL ? 'KN 5001' : 'GT 6001', L(8.2), Y(3.05)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     } else if (SH === 'argo') {
       // ---- Argo Senja generasi baru: moncong peluru melengkung mulus, kaca visor menyatu, atap & bogie tertutup fairing ----
       const P = (m, h) => [L(m), Y(h)];
