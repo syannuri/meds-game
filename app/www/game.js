@@ -4108,6 +4108,9 @@
     const Vs = { c, gy: hy, p, night, storm, camX: x0 * 0.2 + h0 * 400, ppm: 1, sunX: x0, sunPan: h0 * f };
     if (!inTun) drawSky(Vs); else { c.fillStyle = '#07090b'; c.fillRect(0, 0, W, H); }
     const pan = h0 * f;
+    // cahaya matahari yang memantul ke objek: posisi layar matahari & kekuatannya (rendah = lebih hangat & kuat)
+    const SUN = sunPos(Vs), SUNK = inTun || night || storm ? 0 : clamp(1.15 - p * 0.55, 0.45, 1), tNow = performance.now() / 1000;
+    const sunRim = SUNK > 0 ? (MIS.golden || MIS.dusk || p < 0.5 ? '255,196,120' : '255,236,200') : '0,0,0';
     if (!inTun) {
       if (HSTCAB) drawHstScenery(c, { x0, hy, f, pan, p, P, cx, night, storm, st, sun: sunPos(Vs) });
       else {
@@ -4142,6 +4145,18 @@
         if (B.land) continue; // jalur layang di atas sawah: tidak ada sungai di bawahnya
         const d0 = Math.max(2, B.from + 4 - x0), d1 = Math.min(FAR, B.to - 4 - x0);
         if (d1 > d0) quad(W3(d0, -200, -3), W3(d0, 200, -3), W3(d1, 200, -3), W3(d1, -200, -3), night ? '#232a55' : mix('#5f8ea2', '#86bdd0', p));
+        if (d1 > d0 && SUNK > 0) { // jalur kilau matahari di permukaan sungai, berkilauan
+          const yA = W3(d1, 0, -3), yB = W3(d0, 0, -3); if (yA && yB) { c.save(); c.globalCompositeOperation = 'lighter';
+            // cahaya lembut menyebar di air, lalu riak-riak berkilau yang pecah dan bergoyang (bukan batang lurus)
+            c.save(); c.translate(SUN.x, yA.y); c.scale(1, 2.2);
+            const sp = c.createRadialGradient(0, 0, 0, 0, 0, W * 0.18); sp.addColorStop(0, `rgba(${sunRim},${(0.3 * SUNK).toFixed(3)})`); sp.addColorStop(1, `rgba(${sunRim},0)`);
+            c.fillStyle = sp; c.fillRect(-W * 0.2, 0, W * 0.4, (yB.y - yA.y) / 2.2); c.restore();
+            for (let q = 0; q < 60; q++) { const t = q / 59, y = lerp(yA.y, yB.y, t * t), n = 2 + Math.floor(t * 3);
+              for (let r = 0; r < n; r++) { const ph = hash(q * 3.1 + r * 7.7), xo = (ph - 0.5) * (14 + t * 150) + Math.sin(tNow * 1.6 + q * 2.3 + r) * (3 + t * 12);
+                const wv = (3 + t * 34) * (0.35 + 0.65 * Math.max(0, Math.sin(tNow * 2.4 + q * 1.3 + r * 2.1))), fall = Math.exp(-Math.pow(xo / (20 + t * 90), 2));
+                c.fillStyle = `rgba(${sunRim},${(0.55 * SUNK * fall * (1 - t * 0.4)).toFixed(3)})`; c.fillRect(SUN.x + xo - wv / 2, y, wv, Math.max(1, 0.8 + t * 2)); } }
+            c.restore(); }
+        }
       }
       // jalan perlintasan melintang
       ROUTE.crossings.forEach((cr) => {
@@ -4154,6 +4169,10 @@
       c.fillStyle = '#0b0d10'; c.fillRect(0, 0, W, H);
     }
 
+    // cahaya matahari memantul di tanah: sapuan hangat di bawah matahari, memudar ke dekat kamera
+    if (SUNK > 0) { c.save(); c.beginPath(); c.rect(0, hy, W, H - hy); c.clip(); c.translate(SUN.x, hy); c.scale(1, 0.28);
+      const gg = c.createRadialGradient(0, 0, 0, 0, 0, W * 0.55); gg.addColorStop(0, `rgba(${sunRim},${(0.18 * SUNK).toFixed(3)})`); gg.addColorStop(0.5, `rgba(${sunRim},${(0.05 * SUNK).toFixed(3)})`); gg.addColorStop(1, `rgba(${sunRim},0)`);
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = gg; c.fillRect(-W, 0, W * 2, H * 4); c.restore(); }
     // ---- badan rel: balas, bantalan, rel ----
     const steps = [];
     for (let d = 1.2; d < FAR; d += Math.max(0.6, d * 0.035)) steps.push(d);
@@ -4219,12 +4238,15 @@
           const d = wd - x0, b = W3(d, 3.4, 0), t = W3(d, 3.4, HW + 1.5), a0 = W3(d, 0, HW + 1.3), a1 = W3(d, stag(wd), HW);
           if (!b || !t) return; const col = night ? '#6a7484' : '#8c969e';
           c.strokeStyle = col; c.lineWidth = Math.min(W * 0.02, Math.max(1, 0.25 * b.k)); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+          if (SUNK > 0) { const sd = SUN.x > t.x ? 1 : -1; c.strokeStyle = `rgba(${sunRim},${(0.6 * SUNK).toFixed(3)})`; c.lineWidth = Math.min(W * 0.006, Math.max(0.6, 0.07 * b.k)); c.beginPath(); c.moveTo(b.x + sd * 0.09 * b.k, b.y); c.lineTo(t.x + sd * 0.09 * b.k, t.y); c.stroke(); }
           if (a0 && a1) { c.lineWidth = Math.min(W * 0.012, Math.max(1, 0.1 * b.k)); c.beginPath(); c.moveTo(t.x, t.y); c.lineTo(a0.x, a0.y); c.moveTo(W3(d, 3.4, HW).x, W3(d, 3.4, HW).y); c.lineTo(a1.x, a1.y); c.stroke(); }
         });
       } else for (let wd = Math.ceil(x0 / 40) * 40; wd < x0 + dMax; wd += 40) if (!inBrW(wd, 3)) add(wd - x0, () => {
         const d = wd - x0, b = W3(d, 3.6, 0), t = W3(d, 3.6, 7.2), arm = W3(d, 3.6, 6.8);
         if (!b || !t) return;
         c.strokeStyle = '#5b4a3a'; c.lineWidth = Math.max(1, 0.22 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+        if (SUNK > 0) { const sd = SUN.x > t.x ? 1 : -1; c.strokeStyle = `rgba(${sunRim},${(0.5 * SUNK).toFixed(3)})`; c.lineWidth = Math.max(0.6, 0.07 * b.k); c.beginPath(); c.moveTo(b.x + sd * 0.08 * b.k, b.y); c.lineTo(t.x + sd * 0.08 * b.k, t.y); c.stroke();
+          c.fillStyle = `rgba(20,25,15,${(0.2 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sd * 2.2 * b.k, b.y + 0.1 * b.k, 2.4 * b.k, 0.18 * b.k, 0, 0, 7); c.fill(); }
         c.lineWidth = Math.max(1, 0.12 * b.k); c.beginPath(); c.moveTo(arm.x - 0.9 * b.k, arm.y); c.lineTo(arm.x + 0.9 * b.k, arm.y); c.stroke();
       });
       const sawit = MIS.land === 'sawit';
@@ -4237,7 +4259,10 @@
           const d = wd - x0, b = W3(d, o, 0), t = W3(d, o, ht); if (!b || !t) return;
           const fadeA = 1 - smooth(dMax - 120, dMax, d); if (fadeA <= 0.01) return; c.globalAlpha = fadeA;
           const palm = sawit || hash(i * 5.3) < 0.35;
+          const sSide = SUN.x > t.x ? 1 : -1, back = SUNK * Math.max(0, 1 - Math.abs(SUN.x - t.x) / (W * 0.25)); // 1 = tepat berlawanan cahaya
+          if (SUNK > 0) { c.fillStyle = `rgba(20,30,10,${(0.22 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sSide * ht * 0.35 * b.k, b.y + 0.15 * b.k, ht * 0.45 * b.k, 0.45 * b.k, 0, 0, 7); c.fill(); }
           c.strokeStyle = night ? '#1c1712' : '#5a4430'; c.lineWidth = Math.max(1, 0.3 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+          if (SUNK > 0) { c.strokeStyle = `rgba(${sunRim},${(0.45 * SUNK).toFixed(3)})`; c.lineWidth = Math.max(0.6, 0.08 * b.k); c.beginPath(); c.moveTo(b.x + sSide * 0.1 * b.k, b.y); c.lineTo(t.x + sSide * 0.1 * b.k, t.y); c.stroke(); }
           const r = (palm ? 2.4 : ht * 0.32) * b.k;
           c.fillStyle = night ? '#16261a' : palm ? mix('#3d6a34', '#4f8a40', p) : (hash(i * 7.7) < 0.5 ? mix('#2f5f36', '#3f7a4a', p) : mix('#3a6a3c', '#4c8a50', p));
           if (palm) {
@@ -4245,8 +4270,22 @@
             // pelepah nyiur: naik dari pucuk lalu melengkung jatuh, menyebar ke segala arah
             for (let k = 0; k < 9; k++) { const a = -Math.PI + (k + 0.5) * (Math.PI / 9), sp = 0.85 + hash(i * 3 + k) * 0.3;
               c.beginPath(); c.moveTo(t.x, t.y); c.quadraticCurveTo(t.x + Math.cos(a) * r * 0.6 * sp, t.y + Math.sin(a) * r * 0.75 - r * 0.15, t.x + Math.cos(a) * r * sp, t.y + r * (0.25 + 0.35 * (1 - Math.abs(Math.sin(a))))); c.stroke(); }
+            if (SUNK > 0) { // pelepah yang menghadap matahari berkilau
+              c.strokeStyle = `rgba(${sunRim},${(0.45 * SUNK + 0.3 * back).toFixed(3)})`; c.lineWidth = Math.max(0.6, 0.1 * b.k);
+              for (let k = 0; k < 9; k++) { const a = -Math.PI + (k + 0.5) * (Math.PI / 9); if (Math.cos(a) * sSide < 0.1) continue; const sp = 0.85 + hash(i * 3 + k) * 0.3;
+                c.beginPath(); c.moveTo(t.x, t.y - 0.06 * b.k); c.quadraticCurveTo(t.x + Math.cos(a) * r * 0.6 * sp, t.y + Math.sin(a) * r * 0.75 - r * 0.2, t.x + Math.cos(a) * r * sp, t.y + r * (0.2 + 0.35 * (1 - Math.abs(Math.sin(a))))); c.stroke(); }
+            }
             c.lineCap = 'butt';
-          } else { c.beginPath(); c.arc(t.x, t.y + r * 0.5, r, 0, 7); c.arc(t.x - r * 0.6, t.y + r, r * 0.7, 0, 7); c.arc(t.x + r * 0.6, t.y + r, r * 0.7, 0, 7); c.fill(); }
+          } else { c.beginPath(); c.arc(t.x, t.y + r * 0.5, r, 0, 7); c.arc(t.x - r * 0.6, t.y + r, r * 0.7, 0, 7); c.arc(t.x + r * 0.6, t.y + r, r * 0.7, 0, 7); c.fill();
+            if (SUNK > 0) {
+              // sisi membelakangi matahari lebih gelap, sisi terkena matahari terang hangat
+              c.fillStyle = `rgba(10,25,12,${(0.22 * SUNK).toFixed(3)})`; c.beginPath(); c.arc(t.x - sSide * r * 0.55, t.y + r * 0.95, r * 0.72, 0, 7); c.fill();
+              c.fillStyle = `rgba(${sunRim},${(0.24 * SUNK).toFixed(3)})`; c.beginPath(); c.arc(t.x + sSide * r * 0.45, t.y + r * 0.25, r * 0.55, 0, 7); c.fill();
+              // kilau tepi saat pohon berada di depan matahari (cahaya menembus tepi daun)
+              c.strokeStyle = `rgba(${sunRim},${(0.25 * SUNK + 0.55 * back).toFixed(3)})`; c.lineWidth = Math.max(0.8, r * 0.09);
+              c.beginPath(); c.arc(t.x, t.y + r * 0.5, r * 0.98, sSide > 0 ? -1.3 : Math.PI - 0.3, sSide > 0 ? 0.3 : Math.PI + 1.3); c.stroke();
+            }
+          }
           c.globalAlpha = 1;
         });
       }
@@ -4798,9 +4837,15 @@
           if (h < 0.22) { const wg = c.createLinearGradient(0, q3.y, 0, q1.y); wg.addColorStop(0, waterTop); wg.addColorStop(1, waterBot); fill = wg; }
           else if (h < 0.34) fill = gold; else fill = greens[Math.floor(h * 97) % greens.length];
           c.fillStyle = fill; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill();
-          if (h < 0.22 && !night) { // kilau matahari & pantulan awan di air
-            const mx2 = (q1.x + q3.x) / 2, near = 1 - Math.min(1, Math.abs(mx2 - sun.x) / (W * 0.35));
-            if (near > 0.05) { c.fillStyle = `rgba(255,246,220,${(0.5 * near).toFixed(2)})`; c.fillRect(Math.min(q1.x, q4.x), (q1.y + q3.y) / 2 - 0.5, Math.abs(q2.x - q1.x), Math.max(1, (q1.y - q3.y) * 0.12)); }
+          if (h < 0.22 && !night) { // pantulan matahari di air sawah: jalur kilau terang di bawah matahari, butir berkilau
+            const mx2 = (q1.x + q3.x) / 2, dxs = (mx2 - sun.x) / (W * 0.16), near = Math.exp(-dxs * dxs), wide = 1 - Math.min(1, Math.abs(mx2 - sun.x) / (W * 0.45));
+            const warm = MIS.golden || p < 0.5 ? '255,214,150' : '255,246,220', cy = (q1.y + q3.y) / 2, ch2 = q1.y - q3.y;
+            if (wide > 0.02) { c.fillStyle = `rgba(${warm},${(0.22 * wide).toFixed(3)})`; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill(); }
+            if (near > 0.04) { c.save(); c.globalCompositeOperation = 'lighter';
+              c.fillStyle = `rgba(${warm},${(0.38 * near * Math.min(1, ch2 / 6)).toFixed(3)})`; c.fillRect(Math.min(q1.x, q4.x), cy - Math.max(1, ch2 * 0.08), Math.abs(q2.x - q1.x), Math.max(1.5, ch2 * 0.16));
+              for (let q = 0; q < 4; q++) { const sx2 = lerp(Math.min(q1.x, q4.x), Math.max(q2.x, q3.x), hash(j * 3 + k + q * 0.7)), sy2 = lerp(q3.y, q1.y, hash(j + k * 5 + q)), tw = 0.5 + 0.5 * Math.sin(tt * 6 + q * 2.1 + j);
+                c.fillStyle = `rgba(255,252,240,${(0.8 * near * tw).toFixed(3)})`; c.fillRect(sx2 - 1, sy2 - 0.5, 2 + ch2 * 0.04, 1); }
+              c.restore(); }
           }
           else if (h > 0.34 && (q1.y - q3.y) > 6) { // alur tanaman padi mengarah ke titik hilang
             c.strokeStyle = 'rgba(255,255,255,0.08)'; c.lineWidth = 1; c.beginPath();
