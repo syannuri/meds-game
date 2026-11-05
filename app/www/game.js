@@ -4285,7 +4285,7 @@
       });
       const sawit = MIS.land === 'sawit';
       for (let i = Math.ceil(x0 / 9); i * 9 < x0 + dMax; i++) {
-        const side = hash(i * 1.3) < 0.5 ? -1 : 1, o = side * (8 + hash(i * 2.1) * 26), ht = 5 + hash(i * 3.7) * 6;
+        const side = hash(i * 1.3) < 0.5 ? -1 : 1, o = side * (8 + hash(i * 2.1) * 26), ht = sawit ? 8 + hash(i * 3.7) * 3 : 5 + hash(i * 3.7) * 6;
         const wd = i * 9 + hash(i) * 5;
         if (nearStation(wd) && side < 0 && Math.abs(o) < 22) continue;
         if (inBrW(wd, 12)) continue;
@@ -4678,7 +4678,8 @@
     const fog = fogAt(x0 + 60);
     if (fog > 0.02 && !inTun) {
       const fg = c.createLinearGradient(0, hy - H * 0.2, 0, H);
-      fg.addColorStop(0, `rgba(222,228,230,${0.95 * fog})`); fg.addColorStop(0.35, `rgba(222,228,230,${0.85 * fog})`); fg.addColorStop(1, `rgba(222,228,230,${0.25 * fog})`);
+      const fc = night ? '52,60,84' : '222,228,230';
+      fg.addColorStop(0, `rgba(${fc},${0.8 * fog})`); fg.addColorStop(0.35, `rgba(${fc},${0.7 * fog})`); fg.addColorStop(1, `rgba(${fc},${0.2 * fog})`);
       c.fillStyle = fg; c.fillRect(0, 0, W, H);
     }
     if (night || inTun || storm) {
@@ -4817,7 +4818,7 @@
     // awan senja di kejauhan: lapisan awan pipih memanjang dekat cakrawala (di belakang gunung),
     // disinari matahari rendah dari bawah: dasar jingga keemasan, badan merah muda-ungu, tepi emas
     const rgba = (cc, a) => `rgba(${cc[0] | 0},${cc[1] | 0},${cc[2] | 0},${a.toFixed(3)})`;
-    const warmSky = MIS.golden || MIS.dusk || p < 0.5;
+    const warmSky = (MIS.golden || MIS.dusk || p < 0.5) && MIS.land !== 'sawit';
     const cBody = night ? [90, 96, 130] : warmSky ? [214, 150, 160] : [236, 238, 246];
     const cLit = night ? [130, 140, 170] : warmSky ? [255, 186, 120] : [255, 250, 240];
     const cRim = warmSky ? [255, 222, 150] : [255, 255, 255];
@@ -4850,8 +4851,14 @@
       for (let x = 0; x <= W + 8; x += 6) { const u = x + pan * par + x0 * par * 0.05; c.lineTo(x, hy - amp * (0.5 + 0.28 * Math.sin(u * fq + ph) + 0.14 * Math.sin(u * fq * 2.3 + ph * 1.7) + 0.08 * Math.sin(u * fq * 5.1 + seed))); }
       c.lineTo(W, hy + 1); c.closePath(); c.fill();
     };
+    const SUMA = MIS.land === 'sawit';
+    if (SUMA) { // Sumatra: Bukit Barisan, hutan hujan, rumah gadang — sama dengan pemandangan luar
+      barisanRidges(c, hy + 1, H * 0.24, pan * 2 + x0 * 0.3, night, p);
+      for (let i = 0; i < 4; i++) { const xx = ((i * W * 0.31 + hash(i) * 80 - pan * 0.7 - x0 * 0.04) % (W * 1.3) + W * 1.3) % (W * 1.3) - W * 0.15; if (hash(i + 3) < 0.6) rumahGadang(c, xx, hy - H * 0.012, H * 0.006, night, 0.35); }
+      rainforestLine(c, hy + 1, H * 0.035, pan * 0.8 + x0 * 0.06, night, p);
+    }
     // gunung api: kerucut landai dengan lembah garis, puncak sedikit tertutup awan
-    { const vx = W * 0.32 - pan * 0.15 - x0 * 0.0015, vh = H * 0.2, vw = W * 0.42;
+    if (!SUMA) { const vx = W * 0.32 - pan * 0.15 - x0 * 0.0015, vh = H * 0.2, vw = W * 0.42;
       const g = c.createLinearGradient(0, hy - vh, 0, hy); g.addColorStop(0, night ? '#2a3050' : mix('#8ea3c0', '#a8bdd2', p)); g.addColorStop(1, night ? '#222842' : mix('#a9bccf', '#c4d4e0', p));
       c.fillStyle = g; c.beginPath(); c.moveTo(vx - vw, hy + 1);
       c.bezierCurveTo(vx - vw * 0.45, hy - vh * 0.25, vx - vw * 0.12, hy - vh * 0.95, vx - vw * 0.05, hy - vh); c.lineTo(vx + vw * 0.05, hy - vh * 0.98);
@@ -4860,8 +4867,8 @@
       // awan tipis melingkari puncak, lembut tanpa tepi keras
       [[0.04, 0.97, 0.13, 0.07], [-0.06, 0.93, 0.09, 0.05]].forEach(([ox, oy, rx, ry]) => { c.save(); c.translate(vx + vw * ox, hy - vh * oy); c.scale(1, ry / rx);
         const g = c.createRadialGradient(0, 0, 0, 0, 0, vw * rx); g.addColorStop(0, 'rgba(255,255,255,0.5)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, vw * rx, 0, 7); c.fill(); c.restore(); }); }
-    ridge(H * 0.11, 0.0045, 0.35, 1.2, night ? '#232a44' : mix('#8aa6b6', '#a3bccb', p), night ? '#1f263c' : mix('#a7bfcb', '#bfd2dc', p), 2);
-    ridge(H * 0.07, 0.008, 0.6, 3.1, night ? '#18202e' : mix('#5f8a7a', '#79a48c', p), night ? '#151c26' : mix('#86a998', '#9cbfa8', p), 5);
+    if (!SUMA) ridge(H * 0.11, 0.0045, 0.35, 1.2, night ? '#232a44' : mix('#8aa6b6', '#a3bccb', p), night ? '#1f263c' : mix('#a7bfcb', '#bfd2dc', p), 2);
+    if (!SUMA) ridge(H * 0.07, 0.008, 0.6, 3.1, night ? '#18202e' : mix('#5f8a7a', '#79a48c', p), night ? '#151c26' : mix('#86a998', '#9cbfa8', p), 5);
     // unsur khas per bagian rute di cakrawala
     const nearRidge = (x) => hy - H * 0.04 * (0.5 + 0.4 * Math.sin((x + pan) * 0.011));
     if (SC.terrace > 0.02) { c.save(); c.globalAlpha = SC.terrace; // terasering hijau berundak di bukit dekat
@@ -4908,6 +4915,15 @@
           else if (h < 0.22) { const wg = c.createLinearGradient(0, q3.y, 0, q1.y); wg.addColorStop(0, waterTop); wg.addColorStop(1, waterBot); fill = wg; }
           else if (h < 0.34) fill = gold; else fill = greens[Math.floor(h * 97) % greens.length];
           c.fillStyle = fill; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill();
+          if (SAWIT && h >= 0.22 && Math.abs(k) >= 1) { // barisan sawit kebun di kejauhan: tajuk bintang di tiap petak
+            const tw = Math.abs(q2.x - q1.x), sc = tw * 0.16; if (sc > 1.2 && sc < 22) for (let r2 = 0; r2 < 2; r2++) {
+              const px = lerp(q1.x, q2.x, 0.3 + r2 * 0.4), py = (q1.y + q3.y) / 2, th = sc * 1.6;
+              c.strokeStyle = night ? '#1a1410' : '#4a3626'; c.lineWidth = Math.max(1, sc * 0.18); c.beginPath(); c.moveTo(px, py); c.lineTo(px, py - th); c.stroke();
+              c.strokeStyle = night ? '#16261a' : mix('#2f5a2c', '#3f7036', p); c.lineWidth = Math.max(1, sc * 0.22); c.lineCap = 'round'; c.beginPath();
+              for (let f = 0; f < 7; f++) { const aa = Math.PI + (f + 0.5) * Math.PI / 7; c.moveTo(px, py - th); c.quadraticCurveTo(px + Math.cos(aa) * sc * 0.7, py - th - sc * 0.5, px + Math.cos(aa) * sc * 1.2, py - th + sc * 0.45); }
+              c.stroke(); c.lineCap = 'butt';
+            }
+          }
           if (h < 0.22 && !night && !SAWIT) { // pantulan matahari di air sawah: jalur kilau terang di bawah matahari, butir berkilau
             const mx2 = (q1.x + q3.x) / 2, dxs = (mx2 - sun.x) / (W * 0.16), near = Math.exp(-dxs * dxs), wide = 1 - Math.min(1, Math.abs(mx2 - sun.x) / (W * 0.45));
             const warm = MIS.golden || p < 0.5 ? '255,214,150' : '255,246,220', cy = (q1.y + q3.y) / 2, ch2 = q1.y - q3.y;
@@ -6037,8 +6053,52 @@
     c.lineTo(W, V.gy + 2); c.closePath();
     c.fillStyle = color; c.fill();
   }
+
+  // ---------- tema Sumatra (dipakai tampilan samping & kokpit agar sama) ----------
+  // Bukit Barisan: 3 lapis punggung bergerigi, makin jauh makin biru pucat, pita kabut di antara lapisan
+  function barisanRidges(c, yb, amp, off, night, p, sunX) {
+    const L = night ? [['#1c2440', '#222c4a'], ['#16203a', '#1a2440'], ['#101a2c', '#132034']]
+      : [[mix('#7f96b4', '#9fb6cc', p), mix('#a8b8c8', '#c3d0da', p)], [mix('#557a78', '#6f9690', p), mix('#7f9e98', '#9cb8b0', p)], [mix('#2f5a44', '#3f704f', p), mix('#4d7a5c', '#5f8e68', p)]];
+    const prof = [(u) => 0.55 + 0.22 * Math.sin(u * 0.0021 + 1) + 0.12 * Math.abs(Math.sin(u * 0.0093)) + 0.08 * Math.sin(u * 0.021 + 2),
+      (u) => 0.4 + 0.2 * Math.sin(u * 0.0033 + 3) + 0.14 * Math.abs(Math.sin(u * 0.012 + 1)) + 0.05 * Math.sin(u * 0.035),
+      (u) => 0.24 + 0.12 * Math.sin(u * 0.0052 + 5) + 0.08 * Math.abs(Math.sin(u * 0.019 + 4)) + 0.04 * Math.sin(u * 0.06)];
+    const par = [0.06, 0.12, 0.22];
+    for (let l = 0; l < 3; l++) {
+      const o = off * par[l], g = c.createLinearGradient(0, yb - amp, 0, yb); g.addColorStop(0, L[l][0]); g.addColorStop(1, L[l][1]);
+      c.fillStyle = g; c.beginPath(); c.moveTo(-4, yb + 1);
+      for (let x = -4; x <= W + 8; x += 5) c.lineTo(x, yb - amp * prof[l](x + o) * (1 - l * 0.12));
+      c.lineTo(W + 8, yb + 1); c.closePath(); c.fill();
+      // sisi lereng terkena cahaya (garis punggung hangat)
+      if (!night && l < 2) { c.strokeStyle = `rgba(255,236,200,${(0.16 - l * 0.05).toFixed(2)})`; c.lineWidth = 1; c.beginPath(); for (let x = -4; x <= W + 8; x += 5) { const y = yb - amp * prof[l](x + o) * (1 - l * 0.12); x < 0 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); }
+      // pita kabut lembap di kaki tiap lapisan
+      const my = yb - amp * (0.18 - l * 0.04), mg = c.createLinearGradient(0, my - amp * 0.22, 0, my + amp * 0.1);
+      mg.addColorStop(0, 'rgba(235,240,236,0)'); mg.addColorStop(0.6, night ? 'rgba(70,80,110,0.35)' : 'rgba(235,240,236,0.5)'); mg.addColorStop(1, 'rgba(235,240,236,0)');
+      c.fillStyle = mg; c.fillRect(-4, my - amp * 0.22, W + 12, amp * 0.32);
+    }
+  }
+  // garis tajuk hutan hujan yang rapat di depan pegunungan
+  function rainforestLine(c, yb, h, off, night, p) {
+    const col = night ? '#0f1a14' : mix('#2a4a2e', '#3a6038', p), colL = night ? '#15241a' : mix('#3f6a3c', '#558a48', p);
+    c.fillStyle = col; c.beginPath(); c.moveTo(-6, yb + 2);
+    for (let x = -6; x <= W + 12; x += 6) { const u = x + off, b = Math.abs(Math.sin(u * 0.07)) * 0.45 + Math.abs(Math.sin(u * 0.023 + 1)) * 0.4 + 0.3; c.lineTo(x, yb - h * b); }
+    c.lineTo(W + 12, yb + 2); c.closePath(); c.fill();
+    c.fillStyle = colL; for (let x = -((off % 11) + 11) % 11; x < W + 11; x += 11) { const u = Math.round((x + off) / 11), r = hash(u * 1.7); if (r > 0.6) { const yy = yb - h * (0.6 + r * 0.5); c.beginPath(); c.arc(x, yy, h * 0.28, Math.PI, 0); c.fill(); } }
+  }
+  // rumah gadang kecil: atap gonjong melengkung bertanduk
+  function rumahGadang(c, x, yb, s, night, hz) {
+    const roof = night ? '#1a1a22' : mix('#3a2a22', '#b8b0a8', hz), wall = night ? '#2a2018' : mix('#8a5a34', '#c8bcae', hz);
+    c.fillStyle = wall; c.fillRect(x - 3 * s, yb - 2.4 * s, 6 * s, 1.8 * s); c.fillRect(x - 2.6 * s, yb - 0.6 * s, 0.3 * s, 0.6 * s); c.fillRect(x + 2.3 * s, yb - 0.6 * s, 0.3 * s, 0.6 * s);
+    c.fillStyle = roof; c.beginPath(); c.moveTo(x - 3.6 * s, yb - 2.3 * s); c.quadraticCurveTo(x - 3.2 * s, yb - 3.6 * s, x - 4.2 * s, yb - 4.6 * s); c.quadraticCurveTo(x - 1.6 * s, yb - 3.2 * s, x, yb - 3.9 * s);
+    c.quadraticCurveTo(x + 1.6 * s, yb - 3.2 * s, x + 4.2 * s, yb - 4.6 * s); c.quadraticCurveTo(x + 3.2 * s, yb - 3.6 * s, x + 3.6 * s, yb - 2.3 * s); c.closePath(); c.fill();
+    if (night) { c.fillStyle = 'rgba(255,205,120,0.85)'; c.fillRect(x - 1.5 * s, yb - 2 * s, 0.8 * s, 0.7 * s); c.fillRect(x + 0.7 * s, yb - 2 * s, 0.8 * s, 0.7 * s); }
+  }
   function drawRidges(V) {
     const { gy, p } = V;
+    if (MIS.land === 'sawit' && !V.storm) { // Sumatra: Bukit Barisan berlapis berkabut + tajuk hutan hujan (sama dengan kokpit)
+      barisanRidges(V.c, gy - 2, gy * 0.78, pcOf(V), V.night, p);
+      rainforestLine(V.c, gy, gy * 0.2, pcOf(V) * 0.42, V.night, p);
+      return;
+    }
     // gunung berapi jauh
     ridgePath(V, 0.05, gy - 8, gy * 0.42, (u) => {
       const k = ((u % 2600) + 2600) % 2600;
@@ -6349,7 +6409,9 @@
           for (let f = 0; f < 4; f++) { c.beginPath(); c.ellipse(x + (f - 1.5) * 0.9 * s, y - 3.8 * s - (f % 2) * 0.6 * s, 1.5 * s, 0.6 * s, (f - 1.5) * 0.6, 0, 7); c.fill(); }
         } else if (kind === 'bamboo' || kind === 'tree') {
           c.fillStyle = H2(kind === 'tree' ? '#355a36' : '#4a7a3e'); c.beginPath(); c.ellipse(x, y - 3.4 * s, 3 * s, 3.4 * s, 0, 0, 7); c.fill();
-        } else if (kind === 'house' || kind === 'stilt') {
+        } else if (kind === 'stilt') {
+          rumahGadang(c, x, y, s * 1.4, night, 0.32);
+        } else if (kind === 'house') {
           const w = (7 + r * 4) * s, wh = 3.2 * s, rh = 2.4 * s, lift = kind === 'stilt' ? 1.6 * s : 0;
           if (V.sunShadow > 0.01) { c.fillStyle = `rgba(40,30,20,${0.16 * V.sunShadow})`; c.fillRect(x - w / 2 - 2 * s, y - 0.4 * s, w + s, 0.8 * s); }
           if (lift) { c.fillStyle = H2('#5a4430'); for (let q = 0; q < 4; q++) c.fillRect(x - w / 2 + q * (w / 3) - 0.2 * s, y - lift, 0.4 * s, lift); }
@@ -6533,7 +6595,7 @@
     for (let i = Math.floor(wx0 / slot) - 1; i < wx1 / slot + 1; i++) {
       const h = hash(i);
       const tx = i * slot + hash(i + 0.37) * 9;
-      if (h > 0.5 || (ROUTE.scenes && h > 0.5 * (1 - 0.8 * seaAt(tx)))) continue; // pesisir: pepohonan jarang agar laut terlihat
+      if (h > (MIS.land === 'sawit' ? 0.78 : 0.5) || (ROUTE.scenes && h > 0.5 * (1 - 0.8 * seaAt(tx)))) continue; // pesisir: pepohonan jarang agar laut terlihat; kebun sawit rapat
       if (nearStation(tx) || inBridge(tx) || nearCrossing(tx, 12) || nearTunnel(tx)) continue;
       const sx = X(tx), base = gy - 1.2 * ppm - hash(i + 0.9) * 1.2 * ppm;
       const kind = hash(i + 0.11);
@@ -6541,11 +6603,12 @@
       if (MIS.land === 'sawit') {
         if (V.sunShadow > 0.01) { c.fillStyle = `rgba(0,0,0,${0.2 * V.sunShadow})`; c.beginPath(); c.ellipse(sx - 1.2 * ppm, base + 0.2 * ppm, 2.4 * ppm, 0.35 * ppm, 0, 0, 7); c.fill(); }
         if (kind < 0.7) { // pohon sawit: batang pendek kasar, tajuk lebat
-          const ht = (4.5 + hash(i + 2) * 2.5) * ppm;
-          c.fillStyle = mix('#3e3022', '#55422e', p); c.fillRect(sx - 0.35 * ppm, base - ht, 0.7 * ppm, ht);
-          c.strokeStyle = col2; c.lineWidth = 0.36 * ppm; c.lineCap = 'round';
-          for (let f = 0; f < 11; f++) {
-            const a = -Math.PI / 2 + (f - 5) * 0.32, len = 3.6 * ppm;
+          const ht = trainH(8 + hash(i + 2) * 3) * ppm; // sawit dewasa 8–11 m (skala sama dengan kereta & kokpit)
+          c.fillStyle = mix('#3e3022', '#55422e', p); c.fillRect(sx - 0.4 * ppm, base - ht, 0.8 * ppm, ht);
+          c.fillStyle = 'rgba(0,0,0,0.18)'; for (let q = 1; q < 6; q++) c.fillRect(sx - 0.4 * ppm, base - ht * q / 6, 0.8 * ppm, Math.max(1, 0.12 * ppm)); // bekas pelepah di batang
+          c.strokeStyle = col2; c.lineWidth = 0.4 * ppm; c.lineCap = 'round';
+          for (let f = 0; f < 13; f++) {
+            const a = -Math.PI / 2 + (f - 6) * 0.27, len = 4.4 * ppm;
             c.beginPath(); c.moveTo(sx, base - ht);
             c.quadraticCurveTo(sx + Math.cos(a) * len * 0.6, base - ht - 1.2 * ppm + Math.abs(f - 5) * 0.15 * ppm, sx + Math.cos(a) * len, base - ht + Math.sin(a) * len * 0.45 + 1.5 * ppm);
             c.stroke();
@@ -6553,9 +6616,15 @@
           c.lineCap = 'butt';
         } else { // pohon hutan besar bertajuk lebar
           const ht = (11 + hash(i + 2) * 6) * ppm;
-          c.fillStyle = mix('#4a3a2c', '#5e4a36', p); c.fillRect(sx - 0.3 * ppm, base - ht * 0.7, 0.6 * ppm, ht * 0.7);
+          // batang menyambung sampai ke dalam tajuk, cabang menopang gumpalan daun (tidak melayang)
+          const bark = mix('#4a3a2c', '#5e4a36', p), ty = base - ht;
+          c.fillStyle = bark; c.beginPath(); c.moveTo(sx - 0.45 * ppm, base); c.lineTo(sx - 0.22 * ppm, ty + 0.6 * ppm); c.lineTo(sx + 0.22 * ppm, ty + 0.6 * ppm); c.lineTo(sx + 0.45 * ppm, base); c.closePath(); c.fill();
+          c.strokeStyle = bark; c.lineWidth = 0.22 * ppm; c.lineCap = 'round'; c.beginPath();
+          c.moveTo(sx, ty + 2.2 * ppm); c.lineTo(sx - 2.4 * ppm, ty + 0.9 * ppm); c.moveTo(sx, ty + 1.8 * ppm); c.lineTo(sx + 2.6 * ppm, ty + 0.8 * ppm); c.stroke(); c.lineCap = 'butt';
+          c.fillStyle = mix('#1c3420', '#28482a', p);
+          [[0, 0.9, 4.0], [-2.6, 1.3, 2.6], [2.8, 1.2, 2.8]].forEach(([dx, dy, r]) => { c.beginPath(); c.ellipse(sx + dx * ppm, ty + dy * ppm, r * ppm, r * 0.5 * ppm, 0, 0, 7); c.fill(); });
           c.fillStyle = col;
-          [[0, 0, 4.2], [-2.6, 0.9, 2.8], [2.8, 0.8, 3]].forEach(([dx, dy, r]) => { c.beginPath(); c.ellipse(sx + dx * ppm, base - ht + dy * ppm, r * ppm, r * 0.62 * ppm, 0, 0, 7); c.fill(); });
+          [[0, 0, 4.2], [-2.6, 0.9, 2.8], [2.8, 0.8, 3]].forEach(([dx, dy, r]) => { c.beginPath(); c.ellipse(sx + dx * ppm, ty + dy * ppm, r * ppm, r * 0.62 * ppm, 0, 0, 7); c.fill(); });
           if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.1 * ppm); c.beginPath(); c.ellipse(sx, base - ht, 4.2 * ppm, 2.6 * ppm, 0, Math.PI * 1.2, Math.PI * 1.9); c.stroke(); c.restore(); }
         }
         continue;
@@ -6596,12 +6665,13 @@
         for (let i = i0; i < i1; i++) {
           const x = at(X((i + 0.5) * cell), t);
           if (x < -3 * sc || x > W + 3 * sc) continue;
-          c.fillStyle = mix('#3c2a1a', '#4e3824', p); c.fillRect(x - 0.18 * sc, y - 1.1 * sc, 0.36 * sc, 1.1 * sc);
-          c.strokeStyle = mix('#24452a', '#356a36', p); c.lineWidth = Math.max(1, 0.22 * sc); c.lineCap = 'round';
-          for (let f = 0; f < 8; f++) {
-            const a = -Math.PI / 2 + (f - 3.5) * 0.42;
-            c.beginPath(); c.moveTo(x, y - 1.1 * sc);
-            c.quadraticCurveTo(x + Math.cos(a) * 1.1 * sc, y - 1.1 * sc + Math.sin(a) * 0.9 * sc - 0.4 * sc, x + Math.cos(a) * 1.9 * sc, y - 1.1 * sc + Math.sin(a) * 0.7 * sc + 0.4 * sc);
+          const tk = 2.2 * sc; // batang sawit kebun (dipotong oleh tepi bawah layar seperti dilihat dari atas tanggul)
+          c.fillStyle = mix('#3c2a1a', '#4e3824', p); c.fillRect(x - 0.22 * sc, y - tk, 0.44 * sc, tk);
+          c.strokeStyle = mix('#24452a', '#356a36', p); c.lineWidth = Math.max(1, 0.26 * sc); c.lineCap = 'round';
+          for (let f = 0; f < 10; f++) {
+            const a = -Math.PI / 2 + (f - 4.5) * 0.34;
+            c.beginPath(); c.moveTo(x, y - tk);
+            c.quadraticCurveTo(x + Math.cos(a) * 2.0 * sc, y - tk + Math.sin(a) * 1.4 * sc - 0.7 * sc, x + Math.cos(a) * 3.4 * sc, y - tk + Math.sin(a) * 1.0 * sc + 0.8 * sc);
             c.stroke();
           }
           c.lineCap = 'butt';
