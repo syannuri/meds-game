@@ -3334,9 +3334,60 @@
     '2-3': skyG('b3', '#d9b48a', '#f2ead2') + '<path d="M0 36 L24 18 L44 32 L66 14 L92 30 L120 20 V70 H0z" fill="#7a8a6a"/><path d="M0 46 Q40 38 120 44 V70 H0z" fill="#5a7a42"/><g>' + [10, 28, 46, 98, 114].map((x) => `<circle cx="${x}" cy="54" r="7" fill="#3d6a32"/><circle cx="${x - 3}" cy="52" r="1.3" fill="#d83a2e"/><circle cx="${x + 2}" cy="56" r="1.3" fill="#d83a2e"/><circle cx="${x + 3}" cy="51" r="1.3" fill="#b02a22"/>`).join('') + '</g><rect x="56" y="44" width="34" height="14" rx="1.5" fill="#8a5a3a"/><g fill="#d9c09a"><rect x="59" y="38" width="9" height="7" rx="2"/><rect x="69" y="37" width="9" height="8" rx="2"/><rect x="79" y="38" width="9" height="7" rx="2"/></g><circle cx="62" cy="60" r="2.8" fill="#222"/><circle cx="84" cy="60" r="2.8" fill="#222"/>' + rails(62),
   };
   MIS_ART['3-1'] = skyG('c1', '#3a2f66', '#ffb46a') + '<circle cx="92" cy="40" r="11" fill="#ffe0a0"/><circle cx="92" cy="40" r="20" fill="#ffc070" opacity=".25"/><path d="M0 46 Q30 40 60 44 T120 42 V70 H0z" fill="#6a4a5a"/><rect x="0" y="50" width="120" height="20" fill="#3a2e3a"/>' + rails(52, '#1d1820') + '<g stroke="#fff3d8" stroke-width="1.2" opacity=".55" stroke-linecap="round"><path d="M2 58h22M10 63h30M30 60h18M60 64h26"/></g><path d="M18 38h70l12 8v6H18z" fill="#f3eee1"/><rect x="18" y="46" width="82" height="2" fill="#c8352b"/><g fill="#ffd88a">' + [24, 34, 44, 54, 64, 74].map((x) => `<rect x="${x}" y="40" width="7" height="4" rx=".8"/>`).join('') + '</g><path d="M88 38h4l8 8h-12z" fill="#1e2a33"/><circle cx="100" cy="49" r="1.6" fill="#fff6c4"/><path d="M101 49 L120 45 V53z" fill="#fff6c4" opacity=".35"/>';
-  MIS_ART['3-3'] = skyG('c3', '#7f9fb4', '#e8eee6') + '<path d="M0 44 L14 26 L26 36 L40 18 L56 34 L70 22 L86 36 L100 20 L120 34 V70 H0z" fill="#7f96ac"/><path d="M0 50 L18 36 L34 44 L52 32 L70 44 L90 34 L120 46 V70 H0z" fill="#557a68"/><rect x="0" y="44" width="120" height="6" fill="#e8eee6" opacity=".55"/><path d="M0 56 Q30 50 60 54 T120 52 V70 H0z" fill="#2f5a3c"/><rect x="0" y="40" width="120" height="3" fill="#cfd4d8"/><g fill="#b9bec3">' + [10, 34, 58, 82, 106].map((x) => `<rect x="${x}" y="43" width="3" height="20"/>`).join('') + '</g><path d="M30 33h54l10 4v3H30z" fill="#f4f7fa"/><rect x="30" y="37" width="64" height="2" fill="#1567c4"/><rect x="34" y="34" width="44" height="2" fill="#22303c"/>';
-  MIS_ART['3-2'] = skyG('c2', '#6ab8ec', '#e2f4fa') + '<g fill="#8aa8c0" opacity=".7"><rect x="6" y="18" width="8" height="26"/><rect x="16" y="10" width="7" height="34"/><rect x="25" y="22" width="9" height="22"/></g><path d="M0 48 Q30 40 60 46 T120 42 V70 H0z" fill="#7fb85a"/><g stroke="#5f9a3a" stroke-width="1"><path d="M0 56 H120M0 62 H120M20 48 L10 70M50 48 L46 70M80 48 L84 70M108 46 L118 70"/></g><rect x="0" y="40" width="120" height="3" fill="#cfd4d8"/><g fill="#b9bec3">' + [8, 32, 56, 80, 104].map((x) => `<rect x="${x}" y="43" width="3" height="16"/>`).join('') + '</g><g stroke="#f5f7f9" stroke-width="1.4"><path d="M100 14 V40M100 14 l-6 -5M100 14 l7 -2M100 14 l-1 7"/></g><path d="M14 30h76l14 6v4H14z" fill="#ffffff"/><rect x="14" y="36" width="90" height="2.2" fill="#1567c4"/><rect x="18" y="32" width="66" height="2.6" fill="#22303c"/><path d="M90 30h4l10 6h-14z" fill="#11151b"/><g stroke="#fff" stroke-width="1" opacity=".7"><path d="M0 34h10M2 38h8"/></g>';
-  const misArt = (id) => MIS_ART[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="0 0 120 70" preserveAspectRatio="xMidYMid slice">${MIS_ART[id]}</svg></span>` : '';
+    // kartu Guntur & Kilat: kereta tampak 3/4 dalam bingkai tegak 80x100
+  function cardTrain(o){
+    const NX=34, NT=60, NB=88, FX=65, FT=41, FB=47;
+    const yN=(f)=>NT+(NB-NT)*f, yF=(f)=>FT+(FB-FT)*f;
+    const band=(f0,f1,fill)=>`<path d="M${NX} ${yN(f0)} L${FX} ${yF(f0)} L${FX} ${yF(f1)} L${NX} ${yN(f1)}z" fill="${fill}"/>`;
+    const at=(x,f)=>{const t=(x-NX)/(FX-NX);return yN(f)+(yF(f)-yN(f))*t;};
+    return `
+    <defs>
+     <linearGradient id="bd${o.k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="${o.body}"/><stop offset="1" stop-color="#aeb8c2"/></linearGradient>
+     <linearGradient id="ns${o.k}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#c9d1da"/></linearGradient>
+     <linearGradient id="bn${o.k}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${o.acc}"/><stop offset="1" stop-color="${o.acc2}"/></linearGradient>
+     <radialGradient id="hl${o.k}"><stop offset="0" stop-color="#fffbe6"/><stop offset=".35" stop-color="#fff1b8" stop-opacity=".75"/><stop offset="1" stop-color="#fff1b8" stop-opacity="0"/></radialGradient>
+    </defs>
+    <g transform="translate(63 31) scale(.78) translate(-66 -47)">
+    <path d="M6 93 L${FX+2} 47.6 L${FX+2} 50.2 L6 99z" fill="#d5d9dd"/>
+    <path d="M6 99 L${FX+2} 50.2 L${FX+2} 51.4 L6 103z" fill="#8f979f"/>
+    <g fill="#a9b0b7">${[[18,95,7,30],[44,74,4,18],[58,58,2.4,10]].map(([x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`).join('')}</g>
+    <g stroke="#7f8790" stroke-linecap="round"><path d="M72 104 V18" stroke-width="1.3"/><path d="M72 22 H48" stroke-width="1"/><path d="M69 47 V33" stroke-width=".7"/><path d="M69 34.5 H62" stroke-width=".6"/></g>
+    <path d="M48 23.4 L${FX} 37" stroke="#4d545c" stroke-width=".4"/>
+    <path d="M${NX-2} ${NT-.3} L${FX} ${FT-.8} L${FX} ${FT} L${NX} ${NT}z" fill="#e3e8ed"/>
+    <path d="M${NX} ${NT} L${FX} ${FT} L${FX} ${FB} L${NX} ${NB}z" fill="url(#bd${o.k})"/>
+    ${band(.12,.32,o.win)}
+    <g stroke="${o.body}" stroke-width=".45">${[38,42.5,46.5,50,53,55.8,58.3,60.5,62.5].map(x=>`<path d="M${x} ${at(x,.12)} L${x} ${at(x,.32)}"/>`).join('')}</g>
+    ${band(.55,.64,`url(#bn${o.k})`)}
+    ${o.gold?band(.67,.7,o.gold):''}
+    ${band(.93,1,'#2a3038')}
+    <g stroke="#97a1ab" stroke-width=".4">${[47,57.5,62].map(x=>`<path d="M${x} ${at(x,0)} L${x} ${at(x,.93)}"/>`).join('')}</g>
+    <path d="M42 ${at(42,0)} l3.5 -6 l3 4.6 M43.8 ${at(42,0)-6} h4.6" stroke="#3a4048" stroke-width=".7" fill="none"/>
+    <text x="49" y="${at(49,.47)}" font-size="2.4" font-weight="800" font-family="sans-serif" fill="${o.acc}" transform="rotate(-31.5 49 ${at(49,.47)})">${o.label}</text>
+    <path d="M${NX} ${NT} C24 61 13 69 8.5 80 C6.6 85 9 90.5 16 91.2 L${NX} ${NB}z" fill="url(#ns${o.k})"/>
+    <path d="M${NX} ${NT} C26 61.4 18 66 14 72.6 C20 70.4 27 68.6 ${NX} ${yN(.32)}z" fill="${o.win}"/>
+    <path d="M31 61.4 C25 62.6 20.6 65.6 17.6 69.2" stroke="#fff" stroke-width=".6" opacity=".5" fill="none"/>
+    <path d="M8.6 81.4 C15 78.6 24 76.6 ${NX} ${yN(.55)} L${NX} ${yN(.64)} C24 79.4 15 81.6 9.2 84.4z" fill="url(#bn${o.k})"/>
+    ${o.gold?`<path d="M9.6 85.6 C15.6 83.2 24 81.4 ${NX} ${yN(.685)}" stroke="${o.gold}" stroke-width=".85" fill="none"/>`:''}
+    <path d="M10.4 88.4 C14 90 22 88.6 ${NX} ${yN(.93)} L${NX} ${NB} L16 91.2 C12.6 91 10.8 90 10.4 88.4z" fill="#2a3038"/>
+    <circle cx="12.2" cy="85.6" r="1.3" fill="#fffbe6"/><circle cx="12.2" cy="85.6" r="8" fill="url(#hl${o.k})"/>
+    <g stroke="#fff" stroke-width=".7" stroke-linecap="round" opacity=".6"><path d="M0 68 h7"/><path d="M0 74 h4"/><path d="M0 97 h6"/></g>
+    </g>`;
+  }
+  function cardSky(k,a,b){return `<defs><linearGradient id="sk${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="80" height="100" fill="url(#sk${k})"/>`;}
+  MIS_ART['3-2'] = cardSky('tg','#6c7bb8','#ffc98a')
+   + '<circle cx="22" cy="20" r="12" fill="#ffd28a" opacity=".35"/><circle cx="22" cy="20" r="5" fill="#fff0c8"/>'
+   + '<g transform="translate(0 -16)"><g fill="#8f8fb4" opacity=".75"><rect x="38" y="20" width="7" height="28"/><rect x="46" y="27" width="6" height="21"/><rect x="53" y="16" width="8" height="32"/><rect x="62" y="24" width="6" height="24"/><rect x="69" y="30" width="7" height="18"/><rect x="56" y="12" width="1" height="4"/></g>'
+   + '<g fill="#ffe1a8" opacity=".5">'+[[40,24],[40,30],[55,20],[55,28],[63,28],[47,32]].map(([x,y])=>`<rect x="${x}" y="${y}" width="1.6" height="1"/>`).join('')+'</g></g>'
+   + '<rect x="0" y="31" width="80" height="69" fill="#8fae52"/><g stroke="#ffd896" stroke-width=".8" opacity=".55"><path d="M0 33.5 H80M0 37 H80M0 42 H80M0 49 H80M0 59 H80M0 73 H80M0 91 H80"/></g><g stroke="#6f9440" stroke-width=".6" opacity=".7"><path d="M63 31 L-40 100M63 31 L-5 100M63 31 L30 100M63 31 L95 100M63 31 L140 100"/></g>'
+   + cardTrain({k:'tg',body:'#eef1f4',acc:'#d4202b',acc2:'#e8484f',win:'#1b2733',label:'GUNTUR',gold:'#e2b04a'});
+  MIS_ART['3-3'] = cardSky('tk','#5aa0d8','#e4f1f6')
+   + '<g transform="translate(0 -16)"><path d="M0 40 L10 26 L20 34 L32 16 L44 32 L54 22 L66 34 L80 24 V50 H0z" fill="#7f96ac"/><path d="M28 21 L32 16 L36 21.5z" fill="#eef3f6"/>'
+   + '<path d="M0 46 L12 36 L26 43 L40 33 L56 43 L70 35 L80 40 V52 H0z" fill="#4f7a62"/></g>'
+   + '<rect x="0" y="31" width="80" height="69" fill="#5d8a3e"/>'
+   + '<g>'+[[5,38,.5],[30,34,.32],[56,35,.36],[76,52,.8],[4,56,.7]].map(([x,y,s])=>`<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 0 V-10" stroke="#5a4630" stroke-width="1.6"/><path d="M0 -10 q-7 -1 -10 3 M0 -10 q7 -1 10 3 M0 -10 q-5 -5 -9 -5 M0 -10 q5 -5 9 -5 M0 -10 q0 -6 1 -8" stroke="#2f6a34" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>`).join('')+'</g>'
+   + cardTrain({k:'tk',body:'#f2f6fa',acc:'#1567c4',acc2:'#22b6d6',win:'#13263a',label:'KILAT'});
+  const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100' };
+  const misArt = (id) => MIS_ART[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${MIS_ART[id]}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
   function dailyArt(base) {
     const night = base === '1-6' || base === '2-2', storm = base === '1-5' || base === '1-7', sum = base[0] === '2';
