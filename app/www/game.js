@@ -5206,7 +5206,10 @@
       rainforestLine(c, hy + 1, H * 0.035, pan * 0.8 + x0 * 0.06, night, p);
     }
     // gunung api: kerucut landai dengan lembah garis, puncak sedikit tertutup awan
-    if (!SUMA) { const vx = W * 0.32 - pan * 0.15 - x0 * 0.0015, vh = H * 0.2, vw = W * 0.42;
+    if (!SUMA && MIS.dusk) { // Argo Senja: gunung api kembar detail bercahaya senja
+      duskMountain(c, { x: W * 0.9 - pan * 0.12 - x0 * 0.0012, yb: hy + 1, h: H * 0.13, w: W * 0.24, night, sunX: sun.x, seed: 7, far: 0.55, smoke: false });
+      duskMountain(c, { x: W * 0.3 - pan * 0.15 - x0 * 0.0015, yb: hy + 1, h: H * 0.21, w: W * 0.36, night, sunX: sun.x, seed: 3 });
+    } else if (!SUMA) { const vx = W * 0.32 - pan * 0.15 - x0 * 0.0015, vh = H * 0.2, vw = W * 0.42;
       const g = c.createLinearGradient(0, hy - vh, 0, hy); g.addColorStop(0, night ? '#2a3050' : mix('#8ea3c0', '#a8bdd2', p)); g.addColorStop(1, night ? '#222842' : mix('#a9bccf', '#c4d4e0', p));
       c.fillStyle = g; c.beginPath(); c.moveTo(vx - vw, hy + 1);
       c.bezierCurveTo(vx - vw * 0.45, hy - vh * 0.25, vx - vw * 0.12, hy - vh * 0.95, vx - vw * 0.05, hy - vh); c.lineTo(vx + vw * 0.05, hy - vh * 0.98);
@@ -5215,8 +5218,13 @@
       // awan tipis melingkari puncak, lembut tanpa tepi keras
       [[0.04, 0.97, 0.13, 0.07], [-0.06, 0.93, 0.09, 0.05]].forEach(([ox, oy, rx, ry]) => { c.save(); c.translate(vx + vw * ox, hy - vh * oy); c.scale(1, ry / rx);
         const g = c.createRadialGradient(0, 0, 0, 0, 0, vw * rx); g.addColorStop(0, 'rgba(255,255,255,0.5)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, vw * rx, 0, 7); c.fill(); c.restore(); }); }
+    if (!SUMA && MIS.dusk && !night) { // senja: punggung bukit ungu berkabut & bukit dekat hijau keunguan, tepi atas tersentuh cahaya
+      ridge(H * 0.1, 0.0045, 0.35, 1.2, '#8f7a9e', '#c2a6b2', 2);
+      ridge(H * 0.065, 0.008, 0.6, 3.1, '#5a6262', '#8a8c86', 5);
+    } else {
     if (!SUMA) ridge(H * 0.11, 0.0045, 0.35, 1.2, night ? '#232a44' : mix('#8aa6b6', '#a3bccb', p), night ? '#1f263c' : mix('#a7bfcb', '#bfd2dc', p), 2);
     if (!SUMA) ridge(H * 0.07, 0.008, 0.6, 3.1, night ? '#18202e' : mix('#5f8a7a', '#79a48c', p), night ? '#151c26' : mix('#86a998', '#9cbfa8', p), 5);
+    }
     // unsur khas per bagian rute di cakrawala
     const nearRidge = (x) => hy - H * 0.04 * (0.5 + 0.4 * Math.sin((x + pan) * 0.011));
     if (SC.terrace > 0.02) { c.save(); c.globalAlpha = SC.terrace; // terasering hijau berundak di bukit dekat
@@ -6718,6 +6726,76 @@
     c.quadraticCurveTo(x + 1.6 * s, yb - 3.2 * s, x + 4.2 * s, yb - 4.6 * s); c.quadraticCurveTo(x + 3.2 * s, yb - 3.6 * s, x + 3.6 * s, yb - 2.3 * s); c.closePath(); c.fill();
     if (night) { c.fillStyle = 'rgba(255,205,120,0.85)'; c.fillRect(x - 1.5 * s, yb - 2 * s, 0.8 * s, 0.7 * s); c.fillRect(x + 0.7 * s, yb - 2 * s, 0.8 * s, 0.7 * s); }
   }
+  // gunung api senja detail (Argo Senja): kerucut cekung, kawah berasap, galur erosi memancar dari puncak,
+  // sisi menghadap matahari bercahaya jingga-merah muda & sisi lain berbayang ungu, sabuk hutan di kaki, kabut & awan sabuk
+  function duskMountain(c, o) {
+    const { x, yb, h, w, night, sunX, seed = 1, far = 0 } = o, tt = performance.now() / 1000;
+    const sr = sunX >= x ? 1 : -1, sh = hash(seed * 3.1) > 0.5 ? 1 : -1; // sisi matahari & sisi bahu (anak gunung)
+    const prof = (r, sg) => { // tinggi relatif pada jarak horizontal r (0 puncak .. 1 kaki)
+      const a = Math.min(1, r); let y = a < 0.055 ? 0.965 + 0.035 * (a / 0.055) : Math.pow(1 - (a - 0.055) / 0.945, 1.85);
+      y += 0.012 * Math.sin(a * 31 + seed * 2 + sg) * (1 - a) + 0.008 * Math.sin(a * 73 + seed) * (1 - a);
+      if (sg === sh) y += 0.07 * Math.exp(-Math.pow((a - 0.52) / 0.09, 2));
+      return Math.max(0, y);
+    };
+    const pt = (s) => { const sg = s < 0 ? -1 : 1, a = Math.abs(s); return [x + s * w * (sg === sh ? 1.06 : 0.96), yb - h * prof(a, sg)]; };
+    const body = new Path2D(); body.moveTo(x - w * 1.2, yb + 2);
+    for (let i = 0; i <= 90; i++) { const [px, py] = pt(-1 + i / 45); body.lineTo(px, py); }
+    body.lineTo(x + w * 1.2, yb + 2); body.closePath();
+    const top = yb - h;
+    // warna dasar: ungu senja berkabut, makin jauh makin pucat
+    const cTop = night ? '#262a48' : mix('#6a5a8c', '#8a86ac', far), cBot = night ? '#1e2240' : mix('#9a86a8', '#b2a6bc', far);
+    const g = c.createLinearGradient(0, top, 0, yb); g.addColorStop(0, cTop); g.addColorStop(1, cBot);
+    c.save(); c.fillStyle = g; c.fill(body); c.clip(body);
+    if (!night) {
+      // cahaya senja menyapu sisi menghadap matahari, bayangan di sisi lain
+      const lg = c.createLinearGradient(x - w * sr, 0, x + w * sr, 0);
+      lg.addColorStop(0, 'rgba(46,34,78,0.45)'); lg.addColorStop(0.45, 'rgba(46,34,78,0.1)'); lg.addColorStop(0.55, 'rgba(255,160,120,0.14)'); lg.addColorStop(1, 'rgba(255,170,118,0.62)');
+      c.globalAlpha = 1 - far * 0.55; c.fillStyle = lg; c.fillRect(x - w * 1.3, top - 4, w * 2.6, h + 8);
+      // puncak berbatu kecokelatan kena sinar
+      const rg = c.createLinearGradient(0, top, 0, top + h * 0.3); rg.addColorStop(0, 'rgba(255,196,150,0.35)'); rg.addColorStop(1, 'rgba(255,196,150,0)');
+      c.fillStyle = rg; c.fillRect(x - w, top, w * 2, h * 0.3); c.globalAlpha = 1;
+    }
+    // galur erosi: punggung & lembah bergantian memancar dari bibir kawah ke kaki (meridian kerucut),
+    // punggung menghadap matahari kena sinar jingga, lembah di antaranya berbayang ungu tua
+    const N = 26, lw = Math.max(0.6, h / 180), A = (1 - far * 0.6) * (night ? 0.4 : 1);
+    const mer = (s, r) => { const sg = s < 0 ? -1 : 1; return [x + s * w * r * (sg === sh ? 1.06 : 0.96) + Math.sin(r * 11 + s * 40 + seed) * w * 0.01, yb - h * prof(r, sg) * (0.99 - Math.abs(s) * 0.015) + h * 0.003]; };
+    const ss = []; for (let i = 0; i <= N; i++) ss.push((i / N) * 2 - 1 + (i > 0 && i < N ? (hash(i * 1.3 + seed) - 0.5) * 0.05 : 0));
+    for (let i = 0; i < N; i++) {
+      const s0 = ss[i], s1 = ss[i + 1], sm = (s0 + s1) / 2, rEnd = 0.5 + hash(i * 2.7 + seed) * 0.42, ridgeK = i % 2 === 0;
+      c.beginPath(); for (let r = 0.06; r <= rEnd; r += 0.03) { const [px, py] = mer(s0, r); r === 0.06 ? c.moveTo(px, py) : c.lineTo(px, py); }
+      { const [px, py] = mer(sm, rEnd + 0.08); c.lineTo(px, py); }
+      for (let r = rEnd; r >= 0.06; r -= 0.03) { const [px, py] = mer(s1, r); c.lineTo(px, py); } c.closePath();
+      const toward = Math.sign(sm) === sr ? Math.abs(sm) : -Math.abs(sm) * 0.6;
+      if (ridgeK) c.fillStyle = night ? `rgba(120,130,170,${(0.08 * A).toFixed(3)})` : `rgba(255,${(190 + toward * 20) | 0},${(150 + toward * 10) | 0},${((0.08 + 0.22 * Math.max(0, toward)) * A).toFixed(3)})`;
+      else c.fillStyle = `rgba(34,24,60,${((0.12 + 0.14 * Math.max(0, -toward + 0.3)) * A).toFixed(3)})`;
+      c.fill();
+      if (!ridgeK) { c.strokeStyle = `rgba(30,20,52,${(0.28 * A).toFixed(3)})`; c.lineWidth = lw; c.beginPath(); for (let r = 0.07; r <= rEnd * 0.95; r += 0.03) { const [px, py] = mer(sm, r); r === 0.07 ? c.moveTo(px, py) : c.lineTo(px, py); } c.stroke(); }
+    }
+    // sabuk hutan di kaki gunung: tajuk bergerigi, tepi berkilau di sisi matahari
+    const fy = (px) => yb - h * (0.2 + 0.05 * Math.sin(px * 0.05 + seed) + 0.03 * Math.sin(px * 0.13 + seed * 2));
+    const fc = night ? '#141a2c' : mix('#3e4a5e', '#7a7c98', far);
+    c.fillStyle = fc; c.globalAlpha = 0.85 - far * 0.35; c.beginPath(); c.moveTo(x - w * 1.2, yb + 2);
+    for (let px = x - w * 1.2; px <= x + w * 1.2; px += 3) c.lineTo(px, fy(px) - Math.abs(Math.sin(px * 0.6 + seed)) * h * 0.018);
+    c.lineTo(x + w * 1.2, yb + 2); c.closePath(); c.fill();
+    if (!night) { c.fillStyle = 'rgba(255,186,140,0.35)'; for (let px = x - w * 1.1; px <= x + w * 1.1; px += 5) { if ((px - x) * sr < 0 || hash(px * 0.7 + seed) < 0.4) continue; const yy = fy(px) - Math.abs(Math.sin(px * 0.6 + seed)) * h * 0.018; c.fillRect(px, yy, 2.2, 1); } }
+    c.globalAlpha = 1;
+    c.restore();
+    // kawah: bibir terang & rongga gelap
+    { const [lx] = pt(-0.055), [rx] = pt(0.055); c.fillStyle = night ? 'rgba(10,12,26,0.6)' : 'rgba(52,36,70,0.55)'; c.beginPath(); c.ellipse(x, top + h * 0.03, (rx - lx) / 2, h * 0.012, 0, 0, 7); c.fill();
+      if (!night) { c.strokeStyle = 'rgba(255,206,160,0.55)'; c.lineWidth = lw; c.beginPath(); c.ellipse(x, top + h * 0.03, (rx - lx) / 2, h * 0.012, 0, Math.PI * (sr > 0 ? 1.5 : 1), Math.PI * (sr > 0 ? 2.5 : 1.5)); c.stroke(); } }
+    // asap kawah tipis melayang ke arah angin, disinari senja
+    if (o.smoke !== false) for (let k = 0; k < 7; k++) {
+      const ph = ((tt * 0.05 + k / 7) % 1), px = x + ph * w * 0.55 + Math.sin(ph * 5 + k) * w * 0.02, py = top - ph * h * 0.32, r = w * (0.03 + ph * 0.1);
+      const sg2 = c.createRadialGradient(px, py, 0, px, py, r), sa = (1 - ph) * (night ? 0.18 : 0.38) * (1 - far * 0.4);
+      sg2.addColorStop(0, night ? `rgba(150,150,180,${sa.toFixed(3)})` : `rgba(255,214,200,${sa.toFixed(3)})`); sg2.addColorStop(1, 'rgba(255,214,200,0)');
+      c.fillStyle = sg2; c.beginPath(); c.arc(px, py, r, 0, 7); c.fill();
+    }
+    // awan sabuk melingkari lereng tengah
+    if (!night) [[-0.35, 0.5, 0.32], [0.3, 0.44, 0.26]].forEach(([ox, oy, rx], k) => { c.save(); c.translate(x + w * ox + Math.sin(tt * 0.08 + k) * w * 0.02, yb - h * oy); c.scale(1, 0.12);
+      const cg = c.createRadialGradient(0, 0, 0, 0, 0, w * rx); cg.addColorStop(0, `rgba(255,222,214,${(0.42 * (1 - far * 0.4)).toFixed(3)})`); cg.addColorStop(1, 'rgba(255,222,214,0)'); c.fillStyle = cg; c.beginPath(); c.arc(0, 0, w * rx, 0, 7); c.fill(); c.restore(); });
+    // kabut senja di kaki
+    { const mg = c.createLinearGradient(0, yb - h * 0.22, 0, yb + 2); mg.addColorStop(0, 'rgba(255,210,190,0)'); mg.addColorStop(1, night ? 'rgba(60,66,100,0.4)' : 'rgba(236,190,186,0.55)'); c.fillStyle = mg; c.fillRect(x - w * 1.2, yb - h * 0.22, w * 2.4, h * 0.22 + 2); }
+  }
   function drawRidges(V) {
     const { gy, p } = V;
     if (MIS.land === 'sawit' && !V.storm) { // Sumatra: Bukit Barisan berlapis berkabut + tajuk hutan hujan (sama dengan kokpit)
@@ -6725,6 +6803,14 @@
       rainforestLine(V.c, gy, gy * 0.2, pcOf(V) * 0.42, V.night, p);
       return;
     }
+    if (MIS.dusk) { // Argo Senja: perbukitan rendah + gunung api detail bercahaya senja
+      const off = pcOf(V) * 0.05 - (V.pan || 0), sx0 = V.sunX !== undefined ? sunPos(V).x : W * 0.8;
+      ridgePath(V, 0.05, gy - 8, gy * 0.42, (u) => 0.18 + 0.1 * Math.sin(u * 0.004) + 0.06 * Math.sin(u * 0.011), V.night ? '#262a48' : mix('#8a76a0', '#9aa6c0', p));
+      for (let k = Math.floor((off - 1300 - 700) / 2600); k <= Math.ceil((off + W + 700) / 2600); k++) {
+        const vx = 1300 + k * 2600 - off; if (vx < -700 || vx > W + 700) continue;
+        duskMountain(V.c, { x: vx, yb: gy - 6, h: gy * 0.46, w: 540, night: V.night, sunX: sunPos(V).x, seed: k + 5 });
+      }
+    } else
     // gunung berapi jauh
     ridgePath(V, 0.05, gy - 8, gy * 0.42, (u) => {
       const k = ((u % 2600) + 2600) % 2600;
