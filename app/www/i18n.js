@@ -664,7 +664,13 @@
 "BERIKUTNYA": "NEXT",
 "TUJUAN": "DESTINATION",
 "14 MISI": "14 MISSIONS",
-"wisata": "heritage"
+"wisata": "heritage",
+"Hujan deras sejak siang, Anett. Lintas Lengkung Watu baru saja ditingkatkan sampai 150 km/h, tapi rel licin: pakai P1–P2 waktu berangkat, tabur pasir kalau roda selip, dan mulai mengerem jauh lebih awal. Satu lagi: semalam ada yang mengutak-atik wesel dekat Watu. Aku menunggu di sana.": "It's been pouring since noon, Anett. The Lengkung Watu line has just been upgraded to 150 km/h, but the rails are slippery: use P1–P2 when pulling away, drop sand if the wheels slip, and start braking much earlier. One more thing: last night someone tampered with the points near Watu. I'll be waiting there.",
+"Lintas baru di depan: batas 150 km/h. Di rel basah, jarak pengereman dari 150 lebih dari 1 km.": "New line ahead: limit 150 km/h. On wet rails, braking from 150 takes more than 1 km.",
+"Tanjakan 12‰ di depan. Jaga momentum, tapi siap berhenti di B2.": "12‰ climb ahead. Keep your momentum, but be ready to stop at B2.",
+"Masuk Terowongan Lengkung Watu. Batas 100 km/h, perhatikan peta jalur.": "Entering Lengkung Watu Tunnel. Limit 100 km/h, watch the route map.",
+"REM DINAMIS": "DYNAMIC BRAKE",
+"PASIR": "SAND"
 };
   var P = [
   [/^Pasir ditabur ke rel\. Cengkeraman roda pulih selama (\d+) detik\.$/, "Sand applied to the rails. Wheel grip restored for $1 seconds."],
