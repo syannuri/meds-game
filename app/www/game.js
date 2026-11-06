@@ -4417,7 +4417,7 @@
     const SUN = sunPos(Vs), SUNK = inTun || night || storm ? 0 : clamp(1.15 - p * 0.55, 0.45, 1), tNow = performance.now() / 1000;
     const sunRim = SUNK > 0 ? (MIS.golden || MIS.dusk || p < 0.5 ? '255,196,120' : '255,236,200') : '0,0,0';
     if (!inTun) {
-      if (HSTCAB || !storm || MIS.digitalCab) { drawHstScenery(c, { x0, hy, f, pan, p, P, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); }
+      if (HSTCAB || !storm || MIS.digitalCab) { drawHstScenery(c, { x0, hy, f, pan, p, P: BEND ? (z, la, h) => (z < 0.8 ? null : W3(z, la - SEAT * 0, h)) : P, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); } // tikungan: sawah & kebun ikut melengkung bersama rel
       else {
       const ridge = (amp, fq, col, par, ph) => {
         c.fillStyle = col; c.beginPath(); c.moveTo(0, hy + 1);
@@ -4449,8 +4449,26 @@
       for (const B of CAB_BRS) {
         if (B.land) continue; // jalur layang di atas sawah: tidak ada sungai di bawahnya
         const d0 = Math.max(2, B.from + 4 - x0), d1 = Math.min(FAR, B.to - 4 - x0);
-        if (d1 > d0) quad(W3(d0, -200, -3), W3(d0, 200, -3), W3(d1, 200, -3), W3(d1, -200, -3), night ? '#232a55' : mix('#5f8ea2', '#86bdd0', p));
-        if (d1 > d0 && SUNK > 0) { // jalur kilau matahari di permukaan sungai, berkilauan
+        if (d1 > d0 && B.viaduct) { // ngarai di bawah viaduk: dasar lembah berhutan, sungai berliku, tebing hijau, kabut lembah
+          const DH = -26, fg = night ? '#152018' : mix('#2f5a34', '#3d6c40', p), fg2 = night ? '#1a281d' : mix('#3e6e42', '#4f8250', p);
+          quad(W3(d0, -220, DH), W3(d0, 220, DH), W3(d1, 220, DH), W3(d1, -220, DH), fg);
+          // tebing lembah naik ke kiri & kanan
+          for (const sg of [-1, 1]) quad(W3(d0, sg * 60, DH), W3(d0, sg * 220, -2), W3(d1, sg * 220, -2), W3(d1, sg * 60, DH), night ? '#1c2a20' : mix('#4a7a4a', '#5a8c58', p));
+          // sungai berliku di dasar lembah
+          const rv = (d) => Math.sin((d + x0) * 0.012) * 14;
+          for (let d = d0; d < d1; d += 6) { const e = Math.min(d1, d + 6); quad(W3(d, rv(d) - 7, DH + 0.1), W3(d, rv(d) + 7, DH + 0.1), W3(e, rv(e) + 7, DH + 0.1), W3(e, rv(e) - 7, DH + 0.1), night ? '#232a55' : mix('#5f8ea2', '#86bdd0', p)); }
+          // tajuk hutan di dasar & lereng (gumpal bulat, makin jauh makin kecil)
+          for (let d = Math.ceil((x0 + d0) / 9) * 9 - x0; d < d1; d += 9) for (let q = -11; q <= 11; q++) {
+            const hr = hash(Math.round(d + x0) * 0.37 + q * 3.1); if (hr < 0.35) continue; const o = q * 18 + (hr - 0.5) * 10; if (Math.abs(o - rv(d)) < 10) continue;
+            const hh = Math.abs(o) < 60 ? DH : DH + (Math.abs(o) - 60) / 160 * (DH * -1 - 2), pt = W3(d, o, hh + 2.5); if (!pt || pt.y > H) continue;
+            const r = Math.max(1, 4.5 * pt.k); c.fillStyle = hr > 0.7 ? fg2 : fg; c.beginPath(); c.arc(pt.x, pt.y, r, 0, 7); c.fill();
+            if (!night && r > 2) { c.fillStyle = 'rgba(255,240,200,0.12)'; c.beginPath(); c.arc(pt.x - r * 0.3, pt.y - r * 0.35, r * 0.5, 0, 7); c.fill(); }
+          }
+          // kabut lembah tipis
+          const yA = W3(d1, 0, DH), yB = W3(d0, 0, DH);
+          if (yA && yB) { const mg = c.createLinearGradient(0, yA.y - 10, 0, yB.y); mg.addColorStop(0, night ? 'rgba(60,70,90,0.35)' : 'rgba(225,235,238,0.4)'); mg.addColorStop(0.35, 'rgba(225,235,238,0)'); c.fillStyle = mg; c.fillRect(0, yA.y - 10, W, Math.max(0, yB.y - yA.y + 10)); }
+        } else if (d1 > d0) quad(W3(d0, -200, -3), W3(d0, 200, -3), W3(d1, 200, -3), W3(d1, -200, -3), night ? '#232a55' : mix('#5f8ea2', '#86bdd0', p));
+        if (d1 > d0 && SUNK > 0 && !B.viaduct) { // jalur kilau matahari di permukaan sungai, berkilauan
           const yA = W3(d1, 0, -3), yB = W3(d0, 0, -3); if (yA && yB) { c.save(); c.globalCompositeOperation = 'lighter';
             // cahaya lembut menyebar di air, lalu riak-riak berkilau yang pecah dan bergoyang (bukan batang lurus)
             c.save(); c.translate(SUN.x, yA.y); c.scale(1, 2.2);
@@ -5547,9 +5565,9 @@
     // ---- layar DMI kiri: busur kecepatan, batas, jarak target ----
     {
       const x = W * 0.08, w = W * 0.4; panel(x, py, w, ph);
-      const r = ph * 0.4, gx = x + ph * (MIS.loco === 'hst' ? 0.58 : 0.55), gy2 = py + ph * 0.52;
+      const r = ph * 0.4, gx = x + ph * 0.55, gy2 = py + ph * 0.52;
       const A0 = Math.PI * 0.8, SW = Math.PI * 1.4, ang = (v) => A0 + SW * clamp(v / GMAX, 0, 1);
-      if (MIS.loco === 'hst') { // Kilat G1: perpaduan analog (jarum & skala berangka) dan digital
+      if (false) { // (dulu: Kilat G1 analog-digital; kini full digital seperti Guntur)
         const rr = ph * 0.46, gyA = py + ph * 0.5;
         const bz = c.createLinearGradient(gx - rr, gyA - rr, gx + rr, gyA + rr); bz.addColorStop(0, '#e8eef2'); bz.addColorStop(0.5, '#7d8890'); bz.addColorStop(1, '#d4dbe0');
         c.fillStyle = bz; c.beginPath(); c.arc(gx, gyA, rr, 0, 7); c.fill();
@@ -5579,7 +5597,7 @@
       c.fillStyle = 'rgba(234,250,255,0.55)'; c.font = FONT(700, r * 0.24); c.fillText('km/h', gx, gy2 + r * 0.5);
       }
       // kolom info
-      const ix = gx + (MIS.loco === 'hst' ? ph * 0.62 : r * 1.55), iw = x + w - ix - ph * 0.15; c.textAlign = 'start';
+      const ix = gx + r * 1.55, iw = x + w - ix - ph * 0.15; c.textAlign = 'start';
       c.fillStyle = 'rgba(234,250,255,0.5)'; c.font = FONT(800, ph * 0.11); c.fillText('BATAS', ix, py + ph * 0.2);
       c.fillStyle = AMB; c.font = BIG(ph * 0.24); c.fillText(String(lim), ix, py + ph * 0.38);
       if (nl) { c.fillStyle = 'rgba(234,250,255,0.75)'; c.font = FONT(700, ph * 0.1); c.fillText(`▸ ${nl.limit} dalam ${Math.round(nl.from - st.x)} m`, ix + iw * 0.35, py + ph * 0.38, iw * 0.65); }
