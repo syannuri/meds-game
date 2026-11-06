@@ -5691,6 +5691,17 @@
   // yang tampak berlari. Hanya >= 1 (mendekat) agar tepi layar tetap tertutup gambar.
   const CINE = { s: 1, v: 0, px: 0, py: 0, want: 1, raw: null, shot: null, cool: 14, nShot: 0, bars: 0 };
   const SHOTS = ['nose', 'wheels', 'mid']; // urutan sorotan saat melaju kencang: moncong, roda, rangkaian
+  // posisi dunia kerumunan penumpang yang sedang naik/turun di peron ini (null bila tidak ada)
+  function paxFocus() {
+    if (!S || S.phase !== 'dwell' || MIS.freight) return null;
+    const step = S.dwell.step, st = ROUTE.stations[S.st], cr = crowds.get(S.st);
+    if (!(step === 'open' || step === 'board' || step === 'alight')) return null;
+    const ppl = cr ? cr.people.filter((p) => p.role !== 'ppka' && p.alpha > 0.05 && p.state !== 'gone' && p.state !== 'in') : [];
+    const expect = step === 'alight' ? (S.aboard > 0 || (cr && cr.alightLeft > 0)) : st.waiting > 0 && (!cr || !cr.boardDone);
+    if (!ppl.length && !expect) return null;
+    if (ppl.length) return ppl.reduce((a, p) => a + p.x, 0) / ppl.length;
+    const d = doorOffsets()[0]; return S.x - d;
+  }
   function cineTarget() {
     if (!S || mode !== 'play' || REDUCE_MOTION || viewMode === 'cab') return 1;
     if (MIS.freight || S.phase === 'load' || ROUTE.elephants && S.eleph && S.eleph.phase !== 'gone' && ROUTE.elephants.x - S.x < 300) return 1;
@@ -5698,7 +5709,7 @@
     if (S.meet && S.meet.phase === 'run') return 1;
     if (ROUTE.rival && S.bus && S.bus.started && !S.bus.done) return 1;
     const kmh = S.v * 3.6;
-    if (S.phase === 'dwell') return S.dwell.step === 'couple' ? 1 : 1.24;        // berhenti di peron: mendekat ke kereta & penumpang
+    if (S.phase === 'dwell') return S.dwell.step !== 'couple' && paxFocus() !== null ? 2.3 : 1; // close-up hanya bila ada penumpang naik/turun
     if (kmh < 14 && S.t < 40) return 1.3;                                         // berangkat pertama: close-up lokomotif
     const ns = nextStation(), ds = ns ? ns.x - S.x : Infinity;
     if (ds < 320 && kmh < 45) return 1.14;                                       // menjelang peron: perlahan mendekat
@@ -5726,8 +5737,10 @@
     const r = CINE.raw;
     if (r) { const sh = CINE.shot, len = r.x1 - r.x0;
       const fx = sh ? (sh.focus === 'nose' ? 0.05 : sh.focus === 'wheels' ? 0.1 : 0.42) : S && S.t < 40 && S.phase !== 'dwell' ? 0.12 : 0.35;
-      const px = clamp(r.x1 - len * fx, W * 0.2, W * 0.82), py = sh ? (sh.focus === 'wheels' ? r.bottom - (r.bottom - r.top) * 0.08 : r.bottom - (r.bottom - r.top) * 0.4) : r.bottom;
-      CINE.px = CINE.px ? CINE.px + (px - CINE.px) * Math.min(1, k * 1.2) : px; CINE.py = CINE.py ? CINE.py + (py - CINE.py) * Math.min(1, k * 1.2) : py; }
+      const pf = CINE.paxX, hasPf = pf !== null && pf !== undefined;
+      // penumpang: poros dipilih supaya kerumunan bergeser ke tengah layar seiring kamera mendekat
+      const px = hasPf ? (CINE.s > 1.005 ? clamp((lerp(pf, W * 0.46, clamp((CINE.s - 1) / 1.3, 0, 1)) - pf * CINE.s) / (1 - CINE.s), -W * 3, W * 4) : pf) : clamp(r.x1 - len * fx, W * 0.2, W * 0.82), py = sh ? (sh.focus === 'wheels' ? r.bottom - (r.bottom - r.top) * 0.08 : r.bottom - (r.bottom - r.top) * 0.4) : r.bottom + (hasPf ? (r.bottom - r.top) * 0.15 : 0);
+      CINE.px = hasPf || !CINE.px ? px : CINE.px + (px - CINE.px) * Math.min(1, k * 1.2); CINE.py = CINE.py ? CINE.py + (py - CINE.py) * Math.min(1, k * 1.2) : py; }
     CINE.bars += ((CINE.shot && CINE.shot.t < CINE.shot.dur - 2.2 ? 1 : 0) - CINE.bars) * Math.min(1, k * 1.6);
   }
   // bingkai film (letterbox) tipis selama shot sinematik
@@ -5807,6 +5820,7 @@
     const ppmB = clamp(H / 44, 3.4, 13);
     if (window.__rnDebug) window.__rnCam = { camX, ppm, camLead, pc: (camX + W / (2 * ppm)) * ppmB - W / 2, old: camX * ppm };
     CINE.raw = { x0: X(st.x - TRAIN_LEN), x1: X(st.x), top: gy - 6.6 * ppm, bottom: gy };
+    { const pw = S && st === S && CINE.want > 1.5 ? paxFocus() : null; CINE.paxX = pw === null ? null : X(pw); }
     { const zx = (x) => CINE.px + (x - CINE.px) * CZ, zy = (y) => CINE.py + (y - CINE.py) * CZ, r = CINE.raw; trainScr = CZ > 1.001 ? { x0: zx(r.x0), x1: zx(r.x1), top: zy(r.top), bottom: zy(r.bottom) } : r; }
     // paralaks latar hanya mengikuti posisi kereta (bukan zoom/geser kamera), jadi saat mengerem
     // dan berhenti di stasiun pemandangan jauh tidak ikut 'berlari' ketika kamera mendekat
