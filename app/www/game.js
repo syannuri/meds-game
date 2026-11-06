@@ -5331,11 +5331,10 @@
     // bus pesaing berdampingan: tampilkan kereta dan bus sekaligus
     if (ROUTE.rival && S.bus && S.bus.started && !S.bus.done && Math.abs(S.bus.x - S.x) < 90) return 0.8;
     // mendekati titik henti saat sudah pelan: perbesar sedikit untuk presisi
-    const ns = S.phase === 'run' ? nextStation() : null, ds = ns ? ns.x - S.x : Infinity;
-    if (ds < 140 && ds > -10 && kmh < 30) return 1.18;
+    // (tanpa zoom-in saat merayap ke titik henti: zoom berporos di moncong membuat tanah tampak berlari)
     if (S.phase === 'load' && S.loadT <= 0 && Math.abs(S.x - loadTarget(S.loadIdx)) < 20 && kmh < 12) return 1.2;
     // melaju kencang di lintas bebas: perkecil agar terasa cepat dan jalur depan terlihat
-    if (kmh > 45 && ds > 450) return 1 - clamp((kmh - 45) / 35, 0, 1) * 0.17 - clamp((kmh - 80) / 40, 0, 1) * 0.13;
+    if (kmh > 45) return 1 - clamp((kmh - 45) / 35, 0, 1) * 0.17 - clamp((kmh - 80) / 40, 0, 1) * 0.13;
     return 1;
   }
   function stationZoom(st) {
@@ -5403,9 +5402,15 @@
     const E0 = ROUTE.elephants, st0 = S || idleState;
     const TR0 = st0.tree, treeNear = TR0 && (TR0.phase === 'warn' || TR0.phase === 'work') && TR0.x - st0.x < 260;
     const stZoom = stationZoom(st0);
-    const wantZoom = (E0 && st0.eleph && (st0.eleph.phase === 'block' || st0.eleph.phase === 'cross') && E0.x - st0.x < 260) || treeNear ? 0.7 : stZoom ? 1.45 : autoZoom(st0);
+    let wantZoom = (E0 && st0.eleph && (st0.eleph.phase === 'block' || st0.eleph.phase === 'cross') && E0.x - st0.x < 260) || treeNear ? 0.7 : stZoom ? 1.45 : autoZoom(st0);
     // pegas teredam: zoom bergerak halus tanpa sentakan
     const zdt = Math.min(0.05, dtReal || 0.016);
+    // saat mengerem atau berhenti (di luar zoom berporos di stasiun) kamera tidak boleh mendekat:
+    // zoom-in berporos di moncong melempar tanah di belakang kereta ke kiri sehingga pemandangan
+    // tampak 'berlari' padahal kereta melambat. Zoom kembali normal saat kereta melaju lagi.
+    const braking = !!(S && st0 === S && S.mode === 'play' && (S.notch < 0 || S.v < 0.3));
+    const pivotZoom = !!(S && st0 === S && S.phase === 'dwell' && !MIS.freight && S.dwell.step !== 'couple');
+    if (braking && !pivotZoom && wantZoom > camZoom) { wantZoom = camZoom; if (camZoomV > 0) camZoomV = 0; }
     camZoomV += ((wantZoom - camZoom) * 2.2 - camZoomV * 2.4) * zdt;
     camZoom += camZoomV * zdt;
     const ppm = clamp(H / 44, 3.4, 13) * camZoom;
@@ -5413,7 +5418,8 @@
     const shake = st.shake > 0 ? (Math.random() - 0.5) * st.shake * (MIS.loco === 'hst2' || MIS.loco === 'hst' ? 3 : 7) : 0;
     const fast = S && st === S && S.phase === 'run' && !REDUCE_MOTION ? clamp((S.v * 3.6 - 75) / 45, 0, 1) : 0;
     // geser jangkar kamera hanya selama kereta bergerak: setelah berhenti kamera diam total
-    camFast += (fast - camFast) * Math.min(1, (dtReal || 0.016) * 0.8 * clamp(st.v / 6, 0, 1));
+    // ... dan tidak bergeser selama mengerem, supaya kereta tidak meluncur di layar saat melambat
+    if (!braking) camFast += (fast - camFast) * Math.min(1, (dtReal || 0.016) * 0.8 * clamp(st.v / 6, 0, 1));
     const anchor = mode === 'play' || mode === 'pause' ? 0.6 - camFast * 0.13 : 0.78;
     // kamera melirik ke depan saat ada satwa di jalur, supaya pemain bisa melihatnya
     let lead = 0;
@@ -5448,7 +5454,7 @@
     trainScr = { x0: X(st.x - TRAIN_LEN), x1: X(st.x), top: gy - 6.6 * ppm, bottom: gy };
     // paralaks latar hanya mengikuti posisi kereta (bukan zoom/geser kamera), jadi saat mengerem
     // dan berhenti di stasiun pemandangan jauh tidak ikut 'berlari' ketika kamera mendekat
-    const pcTrain = st.x * ppmB - W * 0.6;
+    const pcTrain = st.x * ppmB - W * anchor; // ikut jangkar kamera agar latar jauh & tanah bergeser bersama
     const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2, ppmB, pc: mode === 'play' || mode === 'pause' ? pcTrain : (camX + W / (2 * ppm)) * ppmB - W / 2 };
     // cahaya tepi (rim light), pantulan kaca, lampu kabin per suasana
     if (night) Object.assign(V, { rim: '#9fb4ff', rimA: 0.5, refl: 0.05, cabA: 0.9, haze: '#4b3d6b', hazeA: 0.3, water: '#3a3f74' });
