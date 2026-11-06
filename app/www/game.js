@@ -10191,7 +10191,7 @@
     const tunnel = inTunnel(st.x - 12);
     return { title, 
       scene, running, v: st.v, x: st.x, onBridge, river, crowd, bell,
-      power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0, electric: !!S && ELEC(),
+      power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0, electric: !!S && (ELEC() || MIS.loco === 'argo'), // Agraveda bertenaga listrik: suara traksi listrik, tanpa mesin diesel
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
       rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
