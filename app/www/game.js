@@ -29,6 +29,7 @@
   const VS = 0.54, VPIV = 1.05; // skala tinggi badan kereta (atap sekitar 4,1 m)
   const trainH = (h) => (h <= VPIV ? h : VPIV + (h - VPIV) * VS);
   const ELEC = () => MIS.loco === 'hst2' || MIS.loco === 'hst' || MIS.loco === 'argo'; // bertenaga listrik 25 kV (pantograf): Guntur, Kilat, Agraveda
+  const SMOOTH = () => ELEC() || !!ROUTE.hst; // kereta cepat: tanpa guncangan sama sekali (rel las panjang, suspensi udara, coupler rapat)
   const WIRE_H = 4.42; // tinggi kawat aliran atas di layar samping (meter terskala, tepat di kepala pantograf)
   // susunan rangkaian berubah per misi: 3 gerbong penumpang atau N gerbong batu bara
   let N_COACH = 3, CAR_LEN = COACH_LEN;
@@ -2510,13 +2511,13 @@
   function updateCarDyn(dt) {
     const n = N_COACH + 1;
     if (!S.carDyn || S.carDyn.length !== n) S.carDyn = Array.from({ length: n }, () => ({ s: 0, g: 0, yF: 0, yR: 0, vF: 0, vR: 0, dy: 0, pitch: 0, jF: null, jR: null }));
-    const a = S.aAct || 0, target = clamp(a * 0.55, -0.32, 0.36);
+    const FS = SMOOTH(), a = FS ? 0 : S.aAct || 0, target = clamp(a * 0.55, -0.32, 0.36);
     S.carDyn.forEach((D, k) => {
       if (k > 0) { const prev = S.carDyn[k - 1]; D.g += ((k === 1 ? target : prev.g) - D.g) * Math.min(1, dt * 4); D.s = prev.s + D.g; }
       const [mF, len] = carSpan(k);
       [['F', mF + 3], ['R', mF + len - 3]].forEach(([b, m]) => {
         const j = Math.floor((S.x - m - D.s) / 25);
-        if (D['j' + b] !== null && j !== D['j' + b] && S.v > 1) D['v' + b] -= 0.3 + S.v * 0.045;
+        if (D['j' + b] !== null && j !== D['j' + b] && S.v > 1 && !FS) D['v' + b] -= 0.3 + S.v * 0.045;
         D['j' + b] = j;
         D['v' + b] += (-80 * D['y' + b] - 7 * D['v' + b]) * dt;
         D['y' + b] += D['v' + b] * dt;
@@ -4389,7 +4390,7 @@
     const f = W * 0.8;
     // kereta cepat: rel las panjang + suspensi udara, kabin hanya mengapung pelan (tanpa getar)
     const HSTCAB = MIS.loco === 'hst2' || MIS.loco === 'hst', fk = clamp(st.v / 30, 0, 1);
-    const bob = REDUCE_MOTION ? 0 : HSTCAB ? (Math.sin(st.t * 1.05) * 0.45 + Math.sin(st.t * 0.47 + 1) * 0.3) * fk + (st.shake > 0 ? (Math.random() - 0.5) * st.shake * 2 : 0)
+    const bob = REDUCE_MOTION || SMOOTH() ? 0 : HSTCAB ? (Math.sin(st.t * 1.05) * 0.45 + Math.sin(st.t * 0.47 + 1) * 0.3) * fk + (st.shake > 0 ? (Math.random() - 0.5) * st.shake * 2 : 0)
       : (Math.sin(st.t * (1.6 + st.v * 0.12)) * 0.4 + Math.sin(st.t * 0.7 + 1) * 0.25) * clamp(st.v / 12, 0, 1) + (st.shake > 0 ? (Math.random() - 0.5) * st.shake * 2.5 : 0);
     // masinis duduk di sisi kiri kabin (kereta di Indonesia berjalan di jalur kiri)
     const hy = H * 0.4 + bob, cx = W * 0.5, SEAT = 0.55;
@@ -5790,7 +5791,7 @@
   }
   // hentakan kecil tiap sambungan rel (rel 25 m), makin terasa saat cepat
   function railBump(st) {
-    if (!S || st !== S || REDUCE_MOTION) return 0;
+    if (!S || st !== S || REDUCE_MOTION || SMOOTH()) return 0;
     const kmh = st.v * 3.6; if (kmh < 15) return 0;
     // kereta cepat: rel las panjang tanpa sambungan, hanya ayunan suspensi udara yang sangat halus
     if (MIS.loco === 'hst2' || MIS.loco === 'hst') return Math.sin(st.t * 0.9) * 0.22 * clamp(kmh / 120, 0, 1);
@@ -5897,7 +5898,7 @@
     camZoom += camZoomV * zdt;
     const ppm = clamp(H / 44, 3.4, 13) * camZoom;
     const gy = Math.round(H * 0.64);
-    const shake = st.shake > 0 ? (Math.random() - 0.5) * st.shake * (MIS.loco === 'hst2' || MIS.loco === 'hst' ? 3 : 7) : 0;
+    const shake = st.shake > 0 && !SMOOTH() ? (Math.random() - 0.5) * st.shake * (MIS.loco === 'hst2' || MIS.loco === 'hst' ? 3 : 7) : 0;
     const fast = S && st === S && S.phase === 'run' && !REDUCE_MOTION ? clamp((S.v * 3.6 - 75) / 45, 0, 1) : 0;
     // geser jangkar kamera hanya selama kereta bergerak: setelah berhenti kamera diam total
     // ... dan tidak bergeser selama mengerem, supaya kereta tidak meluncur di layar saat melambat
@@ -9396,7 +9397,7 @@
     const carXform = (idx) => {
       const D = st.carDyn && st.carDyn[idx]; if (!D) return;
       if (D.s) c.translate(-D.s * ppm, 0);
-      if (V.upper && !REDUCE_MOTION) {
+      if (V.upper && !REDUCE_MOTION && !SMOOTH()) {
         const [mF, len] = carSpan(idx), cx = L(mF + len / 2), cy = Y(VPIV);
         c.translate(cx, cy - D.dy * ppm * 1.6); c.rotate(D.pitch); c.translate(-cx, -cy);
       }
