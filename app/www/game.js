@@ -853,6 +853,11 @@
       fog: null,
       bridge: { from: 1100, to: 1260 },
       bridges: [{ from: 1100, to: 1260, truss: true, name: 'Jembatan Kali Gondang' }],
+      scenes: [
+        { from: 250, to: 1050, kind: 'cane' },
+        { from: 1700, to: 2450, kind: 'cane', lori: true },
+        { from: 2900, to: 4900, kind: 'coffee' },
+      ],
       tunnel: null,
       grades: [
         { from: 1500, to: 2400, permil: 18, label: 'Tanjakan Gondang' },
@@ -10275,6 +10280,73 @@
               c.fillStyle = '#d8dde2'; c.beginPath(); c.arc(x, yH - h, Math.max(1.5, 0.4 * ppm), 0, 7); c.fill(); }
           }
         }
+      } else if (sc.kind === 'cane') {
+        // kebun tebu: barisan batang tinggi berdaun panjang melengkung, malai bunga keperakan, jalur lori tebu
+        c.globalAlpha = 1;
+        const grow = smooth(0, 1, w), wind = Math.sin(performance.now() / 900) * 0.6;
+        const rows = [[0.3, 0.42, night ? '#24331f' : '#8fa458', night ? '#1a2617' : '#6f8a3c'], [0.4, 0.58, night ? '#1e2c1a' : '#7d9a46', night ? '#152013' : '#5b7a2e'], [0.55, 0.8, night ? '#182515' : '#6c8e3a', night ? '#101a0e' : '#4a6a24']];
+        rows.forEach(([par, scl, col, colD], li) => {
+          const off = pcOf(V) * par, gap = 0.8 * ppm * scl, yb = yH + (li * 1.1 + 0.4) * ppm, hh = 5.6 * ppm * scl * grow;
+          if (hh < 1) return;
+          // massa daun rapat sebagai dasar barisan
+          c.fillStyle = colD; c.beginPath(); c.moveTo(-10, yb + 1.5 * ppm);
+          for (let x = -(((off % 9) + 9) % 9) - 9; x <= W + 18; x += 9) c.lineTo(x, yb - hh * (0.7 + hash(Math.round((x + off) / 9) + li * 13) * 0.12));
+          c.lineTo(W + 20, yb + 1.5 * ppm); c.closePath(); c.fill();
+          const j0 = Math.floor((off - gap) / gap), j1 = Math.ceil((off + W + gap) / gap);
+          c.lineCap = 'round';
+          for (let j = j0; j <= j1; j++) {
+            const r = hash(j * 2.3 + li * 7), x = j * gap - off + r * gap * 0.5, top = yb - hh * (0.85 + r * 0.25);
+            // batang beruas
+            c.strokeStyle = colD; c.lineWidth = Math.max(1, 0.09 * ppm * scl); c.beginPath(); c.moveTo(x, yb); c.lineTo(x + wind * 0.15 * ppm * scl, top); c.stroke();
+            // daun panjang melengkung ke kedua sisi
+            c.strokeStyle = col; c.lineWidth = Math.max(1, 0.07 * ppm * scl);
+            for (let q = 0; q < 4; q++) { const ly = top + (q * 0.14 + 0.04) * hh, d = q % 2 ? 1 : -1, L2 = (1.4 + r * 0.6) * ppm * scl;
+              c.beginPath(); c.moveTo(x, ly); c.quadraticCurveTo(x + d * L2 * 0.6 + wind * 0.2 * ppm, ly - L2 * 0.35, x + d * L2 + wind * 0.3 * ppm, ly + L2 * 0.35); c.stroke(); }
+            // malai bunga tebu
+            if (r > 0.42) { const px = x + wind * 0.15 * ppm * scl, ph = (1.0 + r * 0.5) * ppm * scl, pw = 0.32 * ppm * scl, sw = wind * 0.35 * ppm * scl;
+              c.strokeStyle = night ? 'rgba(120,120,110,0.6)' : '#c9b98a'; c.lineWidth = Math.max(1, 0.05 * ppm * scl); c.beginPath(); c.moveTo(px, top); c.lineTo(px + sw * 0.5, top - ph * 0.35); c.stroke();
+              c.fillStyle = night ? 'rgba(200,200,220,0.35)' : 'rgba(248,236,236,0.92)'; c.beginPath(); c.moveTo(px + sw * 0.5, top - ph * 0.3); c.quadraticCurveTo(px - pw + sw, top - ph * 0.75, px + sw * 1.2, top - ph); c.quadraticCurveTo(px + pw + sw, top - ph * 0.7, px + sw * 0.5, top - ph * 0.3); c.fill();
+              c.fillStyle = night ? 'rgba(220,200,220,0.25)' : 'rgba(236,196,214,0.6)'; c.beginPath(); c.ellipse(px + sw * 0.9, top - ph * 0.62, pw * 0.4, ph * 0.22, 0, 0, 7); c.fill(); }
+          }
+          c.lineCap = 'butt';
+        });
+        // jalur lori tebu dengan gerbong kecil bermuatan tebu di depan barisan pertama
+        if (sc.lori) {
+          const par = 0.44, off = pcOf(V) * par, scl = 0.6, yb = yH + 1.9 * ppm, base = (((-off) % (W * 1.4)) + W * 1.4) % (W * 1.4) - W * 0.2;
+          c.fillStyle = night ? '#2a2420' : '#6a5a48'; c.fillRect(0, yb, W, Math.max(1, 0.1 * ppm));
+          for (let q = 0; q < 4; q++) { const x = base + q * 2.4 * ppm * scl;
+            c.fillStyle = night ? '#2a1e18' : '#5a4636'; c.fillRect(x, yb - 0.75 * ppm * scl, 2.1 * ppm * scl, 0.45 * ppm * scl);
+            c.fillStyle = night ? '#3a4a2a' : '#c7b46a'; for (let t = 0; t < 6; t++) c.fillRect(x - 0.1 * ppm * scl, yb - (0.95 + t * 0.09) * ppm * scl, 2.3 * ppm * scl, Math.max(1, 0.07 * ppm * scl));
+            c.fillStyle = '#1a1a1a'; for (const wx of [0.4, 1.7]) { c.beginPath(); c.arc(x + wx * ppm * scl, yb - 0.12 * ppm * scl, 0.16 * ppm * scl, 0, 7); c.fill(); } }
+        }
+      } else if (sc.kind === 'coffee') {
+        // kebun kopi di lereng berundak: perdu bulat berbuah merah, pohon pelindung bertajuk tipis, pondok jemur
+        c.globalAlpha = 1;
+        const grow = smooth(0, 1, w);
+        // lereng berundak di belakang
+        { const off = pcOf(V) * 0.2; c.fillStyle = night ? '#1a2620' : '#6f8c5a';
+          c.beginPath(); c.moveTo(-10, yH + 0.4 * ppm); for (let x = -10; x <= W + 10; x += 12) c.lineTo(x, yH - (5.5 + 2.5 * Math.sin((x + off) * 0.006) + 1.2 * Math.sin((x + off) * 0.017)) * ppm * grow); c.lineTo(W + 10, yH + 0.4 * ppm); c.closePath(); c.fill();
+          c.strokeStyle = night ? 'rgba(80,110,80,0.4)' : 'rgba(210,200,150,0.55)'; c.lineWidth = 1;
+          for (let t = 1; t < 5; t++) { c.beginPath(); for (let x = -10; x <= W + 10; x += 12) { const y = yH - (5.5 + 2.5 * Math.sin((x + off) * 0.006) + 1.2 * Math.sin((x + off) * 0.017)) * ppm * grow * (1 - t * 0.2); x < 0 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); } }
+        // pohon pelindung (dadap/lamtoro): batang ramping, tajuk datar bertingkat
+        { const par = 0.3, off = pcOf(V) * par, gap = 22 * ppm * 0.5, j0 = Math.floor((off - gap) / gap), j1 = Math.ceil((off + W + gap) / gap);
+          for (let j = j0; j <= j1; j++) { const r = hash(j * 4.1 + 3), x = j * gap - off + r * gap * 0.6, yb = yH + 0.2 * ppm, h = (6 + r * 3) * ppm * 0.5 * grow; if (h < 2) continue;
+            c.strokeStyle = night ? '#1a1a16' : '#6a5440'; c.lineWidth = Math.max(1, 0.25 * ppm * 0.5); c.beginPath(); c.moveTo(x, yb); c.lineTo(x, yb - h); c.stroke();
+            c.fillStyle = night ? '#1c2a1e' : '#7fa060'; for (const [dx, dy, rw] of [[0, 0, 2.6], [-1.2, 0.9, 1.8], [1.3, 0.8, 1.7]]) { c.beginPath(); c.ellipse(x + dx * ppm * 0.5, yb - h + dy * ppm * 0.5, rw * ppm * 0.5, 0.55 * ppm * 0.5, 0, 0, 7); c.fill(); } } }
+        // barisan perdu kopi berundak, makin dekat makin besar
+        [[0.36, 0.5, 0.2], [0.46, 0.66, 1.1], [0.58, 0.86, 2.1]].forEach(([par, scl, dy], li) => {
+          const off = pcOf(V) * par, gap = 2.3 * ppm * scl, yb = yH + dy * ppm, j0 = Math.floor((off - gap) / gap), j1 = Math.ceil((off + W + gap) / gap);
+          c.fillStyle = night ? '#2a2418' : '#a08458'; c.fillRect(0, yb - 0.05 * ppm, W, 0.28 * ppm * scl); // tanggul teras
+          for (let j = j0; j <= j1; j++) { const r = hash(j * 1.9 + li * 11), x = j * gap - off + r * gap * 0.25, rr = (0.95 + r * 0.35) * ppm * scl * grow; if (rr < 1) continue;
+            c.fillStyle = night ? '#132016' : '#2f5a2c'; c.beginPath(); c.ellipse(x, yb - rr * 0.9, rr, rr * 0.95, 0, 0, 7); c.fill();
+            c.fillStyle = night ? '#1c2c1e' : '#4a7c3a'; c.beginPath(); c.ellipse(x - rr * 0.25, yb - rr * 1.15, rr * 0.62, rr * 0.55, 0, 0, 7); c.fill();
+            if (!night) { c.fillStyle = '#c8322a'; for (let q = 0; q < 5; q++) { const a = hash(j * 7 + q) * 6.28, d = rr * (0.35 + hash(j + q * 3) * 0.5); c.beginPath(); c.arc(x + Math.cos(a) * d, yb - rr * 0.9 + Math.sin(a) * d * 0.8, Math.max(0.8, 0.09 * ppm * scl), 0, 7); c.fill(); } } }
+        });
+        // pondok jemur kopi beratap ijuk dengan tampah biji kopi
+        { const par = 0.4, off = pcOf(V) * par, P = W * 1.8, x = (((W * 0.7 - off) % P) + P) % P - W * 0.3, yb = yH + 0.9 * ppm, s2 = ppm * 0.6;
+          c.fillStyle = night ? '#1c1612' : '#5a4232'; c.fillRect(x, yb - 2.2 * s2, 0.18 * s2, 2.2 * s2); c.fillRect(x + 3.4 * s2, yb - 2.2 * s2, 0.18 * s2, 2.2 * s2);
+          c.fillStyle = night ? '#1a1612' : '#3a2c22'; c.beginPath(); c.moveTo(x - 0.7 * s2, yb - 2.1 * s2); c.lineTo(x + 1.8 * s2, yb - 3.4 * s2); c.lineTo(x + 4.3 * s2, yb - 2.1 * s2); c.closePath(); c.fill();
+          c.fillStyle = night ? '#2a2018' : '#c8a46a'; for (const tx of [-2.6, 5.2]) { c.beginPath(); c.ellipse(x + tx * s2, yb - 0.1 * s2, 1.0 * s2, 0.22 * s2, 0, 0, 7); c.fill(); c.fillStyle = night ? '#2a1814' : '#7a3a22'; c.beginPath(); c.ellipse(x + tx * s2, yb - 0.16 * s2, 0.75 * s2, 0.12 * s2, 0, 0, 7); c.fill(); c.fillStyle = night ? '#2a2018' : '#c8a46a'; } }
       } else if (sc.kind === 'teak') {
         // hutan jati Alas Roban: tajuk rapat berlapis yang 'tumbuh' dari cakrawala (tanpa transparan
         // sehingga tidak tampak seperti hantu di atas gunung), jarak pohon tak beraturan, batang lurus
