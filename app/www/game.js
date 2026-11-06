@@ -3381,6 +3381,16 @@
     try { drawTrain(V); } catch (e) { /* gambar kartu opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; }
     return (trainCardCache[loco] = cv.toDataURL('image/png'));
   }
+  // ilustrasi utama halaman pembuka: Guntur asli dari game (lokomotif + gerbong), moncong ke kanan, kanvas transparan lebar
+  function heroTrainImg() {
+    const cw = 2200, ch = 380, cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const c = cv.getContext('2d'), ppm = ch / 7.4, gy = ch * 0.9, kw = W, kh = H, keep = N_COACH;
+    const V = { c, ppm, gy, X: (wx) => cw * 0.86 + wx * ppm, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.4, storm: false, tf: 0, camX: 0,
+      rimA: 0.9, rim: '#ffb067', refl: 0.2, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
+    W = cw; H = ch; N_COACH = 2; LOCO_FORCE = 'hst2';
+    try { drawTrain(V); } catch (e) { /* ilustrasi opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; }
+    return cv.toDataURL('image/png');
+  }
   const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100' };
   const cardArt = (id) => TRAIN_CARD[id] ? CARD_BG[id] + `<image href="${trainCardImg(TRAIN_CARD[id])}" x="0" y="0" width="80" height="100" preserveAspectRatio="none"/>` : MIS_ART[id];
   const misArt = (id) => MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
@@ -3400,6 +3410,7 @@
   // ---------- layar pembuka: muat font & render awal, lalu "Ketuk untuk mulai" (membuka audio & mengunci mendatar) ----------
   function bootSplash() {
     const sp = $('splash'), SPL = window.__splash; if (!sp || !SPL) return;
+    { const hi = $('spHeroImg'); if (hi) { try { hi.src = heroTrainImg(); hi.classList.add('in'); } catch (e) { /* tanpa ilustrasi */ } } }
     if (navigator.webdriver) { sp.remove(); return; } // uji otomatis: lewati
     let k = 0; const say = () => SPL.msgs[k++ % SPL.msgs.length];
     SPL.set(35, say());
@@ -5387,7 +5398,6 @@
     if (ROUTE.rival && S.bus && S.bus.started && !S.bus.done && Math.abs(S.bus.x - S.x) < 90) return 0.8;
     // mendekati titik henti saat sudah pelan: perbesar sedikit untuk presisi
     // (tanpa zoom-in saat merayap ke titik henti: zoom berporos di moncong membuat tanah tampak berlari)
-    if (S.phase === 'load' && S.loadT <= 0 && Math.abs(S.x - loadTarget(S.loadIdx)) < 20 && kmh < 12) return 1.2;
     // tanpa zoom otomatis karena kecepatan: lapisan latar (gedung, bukit) berskala zoom tetapi
     // posisinya tidak, sehingga setiap perubahan zoom membuat pemandangan tampak berlari
     return 1;
@@ -5487,6 +5497,8 @@
     }
     // menyambung gerbong: kamera melihat ujung belakang rangkaian
     if (S && st === S && S.phase === 'dwell' && S.dwell.step === 'couple') lead = -TRAIN_LEN + (W * (anchor - 0.62)) / ppm;
+    // memuat batu bara: kamera mengikuti corong silo (di sepertiga kiri layar) agar gerbong yang sedang diisi, termasuk gerbong 3 & 4, terlihat jelas
+    if (S && st === S && S.phase === 'load' && ROUTE.loading && S.loadIdx < N_COACH) lead = ROUTE.loading.silo - st.x + (W * (anchor - 0.33)) / ppm;
     // zoom stasiun: titik fokus ke tengah rangkaian & peron
     // berhenti di stasiun: zoom berporos di titik tetap (tengah rangkaian), kamera tidak bergeser
     const pivotStn = S && st === S && S.phase === 'dwell' && !MIS.freight && !(S.dwell.step === 'couple');
@@ -5511,7 +5523,7 @@
     trainScr = { x0: X(st.x - TRAIN_LEN), x1: X(st.x), top: gy - 6.6 * ppm, bottom: gy };
     // paralaks latar hanya mengikuti posisi kereta (bukan zoom/geser kamera), jadi saat mengerem
     // dan berhenti di stasiun pemandangan jauh tidak ikut 'berlari' ketika kamera mendekat
-    const pcTrain = st.x * ppmB - W * anchor; // ikut jangkar kamera agar latar jauh & tanah bergeser bersama
+    const pcTrain = (st.x + camLead) * ppmB - W * anchor; // ikut jangkar & geser kamera agar latar jauh & tanah bergeser bersama
     const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2, ppmB, pc: mode === 'play' || mode === 'pause' ? pcTrain : (camX + W / (2 * ppm)) * ppmB - W / 2 };
     // cahaya tepi (rim light), pantulan kaca, lampu kabin per suasana
     if (night) Object.assign(V, { rim: '#9fb4ff', rimA: 0.5, refl: 0.05, cabA: 0.9, haze: '#4b3d6b', hazeA: 0.3, water: '#3a3f74' });
