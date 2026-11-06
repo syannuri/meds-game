@@ -571,7 +571,7 @@
       bufferStop: 3600,
     },
   };
-  // Babak 3: lintas ekspres Pantura, 120 km/h
+  // Babak 3: lintas ekspres Pantura, 200 km/h (Agraveda listrik)
   MISSIONS['3-1'] = {
     id: '3-1',
     chapter: 'Babak 3 · Ekspres Jawa',
@@ -579,21 +579,22 @@
     startClock: 16 * 3600 + 50 * 60,
     sky: 'dawn', dusk: true,
     rain: false,
-    tags: ['Ekspres 120 km/h', 'Listrik 25 kV', 'Lewat langsung', 'Senja'],
+    tags: ['Ekspres 200 km/h', 'Listrik 25 kV', 'Lewat langsung', 'Senja'],
     loco: 'argo',
     speaker: { who: 'Bu Anna, kepala stasiun', initials: 'BW' },
     driver: { name: 'Anett', initials: 'AN' },
-    brief: 'Anett, mulai hari ini lokomotif listrik baru Agraveda menarik Argo Senja, kereta eksekutif ke Kota Kencana. Naikkan pantograf sebelum berangkat, dan taruh tuas di N saat melewati seksi netral di tambak garam. Lintas Pantura lurus dan baru, boleh sampai 120 km/h. Jatiasri dan Rancamaya dilewati langsung. Perhatikan papan REM kuning: dari 120, kereta butuh hampir satu kilometer untuk berhenti.',
+    brief: 'Anett, mulai hari ini lokomotif listrik baru Agraveda menarik Argo Senja, kereta eksekutif ke Kota Kencana. Naikkan pantograf sebelum berangkat, dan taruh tuas di N saat melewati seksi netral setelah Jembatan Kali Kencana. Lintas Pantura lurus dan baru, boleh sampai 200 km/h. Jatiasri dan Rancamaya dilewati langsung. Perhatikan papan REM kuning: dari 200, kereta butuh lebih dari dua kilometer untuk berhenti.',
     weather: 'senja cerah',
     intro: 'Masinis Anett, Argo Senja siap berangkat. Naikkan pantograf, tutup pintu, lalu bawa penumpang eksekutif ke Kota Kencana.',
     reward: '<strong>Terbuka:</strong> Lencana Masinis Ekspres. Penumpang eksekutif memuji perjalanan yang mulus.',
     aboard: 18,
     ticket: 'dusk',
     route: {
-      lineSpeed: 120,
+      lineSpeed: 200,
+      hst: true, // fisika & papan REM kereta cepat (Agraveda listrik 200 km/h)
       stations: [
         { name: 'SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0 },
-        { name: 'KOTA KENCANA', elev: '+12 m', x: 15000, sched: 3780, waiting: 16, final: true, travelers: true },
+        { name: 'KOTA KENCANA', elev: '+12 m', x: 15000, sched: 2910, waiting: 16, final: true, travelers: true },
       ],
       passStations: [
         { name: 'JATIASRI', elev: '+240 m', x: 5200, waiting: 12 },
@@ -602,11 +603,11 @@
       zones: [
         { from: -120, to: 260, limit: 40, label: 'area Stasiun Sukamaju' },
         { from: 260, to: 900, limit: 80, label: 'keluar kota Sukamaju' },
-        { from: 4900, to: 5500, limit: 80, label: 'Stasiun Jatiasri (langsung)' },
-        { from: 6600, to: 7100, limit: 70, label: 'Tikungan Alas Roban', curve: true },
-        { from: 10100, to: 10700, limit: 80, label: 'Stasiun Rancamaya (langsung)' },
-        { from: 7700, to: 7880, limit: 90, label: 'Jembatan rangka Kali Kuto' },
-        { from: 11200, to: 11600, limit: 100, label: 'Jembatan Kali Kencana' },
+        { from: 4900, to: 5500, limit: 160, label: 'Stasiun Jatiasri (langsung)' },
+        { from: 6600, to: 7100, limit: 140, label: 'Tikungan Alas Roban', curve: true },
+        { from: 10100, to: 10700, limit: 160, label: 'Stasiun Rancamaya (langsung)' },
+        { from: 7700, to: 7880, limit: 160, label: 'Jembatan rangka Kali Kuto' },
+        { from: 11200, to: 11600, limit: 160, label: 'Jembatan Kali Kencana' },
         { from: 14250, to: 15150, limit: 40, label: 'area Stasiun Kota Kencana' },
       ],
       signals: [
@@ -618,7 +619,7 @@
       ],
       scripts: [
         {
-          type: 'timed', sig: 'B2', at: 8150, red: 13, yellow: 12,
+          type: 'timed', sig: 'B2', at: 7600, red: 13, yellow: 12,
           msg: 'Sinyal blok B2 MERAH! Kereta barang belum keluar dari petak depan. Kurangi kecepatan.',
           yellowMsg: 'B2 berubah kuning. Lewati maks 40 km/h, lalu tancap lagi setelah J2.',
         },
@@ -641,8 +642,8 @@
         { from: 13300, to: 15600, kind: 'city', name: 'Kota Kencana', big: true },
       ],
       tunnel: { from: 5950, to: 6480, name: 'ALAS ROBAN', year: '2019', modern: true },
-      neutral: [{ from: 9150, to: 9290 }], // seksi netral pergantian gardu listrik di tambak garam
-      side: { from: 3500, to: 5800, v: 128, name: 'KA Cepat Garuda' },
+      neutral: [{ from: 11900, to: 12040 }], // seksi netral pergantian gardu listrik setelah Jembatan Kali Kencana
+      side: { from: 3500, to: 5800, v: 205, name: 'KA Cepat Garuda' },
       grades: [
         { from: 1800, to: 3200, permil: -6, label: 'Turunan Pantura' },
         { from: 7400, to: 8400, permil: 5, label: 'Tanjakan Alas Roban' },
@@ -650,9 +651,9 @@
       switchX: null,
       brakeBoards: true,
       hints: [
-        { at: 700, msg: 'Lintas lurus di depan: batas 120 km/h. Naikkan ke P4 setelah papan 80 berakhir.' },
+        { at: 700, msg: 'Lintas lurus di depan: batas 200 km/h. Naikkan ke P4 setelah papan 80 berakhir.' },
         { at: 13200, msg: 'Kota Kencana tinggal 2 km. Ikuti papan REM agar berhenti mulus.' },
-        { at: 3450, msg: 'KA Cepat Garuda melaju di jalur sebelah. Tahan 120, coba tetap sejajar!' },
+        { at: 3450, msg: 'KA Cepat Garuda melaju di jalur sebelah. Tahan 200, coba tetap sejajar!' },
         { at: 5800, msg: 'Terowongan Alas Roban di depan. Lampu depan menyala otomatis.' },
       ],
       bufferStop: 15100,
@@ -2579,6 +2580,7 @@
     const HST = !!ROUTE.hst;
     const KIL = MIS.loco === 'hst' ? 0.85 : 1; // Kilat G1 generasi pertama: tarikan & rem 15% lebih lemah
     if (n > 0) target = powerLocked ? 0 : (n * 0.26 * KIL * (HST ? Math.min(1.25, 46 / Math.max(1, S.v)) : EXP ? Math.min(1, 14 / Math.max(1, S.v)) : Math.max(0, 1 - S.v / 26))) / massF * (S.wetMotor ? 0.6 : 1);
+    if (n > 0 && MIS.loco === 'argo') target *= clamp((57 - S.v) / 3, 0, 1); // Agraveda: kecepatan maksimum 200 km/h (tenaga habis menjelang 205 km/h)
     else if (n === 0) target = 0;
     else if (n === -5) target = (-1.6 * grip) / brakeF;
     else target = (n * (HST ? 0.3 * (KIL < 1 ? 0.88 : 1) : 0.25) * grip) / brakeF;
@@ -3587,7 +3589,7 @@
     c.fillStyle = '#2a2f33'; c.beginPath(); c.ellipse(w / 2, gy + 6, w * 0.46, h * 0.1, 0, 0, 7); c.fill();
     c.fillStyle = '#7d8487'; c.fillRect(w * 0.06, gy - 2, w * 0.88, 2); c.fillStyle = '#a3a9ab'; c.fillRect(w * 0.06, gy + 2, w * 0.88, 2);
     // lokomotif terpilih dari samping, digambar dengan fungsi kereta di game
-    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Lokomotif listrik 25 kV · 120 km/h · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · 200 km/h · misi 3-3'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'] };
+    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Lokomotif listrik 25 kV · 200 km/h · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · 200 km/h · misi 3-3'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'] };
     const AG = titleMap.loco !== 'cakra';
     const V = { c, ppm, gy, X: (wx) => w / 2 + (wx - 9) * ppm, st: { x: 18, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0, rimA: 0.35, rim: '#ffcf8a', refl: 0.15, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
     const keep = [N_COACH]; N_COACH = 0; LOCO_FORCE = AG ? titleMap.loco : 'none';
@@ -8694,6 +8696,20 @@
   }
   // rok bogie grafit Argo Senja: panel gelap bergaris jingga senja, kisi ventilasi motor traksi,
   // tepi bawah melengkung di atas tiap bogie sehingga separuh bawah roda tetap terlihat
+  // rok bogie penuh gaya kereta cepat untuk Argo Senja: grafit bergaris jingga, roda hampir tertutup,
+  // kisi pendingin motor traksi di depan tiap bogie
+  function senjaFullSkirt(c, x, w, Y, ppm, bogies) {
+    const top = Y(1.72), bot = Y(0.36);
+    const g = c.createLinearGradient(0, top, 0, bot); g.addColorStop(0, '#4f545c'); g.addColorStop(0.55, '#30343a'); g.addColorStop(1, '#1b1e22');
+    c.fillStyle = g; c.fillRect(x, top, w, bot - top);
+    c.fillStyle = '#f0743a'; c.fillRect(x, top, w, Math.max(1, 0.1 * ppm));
+    c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(x, top + 0.1 * ppm, w, 1);
+    c.fillStyle = 'rgba(0,0,0,0.35)'; for (const [bx, bw] of bogies) c.fillRect(bx, Y(0.95), bw, 0.5 * ppm); // bayangan bogie di balik rok
+    c.strokeStyle = 'rgba(0,0,0,0.45)'; c.lineWidth = 1; c.beginPath();
+    for (const [bx, bw] of bogies) for (let q = 0.25; q < bw / ppm - 0.2; q += 0.28) { c.moveTo(bx + q * ppm, top + 0.3 * ppm); c.lineTo(bx + q * ppm, top + 0.62 * ppm); }
+    c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(x, bot - 1, w, 1);
+  }
   function senjaSkirt(c, x, w, Y, ppm, bogies, loco) {
     const top = Y(1.72), bot = Y(loco ? 0.72 : 0.66);
     const g = c.createLinearGradient(0, top, 0, bot); g.addColorStop(0, '#4a4f57'); g.addColorStop(0.55, '#2c3036'); g.addColorStop(1, '#1b1e22');
@@ -8773,7 +8789,7 @@
       c.save(); carXform(k + 1);
       // bellow sambungan antargerbong (lipatan akordeon), ikut merenggang & merapat
       const gd = gapD(k + 1);
-      const DIESELC = !HST2C && !HSTC;
+      const DIESELC = !HST2C && !HSTC && !SENJAC;
       if (k === 0 && DIESELC && !MIS.freight) { // lokomotif diesel ke gerbong: kopling otomatis & selang udara terlihat, tanpa penutup
         const g0 = L(F), g1 = L(F - GAP - gd), mid = (g0 + g1) / 2;
         c.fillStyle = '#1b1e21'; c.fillRect(g0 - 0.3 * ppm, Y(1.42), g1 - g0 + 0.6 * ppm, 0.26 * ppm);
@@ -8791,12 +8807,17 @@
           cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
           c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(5.75)); c.quadraticCurveTo(mid, Y(6.12), mid + sw / 2, Y(5.75)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
           c.fillStyle = '#1a1d21'; c.fillRect(mid - sw * 0.7, Y(0.85), sw * 1.4, 0.55 * ppm); }
-      } else if (SENJAC) { // sambungan karet berlipat setinggi badan (gaya kereta diesel ekspres): rapat, tapi tetap terlihat berlipat
-        const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0;
-        c.fillStyle = vgrad(4.85, 0.7, [[0, '#3a3e44'], [0.5, '#24272b'], [1, '#16181b']]); c.fillRect(g0 - 0.25 * ppm, Y(4.85), gw + 0.5 * ppm, 4.15 * ppm);
-        c.fillStyle = vgrad(6.08, 4.85, [[0, '#d9dde2'], [1, '#9aa0a8']]); c.fillRect(g0 - 0.4 * ppm, Y(6.05), gw + 0.8 * ppm, 1.2 * ppm);
-        c.strokeStyle = 'rgba(255,255,255,0.14)'; c.lineWidth = 1; c.beginPath(); for (let q = 0.1; q < GAP + gd; q += 0.2) { c.moveTo(L(F - q), Y(4.75)); c.lineTo(L(F - q), Y(0.85)); } c.stroke();
-        c.fillStyle = '#f0743a'; c.fillRect(g0 - 0.25 * ppm, Y(2.75), gw + 0.5 * ppm, 0.12 * ppm);
+      } else if (SENJAC) { // Argo Senja: penutup sambungan menyatu ala kereta cepat, pita senja & garis emas menerus
+        const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0, mid = (g0 + g1) / 2;
+        c.fillStyle = vgrad(4.85, 0.35, [[0, '#ffffff'], [0.75, '#c8cbd1'], [1, '#8f949c']]); c.fillRect(g0, Y(4.85), gw, 4.5 * ppm);
+        c.fillStyle = '#14181e'; c.fillRect(g0, Y(4.5), gw, 1.7 * ppm);
+        const sg = c.createLinearGradient(0, Y(2.75), 0, Y(2.0)); sg.addColorStop(0, '#f0743a'); sg.addColorStop(1, '#c2427a'); c.fillStyle = sg; c.fillRect(g0, Y(2.75), gw, 0.75 * ppm);
+        c.fillStyle = '#e9c26a'; c.fillRect(g0, Y(2.85), gw, Math.max(1, 0.06 * ppm));
+        c.fillStyle = vgrad(6.08, 4.85, [[0, '#eef0f2'], [1, '#b4bac1']]); c.fillRect(g0 - 0.6 * ppm, Y(6.08), gw + 1.2 * ppm, 1.25 * ppm);
+        const sw = Math.max(3, 0.34 * ppm), cg = c.createLinearGradient(mid - sw / 2, 0, mid + sw / 2, 0);
+        cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
+        c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(5.75)); c.quadraticCurveTo(mid, Y(6.12), mid + sw / 2, Y(5.75)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
+        c.fillStyle = '#1a1d21'; c.fillRect(mid - sw * 0.7, Y(0.85), sw * 1.4, 0.55 * ppm);
       } else box(F - GAP - gd, F, 1.25, 4.6, '#1b1e21');
       if (!SENJAC && !(k === 0 && DIESELC && !MIS.freight)) { c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
       for (let q = 0.2; q < GAP + gd; q += 0.3) { c.moveTo(L(F - q), Y(4.5)); c.lineTo(L(F - q), Y(1.35)); }
@@ -8868,7 +8889,7 @@
         c.strokeStyle = '#ffd27a'; c.lineWidth = Math.max(1, 0.04 * ppm); c.beginPath(); for (let q = 0; q < 5; q++) { const a = Math.PI * (1.1 + q * 0.2); c.moveTo(lx + Math.cos(a) * rr * 1.35, ly + rr * 0.35 + Math.sin(a) * rr * 1.35); c.lineTo(lx + Math.cos(a) * rr * 1.75, ly + rr * 0.35 + Math.sin(a) * rr * 1.75); } c.stroke();
         c.fillStyle = '#fff6e6'; c.font = `italic 800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
         c.fillText(HSTC ? 'KILAT NUSANTARA · BISNIS' : 'ARGO SENJA · EKSEKUTIF', lx + rr * 2.2, ly + 0.02 * ppm);
-        if (SENJAC) senjaSkirt(c, sx0(0, 240), sw0(0, 240), Y, ppm, [[30, 82], [158, 210]].map(([a, b]) => [sx0(a, b), sw0(a, b)]));
+        if (SENJAC) senjaFullSkirt(c, sx0(0, 240), sw0(0, 240), Y, ppm, [[30, 82], [158, 210]].map(([a, b]) => [sx0(a, b), sw0(a, b)]));
       } else {
         box(u(240), u(0), 2.27, 2.6, '#f2a516');
         box(u(240), u(0), 2.0, 2.22, '#1f6f6d');
@@ -9097,7 +9118,7 @@
         c.strokeStyle = 'rgba(190,198,206,0.55)'; c.lineWidth = 1; c.beginPath(); for (let q = 0.12; q < 3.05; q += 0.16) { c.moveTo(gx + q * ppm, gy0 + 0.1 * ppm); c.lineTo(gx + q * ppm, gy0 + gh - 0.1 * ppm); } c.stroke();
         c.strokeStyle = '#d8dde3'; c.lineWidth = lw(0.03); roundRect(c, gx, gy0, gw, gh, 0.12 * ppm); c.stroke();
         // rok bogie grafit: menutup bagian atas roda, roda bawah tetap terlihat (berbeda dari Guntur yang tertutup penuh)
-        senjaSkirt(c, L(15.6), 16.3 * ppm, Y, ppm, [[L(15.0), 5.7 * ppm], [L(6.4), 5.7 * ppm]], true);
+        senjaFullSkirt(c, L(15.6), 16.3 * ppm, Y, ppm, [[L(15.0), 5.7 * ppm], [L(6.4), 5.7 * ppm]]);
       }
     } else if (SH === 'boxB') {
       // ---- kotak B: muka tegak penuh, kabin lebih tinggi dari badan (bertingkat) ----
@@ -9818,9 +9839,10 @@
       // kisi jendela / mullion
       const fl = Math.max(2, bw * 0.09), cols = Math.max(2, Math.round(w / Math.max(2.5, bw * 0.16)));
       if (w > 6 && 1 - hz > 0.2) {
-        c.fillStyle = night ? 'rgba(255,214,140,0.85)' : o.glass ? `rgba(30,45,70,${(0.22 * (1 - hz)).toFixed(3)})` : `rgba(50,45,40,${(0.35 * (1 - hz)).toFixed(3)})`;
-        for (let yy = y0 + fl * 0.8; yy < yTop - fl * 0.6; yy += fl) for (let q = 0; q < cols; q++) {
-          if (night && hash(o.seed + yy * 0.37 + q * 1.3) > (o.lit || 0.5)) continue;
+        c.fillStyle = night ? 'rgba(255,196,118,0.9)' : o.glass ? `rgba(30,45,70,${(0.22 * (1 - hz)).toFixed(3)})` : `rgba(50,45,40,${(0.35 * (1 - hz)).toFixed(3)})`;
+        let row = 0;
+        for (let yy = y0 + fl * 0.8; yy < yTop - fl * 0.6; yy += fl, row++) for (let q = 0; q < cols; q++) {
+          if (night && hash(o.seed * 1.7 + row * 0.37 + q * 1.3 + wf * 5) > (o.lit || 0.5)) continue; // pola lampu tetap (tidak berkedip)
           const wx = xx + (q + 0.18) * (w / cols), ww = (w / cols) * 0.64; c.fillRect(wx, yy, ww, fl * 0.55);
         }
         if (o.glass && !night) { c.fillStyle = `rgba(255,255,255,${(0.12 * (1 - hz)).toFixed(3)})`; for (let yy = y0 + fl; yy < yTop; yy += fl) c.fillRect(xx, yy, w, Math.max(0.6, fl * 0.07)); }
@@ -9863,14 +9885,15 @@
         // kota: dua lapis gedung bergaya nyata (jauh pudar oleh kabut), pinggiran kota & pepohonan di depan kaki gedung
         const sunR = sunPos(V).x > W / 2, warm = MIS.golden || MIS.dusk || V.p < 0.5 ? '255,196,130' : '255,236,200';
         for (const [par, sc2, n, haze, yo] of [[0.16, 0.55, 18, 0.55, -1.2], [0.3, 0.8, 14, 0.18, 0]]) {
-          const off = pcOf(V) * par, period = 2400;
+          const off = pcOf(V) * par, period = 2400, kOff = Math.floor(off / period);
           for (let k = -1; k < Math.ceil(W / period) + 2; k++) {
-            const base = k * period - (off % period);
+            // indeks blok mutlak di dunia: gedung yang sama selalu memakai pola jendela yang sama (tidak berkedip saat blok bergeser)
+            const base = k * period - (off - kOff * period), kk = k + kOff;
             for (let i = 0; i < n; i++) {
               const r = hash(i * 7.3 + par * 10), cl = Math.sin(i * 0.9 + par * 4) * 0.5 + 0.5; // gedung tinggi berkelompok di pusat kota
               const x = base + i * (period / n) + r * 40; if (x < -120 || x > W + 120) continue;
               const gl = sc.glass ? 0.75 : 1, bw = (5 + r * 6) * ppm * sc2 * gl, bh = ((sc.big ? 12 : 8) + (sc.big ? 30 : 14) * cl * (0.5 + 0.5 * hash(i * 2.1 + par))) * ppm * sc2 * gl;
-              drawTower(c, x, yH + yo * ppm, bw, bh, { seed: i + par * 31 + k * 0.13, night, haze, sunR, glass: !!sc.glass || hash(i + 9) < 0.45, warm, lit: 0.55 });
+              drawTower(c, x, yH + yo * ppm, bw, bh, { seed: i + par * 31 + kk * 0.13, night, haze, sunR, glass: !!sc.glass || hash(i + 9) < 0.45, warm, lit: 0.55 });
             }
           }
         }
