@@ -626,7 +626,9 @@
 "Ekspres 200 km/h": "Express 200 km/h",
 "Lokomotif listrik 25 kV · 200 km/h · Argo Senja": "25 kV electric locomotive · 200 km/h · Argo Senja",
 "Lintas lurus di depan: batas 200 km/h. Naikkan ke P4 setelah papan 80 berakhir.": "Straight line ahead: limit 200 km/h. Notch up to P4 after the 80 board ends.",
-"KA Cepat Garuda melaju di jalur sebelah. Tahan 200, coba tetap sejajar!": "The Garuda high-speed train is racing on the next track. Hold 200 and try to keep pace!"
+"KA Cepat Garuda melaju di jalur sebelah. Tahan 200, coba tetap sejajar!": "The Garuda high-speed train is racing on the next track. Hold 200 and try to keep pace!",
+"13 MISI": "13 MISSIONS",
+"2 PULAU": "2 ISLANDS"
 };
   var P = [
   [/^Pasir ditabur ke rel\. Cengkeraman roda pulih selama (\d+) detik\.$/, "Sand applied to the rails. Wheel grip restored for $1 seconds."],

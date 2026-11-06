@@ -3381,6 +3381,16 @@
     try { drawTrain(V); } catch (e) { /* gambar kartu opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; }
     return (trainCardCache[loco] = cv.toDataURL('image/png'));
   }
+  // ilustrasi utama halaman pembuka: Guntur asli dari game (lokomotif + gerbong), moncong ke kanan, kanvas transparan lebar
+  function heroTrainImg() {
+    const cw = 2200, ch = 380, cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const c = cv.getContext('2d'), ppm = ch / 7.4, gy = ch * 0.9, kw = W, kh = H, keep = N_COACH;
+    const V = { c, ppm, gy, X: (wx) => cw * 0.86 + wx * ppm, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.4, storm: false, tf: 0, camX: 0,
+      rimA: 0.9, rim: '#ffb067', refl: 0.2, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
+    W = cw; H = ch; N_COACH = 2; LOCO_FORCE = 'hst2';
+    try { drawTrain(V); } catch (e) { /* ilustrasi opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; }
+    return cv.toDataURL('image/png');
+  }
   const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100' };
   const cardArt = (id) => TRAIN_CARD[id] ? CARD_BG[id] + `<image href="${trainCardImg(TRAIN_CARD[id])}" x="0" y="0" width="80" height="100" preserveAspectRatio="none"/>` : MIS_ART[id];
   const misArt = (id) => MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
@@ -3400,6 +3410,7 @@
   // ---------- layar pembuka: muat font & render awal, lalu "Ketuk untuk mulai" (membuka audio & mengunci mendatar) ----------
   function bootSplash() {
     const sp = $('splash'), SPL = window.__splash; if (!sp || !SPL) return;
+    { const hi = $('spHeroImg'); if (hi) { try { hi.src = heroTrainImg(); hi.classList.add('in'); } catch (e) { /* tanpa ilustrasi */ } } }
     if (navigator.webdriver) { sp.remove(); return; } // uji otomatis: lewati
     let k = 0; const say = () => SPL.msgs[k++ % SPL.msgs.length];
     SPL.set(35, say());
