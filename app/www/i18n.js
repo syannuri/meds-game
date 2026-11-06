@@ -615,7 +615,8 @@
 "petir": "thunder",
 "malam takbiran": "takbiran night",
 "cerah": "clear",
-"MISI": "MISSION"
+"MISI": "MISSION",
+"DAYA TRAKSI": "TRACTION POWER"
 };
   var P = [
   [/^Pasir ditabur ke rel\. Cengkeraman roda pulih selama (\d+) detik\.$/, "Sand applied to the rails. Wheel grip restored for $1 seconds."],
