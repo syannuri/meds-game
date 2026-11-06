@@ -615,7 +615,14 @@
 "petir": "thunder",
 "malam takbiran": "takbiran night",
 "cerah": "clear",
-"MISI": "MISSION"
+"MISI": "MISSION",
+"DAYA TRAKSI": "TRACTION POWER",
+"Anett, mulai hari ini lokomotif listrik baru Agraveda menarik Argo Senja, kereta eksekutif ke Kota Kencana. Naikkan pantograf sebelum berangkat, dan taruh tuas di N saat melewati seksi netral di tambak garam. Lintas Pantura lurus dan baru, boleh sampai 120 km/h. Jatiasri dan Rancamaya dilewati langsung. Perhatikan papan REM kuning: dari 120, kereta butuh hampir satu kilometer untuk berhenti.": "Anett, from today the new Agraveda electric locomotive hauls the Argo Senja, the executive train to Kota Kencana. Raise the pantograph before departing, and keep the lever at N through the neutral section at the salt pans. The Pantura line is straight and new, good for up to 120 km/h. You run through Jatiasri and Rancamaya. Watch for the yellow BRAKE boards: from 120, the train needs almost a kilometre to stop.",
+"Masinis Anett, Argo Senja siap berangkat. Naikkan pantograf, tutup pintu, lalu bawa penumpang eksekutif ke Kota Kencana.": "Driver Anett, the Argo Senja is ready to depart. Raise the pantograph, close the doors, then take the executive passengers to Kota Kencana.",
+"Listrik 25 kV": "Electric 25 kV",
+"Lokomotif listrik 25 kV · 120 km/h · Argo Senja": "25 kV electric locomotive · 120 km/h · Argo Senja",
+"Agraveda bertenaga listrik 25 kV. Naikkan pantograf dulu agar menempel di kawat.": "Agraveda runs on 25 kV electricity. Raise the pantograph first so it touches the wire.",
+"⚡NETRAL": "⚡NEUTRAL"
 };
   var P = [
   [/^Pasir ditabur ke rel\. Cengkeraman roda pulih selama (\d+) detik\.$/, "Sand applied to the rails. Wheel grip restored for $1 seconds."],
