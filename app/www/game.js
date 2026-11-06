@@ -3895,7 +3895,7 @@
     $('rivalPanel').hidden = !ROUTE.rival;
     document.querySelectorAll('.cluster .coins').forEach((el) => { el.hidden = !!ROUTE.rival; });
     ui.rivalSep.hidden = !ROUTE.rival;
-    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1; camZoomV = 0; CINE.s = 1; CINE.v = 0; CINE.want = 1; camFast = 0; camRoll = 0; sparks.length = 0; crowds.clear(); goalSig = '';
+    $('radio').hidden = true; radioTimer = 0; camLead = 0; camZoom = 1; camZoomV = 0; CINE.s = 1; CINE.v = 0; CINE.want = 1; CINE.shot = null; CINE.cool = 14; CINE.bars = 0; camFast = 0; camRoll = 0; sparks.length = 0; crowds.clear(); goalSig = '';
     resetCrossings();
     const thisRun = S;
     if (ROUTE.rival) setTimeout(() => { if (S === thisRun && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
@@ -5689,7 +5689,8 @@
   // ---------- kamera sinematik: zoom seluruh bingkai (seperti lensa kamera), berporos di kereta ----------
   // Semua lapisan (langit, bukit, kota, tanah, kereta) diperbesar bersama sehingga tidak ada lapisan
   // yang tampak berlari. Hanya >= 1 (mendekat) agar tepi layar tetap tertutup gambar.
-  const CINE = { s: 1, v: 0, px: 0, py: 0, want: 1, raw: null };
+  const CINE = { s: 1, v: 0, px: 0, py: 0, want: 1, raw: null, shot: null, cool: 14, nShot: 0, bars: 0 };
+  const SHOTS = ['nose', 'wheels', 'mid']; // urutan sorotan saat melaju kencang: moncong, roda, rangkaian
   function cineTarget() {
     if (!S || mode !== 'play' || REDUCE_MOTION || viewMode === 'cab') return 1;
     if (MIS.freight || S.phase === 'load' || ROUTE.elephants && S.eleph && S.eleph.phase !== 'gone' && ROUTE.elephants.x - S.x < 300) return 1;
@@ -5702,9 +5703,18 @@
     const ns = nextStation(), ds = ns ? ns.x - S.x : Infinity;
     if (ds < 320 && kmh < 45) return 1.14;                                       // menjelang peron: perlahan mendekat
     if (kmh < 12) return 1.18;                                                    // merayap: sedikit mendekat
+    if (CINE.shot && CINE.shot.t < CINE.shot.dur - 2.8) return CINE.shot.zoom;   // shot sinematik saat melaju kencang
     return 1;                                                                     // melaju: pandangan lebar
   }
   function cineUpdate(dt) {
+    // shot sinematik: saat melaju kencang & stabil, kamera sesekali mendekat ke moncong / roda / rangkaian lalu menjauh lagi
+    if (S && mode === 'play' && !REDUCE_MOTION && viewMode !== 'cab') {
+      const kmh = S.v * 3.6, ns = nextStation(), ds = ns ? ns.x - S.x : Infinity;
+      const fast = S.phase === 'run' && kmh > Math.max(38, ROUTE.lineSpeed * 0.5) && S.notch >= 0 && ds > 900 && !MIS.freight;
+      if (CINE.shot) { CINE.shot.t += dt || 0.016; if (!fast || CINE.shot.t > CINE.shot.dur) CINE.shot = null; }
+      else if (fast) { CINE.cool -= dt || 0.016; if (CINE.cool <= 0) { const f = SHOTS[CINE.nShot++ % SHOTS.length]; CINE.shot = { t: 0, dur: 9, focus: f, zoom: f === 'wheels' ? 1.4 : f === 'nose' ? 1.34 : 1.22 }; CINE.cool = (window.__rnShotGap || 22) + Math.random() * 12; } }
+      else CINE.cool = Math.max(CINE.cool, 8);
+    } else CINE.shot = null;
     const t = cineTarget();
     // tahan perubahan zoom selama kereta mengerem sambil masih bergerak (latar tidak boleh tampak bergeser)
     if (!(S && S.notch < 0 && S.v > 0.5 && mode === 'play')) CINE.want = t;
@@ -5713,8 +5723,24 @@
     CINE.v += ((CINE.want - CINE.s) * 0.9 - CINE.v * 1.9) * k;   // pegas lambat & teredam (± 3 detik)
     CINE.s = clamp(CINE.s + CINE.v * k, 1, 1.4);
     const r = CINE.raw;
-    if (r) { const px = clamp(r.x1 - (r.x1 - r.x0) * (S && S.t < 40 && S.phase !== 'dwell' ? 0.12 : 0.35), W * 0.25, W * 0.78), py = r.bottom;
-      CINE.px = CINE.px ? CINE.px + (px - CINE.px) * Math.min(1, k * 2) : px; CINE.py = CINE.py ? CINE.py + (py - CINE.py) * Math.min(1, k * 2) : py; }
+    if (r) { const sh = CINE.shot, len = r.x1 - r.x0;
+      const fx = sh ? (sh.focus === 'nose' ? 0.04 : sh.focus === 'wheels' ? 0.16 : 0.55) : S && S.t < 40 && S.phase !== 'dwell' ? 0.12 : 0.35;
+      const px = clamp(r.x1 - len * fx, W * 0.22, W * 0.8), py = sh && sh.focus === 'mid' ? r.bottom - (r.bottom - r.top) * 0.3 : r.bottom;
+      CINE.px = CINE.px ? CINE.px + (px - CINE.px) * Math.min(1, k * 1.2) : px; CINE.py = CINE.py ? CINE.py + (py - CINE.py) * Math.min(1, k * 1.2) : py; }
+    CINE.bars += ((CINE.shot && CINE.shot.t < CINE.shot.dur - 2.2 ? 1 : 0) - CINE.bars) * Math.min(1, k * 1.6);
+  }
+  // bingkai film (letterbox) tipis selama shot sinematik
+  function drawLetterbox(c) {
+    if (CINE.bars < 0.01) return;
+    c.save(); c.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const h = H * 0.075 * CINE.bars;
+    const gt = c.createLinearGradient(0, 0, 0, h * 1.6); gt.addColorStop(0, 'rgba(4,6,9,0.96)'); gt.addColorStop(0.62, 'rgba(4,6,9,0.9)'); gt.addColorStop(1, 'rgba(4,6,9,0)');
+    c.fillStyle = gt; c.fillRect(0, 0, W, h * 1.6);
+    const gb = c.createLinearGradient(0, H, 0, H - h * 1.6); gb.addColorStop(0, 'rgba(4,6,9,0.96)'); gb.addColorStop(0.62, 'rgba(4,6,9,0.9)'); gb.addColorStop(1, 'rgba(4,6,9,0)');
+    c.fillStyle = gb; c.fillRect(0, H - h * 1.6, W, h * 1.6);
+    const vg = c.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(0,0,0,${0.28 * CINE.bars})`);
+    c.fillStyle = vg; c.fillRect(0, 0, W, H);
+    c.restore();
   }
   function render(dtReal) {
     const c = ctx;
@@ -5909,6 +5935,7 @@
     applyGrade(c, V);
     drawSpeedFx(V, dtReal);
     drawMoments(c, V, dtReal);
+    drawLetterbox(c);
   }
   // gradasi warna khas misi di atas seluruh dunia (tidak mengenai HUD), plus kabut lembap Sumatra
   function applyGrade(c, V) {
