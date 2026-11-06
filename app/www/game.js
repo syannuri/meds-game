@@ -9046,10 +9046,10 @@
     // Kilat G1 memakai bentuk rangkaian Guntur (rok bogie penuh, sambungan rapat) dengan warna biru toska khasnya
     const CL = LOCO_FORCE || MIS.loco, HST2C = CL === 'hst2' || CL === 'hst', ARGOC = CL === 'argo' || HST2C, HSTC = CL === 'hst', SENJAC = CL === 'argo', STEAMC = CL === 'steam';
     let ACC = HSTC ? '#1567c4' : '#d4202b', ACC2 = HSTC ? '#22b6d6' : null;
-    const steel = STEAMC ? vgrad(4.85, 1.0, [[0, '#a86a3c'], [0.4, '#8a5430'], [0.85, '#6a3e22'], [1, '#4a2a16']]) : ARGOC ? vgrad(4.85, 1.0, [[0, '#ffffff'], [0.35, '#efede9'], [0.8, '#c8cbd1'], [1, '#9aa0a8']]) : vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
+    const steel = STEAMC ? vgrad(4.85, 1.0, [[0, '#9a2c2c'], [0.4, '#7c1d1f'], [0.85, '#5e1416'], [1, '#420d0f']]) : ARGOC ? vgrad(4.85, 1.0, [[0, '#ffffff'], [0.35, '#efede9'], [0.8, '#c8cbd1'], [1, '#9aa0a8']]) : vgrad(4.85, 1.0, [[0, '#f6f8fa'], [0.45, '#d9dfe3'], [0.85, '#b3bcc2'], [1, '#98a2a9']]);
     const glass = vgrad(4.35, 2.95, [[0, '#3b5263'], [0.5, '#1d2b36'], [1, '#121b23']]);
-    const roofTop = vgrad(6.55, 6.05, [[0, '#f1f4f5'], [1, '#c7cfd3']]);
-    const roofSide = vgrad(6.1, 4.8, [[0, '#cdd4d8'], [1, '#8f999f']]);
+    const roofTop = STEAMC ? vgrad(6.55, 6.05, [[0, '#4a4d50'], [1, '#2a2c2e']]) : vgrad(6.55, 6.05, [[0, '#f1f4f5'], [1, '#c7cfd3']]);
+    const roofSide = STEAMC ? vgrad(6.1, 4.8, [[0, '#3a3c3e'], [1, '#1e2022']]) : vgrad(6.1, 4.8, [[0, '#cdd4d8'], [1, '#8f999f']]);
     if (MIS.freight) drawWagons(Object.assign({}, V, { carXform, gapD }), L, Y, box, poly, line, vgrad, ang);
     for (let k = 0; k < (MIS.freight ? 0 : N_COACH); k++) {
       const F = LOCO_LEN + GAP + k * (COACH_LEN + GAP);
@@ -9087,8 +9087,14 @@
         cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
         c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(5.75)); c.quadraticCurveTo(mid, Y(6.12), mid + sw / 2, Y(5.75)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
         c.fillStyle = '#1a1d21'; c.fillRect(mid - sw * 0.7, Y(0.85), sw * 1.4, 0.55 * ppm);
+      } else if (STEAMC) { // kereta tua: dua penyangga bundar beradu, kopel rantai berulir, tanpa bordes
+        const g0 = L(F), g1 = L(F - GAP - gd), mid = (g0 + g1) / 2;
+        c.fillStyle = '#1a1a1a'; c.fillRect(g0 - 0.1 * ppm, Y(1.45), g1 - g0 + 0.2 * ppm, 0.16 * ppm);
+        for (const [x, d] of [[g0, 1], [g1, -1]]) { c.fillStyle = '#2a2a2a'; c.fillRect(Math.min(x, x + d * 0.35 * ppm), Y(1.62), 0.35 * ppm, 0.3 * ppm); c.fillStyle = '#3a3c3e'; c.beginPath(); c.arc(x + d * 0.42 * ppm, Y(1.47), 0.2 * ppm, 0, 7); c.fill(); c.strokeStyle = 'rgba(255,255,255,0.3)'; c.lineWidth = 1; c.beginPath(); c.arc(x + d * 0.42 * ppm, Y(1.47), 0.14 * ppm, 0, 7); c.stroke(); }
+        c.strokeStyle = '#6a6c6e'; c.lineWidth = Math.max(1, 0.06 * ppm); c.beginPath(); c.moveTo(g0, Y(1.3)); c.quadraticCurveTo(mid, Y(1.12), g1, Y(1.3)); c.stroke();
+        c.strokeStyle = '#8a2a22'; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(g0, Y(1.2)); c.quadraticCurveTo(mid, Y(0.98), g1, Y(1.2)); c.stroke(); // selang rem vakum
       } else box(F - GAP - gd, F, 1.25, 4.6, '#1b1e21');
-      if (!SENJAC && !(k === 0 && DIESELC && !MIS.freight)) { c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
+      if (!SENJAC && !STEAMC && !(k === 0 && DIESELC && !MIS.freight)) { c.strokeStyle = HST2C ? 'rgba(90,98,106,0.25)' : 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.beginPath();
       for (let q = 0.2; q < GAP + gd; q += 0.3) { c.moveTo(L(F - q), Y(4.5)); c.lineTo(L(F - q), Y(1.35)); }
       c.stroke(); }
       // rangka bawah, peralatan, bogie
@@ -9107,7 +9113,11 @@
       c.fillStyle = roofSide; c.beginPath();
       c.moveTo(L(u(0)), Y(4.8)); c.lineTo(L(u(0)), Y(5.4)); c.quadraticCurveTo(L(u(1)), Y(6.05), L(u(10)), Y(6.08));
       c.lineTo(L(u(230)), Y(6.08)); c.quadraticCurveTo(L(u(239)), Y(6.05), L(u(240)), Y(5.4)); c.lineTo(L(u(240)), Y(4.8)); c.closePath(); c.fill();
-      for (const [a, b] of [[34, 82], [158, 206]]) {
+      if (STEAMC) for (let q = 20; q < 236; q += 28) { // tudung lampu minyak di atap
+        c.fillStyle = '#1c1d1e'; roundRect(c, L(u(q + 4)), Y(6.42), 0.34 * ppm, 0.3 * ppm, 0.08 * ppm); c.fill();
+        c.fillStyle = '#3a3c3e'; c.fillRect(L(u(q + 5)), Y(6.5), 0.5 * ppm, 0.08 * ppm);
+      }
+      for (const [a, b] of STEAMC ? [] : [[34, 82], [158, 206]]) {
         c.fillStyle = vgrad(6.75, 6.2, [[0, '#eef1f3'], [1, '#aeb7bd']]);
         roundRect(c, L(u(a)) + 0.2 * ppm, Y(6.75), ((b - a) / 12) * ppm, 0.6 * ppm, 0.2 * ppm); c.fill();
         c.strokeStyle = 'rgba(70,80,88,0.5)'; c.lineWidth = 1; c.beginPath();
@@ -9118,7 +9128,7 @@
       c.fillStyle = steel; roundRect(c, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, 0.35 * ppm); c.fill();
       bodySheen(c, V, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, () => roundRect(c, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, 0.35 * ppm), 1);
       // garis panel bergelombang stainless
-      c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = 1; c.beginPath(); for (let q = 4.6; q > 4.4; q -= 0.08) { c.moveTo(L(u(4)), Y(q)); c.lineTo(L(u(236)), Y(q)); } c.stroke();
+      if (!STEAMC) { c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = 1; c.beginPath(); for (let q = 4.6; q > 4.4; q -= 0.08) { c.moveTo(L(u(4)), Y(q)); c.lineTo(L(u(236)), Y(q)); } c.stroke(); }
       c.fillStyle = vgrad(1.5, 1.0, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.22)']]);
       c.fillRect(L(u(0)), Y(1.5), COACH_LEN * ppm, 0.5 * ppm);
       line([[u(30), 1.72], [u(210), 1.72]], 'rgba(255,255,255,0.4)', 1);
@@ -9160,20 +9170,43 @@
         c.fillText(HSTC ? 'KILAT NUSANTARA · BISNIS' : 'ARGO SENJA · EKSEKUTIF', lx + rr * 2.2, ly + 0.02 * ppm);
         if (SENJAC) senjaFullSkirt(c, sx0(0, 240), sw0(0, 240), Y, ppm, [[30, 82], [158, 210]].map(([a, b]) => [sx0(a, b), sw0(a, b)]));
       } else if (STEAMC) {
-        // gerbong wisata kayu jati: papan vertikal, garis emas, papan nama krem
-        const sx0 = (a, b) => Math.min(L(u(a)), L(u(b))), sw0 = (a, b) => Math.abs(L(u(a)) - L(u(b)));
-        c.strokeStyle = 'rgba(40,20,8,0.35)'; c.lineWidth = 1; c.beginPath(); for (let q = 6; q < 236; q += 6) { c.moveTo(L(u(q)), Y(2.95)); c.lineTo(L(u(q)), Y(1.55)); } c.stroke();
-        box(u(240), u(0), 2.95, 3.06, '#e3c06a');
-        box(u(240), u(0), 1.5, 1.6, '#e3c06a');
-        c.fillStyle = '#f3e6c4'; roundRect(c, sx0(80, 160), Y(2.75), sw0(80, 160), 0.55 * ppm, 0.08 * ppm); c.fill();
-        c.fillStyle = '#4a2a16'; c.font = `800 ${Math.max(5, Math.round(0.36 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-        c.fillText('KERETA WISATA · SURYA', sx0(80, 160) + sw0(80, 160) / 2, Y(2.48)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+        // gerbong kompartemen klasik awal 1900-an: panel kayu bercat marun, bingkai emas, deretan pintu kompartemen
+        // berjendela turun, lampu kompartemen hangat, pegangan kuningan, papan injak panjang
+        const GOLD = '#e0b85a', sx0 = (a, b) => Math.min(L(u(a)), L(u(b))), sw0 = (a, b) => Math.abs(L(u(a)) - L(u(b)));
+        const op = st.doorAnim !== undefined ? st.doorAnim : st.doors === 'open' ? 1 : 0;
+        c.fillStyle = '#4a0e10'; c.fillRect(sx0(0, 240), Y(4.7), sw0(0, 240), 0.16 * ppm); // lis atas
+        c.fillStyle = GOLD; c.fillRect(sx0(0, 240), Y(4.56), sw0(0, 240), Math.max(1, 0.05 * ppm)); c.fillRect(sx0(0, 240), Y(1.58), sw0(0, 240), Math.max(1, 0.05 * ppm));
+        const n = 8, cw = 240 / n;
+        for (let q = 0; q < n; q++) {
+          const a = q * cw, isDoor = q % 2 === 0, x0 = L(u(a + 1.5)), wpx = ((cw - 3) / 12) * ppm;
+          // bingkai panel emas ganda
+          c.strokeStyle = GOLD; c.lineWidth = Math.max(1, 0.035 * ppm); c.strokeRect(x0, Y(4.4), wpx, 2.65 * ppm);
+          c.strokeStyle = 'rgba(224,184,90,0.45)'; c.lineWidth = 1; c.strokeRect(x0 + 0.12 * ppm, Y(2.4), wpx - 0.24 * ppm, 0.65 * ppm);
+          // jendela: pintu berjendela turun kecil, kompartemen berjendela lebar melengkung atas
+          const wx = x0 + (isDoor ? wpx * 0.22 : wpx * 0.08), ww = isDoor ? wpx * 0.56 : wpx * 0.84, wy = Y(4.18), wh = 1.4 * ppm;
+          c.fillStyle = '#2a0a0b'; roundRect(c, wx - 1.5, wy - 1.5, ww + 3, wh + 3, 0.35 * ppm); c.fill();
+          const lit = V.lit || MIS.sky === 'dawn';
+          const gg = c.createLinearGradient(0, wy, 0, wy + wh); gg.addColorStop(0, lit ? '#ffe2a6' : '#3b5263'); gg.addColorStop(1, lit ? '#d8963e' : '#121b23');
+          c.fillStyle = gg; roundRect(c, wx, wy, ww, wh, 0.32 * ppm); c.fill();
+          if (!isDoor && hash(q + k * 7) * 30 < st.aboard) { c.fillStyle = 'rgba(40,18,10,0.6)'; c.beginPath(); c.arc(wx + ww * 0.5, Y(3.2), 0.25 * ppm, 0, 7); c.fill(); c.fillRect(wx + ww * 0.5 - 0.3 * ppm, Y(2.98), 0.6 * ppm, 0.22 * ppm); }
+          c.fillStyle = 'rgba(255,255,255,0.22)'; c.fillRect(wx + ww * 0.12, wy + 1, ww * 0.12, wh - 2);
+          if (isDoor) { // pegangan & engsel kuningan, nomor kelas
+            c.fillStyle = GOLD; c.fillRect(x0 + wpx * 0.86, Y(2.95), Math.max(1.5, 0.08 * ppm), 0.32 * ppm);
+            c.fillRect(x0 + wpx * 0.06, Y(3.9), Math.max(1, 0.05 * ppm), 0.2 * ppm); c.fillRect(x0 + wpx * 0.06, Y(2.2), Math.max(1, 0.05 * ppm), 0.2 * ppm);
+            c.fillStyle = GOLD; c.font = `700 ${Math.max(5, Math.round(0.42 * ppm))}px "Cinzel", Georgia, serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(q < 4 ? '1' : '3', x0 + wpx / 2, Y(2.1)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+          }
+        }
+        // pintu naik penumpang di kedua ujung: terbuka saat berhenti (lubang gelap & lampu dalam)
+        if (op > 0.01) for (const d0 of [cw * 0 + 6, cw * 6 + 6]) { const dx = L(u(d0)), dw = (15 / 12) * ppm;
+          c.fillStyle = '#140808'; c.fillRect(dx, Y(4.4), dw * op, 2.75 * ppm); c.fillStyle = `rgba(255,214,140,${0.35 * op})`; c.fillRect(dx + 1, Y(4.2), dw * op - 2, 0.8 * ppm); }
+        // papan injak panjang di bawah pintu
+        c.fillStyle = '#2a1a12'; c.fillRect(sx0(4, 236), Y(1.38), sw0(4, 236), 0.14 * ppm); c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(sx0(4, 236), Y(1.38), sw0(4, 236), 1);
       } else {
         box(u(240), u(0), 2.27, 2.6, '#f2a516');
         box(u(240), u(0), 2.0, 2.22, '#1f6f6d');
       }
       // jendela berbingkai
-      for (let i = 0; i < 7; i++) {
+      if (!STEAMC) for (let i = 0; i < 7; i++) {
         const a = 36 + i * 24.4, wx = L(u(a)), ww = (21 / 12) * ppm;
         c.fillStyle = ARGOC ? '#0c0f13' : '#5d676e'; roundRect(c, wx - 1, Y(4.38) - 1, ww + 2, 1.46 * ppm + 2, 0.22 * ppm); c.fill();
         c.fillStyle = glass; roundRect(c, wx, Y(4.38), ww, 1.46 * ppm, 0.2 * ppm); c.fill();
@@ -9189,7 +9222,7 @@
         }
       }
       // pintu di kedua ujung + tangga
-      for (const d0 of [6, 214]) {
+      for (const d0 of STEAMC ? [] : [6, 214]) {
         const dx = L(u(d0)), dw = (20 / 12) * ppm;
         const op = st.doorAnim !== undefined ? st.doorAnim : st.doors === 'open' ? 1 : 0;
         // pintu geser: lubang gelap & lampu tangga, daun pintu bergeser ke samping
@@ -9216,7 +9249,7 @@
       }
       c.fillStyle = SENJAC ? '#e9c26a' : '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.5 * ppm))}px "Plus Jakarta Sans", sans-serif`;
       c.textAlign = 'left'; c.textBaseline = 'middle';
-      c.fillText(HSTC ? `KN · 0${k + 1}` : HST2C ? `GT · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
+      if (!STEAMC) c.fillText(HSTC ? `KN · 0${k + 1}` : HST2C ? `GT · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
       if (rimOn) {
         c.save(); c.globalAlpha = V.rimA;
         line([[u(4), 6.06], [u(236), 6.06]], V.rim, lw(0.09));
