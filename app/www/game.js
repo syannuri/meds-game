@@ -4450,10 +4450,10 @@
         if (B.land) continue; // jalur layang di atas sawah: tidak ada sungai di bawahnya
         const d0 = Math.max(2, B.from + 4 - x0), d1 = Math.min(FAR, B.to - 4 - x0);
         if (d1 > d0 && B.viaduct) { // ngarai di bawah viaduk: dasar lembah berhutan, sungai berliku, tebing hijau, kabut lembah
-          const DH = -26, fg = night ? '#152018' : mix('#2f5a34', '#3d6c40', p), fg2 = night ? '#1a281d' : mix('#3e6e42', '#4f8250', p);
+          const DH = -26, fg = night ? '#122016' : mix('#1d5a2a', '#246a32', p), fg2 = night ? '#18281a' : mix('#2e7a36', '#3a8c40', p), fg3 = night ? '#1c2c1e' : mix('#4a9a46', '#58ac50', p);
           quad(W3(d0, -220, DH), W3(d0, 220, DH), W3(d1, 220, DH), W3(d1, -220, DH), fg);
           // tebing lembah naik ke kiri & kanan
-          for (const sg of [-1, 1]) quad(W3(d0, sg * 60, DH), W3(d0, sg * 220, -2), W3(d1, sg * 220, -2), W3(d1, sg * 60, DH), night ? '#1c2a20' : mix('#4a7a4a', '#5a8c58', p));
+          for (const sg of [-1, 1]) quad(W3(d0, sg * 60, DH), W3(d0, sg * 220, -2), W3(d1, sg * 220, -2), W3(d1, sg * 60, DH), night ? '#18261c' : mix('#2c6a34', '#357a3c', p));
           // sungai berliku di dasar lembah
           const rv = (d) => Math.sin((d + x0) * 0.012) * 14;
           for (let d = d0; d < d1; d += 6) { const e = Math.min(d1, d + 6); quad(W3(d, rv(d) - 7, DH + 0.1), W3(d, rv(d) + 7, DH + 0.1), W3(e, rv(e) + 7, DH + 0.1), W3(e, rv(e) - 7, DH + 0.1), night ? '#232a55' : mix('#5f8ea2', '#86bdd0', p)); }
@@ -4461,12 +4461,12 @@
           for (let d = Math.ceil((x0 + d0) / 9) * 9 - x0; d < d1; d += 9) for (let q = -11; q <= 11; q++) {
             const hr = hash(Math.round(d + x0) * 0.37 + q * 3.1); if (hr < 0.35) continue; const o = q * 18 + (hr - 0.5) * 10; if (Math.abs(o - rv(d)) < 10) continue;
             const hh = Math.abs(o) < 60 ? DH : DH + (Math.abs(o) - 60) / 160 * (DH * -1 - 2), pt = W3(d, o, hh + 2.5); if (!pt || pt.y > H) continue;
-            const r = Math.max(1, 4.5 * pt.k); c.fillStyle = hr > 0.7 ? fg2 : fg; c.beginPath(); c.arc(pt.x, pt.y, r, 0, 7); c.fill();
-            if (!night && r > 2) { c.fillStyle = 'rgba(255,240,200,0.12)'; c.beginPath(); c.arc(pt.x - r * 0.3, pt.y - r * 0.35, r * 0.5, 0, 7); c.fill(); }
+            const r = Math.max(1, 4.5 * pt.k); c.fillStyle = hr > 0.85 ? fg3 : hr > 0.6 ? fg2 : fg; c.beginPath(); c.arc(pt.x, pt.y, r, 0, 7); c.fill();
+            if (!night && r > 2) { c.fillStyle = 'rgba(12,40,18,0.45)'; c.beginPath(); c.arc(pt.x + r * 0.25, pt.y + r * 0.3, r * 0.75, 0, 7); c.fill(); c.fillStyle = 'rgba(170,230,120,0.35)'; c.beginPath(); c.arc(pt.x - r * 0.3, pt.y - r * 0.35, r * 0.45, 0, 7); c.fill(); }
           }
           // kabut lembah tipis
           const yA = W3(d1, 0, DH), yB = W3(d0, 0, DH);
-          if (yA && yB) { const mg = c.createLinearGradient(0, yA.y - 10, 0, yB.y); mg.addColorStop(0, night ? 'rgba(60,70,90,0.35)' : 'rgba(225,235,238,0.4)'); mg.addColorStop(0.35, 'rgba(225,235,238,0)'); c.fillStyle = mg; c.fillRect(0, yA.y - 10, W, Math.max(0, yB.y - yA.y + 10)); }
+          if (yA && yB) { const mg = c.createLinearGradient(0, yA.y - 10, 0, yB.y); mg.addColorStop(0, night ? 'rgba(60,70,90,0.25)' : 'rgba(225,235,238,0.25)'); mg.addColorStop(0.2, 'rgba(225,235,238,0)'); c.fillStyle = mg; c.fillRect(0, yA.y - 10, W, Math.max(0, yB.y - yA.y + 10)); }
         } else if (d1 > d0) quad(W3(d0, -200, -3), W3(d0, 200, -3), W3(d1, 200, -3), W3(d1, -200, -3), night ? '#232a55' : mix('#5f8ea2', '#86bdd0', p));
         if (d1 > d0 && SUNK > 0 && !B.viaduct) { // jalur kilau matahari di permukaan sungai, berkilauan
           const yA = W3(d1, 0, -3), yB = W3(d0, 0, -3); if (yA && yB) { c.save(); c.globalCompositeOperation = 'lighter';
@@ -10326,6 +10326,33 @@
     const conc = V.night ? '#5a5f6a' : V.storm ? '#8d9296' : '#c9c2b4', concD = V.night ? '#3a3e48' : '#9a9285';
     const span = 24, n = Math.round((b.to - b.from) / span), sp = (b.to - b.from) / n, deep = 11;
     c.save();
+    if (MIS.land === 'sawit' || b.gorge) { // ngarai: lereng hutan hujan turun ke sungai kecil di dasar lembah (menggantikan bidang air lebar)
+      const yT = gy + 1.4 * ppm, yB = H + 4, ramp = 40 * ppm, night = V.night;
+      const g1 = night ? '#10200f' : '#1d5a2a', g2 = night ? '#16281a' : '#2a7234', g3 = night ? '#1c3020' : '#3e8c40', gl = night ? 'rgba(120,160,120,0.2)' : 'rgba(176,232,120,0.55)';
+      c.fillStyle = g1; c.beginPath(); c.moveTo(x0 - ramp, yT); c.lineTo(x1 + ramp, yT); c.lineTo(x1 + ramp * 0.3, yB); c.lineTo(x0 - ramp * 0.3, yB); c.closePath(); c.fill();
+      // tajuk pohon berlapis: makin ke bawah makin rapat & besar
+      for (let row = 0; row < 7; row++) {
+        const y = yT + (row + 0.6) * (yB - yT) / 7, r0 = (1.2 + row * 0.35) * ppm, step = r0 * 1.5, shrink = row / 7;
+        const xa = x0 - ramp * (1 - shrink * 0.7), xb = x1 + ramp * (1 - shrink * 0.7);
+        for (let x = xa + ((row * 37) % step); x < xb; x += step) {
+          const h2 = hash(Math.round((x - X(0)) / step) * 1.7 + row * 13), rr = r0 * (0.8 + h2 * 0.5);
+          c.fillStyle = h2 > 0.75 ? g3 : h2 > 0.4 ? g2 : g1; c.beginPath(); c.arc(x, y - rr * 0.3, rr, Math.PI, 0); c.lineTo(x + rr, y + rr * 0.4); c.lineTo(x - rr, y + rr * 0.4); c.closePath(); c.fill();
+          c.fillStyle = gl; c.beginPath(); c.arc(x - rr * 0.35, y - rr * 0.65, rr * 0.4, 0, 7); c.fill();
+          if (h2 > 0.88 && row < 4) { c.strokeStyle = night ? '#2a3a2a' : '#5a4630'; c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath(); c.moveTo(x, y - rr * 0.6); c.lineTo(x, y - rr * 0.6 - 2.4 * ppm); c.stroke(); // pucuk palem hutan
+            c.strokeStyle = g3; c.lineWidth = Math.max(1, 0.18 * ppm); c.beginPath(); for (const a of [-2.6, -2.0, -1.2, -0.5]) { c.moveTo(x, y - rr * 0.6 - 2.4 * ppm); c.quadraticCurveTo(x + Math.cos(a) * 1.2 * ppm, y - rr * 0.6 - 3 * ppm, x + Math.cos(a) * 2 * ppm, y - rr * 0.6 - 2.4 * ppm + 0.8 * ppm); } c.stroke(); }
+        }
+      }
+      // sungai kecil berkilau di dasar ngarai
+      const ry = yB - (yB - yT) * 0.16, rw = Math.max(4, 1.6 * ppm);
+      c.fillStyle = night ? '#2b3554' : '#6fb2c8'; c.beginPath(); c.moveTo(x0 - ramp * 0.3, ry);
+      for (let x = x0 - ramp * 0.3; x <= x1 + ramp * 0.3; x += 12) c.lineTo(x, ry + Math.sin((x - X(0)) * 0.01) * rw * 0.8);
+      for (let x = x1 + ramp * 0.3; x >= x0 - ramp * 0.3; x -= 12) c.lineTo(x, ry + rw + Math.sin((x - X(0)) * 0.01) * rw * 0.8);
+      c.closePath(); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.45)'; for (let x = x0; x < x1; x += 30) c.fillRect(x + ((x * 7) % 11), ry + rw * 0.4 + Math.sin((x - X(0)) * 0.01) * rw * 0.8, 6, 1);
+      // kabut tipis di dasar lembah
+      const mg = c.createLinearGradient(0, ry - (yB - yT) * 0.25, 0, yB); mg.addColorStop(0, 'rgba(230,240,242,0)'); mg.addColorStop(1, night ? 'rgba(70,80,100,0.3)' : 'rgba(230,240,242,0.3)');
+      c.fillStyle = mg; c.fillRect(x0 - ramp, ry - (yB - yT) * 0.25, x1 - x0 + ramp * 2, yB - ry + (yB - yT) * 0.25);
+    }
     // tiang & lengkung
     for (let k = 0; k < n; k++) {
       const a = X(b.from + k * sp), e = X(b.from + (k + 1) * sp), mid = (a + e) / 2, wHalf = (e - a) / 2;
