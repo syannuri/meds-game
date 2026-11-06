@@ -1057,7 +1057,7 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .drvpic svg { width: 100%; height: 100%; display: block; }
 
 /* ===== KARTU MISI BESAR: carousel 2 baris, kartu landscape bergambar penuh ===== */
-#screenTitle .tickets { display: grid; grid-template-columns: repeat(7, clamp(150px, 31%, 230px)); grid-template-rows: repeat(2, minmax(0, 1fr)); grid-auto-flow: row; gap: 10px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: none; scroll-padding: 10px;
+#screenTitle .tickets { display: grid; grid-template-columns: repeat(8, clamp(150px, 31%, 230px)); grid-template-rows: repeat(2, minmax(0, 1fr)); grid-auto-flow: row; gap: 10px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: none; scroll-padding: 10px;
   overscroll-behavior-x: contain; touch-action: pan-x pan-y; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-right: 10px; }
 #screenTitle .tickets::-webkit-scrollbar { display: none; }
 #screenTitle .tickets li, #screenTitle .tickets li.tut { grid-column: auto; grid-row: auto; display: flex; min-height: 0; scroll-snap-align: start; }
@@ -1097,7 +1097,7 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 /* petunjuk geser */
 #screenTitle .title-right { position: relative; }
 
-@media (max-height: 400px) { #screenTitle .tickets { gap: 8px; grid-template-columns: repeat(7, clamp(140px, 30%, 210px)); } }
+@media (max-height: 400px) { #screenTitle .tickets { gap: 8px; grid-template-columns: repeat(8, clamp(140px, 30%, 210px)); } }
 
 /* swipe ringan: kartu tidak dianimasikan saat digeser, lapisan GPU sendiri */
 #screenTitle .tickets li { contain: layout paint; }
@@ -1165,3 +1165,4 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 @keyframes logoShine { 0% { background-position: 150% 0, 0 0; } 60%, 100% { background-position: -50% 0, 0 0; } }
 #screenTitle .logo-sub { font-family: "Cinzel", Georgia, serif; font-weight: 700; color: var(--gold2); letter-spacing: 0.3em; }
 @media (prefers-reduced-motion: reduce) { #screenTitle h1.logo span { animation: none; } }
+#nextLimit.warnv { color: #ff8a6a; }
