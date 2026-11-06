@@ -5387,7 +5387,6 @@
     if (ROUTE.rival && S.bus && S.bus.started && !S.bus.done && Math.abs(S.bus.x - S.x) < 90) return 0.8;
     // mendekati titik henti saat sudah pelan: perbesar sedikit untuk presisi
     // (tanpa zoom-in saat merayap ke titik henti: zoom berporos di moncong membuat tanah tampak berlari)
-    if (S.phase === 'load' && S.loadT <= 0 && Math.abs(S.x - loadTarget(S.loadIdx)) < 20 && kmh < 12) return 1.2;
     // tanpa zoom otomatis karena kecepatan: lapisan latar (gedung, bukit) berskala zoom tetapi
     // posisinya tidak, sehingga setiap perubahan zoom membuat pemandangan tampak berlari
     return 1;
@@ -5487,6 +5486,8 @@
     }
     // menyambung gerbong: kamera melihat ujung belakang rangkaian
     if (S && st === S && S.phase === 'dwell' && S.dwell.step === 'couple') lead = -TRAIN_LEN + (W * (anchor - 0.62)) / ppm;
+    // memuat batu bara: kamera mengikuti corong silo (di sepertiga kiri layar) agar gerbong yang sedang diisi, termasuk gerbong 3 & 4, terlihat jelas
+    if (S && st === S && S.phase === 'load' && ROUTE.loading && S.loadIdx < N_COACH) lead = ROUTE.loading.silo - st.x + (W * (anchor - 0.33)) / ppm;
     // zoom stasiun: titik fokus ke tengah rangkaian & peron
     // berhenti di stasiun: zoom berporos di titik tetap (tengah rangkaian), kamera tidak bergeser
     const pivotStn = S && st === S && S.phase === 'dwell' && !MIS.freight && !(S.dwell.step === 'couple');
@@ -5511,7 +5512,7 @@
     trainScr = { x0: X(st.x - TRAIN_LEN), x1: X(st.x), top: gy - 6.6 * ppm, bottom: gy };
     // paralaks latar hanya mengikuti posisi kereta (bukan zoom/geser kamera), jadi saat mengerem
     // dan berhenti di stasiun pemandangan jauh tidak ikut 'berlari' ketika kamera mendekat
-    const pcTrain = st.x * ppmB - W * anchor; // ikut jangkar kamera agar latar jauh & tanah bergeser bersama
+    const pcTrain = (st.x + camLead) * ppmB - W * anchor; // ikut jangkar & geser kamera agar latar jauh & tanah bergeser bersama
     const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2, ppmB, pc: mode === 'play' || mode === 'pause' ? pcTrain : (camX + W / (2 * ppm)) * ppmB - W / 2 };
     // cahaya tepi (rim light), pantulan kaca, lampu kabin per suasana
     if (night) Object.assign(V, { rim: '#9fb4ff', rimA: 0.5, refl: 0.05, cabA: 0.9, haze: '#4b3d6b', hazeA: 0.3, water: '#3a3f74' });
