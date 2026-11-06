@@ -1154,3 +1154,14 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .copyright a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .copyright .lang{font:inherit;color:#f3eee1;background:rgba(255,255,255,.1);border:1px solid rgba(243,238,225,.28);border-radius:999px;padding:3px 10px;margin-left:2px;cursor:pointer}
 .copyright .lang:hover{background:rgba(255,255,255,.18)}
+
+/* logo menu utama seragam dengan halaman pembuka: Cinzel "Mewah Klasik" */
+#screenTitle h1.logo { font-family: "Cinzel", Georgia, "Times New Roman", serif; font-weight: 900; text-transform: uppercase; font-size: clamp(14px, min(2.3vw, 5vh), 28px);
+  letter-spacing: 0.8em; color: #fff1c4; text-shadow: 0 2px 0 #05080c, 0 6px 16px rgba(0, 0, 0, 0.6); line-height: 1; margin: 6px 0 4px; }
+#screenTitle h1.logo span { font-size: 2.35em; letter-spacing: 0.08em; margin-top: 0.12em; color: transparent; text-shadow: none; animation: logoShine 4.5s 1s ease-in-out infinite;
+  -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
+  background-image: linear-gradient(105deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.9) 50%, rgba(255, 255, 255, 0) 60%), linear-gradient(180deg, #fff1c4 0%, #f2c45a 45%, #c98a1e 70%, #f2c45a 100%);
+  background-size: 300% 100%, 100% 100%; filter: drop-shadow(0 3px 0 #05080c) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6)); }
+@keyframes logoShine { 0% { background-position: 150% 0, 0 0; } 60%, 100% { background-position: -50% 0, 0 0; } }
+#screenTitle .logo-sub { font-family: "Cinzel", Georgia, serif; font-weight: 700; color: var(--gold2); letter-spacing: 0.3em; }
+@media (prefers-reduced-motion: reduce) { #screenTitle h1.logo span { animation: none; } }
