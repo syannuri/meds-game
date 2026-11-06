@@ -4532,14 +4532,37 @@
       const odd = Math.floor(wd / slp) % 7 === 0;
       quad(W3(d - 0.12, -1.2, 0.05), W3(d - 0.12, 1.2, 0.05), W3(d + 0.12, 1.2, 0.05), W3(d + 0.12, -1.2, 0.05), inTun ? '#3a3631' : odd ? mix('#7d776e', '#9a948a', p) : mix('#6f6a63', '#8b857b', p));
     }
-    [-0.53, 0.53].forEach((o) => {
-      for (let i = 0; i < steps.length - 1; i++) {
-        const a = W3(steps[i], o - 0.035, 0.16), b = W3(steps[i + 1], o - 0.035, 0.16), a2 = W3(steps[i], o + 0.035, 0.16), b2 = W3(steps[i + 1], o + 0.035, 0.16);
-        quad(a, b, b2, a2, inTun ? '#6d6a66' : '#9aa2a6');
-        // kilap kepala rel
-        if (!inTun && steps[i] < 160) { const m0 = W3(steps[i], o, 0.17), m1 = W3(steps[i + 1], o, 0.17); if (m0 && m1) { c.strokeStyle = night ? 'rgba(200,210,255,0.5)' : 'rgba(255,236,204,0.85)'; c.lineWidth = Math.max(0.6, 0.018 * m0.k); c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke(); } }
-      }
-    });
+    // rel: badan gelap, kepala baja mengilap, penambat di bantalan dekat, kilau matahari di sepanjang kepala rel
+    { const wet = MIS.rain && !inTun, sunX = SUN ? SUN.x : W * 0.8;
+      for (let wd = Math.floor((x0 + 40) / slp) * slp; wd > x0 + 1.4; wd -= slp) { const d = wd - x0; // penambat (klip kuning) & pelat
+        if (d > 28) continue;
+        for (const o of [-0.53, 0.53]) for (const side of [-1, 1]) { const q = W3(d, o + side * 0.075, 0.07); if (!q || q.k < 1.5) continue;
+          c.fillStyle = inTun ? 'rgba(60,56,50,0.7)' : 'rgba(70,74,78,0.55)'; c.fillRect(q.x - 0.05 * q.k, q.y - 0.015 * q.k, 0.1 * q.k, 0.04 * q.k); // pelat landas
+          c.fillStyle = inTun ? '#6a5a32' : '#c9a040'; c.fillRect(q.x - 0.025 * q.k, q.y - 0.045 * q.k, 0.05 * q.k, 0.035 * q.k); } } // klip penambat
+      [-0.53, 0.53].forEach((o) => {
+        for (let i = 0; i < steps.length - 1; i++) {
+          const a = W3(steps[i], o - 0.035, 0.16), b = W3(steps[i + 1], o - 0.035, 0.16), a2 = W3(steps[i], o + 0.035, 0.16), b2 = W3(steps[i + 1], o + 0.035, 0.16);
+          const w0 = W3(steps[i], o - 0.04, 0.02), w1 = W3(steps[i + 1], o - 0.04, 0.02); // badan rel (sisi dalam gelap)
+          if (a && b && w0 && w1) quad(w0, w1, b, a, inTun ? '#2a2826' : '#3a3e42');
+          quad(a, b, b2, a2, inTun ? '#6d6a66' : '#a6aeb2');
+          if (!inTun && steps[i] < 260) { const m0 = W3(steps[i], o, 0.17), m1 = W3(steps[i + 1], o, 0.17);
+            if (m0 && m1) {
+              // kilau makin kuat di dekat garis menuju matahari & di kejauhan (sudut pantul rendah); rel basah lebih berkilap
+              const toward = 1 - clamp(Math.abs(m0.x - sunX) / W, 0, 1), far = clamp(steps[i] / 120, 0, 1), base = night ? 0.35 : 0.55 + (wet ? 0.25 : 0);
+              const al = clamp(base + toward * 0.35 * SUNK + far * 0.25 * SUNK, 0, 1);
+              c.strokeStyle = night ? `rgba(200,210,255,${al * 0.7})` : `rgba(255,${238 - Math.round(toward * 30)},${210 - Math.round(toward * 60)},${al})`;
+              c.lineWidth = Math.max(0.7, 0.022 * m0.k); c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke();
+            } }
+        }
+      });
+      // pantulan cahaya di kepala rel: garis cahaya yang mengalir ke depan seiring laju kereta
+      if (!inTun && (SUNK > 0 || night)) { c.save(); c.globalCompositeOperation = 'lighter';
+        const flow = (x0 * 0.6) % 24;
+        for (const o of [-0.53, 0.53]) for (let d = 4 - flow; d < 200; d += 24) { const dd = Math.max(2, d), q0 = W3(dd, o, 0.17), q1 = W3(dd + 6 + dd * 0.08, o, 0.17); if (!q0 || !q1) continue;
+          const toward = 1 - clamp(Math.abs(q0.x - sunX) / W, 0, 1), al = night ? 0.35 : (0.25 + 0.55 * toward) * SUNK * (wet ? 1.3 : 1);
+          c.strokeStyle = night ? `rgba(255,236,180,${al})` : `rgba(255,246,220,${clamp(al, 0, 1)})`; c.lineWidth = Math.max(1, 0.04 * q0.k); c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); }
+        c.restore(); }
+    }
 
     // jalur utama persilangan di kanan (sepur belok = jalur Cakra)
     const MTc = ROUTE.meet, MO = 10;
@@ -7381,11 +7404,8 @@
       c.fillStyle = V.night ? 'rgba(40,70,40,0.8)' : 'rgba(90,130,60,0.85)';
       for (let m = Math.floor(V.wx0); m < V.wx1; m += 1) { if (hash(m * 1.7) > 0.55) continue; const sx = X(m + hash(m) * 0.8), hgt = (0.2 + hash(m * 3.1) * 0.35) * ppm; c.beginPath(); c.moveTo(sx - 0.25 * ppm, gy + 0.2 * ppm); c.lineTo(sx, gy + 0.2 * ppm - hgt); c.lineTo(sx + 0.25 * ppm, gy + 0.2 * ppm); c.fill(); }
     }
-    // rel jauh (tipis) dan rel dekat
-    c.fillStyle = '#7d8487'; c.fillRect(0, gy - 0.48 * ppm, W, 0.13 * ppm);
-    c.fillStyle = '#9aa0a2'; c.fillRect(0, gy - 0.12 * ppm, W, 0.24 * ppm);
-    c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(0, gy - 0.12 * ppm, W, 1); c.fillRect(0, gy - 0.48 * ppm, W, 1);
-    if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.6; c.fillStyle = V.rim; c.fillRect(0, gy - 0.12 * ppm, W, 1.2); c.fillRect(0, gy - 0.48 * ppm, W, 1); c.restore(); }
+    // rel jauh (tipis) dan rel dekat: profil kepala-badan-kaki, penambat di tiap bantalan, kilap kepala rel
+    drawRailsSide(V);
     // jalan raya sejajar rel (misi dengan bus pesaing)
     if (ROUTE.rival) drawRoad(V);
     // ujung rel (penahan)
@@ -7397,6 +7417,47 @@
     }
   }
 
+  // rel tampak samping: kaki rel di atas pelat landas, badan rel gelap, kepala rel baja terang yang mengilap,
+  // penambat elastis di tiap bantalan, pantulan matahari yang berkilau lebih kuat di arah matahari (& basah saat hujan)
+  function drawRailsSide(V) {
+    const { c, ppm, gy, X } = V, night = V.night, wet = MIS.rain || V.storm, tf = V.tf || 0;
+    const rails = [[gy - 0.48 * ppm, 0.62], [gy - 0.12 * ppm, 1]]; // [y kepala, skala (jauh/dekat)]
+    const sun = sunPos(V), sunK = night || tf > 0.2 ? 0 : V.storm ? 0.35 : clamp(1.1 - V.p * 0.5, 0.45, 1);
+    const step = 1.2;
+    for (const [yh, k] of rails) {
+      const head = Math.max(1.5, 0.13 * ppm * k), web = Math.max(1, 0.11 * ppm * k), foot = Math.max(1, 0.06 * ppm * k);
+      // pelat landas & penambat di tiap bantalan (rel dekat lebih jelas)
+      if (ppm * k > 4) for (let m = Math.floor(V.wx0 / step) * step; m < V.wx1; m += step) { const sx = X(m) + (k < 1 ? 0 : 0.15 * ppm);
+        c.fillStyle = night ? '#2a2c30' : '#4a4d50'; c.fillRect(sx - 0.18 * ppm * k, yh + head + web, 0.5 * ppm * k, foot + 1);
+        c.fillStyle = night ? '#3a3020' : '#b08a3a'; c.fillRect(sx - 0.05 * ppm * k, yh + head + web * 0.4, 0.12 * ppm * k, web * 0.9); }
+      // kaki & badan rel
+      c.fillStyle = night ? '#24272b' : '#4e5256'; c.fillRect(0, yh + head + web, W, foot);
+      c.fillStyle = night ? '#1b1d20' : '#3c4044'; c.fillRect(0, yh + head, W, web);
+      // kepala rel: baja mengilap (sisi atas terang, sisi samping gradasi)
+      const hg = c.createLinearGradient(0, yh, 0, yh + head); hg.addColorStop(0, night ? '#8a90a0' : '#e8ecee'); hg.addColorStop(0.35, night ? '#5a606a' : '#b4bcc0'); hg.addColorStop(1, night ? '#383c44' : '#767e84');
+      c.fillStyle = hg; c.fillRect(0, yh, W, head);
+      c.fillStyle = wet ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.55)'; c.fillRect(0, yh, W, Math.max(1, head * 0.18));
+      // pantulan matahari: pita kilau di bawah posisi matahari + kilatan-kilatan pendek yang ikut bergeser bersama rel
+      if (sunK > 0) {
+        const bw = W * (wet ? 0.5 : 0.32), g = c.createLinearGradient(sun.x - bw, 0, sun.x + bw, 0), col = V.rim && !V.storm ? V.rim : '#ffffff';
+        g.addColorStop(0, 'rgba(255,240,210,0)'); g.addColorStop(0.5, `rgba(255,244,220,${(0.85 * sunK).toFixed(3)})`); g.addColorStop(1, 'rgba(255,240,210,0)');
+        c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(sun.x - bw, yh - 0.5, bw * 2, Math.max(1.5, head * 0.45));
+        c.fillStyle = col; c.globalAlpha = 0.7 * sunK;
+        const off = (V.camX || 0) * ppm;
+        for (let q = 0; q < 26; q++) { const x = ((q * 97.3 - off) % (bw * 2) + bw * 2) % (bw * 2) + sun.x - bw, f = 1 - Math.abs(x - sun.x) / bw; if (f <= 0) continue;
+          const ln = (6 + hash(q * 2.1) * 18) * f * k; c.globalAlpha = 0.75 * sunK * f; c.fillRect(x - ln / 2, yh, ln, Math.max(1, head * 0.3)); }
+        // bintang kilau di titik paling terang
+        const sx2 = sun.x + Math.sin(performance.now() / 700) * 8, sr = (3 + 3 * sunK) * k; c.globalAlpha = 0.9 * sunK; c.strokeStyle = '#fffbe8'; c.lineWidth = 1;
+        c.beginPath(); c.moveTo(sx2 - sr * 2, yh + 1); c.lineTo(sx2 + sr * 2, yh + 1); c.moveTo(sx2, yh + 1 - sr); c.lineTo(sx2, yh + 1 + sr); c.stroke();
+        c.restore();
+      }
+      if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; c.fillStyle = V.rim; c.fillRect(0, yh, W, Math.max(1, head * 0.25)); c.restore(); }
+      // malam / terowongan: pantulan lampu depan kereta di kepala rel di depan moncong
+      if ((night || tf > 0.2) && V.st) { const nx = X(V.st.x); c.save(); c.globalCompositeOperation = 'lighter';
+        const lg = c.createLinearGradient(nx, 0, nx + 60 * ppm, 0); lg.addColorStop(0, 'rgba(255,236,180,0.8)'); lg.addColorStop(1, 'rgba(255,236,180,0)');
+        c.fillStyle = lg; c.fillRect(nx, yh, 60 * ppm, Math.max(1, head * 0.4)); c.restore(); }
+    }
+  }
   // ---------- sawah hidup: petak beragam warna, rumpun padi, kilau air, kuntul, petani bercaping ----------
   // matahari bergeser pelan mengikuti perjalanan (rel tidak pernah benar-benar lurus) dan arah kabin di tikungan
   const sunPos = (V) => { const wx = V.sunX !== undefined ? V.sunX : V.camX || 0; return { x: W * 0.8 + W * 0.045 * Math.sin(wx / 1300) + W * 0.015 * Math.sin(wx / 410 + 1) - (V.sunPan || 0) * 0.05, y: lerp(V.gy - 10, V.gy * 0.25, V.p) + H * 0.012 * Math.sin(wx / 900) }; };
