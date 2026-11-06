@@ -5323,6 +5323,7 @@
 
   // kamera mendekat ke pintu & peron selama penumpang naik/turun (setelah berhenti Good/Perfect)
   // zoom otomatis sesuai situasi (hanya saat bermain di tampilan samping)
+  const STATION_ZOOM = false;
   function autoZoom(st) {
     if (!S || st !== S || REDUCE_MOTION || viewMode === 'cab' || S.mode !== 'play') return 1;
     const kmh = S.v * 3.6;
@@ -5333,11 +5334,13 @@
     // mendekati titik henti saat sudah pelan: perbesar sedikit untuk presisi
     // (tanpa zoom-in saat merayap ke titik henti: zoom berporos di moncong membuat tanah tampak berlari)
     if (S.phase === 'load' && S.loadT <= 0 && Math.abs(S.x - loadTarget(S.loadIdx)) < 20 && kmh < 12) return 1.2;
-    // melaju kencang di lintas bebas: perkecil agar terasa cepat dan jalur depan terlihat
-    if (kmh > 45) return 1 - clamp((kmh - 45) / 35, 0, 1) * 0.17 - clamp((kmh - 80) / 40, 0, 1) * 0.13;
+    // tanpa zoom otomatis karena kecepatan: lapisan latar (gedung, bukit) berskala zoom tetapi
+    // posisinya tidak, sehingga setiap perubahan zoom membuat pemandangan tampak berlari
     return 1;
   }
   function stationZoom(st) {
+    // zoom dekat di peron dimatikan: saat kamera mendekat, latar tampak berlari terhadap kereta
+    if (!STATION_ZOOM) return false;
     if (REDUCE_MOTION || !S || st !== S || S.phase !== 'dwell' || MIS.freight || viewMode === 'cab') return false;
     const step = S.dwell.step;
     if (!(step === 'open' || step === 'board' || step === 'alight' || step === 'close' || step === 'end')) return false;
