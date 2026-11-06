@@ -104,7 +104,7 @@ Gambar ada di `docs/play-store/`:
 >
 > ⚡ LIMA KERETA, LIMA RASA
 > • Cakra (diesel CC) dengan livery batik
-> • Agraveda, lokomotif listrik ekspres Argo Senja 120 km/h
+> • Agraveda, lokomotif listrik ekspres Argo Senja 200 km/h
 > • Guntur GT 6001, kereta cepat listrik 250 km/h
 > • Kilat G1, kereta cepat generasi pertama di Sumatra
 > Kereta listrik punya pantograf, seksi netral, dan rem regeneratif yang mengembalikan energi.
@@ -157,7 +157,7 @@ Di Play Console: **Main store listing → Manage translations → Add your own t
 >
 > ⚡ FIVE TRAINS, FIVE FEELS
 > • Cakra, a CC diesel with batik liveries
-> • Agraveda, the 120 km/h electric express locomotive of the Argo Senja
+> • Agraveda, the 200 km/h electric express locomotive of the Argo Senja
 > • Guntur GT 6001, a 250 km/h electric high-speed train
 > • Kilat G1, Sumatra's first-generation high-speed train
 > Electric trains have a pantograph, neutral sections and regenerative braking that feeds energy back.
