@@ -5712,7 +5712,7 @@
       const kmh = S.v * 3.6, ns = nextStation(), ds = ns ? ns.x - S.x : Infinity;
       const fast = S.phase === 'run' && kmh > Math.max(38, ROUTE.lineSpeed * 0.5) && S.notch >= 0 && ds > 900 && !MIS.freight;
       if (CINE.shot) { CINE.shot.t += dt || 0.016; if (!fast || CINE.shot.t > CINE.shot.dur) CINE.shot = null; }
-      else if (fast) { CINE.cool -= dt || 0.016; if (CINE.cool <= 0) { const f = SHOTS[CINE.nShot++ % SHOTS.length]; CINE.shot = { t: 0, dur: 9, focus: f, zoom: f === 'wheels' ? 1.4 : f === 'nose' ? 1.34 : 1.22 }; CINE.cool = (window.__rnShotGap || 22) + Math.random() * 12; } }
+      else if (fast) { CINE.cool -= dt || 0.016; if (CINE.cool <= 0) { const f = SHOTS[CINE.nShot++ % SHOTS.length]; CINE.shot = { t: 0, dur: 11, focus: f, zoom: f === 'wheels' ? 3.4 : f === 'nose' ? 3.0 : 2.2 }; CINE.cool = (window.__rnShotGap || 22) + Math.random() * 12; } }
       else CINE.cool = Math.max(CINE.cool, 8);
     } else CINE.shot = null;
     const t = cineTarget();
@@ -5720,12 +5720,13 @@
     if (!(S && S.notch < 0 && S.v > 0.5 && mode === 'play')) CINE.want = t;
     if (t === 1 && (!S || mode !== 'play' || viewMode === 'cab')) CINE.want = 1;
     const k = Math.min(0.05, dt || 0.016);
-    CINE.v += ((CINE.want - CINE.s) * 0.9 - CINE.v * 1.9) * k;   // pegas lambat & teredam (± 3 detik)
-    CINE.s = clamp(CINE.s + CINE.v * k, 1, 1.4);
+    const sp = CINE.shot ? 1.5 : 0.9, dmp = CINE.shot ? 2.4 : 1.9;           // shot: dolly sedikit lebih cepat
+    CINE.v += ((CINE.want - CINE.s) * sp - CINE.v * dmp) * k;   // pegas lambat & teredam (± 3 detik)
+    CINE.s = clamp(CINE.s + CINE.v * k, 1, 3.6);
     const r = CINE.raw;
     if (r) { const sh = CINE.shot, len = r.x1 - r.x0;
-      const fx = sh ? (sh.focus === 'nose' ? 0.04 : sh.focus === 'wheels' ? 0.16 : 0.55) : S && S.t < 40 && S.phase !== 'dwell' ? 0.12 : 0.35;
-      const px = clamp(r.x1 - len * fx, W * 0.22, W * 0.8), py = sh && sh.focus === 'mid' ? r.bottom - (r.bottom - r.top) * 0.3 : r.bottom;
+      const fx = sh ? (sh.focus === 'nose' ? 0.05 : sh.focus === 'wheels' ? 0.1 : 0.42) : S && S.t < 40 && S.phase !== 'dwell' ? 0.12 : 0.35;
+      const px = clamp(r.x1 - len * fx, W * 0.2, W * 0.82), py = sh ? (sh.focus === 'wheels' ? r.bottom - (r.bottom - r.top) * 0.08 : r.bottom - (r.bottom - r.top) * 0.4) : r.bottom;
       CINE.px = CINE.px ? CINE.px + (px - CINE.px) * Math.min(1, k * 1.2) : px; CINE.py = CINE.py ? CINE.py + (py - CINE.py) * Math.min(1, k * 1.2) : py; }
     CINE.bars += ((CINE.shot && CINE.shot.t < CINE.shot.dur - 2.2 ? 1 : 0) - CINE.bars) * Math.min(1, k * 1.6);
   }
@@ -10854,6 +10855,7 @@
     starsDemo: (n) => { renderResStars(n, false); Sound.stars(n); },
     radio: (t, w, i) => radio(t, 6, w, i), portrait: (id) => PORTRAIT(id),
     get mode() { return mode; },
+    get cine() { return CINE; },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
     audioMeter: () => Sound.meter(),
     loadTarget: (i) => loadTarget(i),
