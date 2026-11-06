@@ -16,6 +16,6 @@ may be copied, modified, distributed, republished, sold, or used to create deriv
 prior written permission from Prismatix Lab.
 
 Pengecualian / Third-party components:
-- Font "Big Shoulders Display" dan "Plus Jakarta Sans" (app/www/fonts) dilisensikan di bawah
+- Font "Big Shoulders Display", "Plus Jakarta Sans", dan "Cinzel" (app/www/fonts) dilisensikan di bawah
   SIL Open Font License 1.1; lihat file lisensi di folder tersebut.
 - Capacitor dan pustaka Android/Gradle tetap tunduk pada lisensi masing-masing (MIT / Apache 2.0).
