@@ -28,7 +28,7 @@
   const LOCO_LEN = 16, COACH_LEN = 20, WAGON_LEN = 12, GAP = 1.2;
   const VS = 0.54, VPIV = 1.05; // skala tinggi badan kereta (atap sekitar 4,1 m)
   const trainH = (h) => (h <= VPIV ? h : VPIV + (h - VPIV) * VS);
-  const ELEC = () => MIS.loco === 'hst2' || MIS.loco === 'hst'; // kereta cepat bertenaga listrik (pantograf)
+  const ELEC = () => MIS.loco === 'hst2' || MIS.loco === 'hst' || MIS.loco === 'argo'; // bertenaga listrik 25 kV (pantograf): Guntur, Kilat, Agraveda
   const WIRE_H = 4.42; // tinggi kawat aliran atas di layar samping (meter terskala, tepat di kepala pantograf)
   // susunan rangkaian berubah per misi: 3 gerbong penumpang atau N gerbong batu bara
   let N_COACH = 3, CAR_LEN = COACH_LEN;
@@ -579,13 +579,13 @@
     startClock: 16 * 3600 + 50 * 60,
     sky: 'dawn', dusk: true,
     rain: false,
-    tags: ['Ekspres 120 km/h', 'Lewat langsung', 'Senja'],
+    tags: ['Ekspres 120 km/h', 'Listrik 25 kV', 'Lewat langsung', 'Senja'],
     loco: 'argo',
     speaker: { who: 'Bu Anna, kepala stasiun', initials: 'BW' },
     driver: { name: 'Anett', initials: 'AN' },
-    brief: 'Anett, mulai hari ini lokomotif baru Agraveda menarik Argo Senja, kereta eksekutif ke Kota Kencana. Lintas Pantura lurus dan baru, boleh sampai 120 km/h. Jatiasri dan Rancamaya dilewati langsung. Perhatikan papan REM kuning: dari 120, kereta butuh hampir satu kilometer untuk berhenti.',
+    brief: 'Anett, mulai hari ini lokomotif listrik baru Agraveda menarik Argo Senja, kereta eksekutif ke Kota Kencana. Naikkan pantograf sebelum berangkat, dan taruh tuas di N saat melewati seksi netral di tambak garam. Lintas Pantura lurus dan baru, boleh sampai 120 km/h. Jatiasri dan Rancamaya dilewati langsung. Perhatikan papan REM kuning: dari 120, kereta butuh hampir satu kilometer untuk berhenti.',
     weather: 'senja cerah',
-    intro: 'Masinis Anett, Argo Senja siap berangkat. Tutup pintu, lalu bawa penumpang eksekutif ke Kota Kencana.',
+    intro: 'Masinis Anett, Argo Senja siap berangkat. Naikkan pantograf, tutup pintu, lalu bawa penumpang eksekutif ke Kota Kencana.',
     reward: '<strong>Terbuka:</strong> Lencana Masinis Ekspres. Penumpang eksekutif memuji perjalanan yang mulus.',
     aboard: 18,
     ticket: 'dusk',
@@ -641,6 +641,7 @@
         { from: 13300, to: 15600, kind: 'city', name: 'Kota Kencana', big: true },
       ],
       tunnel: { from: 5950, to: 6480, name: 'ALAS ROBAN', year: '2019', modern: true },
+      neutral: [{ from: 9150, to: 9290 }], // seksi netral pergantian gardu listrik di tambak garam
       side: { from: 3500, to: 5800, v: 128, name: 'KA Cepat Garuda' },
       grades: [
         { from: 1800, to: 3200, permil: -6, label: 'Turunan Pantura' },
@@ -2565,8 +2566,8 @@
     }
     if (ELEC()) {
       // energi: daya tarik (kW) dan rem regeneratif yang mengembalikan listrik ke jaringan
-      if (n > 0 && !powerLocked) S.kwh += (n / 4) * 9600 * clamp(S.v / 8, 0.15, 1) * dt / 3600;
-      if (n < 0 && n > -5 && S.v > 1 && !inNeutral) S.regen += clamp(-(S.aCmd || 0) / 1.2, 0, 1) * (MIS.loco === 'hst' ? 5200 : 7200) * clamp(S.v / 10, 0, 1) * dt / 3600;
+      if (n > 0 && !powerLocked) S.kwh += (n / 4) * (MIS.loco === 'argo' ? 5600 : 9600) * clamp(S.v / 8, 0.15, 1) * dt / 3600;
+      if (n < 0 && n > -5 && S.v > 1 && !inNeutral) S.regen += clamp(-(S.aCmd || 0) / 1.2, 0, 1) * (MIS.loco === 'hst' ? 5200 : MIS.loco === 'argo' ? 4200 : 7200) * clamp(S.v / 10, 0, 1) * dt / 3600;
     }
     const wet = MIS.rain && !inTunnel(S.x - LOCO_LEN);
     if (S.sandT > 0) S.sandT = Math.max(0, S.sandT - dt);
@@ -3083,6 +3084,10 @@
     { target: '#lever', who: 'SR', text: 'Gerbong kopi di belakang. Dorong tuas ke P1 sebentar untuk mundur, lalu N dan meluncur pelan.', when: () => S.phase === 'dwell' && S.dwell.step === 'couple' && S.cw && S.cw.slide >= 1 && S.v < 0.1 && coupleGap() > 3, done: () => S.v > 0.3 },
     { target: '#btnDoor', who: 'SR', text: 'Sudah menempel. Tekan Sambung.', when: () => S.phase === 'dwell' && S.dwell.step === 'couple' && S.cw && S.cw.ready, done: () => S.coupled },
   ];
+  TUTORIAL['3-1'] = [
+    { target: '#btnPanto', who: 'BW', text: 'Agraveda bertenaga listrik 25 kV. Naikkan pantograf dulu agar menempel di kawat.', when: () => S.panto < 1 && S.pantoT < 1, done: () => S.pantoT >= 1 },
+    { target: '#lever', who: 'BW', text: 'Seksi netral di depan: kawat tanpa tegangan. Taruh tuas di N sampai papan DAYA ON.', when: () => ROUTE.neutral.some((q) => q.from - S.x < 700 && q.from - S.x > 0), done: () => !S.inNeutral && ROUTE.neutral.every((q) => S.x < q.from - 700 || S.x > q.to) },
+  ];
   TUTORIAL['3-2'] = [
     { target: '#btnPanto', who: 'SR', text: 'Guntur bertenaga listrik. Naikkan pantograf dulu agar menempel di kawat 25 kV.', when: () => S.panto < 1 && S.pantoT < 1, done: () => S.pantoT >= 1 },
     { target: '#lever', who: 'SR', text: 'Seksi netral di depan: kawat tanpa tegangan. Taruh tuas di N sampai papan DAYA ON.', when: () => ROUTE.neutral.some((q) => q.from - S.x < 700 && q.from - S.x > 0), done: () => !S.inNeutral && ROUTE.neutral.every((q) => S.x < q.from - 700 || S.x > q.to) },
@@ -3582,7 +3587,7 @@
     c.fillStyle = '#2a2f33'; c.beginPath(); c.ellipse(w / 2, gy + 6, w * 0.46, h * 0.1, 0, 0, 7); c.fill();
     c.fillStyle = '#7d8487'; c.fillRect(w * 0.06, gy - 2, w * 0.88, 2); c.fillStyle = '#a3a9ab'; c.fillRect(w * 0.06, gy + 2, w * 0.88, 2);
     // lokomotif terpilih dari samping, digambar dengan fungsi kereta di game
-    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Ekspres 120 km/h · Livery Senja · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · 200 km/h · misi 3-3'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'] };
+    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Lokomotif listrik 25 kV · 120 km/h · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · 200 km/h · misi 3-3'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'] };
     const AG = titleMap.loco !== 'cakra';
     const V = { c, ppm, gy, X: (wx) => w / 2 + (wx - 9) * ppm, st: { x: 18, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0, rimA: 0.35, rim: '#ffcf8a', refl: 0.15, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
     const keep = [N_COACH]; N_COACH = 0; LOCO_FORCE = AG ? titleMap.loco : 'none';
@@ -5143,6 +5148,8 @@
       const x = zA + w * 0.015, ww = zB - zA - w * 0.03, n = st.notch;
       const lab = n === -5 ? 'EB' : notchLabel(n), col = n > 0 ? OR : n < 0 ? (n === -5 ? RD : CY) : WH;
       c.fillStyle = col; c.font = BIGF(h * 0.3); c.textAlign = 'left'; c.fillText(lab, x, y0 + h * 0.24);
+      { const live = (st.panto || 0) >= 1 && !st.inNeutral, kv = live ? '25 kV' : st.inNeutral ? 'NETRAL' : '0 kV';
+        c.fillStyle = live ? GR : AMB; c.font = FNT(900, h * 0.085); c.fillText(`⚡${kv}`, x + h * 0.36 + ww * 0.12, y0 + h * 0.24); }
       const powKw = Math.round(pw * 5600 * clamp(0.35 + st.v / 30, 0, 1)), regKw = Math.round(brk * 4200 * clamp(st.v / 12, 0, 1));
       c.textAlign = 'right'; c.fillStyle = DIM; c.font = FNT(800, h * 0.085); c.fillText(n < 0 ? 'REGEN' : 'DAYA TRAKSI', x + ww, y0 + h * 0.13);
       c.fillStyle = n < 0 ? CY : WH; c.font = BIGF(h * 0.18); c.fillText(`${(n < 0 ? regKw : powKw).toLocaleString('id-ID')} kW`, x + ww, y0 + h * 0.3);
@@ -5169,7 +5176,7 @@
         c.textAlign = 'right'; c.fillStyle = late > 30 ? RD : GR; c.font = FNT(900, h * 0.09); c.fillText(late > 30 ? `telat ${fmtDur(late)}` : `sisa ${fmtDur(-late)}`, x + ww, y0 + h * 0.36);
       }
       // lampu status digital
-      const chips = [['ATP', true, GR], ['PINTU', st.doors === 'open', '#f2c94c'], ['TRAKSI', st.notch > 0, OR], ['REM', st.notch < 0, CY], ['SELIP', !!st.slip, RD]];
+      const chips = [['PANTO', (st.panto || 0) >= 1, GR], ['PINTU', st.doors === 'open', '#f2c94c'], ['TRAKSI', st.notch > 0, OR], ['REM', st.notch < 0, CY], ['SELIP', !!st.slip, RD]];
       const chw = ww / chips.length, cy = y0 + h * 0.5;
       chips.forEach(([t, on, cl], i) => { const cx = x + i * chw;
         c.fillStyle = on ? cl : 'rgba(255,255,255,0.06)'; roundRect(c, cx, cy, chw - 4, h * 0.15, h * 0.04); c.fill();
@@ -9084,9 +9091,9 @@
       c.strokeStyle = '#fff4d2'; c.lineWidth = lw(0.06); c.beginPath(); c.moveTo(...P(-0.5, 3.45)); c.bezierCurveTo(...P(0.4, 3.55), ...P(1.6, 3.9), ...P(2.6, 4.12)); c.stroke();
       c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(255,220,150,0.3)'; c.lineWidth = lw(0.22); c.beginPath(); c.moveTo(...P(-0.5, 3.45)); c.bezierCurveTo(...P(0.4, 3.55), ...P(1.6, 3.9), ...P(2.6, 4.12)); c.stroke(); c.restore();
       if (LK === 'argo') {
-        // ciri diesel: kisi radiator berlapis di sisi belakang ruang mesin
-        const gx = L(14.6), gw = 3.1 * ppm, gy0 = Y(4.75), gh = 1.05 * ppm;
-        c.fillStyle = '#1a1d21'; roundRect(c, gx, gy0, gw, gh, 0.12 * ppm); c.fill();
+        // lokomotif listrik: kisi ventilasi tipis ruang konverter/trafo (bukan radiator diesel)
+        const gx = L(14.6), gw = 3.1 * ppm, gy0 = Y(4.75), gh = 0.55 * ppm;
+        c.fillStyle = '#2a2f36'; roundRect(c, gx, gy0, gw, gh, 0.12 * ppm); c.fill();
         c.strokeStyle = 'rgba(190,198,206,0.55)'; c.lineWidth = 1; c.beginPath(); for (let q = 0.12; q < 3.05; q += 0.16) { c.moveTo(gx + q * ppm, gy0 + 0.1 * ppm); c.lineTo(gx + q * ppm, gy0 + gh - 0.1 * ppm); } c.stroke();
         c.strokeStyle = '#d8dde3'; c.lineWidth = lw(0.03); roundRect(c, gx, gy0, gw, gh, 0.12 * ppm); c.stroke();
         // rok bogie grafit: menutup bagian atas roda, roda bawah tetap terlihat (berbeda dari Guntur yang tertutup penuh)
@@ -9259,10 +9266,13 @@
       // atap bersih: fairing aerodinamis menutup AC, knalpot, dan kipas
       c.fillStyle = vgrad(6.6, 6.18, [[0, '#f4f5f7'], [1, '#b8bdc4']]); c.beginPath(); c.moveTo(L(15.0), Y(6.2)); c.lineTo(L(15.0), Y(6.42)); c.quadraticCurveTo(L(14.6), Y(6.62), L(13.8), Y(6.62)); c.lineTo(L(7.6), Y(6.62)); c.quadraticCurveTo(L(6.2), Y(6.6), L(5.4), Y(6.2)); c.closePath(); c.fill();
       line([[14.0, 6.6], [7.6, 6.6]], 'rgba(255,255,255,0.8)', lw(0.03)); c.fillStyle = '#1b1f24'; c.fillRect(L(9.4), Y(6.66), 0.7 * ppm, 0.08 * ppm);
-      if (LK === 'argo') { // cerobong knalpot diesel menonjol dari fairing atap, sedikit gosong
-        c.fillStyle = vgrad(6.95, 6.6, [[0, '#2a2e33'], [1, '#4a5057']]); roundRect(c, L(8.75), Y(6.95), 0.9 * ppm, 0.38 * ppm, 0.12 * ppm); c.fill();
-        c.fillStyle = '#0b0c0e'; c.beginPath(); c.ellipse(L(8.3), Y(6.95), 0.36 * ppm, 0.09 * ppm, 0, 0, 7); c.fill();
-        c.fillStyle = 'rgba(40,36,34,0.35)'; c.beginPath(); c.ellipse(L(8.3), Y(6.62), 1.0 * ppm, 0.07 * ppm, 0, 0, 7); c.fill();
+      if (LK === 'argo') { // pantograf di atas fairing atap: lokomotif listrik 25 kV
+        const P = (m, h) => [L(m), Y(h)];
+        const pu = LOCO_FORCE ? 1 : st.panto === undefined ? 1 : st.panto, ph2 = 6.7 + 0.55 * pu, pe = 6.68 + 0.32 * pu;
+        c.fillStyle = '#3a4048'; c.fillRect(L(12.2), Y(6.72), 1.6 * ppm, 0.1 * ppm); // dudukan isolator
+        c.fillStyle = '#c9a36a'; for (const m of [12.05, 10.75]) c.fillRect(L(m), Y(6.8), 0.14 * ppm, 0.16 * ppm);
+        c.strokeStyle = '#4a525a'; c.lineWidth = lw(0.06); c.beginPath(); c.moveTo(...P(11.8, 6.7)); c.lineTo(...P(11.8 + 1.0 * (0.4 + 0.6 * pu) + 0.7 * (1 - pu), pe)); c.lineTo(...P(11.4, ph2)); c.moveTo(...P(10.8, ph2)); c.lineTo(...P(12.0, ph2)); c.stroke();
+        if (!LOCO_FORCE && st.arc > 0 && pu >= 1) { const [ax, ay] = P(11.4, 7.25); c.save(); c.globalCompositeOperation = 'lighter'; const rg = c.createRadialGradient(ax, ay, 0, ax, ay, 1.4 * ppm); rg.addColorStop(0, 'rgba(235,245,255,0.95)'); rg.addColorStop(1, 'rgba(120,180,255,0)'); c.fillStyle = rg; c.beginPath(); c.arc(ax, ay, 1.4 * ppm, 0, 7); c.fill(); c.restore(); }
       }
     } else {
     // perlengkapan atap: unit AC kabin, klakson, cerobong knalpot diesel, kipas radiator, antena
