@@ -4451,6 +4451,8 @@
         if (B.land) continue; // jalur layang di atas sawah: tidak ada sungai di bawahnya
         const d0 = Math.max(2, B.from + 4 - x0), d1 = Math.min(FAR, B.to - 4 - x0);
         if (d1 > d0 && B.viaduct) { // ngarai di bawah viaduk: dasar lembah berhutan, sungai berliku, tebing hijau, kabut lembah
+          // saat viaduk masih di depan, ngarai tertutup tanah di depannya: hanya tampak di atas tepi tanah (tidak menembus tanah dekat)
+          c.save(); if (d0 > 3) { const eg = W3(d0, 0, 0); if (eg) { c.beginPath(); c.rect(0, 0, W, eg.y); c.clip(); } }
           const DH = -26, fg = night ? '#122016' : mix('#1d5a2a', '#246a32', p), fg2 = night ? '#18281a' : mix('#2e7a36', '#3a8c40', p), fg3 = night ? '#1c2c1e' : mix('#4a9a46', '#58ac50', p);
           quad(W3(d0, -220, DH), W3(d0, 220, DH), W3(d1, 220, DH), W3(d1, -220, DH), fg);
           // tebing lembah naik ke kiri & kanan
@@ -4467,7 +4469,8 @@
           }
           // kabut lembah tipis
           const yA = W3(d1, 0, DH), yB = W3(d0, 0, DH);
-          if (yA && yB) { const mg = c.createLinearGradient(0, yA.y - 10, 0, yB.y); mg.addColorStop(0, night ? 'rgba(60,70,90,0.25)' : 'rgba(225,235,238,0.25)'); mg.addColorStop(0.2, 'rgba(225,235,238,0)'); c.fillStyle = mg; c.fillRect(0, yA.y - 10, W, Math.max(0, yB.y - yA.y + 10)); }
+          if (yA && yB) { const mg = c.createLinearGradient(0, yA.y - 10, 0, yB.y); mg.addColorStop(0, 'rgba(225,235,238,0)'); mg.addColorStop(0.08, night ? 'rgba(60,70,90,0.22)' : 'rgba(225,235,238,0.22)'); mg.addColorStop(0.3, 'rgba(225,235,238,0)'); c.fillStyle = mg; c.fillRect(0, yA.y - 10, W, Math.max(0, yB.y - yA.y + 10)); }
+          c.restore();
         } else if (d1 > d0) quad(W3(d0, -200, -3), W3(d0, 200, -3), W3(d1, 200, -3), W3(d1, -200, -3), night ? '#232a55' : mix('#5f8ea2', '#86bdd0', p));
         if (d1 > d0 && SUNK > 0 && !B.viaduct) { // jalur kilau matahari di permukaan sungai, berkilauan
           const yA = W3(d1, 0, -3), yB = W3(d0, 0, -3); if (yA && yB) { c.save(); c.globalCompositeOperation = 'lighter';
@@ -4898,8 +4901,8 @@
     ROUTE.zones.forEach((z) => {
       if (!z.curve) return;
       const dw = z.from - 120 - x0;
-      if (dw > 2 && dw < FAR) add(dw, () => { const b = W3(dw, -2.8, 0); if (b) curveWarn(c, b.x, b.y, b.k, z.limit); });
-      for (let m = z.from + 6; m < z.to; m += 14) { const d = m - x0; if (d < 2 || d > FAR) continue; add(d, () => { const b = W3(d, 3.6, 0); if (b) chevronBoard(c, b.x, b.y, b.k); }); }
+      if (dw > 9 && dw < FAR) add(dw, () => { const b = W3(dw, -3.4, 0); if (b) curveWarn(c, b.x, b.y, b.k * 0.6, z.limit); }); // papan seukuran rambu rel sungguhan, hilang sebelum memenuhi kaca
+      for (let m = z.from + 6; m < z.to; m += 28) { const d = m - x0; if (d < 7 || d > FAR) continue; add(d, () => { const b = W3(d, 4.2, 0); if (b) chevronBoard(c, b.x, b.y, b.k * 0.75); }); }
     });
     // landmark di kiri rel, jauh di samping
     (ROUTE.landmarks || []).forEach((lm) => {
@@ -5287,12 +5290,15 @@
           else if (h < 0.34) fill = gold; else fill = greens[Math.floor(h * 97) % greens.length];
           c.fillStyle = fill; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill();
           if (SAWIT && h >= 0.22 && Math.abs(k) >= 1) { // barisan sawit kebun di kejauhan: tajuk bintang di tiap petak
-            const tw = Math.abs(q2.x - q1.x), sc = tw * 0.16; if (sc > 1.2 && sc < 22) for (let r2 = 0; r2 < 2; r2++) {
-              const px = lerp(q1.x, q2.x, 0.3 + r2 * 0.4), py = (q1.y + q3.y) / 2, th = sc * 1.6;
-              c.strokeStyle = night ? '#1a1410' : '#4a3626'; c.lineWidth = Math.max(1, sc * 0.18); c.beginPath(); c.moveTo(px, py); c.lineTo(px, py - th); c.stroke();
-              c.strokeStyle = night ? '#16261a' : mix('#2f5a2c', '#3f7036', p); c.lineWidth = Math.max(1, sc * 0.22); c.lineCap = 'round'; c.beginPath();
-              for (let f = 0; f < 7; f++) { const aa = Math.PI + (f + 0.5) * Math.PI / 7; c.moveTo(px, py - th); c.quadraticCurveTo(px + Math.cos(aa) * sc * 0.7, py - th - sc * 0.5, px + Math.cos(aa) * sc * 1.2, py - th + sc * 0.45); }
-              c.stroke(); c.lineCap = 'butt';
+            const tw = Math.abs(q2.x - q1.x), sc = tw * 0.16; if (sc > 0.7 && sc < 22) for (let r2 = 0; r2 < 2; r2++) {
+              // sawit muda: batang pendek gelap + tajuk bulat rimbun (bukan tonggak telanjang); pelepah baru digambar bila cukup dekat
+              const px = lerp(q1.x, q2.x, 0.3 + r2 * 0.4), py = (q1.y + q3.y) / 2, th = sc * 0.95, cr = Math.max(1.1, sc * 1.05);
+              if (sc > 1.6) { c.fillStyle = night ? '#1a1410' : '#5a4a36'; c.fillRect(px - Math.max(0.5, sc * 0.09), py - th, Math.max(1, sc * 0.18), th); }
+              c.fillStyle = night ? '#16261a' : mix('#2f5f2c', '#3c7434', p); c.beginPath(); c.ellipse(px, py - th - cr * 0.25, cr, cr * 0.62, 0, 0, 7); c.fill();
+              if (!night && cr > 2) { c.fillStyle = mix('#4a8a3c', '#5c9c46', p); c.beginPath(); c.ellipse(px - cr * 0.15, py - th - cr * 0.45, cr * 0.62, cr * 0.32, 0, 0, 7); c.fill(); }
+              if (sc > 5) { c.strokeStyle = night ? '#16261a' : mix('#2a5628', '#376a30', p); c.lineWidth = Math.max(1, sc * 0.2); c.lineCap = 'round'; c.beginPath();
+                for (let f = 0; f < 7; f++) { const aa = Math.PI + (f + 0.5) * Math.PI / 7; c.moveTo(px, py - th - cr * 0.2); c.quadraticCurveTo(px + Math.cos(aa) * sc * 0.8, py - th - sc * 0.9, px + Math.cos(aa) * sc * 1.35, py - th + sc * 0.2); }
+                c.stroke(); c.lineCap = 'butt'; }
             }
           }
           if (h < 0.22 && !night && !SAWIT) { // pantulan matahari di air sawah: jalur kilau terang di bawah matahari, butir berkilau
@@ -5989,7 +5995,7 @@
     }
     // kamera miring dan bergoyang mengikuti gaya samping di tikungan
     const lat = latAccel(st);
-    const rollT = REDUCE_MOTION || st !== S ? 0 : clamp(lat * 1.1, 0, 2.2);
+    const rollT = REDUCE_MOTION || st !== S || viewMode === 'cab' ? 0 : clamp(lat * 1.1, 0, 2.2);
     camRoll += (rollT - camRoll) * Math.min(1, (dtReal || 0.016) * 1.5);
     swayT += dtReal || 0.016;
     if (camRoll > 0.02) {
