@@ -2519,8 +2519,9 @@
         const j = Math.floor((S.x - m - D.s) / 25);
         if (D['j' + b] !== null && j !== D['j' + b] && S.v > 1 && !FS) D['v' + b] -= 0.3 + S.v * 0.045;
         D['j' + b] = j;
-        D['v' + b] += (-80 * D['y' + b] - 7 * D['v' + b]) * dt;
-        D['y' + b] += D['v' + b] * dt;
+        const h = Math.min(dt, 0.05);
+        D['v' + b] += (-80 * D['y' + b] - 7 * D['v' + b]) * h;
+        D['y' + b] = clamp(D['y' + b] + D['v' + b] * h, -0.06, 0.06);
       });
       D.dy = (D.yF + D.yR) / 2;
       D.pitch = (D.yR - D.yF) / len - a * 0.004;
@@ -9226,7 +9227,9 @@
     c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.arc(x + Math.cos(ang + 2.1) * r * 0.45, y + Math.sin(ang + 2.1) * r * 0.45, r * 0.07, 0, 7); c.fill();
   }
   // roda cakram dengan tanda putar kecil supaya gerakannya terlihat
+  let UPPER_PASS = false; // lintasan badan (dipadatkan): roda kecil seluruhnya di bawah garis poros, jadi tidak pernah digambar di sini (mencegah roda tampak ganda)
   function trainWheel(c, x, y, r, ang) {
+    if (UPPER_PASS) return;
     c.fillStyle = '#2b2f32'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
     c.strokeStyle = '#a7adb1'; c.lineWidth = Math.max(1, r * 0.18); c.beginPath(); c.arc(x, y, r * 0.86, 0, 7); c.stroke();
     c.fillStyle = '#d7dbde';
@@ -9343,7 +9346,7 @@
     const yP = gy - VPIV * ppm;
     c.save(); c.beginPath(); c.rect(-60, yP, W + 120, H); c.clip(); drawTrainRaw(V); c.restore();
     c.save(); c.beginPath(); c.rect(-60, -H, W + 120, yP + H); c.clip();
-    c.translate(0, yP); c.scale(1, VS); c.translate(0, -yP); drawTrainRaw(Object.assign({}, V, { upper: true })); c.restore();
+    c.translate(0, yP); c.scale(1, VS); c.translate(0, -yP); UPPER_PASS = true; try { drawTrainRaw(Object.assign({}, V, { upper: true })); } finally { UPPER_PASS = false; } c.restore();
   }
   // rok bogie grafit Argo Senja: panel gelap bergaris jingga senja, kisi ventilasi motor traksi,
   // tepi bawah melengkung di atas tiap bogie sehingga separuh bawah roda tetap terlihat
