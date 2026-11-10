@@ -1,0 +1,34 @@
+# Uji asap: menjalankan semua misi (tampilan luar & kokpit) di Chromium tanpa layar
+# dan gagal bila ada galat halaman atau layar kosong. Tidak menghalangi penerbitan.
+name: Uji asap game
+
+on:
+  pull_request:
+    paths: ['app/www/**', 'app/tests/**', '.github/workflows/uji.yml']
+  push:
+    branches: [main]
+    paths: ['app/www/**', 'app/tests/**', '.github/workflows/uji.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  uji:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - name: Pasang Playwright & Chromium
+        working-directory: app
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Jalankan uji asap
+        working-directory: app
+        run: node tests/smoke.js
