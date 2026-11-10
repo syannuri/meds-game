@@ -2029,6 +2029,10 @@
   const cv = $('world'), ctx = cv.getContext('2d');
   const sv = $('strip'), sctx = sv.getContext('2d');
   let W = 0, H = 0, DPR = 1, SW = 0, SH = 0;
+  // kualitas grafis adaptif: bila jarak antar-frame terus tinggi (HP kewalahan), resolusi gambar diturunkan bertahap;
+  // dinaikkan lagi bila sudah lancar cukup lama. 'rn.gfx' = 'high' mengunci resolusi penuh.
+  const GFX = { q: 1, slow: 0, fast: 0, lock: store.get('rn.gfx') === 'high' };
+  const wantDPR = () => Math.max(1, Math.min(2, window.devicePixelRatio || 1) * GFX.q);
   let mode = 'title';
   let radioDur = 1, trainScr = null;
   let camFast = 0;
@@ -2108,7 +2112,7 @@
   }
 
   function resize() {
-    DPR = Math.min(2, window.devicePixelRatio || 1);
+    DPR = wantDPR();
     W = cv.clientWidth; H = cv.clientHeight;
     if (!W || !H) return;
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
@@ -11294,8 +11298,14 @@
   let last = performance.now();
   const PHYS_DT = 1 / 120;
   let acc = 0;
-  const PERF = { ms: 0, max: 0, n: 0 }; // waktu menggambar satu frame (rata-rata bergerak & puncak), untuk pengujian & pengaturan kualitas
+  const PERF = { ms: 0, max: 0, n: 0, gap: 0, tick: 0 }; // gap = jarak antar-frame (ms): ukuran kelancaran yang sebenarnya, termasuk waktu perender // waktu menggambar satu frame (rata-rata bergerak & puncak), untuk pengujian & pengaturan kualitas
   function frame(now) {
+    if (last) PERF.gap += (Math.min(250, now - last) - PERF.gap) * 0.08;
+    if (!GFX.lock && mode === 'play' && ++PERF.tick % 45 === 0) { // periksa tiap ±45 frame
+      if (PERF.gap > 30) { GFX.fast = 0; if (++GFX.slow >= 2 && GFX.q > 0.6) { GFX.q = Math.max(0.6, GFX.q - 0.2); GFX.slow = 0; } }
+      else if (PERF.gap < 19) { GFX.slow = 0; if (++GFX.fast >= 8 && GFX.q < 1) { GFX.q = Math.min(1, GFX.q + 0.2); GFX.fast = 0; } }
+      else { GFX.slow = 0; GFX.fast = 0; }
+    }
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     if (mode === 'play' && S && (S.mode === 'play' || S.mode === 'fail')) {
@@ -11334,7 +11344,7 @@
     }
     if (mode !== 'pause') updateWeather(dt, (S || idleState).v);
     // jaga agar ukuran gambar canvas selalu sama dengan ukuran tampilnya (mencegah kereta tampak gepeng)
-    if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(2, window.devicePixelRatio || 1) !== DPR) resize();
+    if (cv.clientWidth !== W || cv.clientHeight !== H || wantDPR() !== DPR) resize();
     // saat daftar misi digeser: latar menu tidak digambar ulang agar swipe licin
     const swiping = mode === 'title' && ui.screens.title.querySelector('.tickets.scrolling'); frame.skip = !!swiping; // latar membeku sesaat selama jari menggeser, lalu lanjut
     if (W && H && !frame.skip) { const t0 = performance.now(); render(dt); const ms = performance.now() - t0; PERF.ms += (ms - PERF.ms) * 0.08; PERF.max = Math.max(PERF.max * 0.995, ms); PERF.n++; }
@@ -11355,7 +11365,7 @@
     radio: (t, w, i) => radio(t, 6, w, i), portrait: (id) => PORTRAIT(id),
     get mode() { return mode; },
     get cine() { return CINE; },
-    get perf() { return PERF; },
+    get perf() { return PERF; }, get gfx() { return GFX; },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
     audioMeter: () => Sound.meter(),
     loadTarget: (i) => loadTarget(i),
