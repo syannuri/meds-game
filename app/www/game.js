@@ -11242,6 +11242,7 @@
   let last = performance.now();
   const PHYS_DT = 1 / 120;
   let acc = 0;
+  const PERF = { ms: 0, max: 0, n: 0 }; // waktu menggambar satu frame (rata-rata bergerak & puncak), untuk pengujian & pengaturan kualitas
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
@@ -11284,7 +11285,7 @@
     if (cv.clientWidth !== W || cv.clientHeight !== H || Math.min(2, window.devicePixelRatio || 1) !== DPR) resize();
     // saat daftar misi digeser: latar menu tidak digambar ulang agar swipe licin
     const swiping = mode === 'title' && ui.screens.title.querySelector('.tickets.scrolling'); frame.skip = !!swiping; // latar membeku sesaat selama jari menggeser, lalu lanjut
-    if (W && H && !frame.skip) render(dt);
+    if (W && H && !frame.skip) { const t0 = performance.now(); render(dt); const ms = performance.now() - t0; PERF.ms += (ms - PERF.ms) * 0.08; PERF.max = Math.max(PERF.max * 0.995, ms); PERF.n++; }
     if (mode === 'title' && !frame.skip) { drawTitleMap(dt); drawTitleFx(dt); }
     Sound.update(audioInfo());
     if (S && (mode === 'play' || mode === 'pause')) { updateHud(); updateGoalChips(); updateHudFocus(); renderStrip(); }
@@ -11302,6 +11303,7 @@
     radio: (t, w, i) => radio(t, 6, w, i), portrait: (id) => PORTRAIT(id),
     get mode() { return mode; },
     get cine() { return CINE; },
+    get perf() { return PERF; },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
     audioMeter: () => Sound.meter(),
     loadTarget: (i) => loadTarget(i),
