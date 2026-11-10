@@ -6089,11 +6089,11 @@
   }
   // gradasi warna khas misi di atas seluruh dunia (tidak mengenai HUD), plus kabut lembap Sumatra
   function applyGrade(c, V) {
-    if (RICH() && !V.night && !V.tf && V.ppm !== undefined && V.st) { // senja: pendar hangat dari matahari, kabut cakrawala lembut, tepi layar sedikit lebih gelap
+    if (!V.night && !V.storm && !V.tf && V.ppm !== undefined && V.st) { // senja: pendar hangat dari matahari, kabut cakrawala lembut, tepi layar sedikit lebih gelap
       const sun = sunPos(V);
-      c.save(); c.globalCompositeOperation = 'soft-light'; const bg = c.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, W * 0.75); bg.addColorStop(0, 'rgba(255,214,150,0.55)'); bg.addColorStop(0.5, 'rgba(255,170,120,0.2)'); bg.addColorStop(1, DAWN() ? 'rgba(70,100,160,0.08)' : MIS.golden ? 'rgba(70,100,160,0.14)' : 'rgba(90,70,150,0.22)'); c.fillStyle = bg; c.fillRect(-W, -H, W * 3, H * 3); c.restore();
+      c.save(); c.globalCompositeOperation = 'soft-light'; const bg = c.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, W * 0.75); bg.addColorStop(0, 'rgba(255,214,150,0.55)'); bg.addColorStop(0.5, 'rgba(255,170,120,0.2)'); bg.addColorStop(1, (!MIS.dusk && !MIS.golden) ? 'rgba(70,100,160,0.08)' : MIS.golden ? 'rgba(70,100,160,0.14)' : 'rgba(90,70,150,0.22)'); c.fillStyle = bg; c.fillRect(-W, -H, W * 3, H * 3); c.restore();
       const hz = c.createLinearGradient(0, V.gy - 7 * V.ppm, 0, V.gy + 1.5 * V.ppm); hz.addColorStop(0, 'rgba(255,196,150,0)'); hz.addColorStop(0.7, 'rgba(255,196,150,0.16)'); hz.addColorStop(1, 'rgba(255,196,150,0)'); c.fillStyle = hz; c.fillRect(-W, V.gy - 7 * V.ppm, W * 3, 8.5 * V.ppm);
-      const vg = c.createRadialGradient(W / 2, H * 0.5, Math.min(W, H) * 0.45, W / 2, H * 0.5, Math.max(W, H) * 0.8); vg.addColorStop(0, 'rgba(30,16,50,0)'); vg.addColorStop(1, DAWN() ? 'rgba(20,24,40,0.16)' : MIS.golden ? 'rgba(24,20,30,0.22)' : 'rgba(30,16,50,0.3)'); c.fillStyle = vg; c.fillRect(-W, -H, W * 3, H * 3);
+      const vg = c.createRadialGradient(W / 2, H * 0.5, Math.min(W, H) * 0.45, W / 2, H * 0.5, Math.max(W, H) * 0.8); vg.addColorStop(0, 'rgba(30,16,50,0)'); vg.addColorStop(1, (!MIS.dusk && !MIS.golden) ? 'rgba(20,24,40,0.16)' : MIS.golden ? 'rgba(24,20,30,0.22)' : 'rgba(30,16,50,0.3)'); c.fillStyle = vg; c.fillRect(-W, -H, W * 3, H * 3);
     }
     const P = MIS.pal; if (!P) return;
     if (P.mist && !V.tf) {
@@ -6645,30 +6645,30 @@
   // ---------- langit senja Argo Senja: biru-ungu di atas, merah muda, jingga, emas di cakrawala; awan kumulus disinari dari bawah ----------
   const DUSKCL = Array.from({ length: 12 }, (_, i) => ({ u: hash(i * 3.1 + 2), v: hash(i * 5.7 + 4), s: 0.6 + hash(i * 2.2 + 1) * 0.9, n: 5 + Math.floor(hash(i + 9) * 4) }));
   const CLOUD_SPR = [];
-  function drawDuskSky(V) {
-    const { c, gy } = V, tt = performance.now() / 1000, sun = sunPos(V);
+  function drawDuskSky(V, mode) { // mode 'storm' / 'night': hanya lapisan awan (langit, bintang & bulan sudah digambar pemanggil)
+    const { c, gy } = V, tt = performance.now() / 1000, sun = sunPos(V), ST = mode === 'storm', NT = mode === 'night', CLD = ST || NT;
     const g = c.createLinearGradient(0, 0, 0, gy);
-    const GD = !!MIS.golden, DW = DAWN(), p = Math.round(V.p * 20) / 20; // sore keemasan: biru cerah di atas, krem hangat & emas di cakrawala; fajar-pagi: palet misi yang berubah seiring waktu
+    const GD = !!MIS.golden && !CLD, DW = !CLD && !MIS.dusk && !MIS.golden, p = Math.round(V.p * 20) / 20; // sore keemasan: biru cerah di atas, krem hangat & emas di cakrawala; fajar-pagi: palet misi yang berubah seiring waktu
     if (DW) { const ks = (MIS.pal && MIS.pal.sky) || [['#2c3a6b', '#5d9fd3'], ['#c97a7a', '#a8d2ea'], ['#f7b36d', '#e3f0f0']]; g.addColorStop(0, mix(ks[0][0], ks[0][1], p)); g.addColorStop(0.65, mix(ks[1][0], ks[1][1], p)); g.addColorStop(1, mix(ks[2][0], ks[2][1], p)); }
     else (GD ? [[0, '#2f63b0'], [0.3, '#5f93d0'], [0.55, '#a9c4dc'], [0.78, '#f2cf9c'], [0.92, '#ffd384'], [1, '#ffe3a0']] : [[0, '#2f3f8e'], [0.28, '#5d51a4'], [0.52, '#a8609e'], [0.74, '#ee8468'], [0.9, '#ffae5c'], [1, '#ffd07a']]).forEach(([o, col]) => g.addColorStop(o, col));
-    c.fillStyle = g; c.fillRect(0, 0, W, gy + 4);
+    if (!CLD) { c.fillStyle = g; c.fillRect(0, 0, W, gy + 4); }
     // pendar matahari lebar: jingga keemasan menyebar di cakrawala
-    c.save(); c.translate(sun.x, sun.y); c.scale(1.9, 1); if (DW) c.globalAlpha = 1 - p * 0.55;
+    c.save(); c.translate(sun.x, sun.y); c.scale(1.9, 1); c.globalAlpha = CLD ? 0 : DW ? 1 - p * 0.55 : 1;
     let rg = c.createRadialGradient(0, 0, 0, 0, 0, gy * 0.75); rg.addColorStop(0, 'rgba(255,214,130,0.75)'); rg.addColorStop(0.35, 'rgba(255,170,96,0.38)'); rg.addColorStop(1, 'rgba(255,150,90,0)');
     c.fillStyle = rg; c.beginPath(); c.arc(0, 0, gy * 0.75, 0, 7); c.fill(); c.restore();
     const rgba = (cc, a) => `rgba(${cc[0] | 0},${cc[1] | 0},${cc[2] | 0},${Math.max(0, a).toFixed(3)})`, lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
     // garis awan tipis (sirus) keemasan dekat cakrawala
-    for (let i = 0; i < 7; i++) { const ww = W * (0.28 + hash(i * 1.9) * 0.3), xx = ((i * W * 0.29 - pcOf(V) * 0.006 - tt * 0.5) % (W * 1.6) + W * 1.6) % (W * 1.6) - W * 0.3, yy = gy * (0.62 + hash(i * 2.3 + 1) * 0.3);
+    for (let i = 0; i < (CLD ? 0 : 7); i++) { const ww = W * (0.28 + hash(i * 1.9) * 0.3), xx = ((i * W * 0.29 - pcOf(V) * 0.006 - tt * 0.5) % (W * 1.6) + W * 1.6) % (W * 1.6) - W * 0.3, yy = gy * (0.62 + hash(i * 2.3 + 1) * 0.3);
       const ns = clamp(1 - Math.abs(xx + ww / 2 - sun.x) / (W * 0.6), 0, 1);
       c.save(); c.translate(xx + ww / 2, yy); c.scale(1, 0.035); const sg = c.createRadialGradient(0, 0, 0, 0, 0, ww / 2); sg.addColorStop(0, rgba(lerp3(DW ? lerp3([240, 160, 150], [255, 244, 232], p) : GD ? [255, 240, 224] : [226, 120, 150], DW ? lerp3([255, 206, 150], [255, 250, 236], p) : GD ? [255, 224, 160] : [255, 214, 140], ns), 0.5 + 0.3 * ns)); sg.addColorStop(1, 'rgba(240,140,150,0)'); c.fillStyle = sg; c.beginPath(); c.arc(0, 0, ww / 2, 0, 7); c.fill(); c.restore(); }
     // kumulus: badan ungu, dasar merah muda-jingga tersinari matahari rendah, tepi emas di sisi matahari
     for (const cl of DUSKCL) {
       const hgt = cl.v, w0 = gy * (0.2 + 0.16 * cl.s) * (1.15 - hgt * 0.45), span = W + w0 * 4;
       const cx = ((cl.u * span - pcOf(V) * (0.008 + 0.006 * (1 - hgt)) - tt * (1 + cl.s)) % span + span) % span - w0 * 2, cy = gy * (0.1 + hgt * 0.62);
-      const low = hgt, ns = Math.round(clamp(1 - Math.hypot(cx - sun.x, (cy - sun.y) * 1.6) / (W * 0.55), 0, 1) * 5) / 5, sdK = sun.x > cx ? 1 : -1;
-      const body = DW ? lerp3(lerp3([120, 110, 160], [180, 130, 150], low), lerp3([236, 240, 248], [246, 240, 236], low), p) : GD ? lerp3([232, 234, 244], [240, 214, 200], low) : lerp3([86, 78, 150], [176, 92, 138], low), lit = DW ? lerp3(lerp3([250, 160, 150], [255, 180, 110], Math.max(low, ns)), [255, 248, 226], p) : GD ? lerp3([255, 244, 226], [255, 200, 124], Math.max(low, ns)) : lerp3([240, 140, 160], [255, 172, 96], Math.max(low, ns)), rim = [255, 226, 150];
+      const low = hgt, ns = CLD ? 0 : Math.round(clamp(1 - Math.hypot(cx - sun.x, (cy - sun.y) * 1.6) / (W * 0.55), 0, 1) * 5) / 5, sdK = sun.x > cx ? 1 : -1;
+      const body = ST ? lerp3([52, 62, 74], [86, 98, 108], low) : NT ? lerp3([34, 38, 74], [52, 54, 96], low) : DW ? lerp3(lerp3([120, 110, 160], [180, 130, 150], low), lerp3([236, 240, 248], [246, 240, 236], low), p) : GD ? lerp3([232, 234, 244], [240, 214, 200], low) : lerp3([86, 78, 150], [176, 92, 138], low), lit = ST ? [120, 134, 146] : NT ? [96, 104, 156] : DW ? lerp3(lerp3([250, 160, 150], [255, 180, 110], Math.max(low, ns)), [255, 248, 226], p) : GD ? lerp3([255, 244, 226], [255, 200, 124], Math.max(low, ns)) : lerp3([240, 140, 160], [255, 172, 96], Math.max(low, ns)), rim = [255, 226, 150];
       // tiap awan digambar sekali ke kanvas tersimpan (puluhan gradasi melingkar) lalu ditempel tiap frame; digambar ulang hanya bila warna/arah cahayanya berubah
-      const SWd = w0 * 3.8, SHd = w0 * 1.5, key = `${MIS.id}|${Math.round(w0)}|${p}|${ns}|${sdK}`, ci = DUSKCL.indexOf(cl);
+      const SWd = w0 * 3.8, SHd = w0 * 1.5, key = `${MIS.id}|${mode || ''}|${Math.round(w0)}|${p}|${ns}|${sdK}`, ci = DUSKCL.indexOf(cl);
       let sp = CLOUD_SPR[ci];
       if (!sp || sp.key !== key) {
         sp = CLOUD_SPR[ci] || (CLOUD_SPR[ci] = { cv: document.createElement('canvas') }); sp.key = key;
@@ -6679,8 +6679,9 @@
         for (const [px, py, r] of puffs) { const pg = c.createRadialGradient(px, py + r * 0.6, 0, px, py + r * 0.6, r * 0.9); pg.addColorStop(0, rgba(lit, 0.7 + 0.25 * ns)); pg.addColorStop(1, rgba(lit, 0)); c.fillStyle = pg; c.beginPath(); c.arc(px, py + r * 0.6, r * 0.9, 0, 7); c.fill(); }
         if (ns > 0.05) { const sd = sdK; for (const [px, py, r] of puffs) { const pg = c.createRadialGradient(px + sd * r * 0.55, py + r * 0.3, 0, px + sd * r * 0.55, py + r * 0.3, r * 0.6); pg.addColorStop(0, rgba(rim, 0.55 * ns)); pg.addColorStop(1, rgba(rim, 0)); c.fillStyle = pg; c.beginPath(); c.arc(px + sd * r * 0.55, py + r * 0.3, r * 0.6, 0, 7); c.fill(); } }
       }
-      c.drawImage(sp.cv, cx - SWd / 2, cy - SHd * 0.62, SWd, SHd);
+      if (NT) c.globalAlpha = 0.6; c.drawImage(sp.cv, cx - SWd / 2, cy - SHd * 0.62, SWd, SHd); c.globalAlpha = 1;
     }
+    if (CLD) return;
     // cakram matahari terang dengan lingkar cahaya
     const sr = Math.max(9, gy * 0.045);
     rg = c.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, sr * 4.5); rg.addColorStop(0, 'rgba(255,246,206,1)'); rg.addColorStop(0.22, 'rgba(255,232,160,0.95)'); rg.addColorStop(0.3, 'rgba(255,200,110,0.5)'); rg.addColorStop(1, 'rgba(255,170,90,0)');
@@ -6705,6 +6706,7 @@
       const mx = W * 0.64, my = gy * 0.32, mr = Math.max(14, gy * 0.05);
       c.fillStyle = '#fff3c8'; c.beginPath(); c.arc(mx, my, mr, 0, 7); c.fill();
       c.fillStyle = PAL.night ? PAL.night[0] : '#0d1433'; c.beginPath(); c.arc(mx + mr * 0.45, my - mr * 0.15, mr * 0.92, 0, 7); c.fill();
+      drawDuskSky(V, 'night'); // awan malam tipis diterangi bulan
       return;
     }
     if (V.storm) {
@@ -6719,9 +6721,10 @@
         const cy = gy * (0.12 + hash(i) * 0.3);
         c.beginPath(); c.ellipse(cx, cy, 160 + hash(i + 2) * 120, 34 + hash(i + 5) * 20, 0, 0, 7); c.fill();
       }
+      drawDuskSky(V, 'storm'); // awan hujan bergumpal: badan kelabu gelap, sisi bawah sedikit terang
       return;
     }
-    if (RICH()) { drawDuskSky(V); return; }
+    { drawDuskSky(V); return; } // semua misi siang/fajar/senja memakai langit berawan yang sama (palet mengikuti misi)
     const g = c.createLinearGradient(0, 0, 0, gy);
     const ks = PAL.sky || [['#2c3a6b', '#5d9fd3'], ['#c97a7a', '#a8d2ea'], ['#f7b36d', '#e3f0f0']];
     g.addColorStop(0, mix(ks[0][0], ks[0][1], p));
@@ -7469,8 +7472,8 @@
         }
       }
     }
-    const duskW = RICH() && !V.night && !V.storm; // petak berair memantulkan langit senja: jingga di kejauhan, merah muda, ungu di dekat kamera
-    if (duskW) { const wg = c.createLinearGradient(0, yTop, 0, H); (DAWN() ? [mix('#ffd0a0', '#eef6f6', p), mix('#f2a898', '#cfe4ee', p), mix('#b890b8', '#a8cce4', p), mix('#8a86c0', '#86b4dc', p)] : MIS.golden ? ['#ffe2ac', '#f4cda4', '#b6c6dc', '#7fa2d0'] : ['#ffc08a', '#f79a8c', '#c98ab0', '#8f86c8']).forEach((col, q) => wg.addColorStop([0, 0.35, 0.7, 1][q], col)); c.fillStyle = wg; }
+    const duskW = (RICH() || V.night || V.storm) && !sawit, WN = V.night, WS = V.storm; // petak berair memantulkan langit senja: jingga di kejauhan, merah muda, ungu di dekat kamera
+    if (duskW) { const wg = c.createLinearGradient(0, yTop, 0, H); (WN ? ['#4a5488', '#3a4274', '#2c3360', '#222850'] : WS ? ['#a9b8c0', '#8c9ea8', '#6f828e', '#5a6c78'] : DAWN() ? [mix('#ffd0a0', '#eef6f6', p), mix('#f2a898', '#cfe4ee', p), mix('#b890b8', '#a8cce4', p), mix('#8a86c0', '#86b4dc', p)] : MIS.golden ? ['#ffe2ac', '#f4cda4', '#b6c6dc', '#7fa2d0'] : ['#ffc08a', '#f79a8c', '#c98ab0', '#8f86c8']).forEach((col, q) => wg.addColorStop([0, 0.35, 0.7, 1][q], col)); c.fillStyle = wg; }
     for (let i = sawit ? i1 : i0; i < i1; i++) {
       const xa = X(i * cell), xb = X((i + 1) * cell);
       for (let r = 0; r < rows; r++) {
@@ -7478,16 +7481,16 @@
         const t0 = r / rows + 0.025, t1 = (r + 1) / rows - 0.025;
         const q = [[at(xa, t0) + 2, rowY(t0)], [at(xb, t0) - 2, rowY(t0)], [at(xb, t1) - 3, rowY(t1)], [at(xa, t1) + 3, rowY(t1)]];
         if (Math.max(q[1][0], q[2][0]) < 0 || Math.min(q[0][0], q[3][0]) > W) continue;
-        c.globalAlpha = duskW ? 0.85 : (V.night ? 0.2 : 0.34) * (1 - r / rows * 0.45);
+        c.globalAlpha = duskW ? (WN ? 0.7 : 0.85) : (V.night ? 0.2 : 0.34) * (1 - r / rows * 0.45);
         c.beginPath(); q.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fill();
         if (duskW) { // pantulan: bayangan pematang & pepohonan di tepi jauh, kilau matahari memanjang di bawah posisi matahari, riak halus
-          const keep = c.fillStyle, y0 = q[0][1], y1 = q[2][1], hh = y1 - y0, sunX = sunPos(V).x;
+          const keep = c.fillStyle, y0 = q[0][1], y1 = q[2][1], hh = y1 - y0, sunX = WN ? W * 0.64 : WS ? -9999 : sunPos(V).x, glit = WN ? '206,218,255' : '255,232,170';
           c.save(); c.clip();
           const rg = c.createLinearGradient(0, y0, 0, y1); rg.addColorStop(0, 'rgba(34,62,44,0.55)'); rg.addColorStop(0.3, 'rgba(34,62,44,0.12)'); rg.addColorStop(0.5, 'rgba(34,62,44,0)'); c.globalAlpha = 1; c.fillStyle = rg; c.fillRect(Math.min(q[0][0], q[3][0]), y0, Math.max(q[1][0], q[2][0]) - Math.min(q[0][0], q[3][0]), hh);
           for (let m = 0; m < 3; m++) { const rx = lerp(q[0][0], q[1][0], hash(i * 3.1 + r * 5.7 + m)), rw = hh * (0.5 + hash(i + r * 2 + m * 3) * 0.6); c.save(); c.translate(rx, y0); c.scale(1, 1.5); const tg = c.createRadialGradient(0, 0, 0, 0, 0, rw); tg.addColorStop(0, 'rgba(24,52,36,0.42)'); tg.addColorStop(1, 'rgba(24,52,36,0)'); c.fillStyle = tg; c.beginPath(); c.arc(0, 0, rw, 0, 7); c.fill(); c.restore(); }
           const mx = (q[0][0] + q[1][0]) / 2, near = Math.exp(-Math.pow((mx - sunX) / (W * 0.14), 2));
-          if (near > 0.04) { const sg = c.createLinearGradient(sunX - W * 0.07, 0, sunX + W * 0.07, 0); sg.addColorStop(0, 'rgba(255,226,160,0)'); sg.addColorStop(0.5, `rgba(255,232,170,${(0.75 * near).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,226,160,0)'); c.fillStyle = sg; c.fillRect(sunX - W * 0.07, y0, W * 0.14, hh); }
-          const tw = performance.now() / 1000; c.fillStyle = 'rgba(255,240,214,0.5)'; for (let m = 0; m < 4; m++) { const rx = lerp(q[3][0], q[2][0], hash(i * 1.3 + r * 2.9 + m * 0.7)), ry = y0 + hh * (0.25 + hash(i + r + m * 1.9) * 0.65); c.fillRect(rx + Math.sin(tw * 0.8 + m + i) * 3, ry, hh * (0.5 + hash(m + i) * 0.6), Math.max(1, hh * 0.035)); }
+          if (near > 0.04) { const sg = c.createLinearGradient(sunX - W * 0.07, 0, sunX + W * 0.07, 0); sg.addColorStop(0, `rgba(${glit},0)`); sg.addColorStop(0.5, `rgba(${glit},${((WN ? 0.45 : 0.75) * near).toFixed(3)})`); sg.addColorStop(1, `rgba(${glit},0)`); c.fillStyle = sg; c.fillRect(sunX - W * 0.07, y0, W * 0.14, hh); }
+          const tw = performance.now() / 1000; c.fillStyle = WN ? 'rgba(190,204,255,0.3)' : WS ? 'rgba(226,236,240,0.4)' : 'rgba(255,240,214,0.5)'; for (let m = 0; m < 4; m++) { const rx = lerp(q[3][0], q[2][0], hash(i * 1.3 + r * 2.9 + m * 0.7)), ry = y0 + hh * (0.25 + hash(i + r + m * 1.9) * 0.65); c.fillRect(rx + Math.sin(tw * 0.8 + m + i) * 3, ry, hh * (0.5 + hash(m + i) * 0.6), Math.max(1, hh * 0.035)); }
           c.restore(); c.fillStyle = keep;
         }
       }
@@ -7496,7 +7499,7 @@
     for (let r = 1; r < rows; r++) {
       const y = rowY(r / rows);
       c.lineWidth = 1 + r * 0.45; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
-      if (duskW) { const lw0 = c.lineWidth, ss = c.strokeStyle, ga = c.globalAlpha; c.globalAlpha = 0.85; c.strokeStyle = '#2f6a2a'; c.lineWidth = 2.5 + r * 1.3; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); c.strokeStyle = '#8fd060'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, y - (1.2 + r * 0.6)); c.lineTo(W, y - (1.2 + r * 0.6)); c.stroke(); c.strokeStyle = 'rgba(18,40,20,0.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, y + 1.6 + r * 0.7); c.lineTo(W, y + 1.6 + r * 0.7); c.stroke(); c.lineWidth = lw0; c.strokeStyle = ss; c.globalAlpha = ga; }
+      if (duskW) { const lw0 = c.lineWidth, ss = c.strokeStyle, ga = c.globalAlpha; c.globalAlpha = 0.85; c.strokeStyle = WN ? '#142a1a' : WS ? '#285428' : '#2f6a2a'; c.lineWidth = 2.5 + r * 1.3; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); c.strokeStyle = WN ? '#2c5234' : WS ? '#62a04c' : '#8fd060'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, y - (1.2 + r * 0.6)); c.lineTo(W, y - (1.2 + r * 0.6)); c.stroke(); c.strokeStyle = 'rgba(18,40,20,0.5)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, y + 1.6 + r * 0.7); c.lineTo(W, y + 1.6 + r * 0.7); c.stroke(); c.lineWidth = lw0; c.strokeStyle = ss; c.globalAlpha = ga; }
     }
     c.lineWidth = 1.2; c.beginPath();
     for (let i = i0; i < i1; i++) { const xa = X(i * cell); c.moveTo(xa, yTop); c.lineTo(V.Xn(xa), H); }
