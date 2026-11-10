@@ -9375,7 +9375,23 @@
   const rankOf = (n = totalStars()) => { let r = 0; RANKS.forEach((q, i) => { if (n >= q.min) r = i; }); return r; };
   { const sv = store.get('rn.livery'); const ok = RANKS.find((q) => q.liv === sv); if (ok && totalStars() >= ok.min) LOCO_ORN = sv; }
   let LOCO_SHAPE = 'boxC'; // 'boxC' moncong pendek (utama), 'box' kotak ramping, 'boxB' kabin tinggi, 'aero' aerodinamis
+  // ornamen livery digambar sekali ke kanvas tersimpan lalu ditempel tiap frame (ukiran ini bagian paling berat dari lokomotif Cakra)
+  const ORN = { key: '', cv: null };
   function drawOrnament(c, kind, x0, x1, yTop, yBot, u, col) {
+    const w = x1 - x0, h = yBot - yTop, m = c.getTransform ? c.getTransform() : null;
+    if (!m || w <= 0 || h <= 0) return drawOrnamentRaw(c, kind, x0, x1, yTop, yBot, u, col);
+    const q = Math.min(6, Math.ceil(Math.max(Math.abs(m.a), Math.abs(m.d)) * 2) / 2), pad = Math.ceil(h * 0.6);
+    if ((w + pad * 2) * q > 4096) return drawOrnamentRaw(c, kind, x0, x1, yTop, yBot, u, col);
+    const key = `${kind}|${Math.round(w * 4)}|${Math.round(h * 4)}|${Math.round(u * 16)}|${col}|${q}`;
+    if (ORN.key !== key) {
+      if (!ORN.cv) ORN.cv = document.createElement('canvas');
+      ORN.cv.width = Math.ceil((w + pad * 2) * q); ORN.cv.height = Math.ceil((h + pad * 2) * q);
+      const g = ORN.cv.getContext('2d'); g.setTransform(q, 0, 0, q, pad * q, pad * q); g.clearRect(-pad, -pad, w + pad * 2, h + pad * 2);
+      drawOrnamentRaw(g, kind, 0, w, 0, h, u, col); ORN.key = key;
+    }
+    c.drawImage(ORN.cv, x0 - pad, yTop - pad, w + pad * 2, h + pad * 2);
+  }
+  function drawOrnamentRaw(c, kind, x0, x1, yTop, yBot, u, col) {
     const h = yBot - yTop, ym = (yTop + yBot) / 2;
     c.save();
     c.fillStyle = col; c.strokeStyle = col;

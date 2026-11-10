@@ -7,6 +7,7 @@
   "license": "SEE LICENSE IN ../LICENSE",
   "scripts": {
     "serve": "npx --yes http-server www -p 8080 -c-1",
+    "test": "node tests/smoke.js",
     "android": "npx cap sync android && npx cap open android",
     "ios": "npx cap sync ios && npx cap open ios"
   },
