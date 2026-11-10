@@ -5862,7 +5862,7 @@
       const fx = sh ? (sh.focus === 'nose' ? 0.05 : sh.focus === 'wheels' ? 0.1 : 0.42) : S && S.t < 40 && S.phase !== 'dwell' ? 0.12 : 0.35;
       const pf = CINE.paxX, hasPf = pf !== null && pf !== undefined;
       // penumpang: poros dipilih supaya kerumunan bergeser ke tengah layar seiring kamera mendekat
-      const px = hasPf ? (CINE.s > 1.005 ? clamp((lerp(pf, W * 0.46, clamp((CINE.s - 1) / 1.3, 0, 1)) - pf * CINE.s) / (1 - CINE.s), -W * 3, W * 4) : pf) : clamp(r.x1 - len * fx, W * 0.2, W * 0.82), py = sh ? (sh.focus === 'wheels' ? r.bottom - (r.bottom - r.top) * 0.08 : r.bottom - (r.bottom - r.top) * 0.4) : r.bottom + (hasPf ? (r.bottom - r.top) * 0.15 : 0);
+      const px = hasPf ? (CINE.s > 1.005 ? clamp((lerp(pf, W * 0.46, clamp((CINE.s - 1) / 1.3, 0, 1)) - pf * CINE.s) / (1 - CINE.s), 0, W) : clamp(pf, 0, W)) : clamp(r.x1 - len * fx, W * 0.2, W * 0.82), py = sh ? (sh.focus === 'wheels' ? r.bottom - (r.bottom - r.top) * 0.08 : r.bottom - (r.bottom - r.top) * 0.4) : r.bottom + (hasPf ? (r.bottom - r.top) * 0.15 : 0);
       CINE.px = hasPf || !CINE.px ? px : CINE.px + (px - CINE.px) * Math.min(1, k * 1.2); CINE.py = CINE.py ? CINE.py + (py - CINE.py) * Math.min(1, k * 1.2) : py; }
     CINE.bars += ((CINE.shot && CINE.shot.t < CINE.shot.dur - 2.2 ? 1 : 0) - CINE.bars) * Math.min(1, k * 1.6);
   }
@@ -9629,9 +9629,9 @@
         if (op < 0.01) line([[u(d0 + 10), 4.5], [u(d0 + 10), 1.2]], 'rgba(90,100,108,0.6)', 1);
         box(u(d0 + 18), u(d0 + 2), 0.75, 0.95, '#3a4045');
       }
-      c.fillStyle = SENJAC ? '#e9c26a' : '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.5 * ppm))}px "Plus Jakarta Sans", sans-serif`;
+      c.fillStyle = SENJAC ? '#e9c26a' : '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.42 * ppm))}px "Plus Jakarta Sans", sans-serif`;
       c.textAlign = 'left'; c.textBaseline = 'middle';
-      if (!STEAMC) c.fillText(HSTC ? `KN · 0${k + 1}` : HST2C ? `GT · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.2));
+      if (!STEAMC) c.fillText(HSTC ? `KN · 0${k + 1}` : HST2C ? `GT · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.5)); // di atas tepi peron agar tidak terpotong saat berhenti di stasiun
       if (rimOn) {
         c.save(); c.globalAlpha = V.rimA;
         line([[u(4), 6.06], [u(236), 6.06]], V.rim, lw(0.09));
@@ -9773,7 +9773,7 @@
       c.fillStyle = '#c9ced4'; c.fillRect(L(13.6), Y(6.24), 3.2 * ppm, 0.16 * ppm);
       // logo kecil
       c.fillStyle = ACC; c.font = `italic 900 ${Math.max(6, Math.round(0.48 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
-      c.fillText(HSTL ? 'KILAT NUSANTARA' : 'GUNTUR', L(8.2), Y(3.45)); c.fillStyle = '#5a6470'; c.font = `800 ${Math.max(5, Math.round(0.3 * ppm))}px "Big Shoulders Display", sans-serif`; c.fillText(HSTL ? 'KN 5001' : 'GT 6001', L(8.2), Y(3.05)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      c.fillText(HSTL ? 'KILAT NUSANTARA' : 'GUNTUR', L(8.2), Y(3.45)); c.fillStyle = '#5a6470'; c.font = `800 ${Math.round(0.3 * ppm)}px "Big Shoulders Display", sans-serif`; if (ppm * (CINE.s || 1) >= 14) c.fillText(HSTL ? 'KN 5001' : 'GT 6001', L(8.2), Y(2.98)); // nomor hanya saat cukup besar agar tidak menimpa nama c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     } else if (SH === 'argo') {
       // ---- Argo Senja generasi baru: moncong peluru melengkung mulus, kaca visor menyatu, atap & bogie tertutup fairing ----
       const P = (m, h) => [L(m), Y(h)];
