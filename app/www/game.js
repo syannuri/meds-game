@@ -8096,6 +8096,30 @@
   // ---------- pantulan cahaya realistis ----------
   // pantulan lingkungan pada badan logam/cat mengkilap: langit di atas, garis horizon terpantul,
   // tanah di bawah, pita kilau di posisi tetap layar (jadi "mengalir" saat kereta bergerak), kilau matahari
+  // kaca kereta memantulkan langit senja: ungu di atas, garis cakrawala jingga, bayangan tanah gelap, kilau miring yang mengalir seiring laju
+  function duskGlass(c, V, x0, y0, w, h, clipFn, k = 1) {
+    if (V.night || V.storm || V.tf > 0.5) return;
+    c.save(); clipFn(); c.clip(); c.globalAlpha = k;
+    const g = c.createLinearGradient(0, y0, 0, y0 + h);
+    g.addColorStop(0, 'rgba(70,74,150,0.6)'); g.addColorStop(0.45, 'rgba(176,96,150,0.5)'); g.addColorStop(0.6, 'rgba(255,170,110,0.62)'); g.addColorStop(0.66, 'rgba(255,214,150,0.55)'); g.addColorStop(0.7, 'rgba(40,52,44,0.5)'); g.addColorStop(1, 'rgba(12,16,20,0.45)');
+    c.fillStyle = g; c.fillRect(x0, y0, w, h);
+    const per = 9 * V.ppm, off = ((V.st.x * V.ppm * 0.5) % per + per) % per; c.fillStyle = 'rgba(255,236,214,0.16)';
+    for (let x = x0 - per - off; x < x0 + w + per; x += per) { c.beginPath(); c.moveTo(x + h * 0.5, y0); c.lineTo(x + h * 0.5 + per * 0.22, y0); c.lineTo(x + per * 0.22, y0 + h); c.lineTo(x, y0 + h); c.closePath(); c.fill(); }
+    c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(x0, y0, w, Math.max(1, h * 0.05));
+    c.restore();
+  }
+  // badan kereta modern saat senja: bentuk silinder (bahu terang, perut gelap), pantulan langit jingga di bahu, cahaya matahari di tepi atap
+  function duskBody(c, V, x0, y0, w, h, clipFn) {
+    if (V.night || V.storm || V.tf > 0.5) return;
+    c.save(); clipFn(); c.clip();
+    const g = c.createLinearGradient(0, y0, 0, y0 + h);
+    g.addColorStop(0, 'rgba(255,196,140,0.5)'); g.addColorStop(0.1, 'rgba(255,255,255,0.3)'); g.addColorStop(0.22, 'rgba(255,255,255,0)'); g.addColorStop(0.7, 'rgba(40,30,60,0)'); g.addColorStop(1, 'rgba(40,30,60,0.32)');
+    c.fillStyle = g; c.fillRect(x0, y0, w, h);
+    const sx = sunPos(V).x, sg = c.createLinearGradient(x0, 0, x0 + w, 0), toR = sx > x0 + w / 2;
+    sg.addColorStop(toR ? 0 : 1, 'rgba(70,50,110,0.16)'); sg.addColorStop(0.5, 'rgba(255,180,120,0)'); sg.addColorStop(toR ? 1 : 0, 'rgba(255,176,110,0.22)');
+    c.fillStyle = sg; c.fillRect(x0, y0, w, h);
+    c.restore();
+  }
   function bodySheen(c, V, x0, y0, w, h, clipFn, strength = 1) {
     if (V.tf > 0.5) return;
     const night = V.night, storm = V.storm, k = (night ? 0.45 : storm ? 0.6 : 1) * strength;
@@ -9611,6 +9635,21 @@
         c.fillStyle = '#fff6e6'; c.font = `italic 800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
         c.fillText(HSTC ? 'KILAT NUSANTARA · BISNIS' : 'ARGO SENJA · EKSEKUTIF', lx + rr * 2.2, ly + 0.02 * ppm);
         if (SENJAC) senjaFullSkirt(c, sx0(0, 240), sw0(0, 240), Y, ppm, [[30, 82], [158, 210]].map(([a, b]) => [sx0(a, b), sw0(a, b)]));
+        if (SENJAC && MIS.dusk) { // tampilan nyata & canggih: kaca memantulkan senja, badan berbentuk, sambungan panel, layar tujuan LED, lampu status pintu
+          duskGlass(c, V, sx0(30, 210), Y(4.5), sw0(30, 210), 1.7 * ppm, () => roundRect(c, sx0(30, 210), Y(4.5), sw0(30, 210), 1.7 * ppm, 0.3 * ppm));
+          duskBody(c, V, sx0(0, 240), Y(4.85), sw0(0, 240), 3.85 * ppm, () => roundRect(c, sx0(0, 240), Y(4.85), sw0(0, 240), 3.85 * ppm, 0.35 * ppm));
+          c.strokeStyle = 'rgba(40,46,56,0.28)'; c.lineWidth = 1; c.beginPath(); for (const px of [26, 86, 120, 154, 214]) { c.moveTo(L(u(px)), Y(4.78)); c.lineTo(L(u(px)), Y(1.75)); } c.stroke();
+          c.strokeStyle = 'rgba(255,255,255,0.3)'; c.beginPath(); for (const px of [26, 86, 120, 154, 214]) { c.moveTo(L(u(px)) + 1, Y(4.78)); c.lineTo(L(u(px)) + 1, Y(1.75)); } c.stroke();
+          // layar tujuan LED jingga di samping pintu
+          const dx = sx0(150, 204), dw = sw0(150, 204), dy = Y(4.8), dh = 0.24 * ppm; // strip LED tipis di atas jendela
+          c.fillStyle = '#0a0c10'; roundRect(c, dx, dy, dw, dh, 0.06 * ppm); c.fill();
+          c.fillStyle = '#ffb030'; for (let q = 0.04; q < 0.95; q += 0.045) { if (hash(q * 37 + k) < 0.25) continue; c.fillRect(dx + dw * q, dy + dh * 0.28, dw * 0.03, Math.max(1, dh * 0.44)); }
+          // lampu status pintu: hijau saat terbuka, merah redup saat tertutup; garis cahaya lantai di ambang pintu
+          const open = st.doors === 'open';
+          for (const px of [14, 226]) { c.fillStyle = open ? '#58f08a' : '#ff5a4a'; c.beginPath(); c.arc(L(u(px)), Y(4.62), Math.max(1, 0.07 * ppm), 0, 7); c.fill(); c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = open ? 'rgba(88,240,138,0.35)' : 'rgba(255,90,74,0.25)'; c.beginPath(); c.arc(L(u(px)), Y(4.62), 0.22 * ppm, 0, 7); c.fill(); c.restore(); }
+          // garis cahaya matahari di tepi atap
+          c.strokeStyle = 'rgba(255,196,130,0.85)'; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(L(u(8)), Y(6.08)); c.lineTo(L(u(232)), Y(6.08)); c.stroke();
+        }
       } else if (STEAMC) {
         // gerbong kompartemen klasik awal 1900-an: panel kayu bercat marun, bingkai emas, deretan pintu kompartemen
         // berjendela turun, lampu kompartemen hangat, pegangan kuningan, papan injak panjang
@@ -9873,6 +9912,25 @@
         c.strokeStyle = '#d8dde3'; c.lineWidth = lw(0.03); roundRect(c, gx, gy0, gw, gh, 0.12 * ppm); c.stroke();
         // rok bogie grafit: menutup bagian atas roda, roda bawah tetap terlihat (berbeda dari Guntur yang tertutup penuh)
         senjaFullSkirt(c, L(15.6), 16.3 * ppm, Y, ppm, [[L(15.0), 5.7 * ppm], [L(6.4), 5.7 * ppm]]);
+        if (MIS.dusk) { // tampilan nyata & canggih: kaca visor memantulkan senja, badan berbentuk, sambungan panel, sensor & lampu LED
+          duskGlass(c, V, L(15.2), Y(5.62), 15.6 * ppm, 1.95 * ppm, visor, 0.5);
+          duskBody(c, V, L(15.85), Y(6.22), 17.2 * ppm, 4.5 * ppm, bodyPath);
+          // kilau tajam di lengkung moncong
+          c.save(); bodyPath(); c.clip(); c.globalCompositeOperation = 'lighter'; const ng = c.createRadialGradient(L(0.6), Y(5.0), 0, L(0.6), Y(5.0), 2.2 * ppm); ng.addColorStop(0, 'rgba(255,226,180,0.55)'); ng.addColorStop(1, 'rgba(255,226,180,0)'); c.fillStyle = ng; c.fillRect(L(3), Y(6.3), 4.5 * ppm, 3 * ppm); c.restore();
+          // sambungan panel & pintu kabin
+          c.strokeStyle = 'rgba(40,46,56,0.3)'; c.lineWidth = 1; c.beginPath(); for (const m of [6.2, 9.4, 12.6]) { c.moveTo(L(m), Y(6.1)); c.lineTo(L(m), Y(5.68)); c.moveTo(L(m), Y(4.9)); c.lineTo(L(m), Y(3.55)); } c.stroke();
+          c.strokeStyle = 'rgba(40,46,56,0.4)'; roundRect(c, L(5.0), Y(4.55), 0.8 * ppm, 2.6 * ppm, 0.1 * ppm); c.stroke();
+          c.fillStyle = '#c9ced4'; c.fillRect(L(4.4), Y(3.4), 0.06 * ppm, 0.5 * ppm);
+          // kamera & sensor di atas visor, antena GPS di atap
+          c.fillStyle = '#12151a'; roundRect(c, L(3.2), Y(5.88), 0.5 * ppm, 0.16 * ppm, 0.06 * ppm); c.fill(); c.fillStyle = '#58c8ff'; c.fillRect(L(3.05), Y(5.84), Math.max(1, 0.08 * ppm), Math.max(1, 0.07 * ppm));
+          c.fillStyle = '#e6e9ec'; c.beginPath(); c.ellipse(L(9.0), Y(6.28), 0.32 * ppm, 0.09 * ppm, 0, 0, 7); c.fill();
+          // lampu utama LED: tiga titik + pendar & kilat lensa
+          for (let q = 0; q < 3; q++) { c.fillStyle = '#fffbe8'; c.beginPath(); c.arc(L(-0.86 - q * 0.02) + q * 0.22 * ppm, Y(3.02 + q * 0.03), Math.max(1, 0.07 * ppm), 0, 7); c.fill(); }
+          c.save(); c.globalCompositeOperation = 'lighter'; const hg = c.createRadialGradient(L(-0.9), Y(3.05), 0, L(-0.9), Y(3.05), 1.5 * ppm); hg.addColorStop(0, 'rgba(255,240,200,0.6)'); hg.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = hg; c.beginPath(); c.arc(L(-0.9), Y(3.05), 1.5 * ppm, 0, 7); c.fill();
+          c.fillStyle = 'rgba(255,244,214,0.5)'; c.fillRect(L(-0.9) - 2.4 * ppm, Y(3.05) - 0.5, 4.8 * ppm, 1); c.restore();
+          // garis cahaya matahari di tepi atap & moncong
+          c.strokeStyle = 'rgba(255,190,120,0.9)'; c.lineWidth = lw(0.05); c.beginPath(); c.moveTo(...P(15.1, 6.2)); c.lineTo(...P(5.2, 6.2)); c.bezierCurveTo(...P(2.3, 6.18), ...P(0.4, 5.24), ...P(-0.6, 3.75)); c.stroke();
+        }
       }
     } else if (SH === 'boxB') {
       // ---- kotak B: muka tegak penuh, kabin lebih tinggi dari badan (bertingkat) ----
