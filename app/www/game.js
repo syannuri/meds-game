@@ -8111,11 +8111,15 @@
   // pantulan lingkungan pada badan logam/cat mengkilap: langit di atas, garis horizon terpantul,
   // tanah di bawah, pita kilau di posisi tetap layar (jadi "mengalir" saat kereta bergerak), kilau matahari
   // kaca kereta memantulkan langit senja: ungu di atas, garis cakrawala jingga, bayangan tanah gelap, kilau miring yang mengalir seiring laju
+  // warna pantulan langit pada kaca & badan kereta, mengikuti suasana misi (senja, sore keemasan, siang/pagi)
+  const skyTone = () => MIS.dusk ? { top: '70,74,150', mid: '176,96,150', hor: '255,170,110', hi: '255,214,150', rim: '255,196,130', sun: '255,176,110', shade: '70,50,110' }
+    : MIS.golden ? { top: '36,52,88', mid: '84,84,110', hor: '236,170,104', hi: '255,220,160', rim: '255,224,170', sun: '255,214,150', shade: '60,70,110' }
+    : { top: '26,48,84', mid: '52,86,122', hor: '150,186,210', hi: '214,232,244', rim: '255,255,255', sun: '255,246,220', shade: '50,70,100' };
   function duskGlass(c, V, x0, y0, w, h, clipFn, k = 1) {
     if (V.night || V.storm || V.tf > 0.5) return;
     c.save(); clipFn(); c.clip(); c.globalAlpha = k;
-    const g = c.createLinearGradient(0, y0, 0, y0 + h);
-    g.addColorStop(0, 'rgba(70,74,150,0.6)'); g.addColorStop(0.45, 'rgba(176,96,150,0.5)'); g.addColorStop(0.6, 'rgba(255,170,110,0.62)'); g.addColorStop(0.66, 'rgba(255,214,150,0.55)'); g.addColorStop(0.7, 'rgba(40,52,44,0.5)'); g.addColorStop(1, 'rgba(12,16,20,0.45)');
+    const g = c.createLinearGradient(0, y0, 0, y0 + h), T = skyTone();
+    g.addColorStop(0, `rgba(${T.top},0.6)`); g.addColorStop(0.45, `rgba(${T.mid},0.5)`); g.addColorStop(0.6, `rgba(${T.hor},0.62)`); g.addColorStop(0.66, `rgba(${T.hi},0.55)`); g.addColorStop(0.7, 'rgba(40,52,44,0.5)'); g.addColorStop(1, 'rgba(12,16,20,0.45)');
     c.fillStyle = g; c.fillRect(x0, y0, w, h);
     const per = 9 * V.ppm, off = ((V.st.x * V.ppm * 0.5) % per + per) % per; c.fillStyle = 'rgba(255,236,214,0.16)';
     for (let x = x0 - per - off; x < x0 + w + per; x += per) { c.beginPath(); c.moveTo(x + h * 0.5, y0); c.lineTo(x + h * 0.5 + per * 0.22, y0); c.lineTo(x + per * 0.22, y0 + h); c.lineTo(x, y0 + h); c.closePath(); c.fill(); }
@@ -8127,10 +8131,10 @@
     if (V.night || V.storm || V.tf > 0.5) return;
     c.save(); clipFn(); c.clip();
     const g = c.createLinearGradient(0, y0, 0, y0 + h);
-    g.addColorStop(0, 'rgba(255,196,140,0.5)'); g.addColorStop(0.1, 'rgba(255,255,255,0.3)'); g.addColorStop(0.22, 'rgba(255,255,255,0)'); g.addColorStop(0.7, 'rgba(40,30,60,0)'); g.addColorStop(1, 'rgba(40,30,60,0.32)');
+    const T = skyTone(); g.addColorStop(0, `rgba(${T.rim},0.5)`); g.addColorStop(0.1, 'rgba(255,255,255,0.3)'); g.addColorStop(0.22, 'rgba(255,255,255,0)'); g.addColorStop(0.7, 'rgba(40,30,60,0)'); g.addColorStop(1, 'rgba(40,30,60,0.32)');
     c.fillStyle = g; c.fillRect(x0, y0, w, h);
     const sx = sunPos(V).x, sg = c.createLinearGradient(x0, 0, x0 + w, 0), toR = sx > x0 + w / 2;
-    sg.addColorStop(toR ? 0 : 1, 'rgba(70,50,110,0.16)'); sg.addColorStop(0.5, 'rgba(255,180,120,0)'); sg.addColorStop(toR ? 1 : 0, 'rgba(255,176,110,0.22)');
+    sg.addColorStop(toR ? 0 : 1, `rgba(${T.shade},0.16)`); sg.addColorStop(0.5, 'rgba(255,255,255,0)'); sg.addColorStop(toR ? 1 : 0, `rgba(${T.sun},0.22)`);
     c.fillStyle = sg; c.fillRect(x0, y0, w, h);
     c.restore();
   }
@@ -9649,6 +9653,14 @@
         c.fillStyle = vgrad(1.7, 0.32, [[0, '#e4e7eb'], [0.7, '#aab0b8'], [1, '#6c737b']]); c.fillRect(sx0(0, 240), Y(1.7), sw0(0, 240), 1.38 * ppm);
         c.fillStyle = 'rgba(20,24,28,0.28)'; [[30, 82], [158, 210]].forEach(([a, b]) => c.fillRect(sx0(a, b), Y(0.95), sw0(a, b), 0.5 * ppm));
         line([[u(240), 1.0], [u(0), 1.0]], 'rgba(90,98,106,0.45)', 1);
+        { // kaca memantulkan langit, badan berbentuk, sambungan panel, lampu status pintu, cahaya di tepi atap
+          duskGlass(c, V, sx0(0, 240), Y(4.55), sw0(0, 240), 1.7 * ppm, () => { c.beginPath(); c.rect(sx0(0, 240), Y(4.55), sw0(0, 240), 1.7 * ppm); }, 0.8);
+          duskBody(c, V, sx0(0, 240), Y(4.85), sw0(0, 240), 3.85 * ppm, () => roundRect(c, sx0(0, 240), Y(4.85), sw0(0, 240), 3.85 * ppm, 0.35 * ppm));
+          c.strokeStyle = 'rgba(40,46,56,0.22)'; c.lineWidth = 1; c.beginPath(); for (const px of [60, 120, 180]) { c.moveTo(L(u(px)), Y(4.02)); c.lineTo(L(u(px)), Y(1.75)); } c.stroke();
+          const open = st.doors === 'open';
+          for (const px of [14, 226]) { c.fillStyle = open ? '#58f08a' : '#ff5a4a'; c.beginPath(); c.arc(L(u(px)), Y(4.7), Math.max(1, 0.07 * ppm), 0, 7); c.fill(); }
+          c.strokeStyle = `rgba(${skyTone().rim},0.8)`; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(L(u(8)), Y(6.08)); c.lineTo(L(u(232)), Y(6.08)); c.stroke();
+        }
       } else if (ARGOC) {
         // gerbong eksekutif Argo Senja: pita kaca gelap menyatu, pita senja bergaris emas, logo matahari terbenam
         const sx0 = (a, b) => Math.min(L(u(a)), L(u(b))), sw0 = (a, b) => Math.abs(L(u(a)) - L(u(b)));
@@ -9885,6 +9897,14 @@
         c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = lw(0.03); c.beginPath(); c.moveTo(...P(15.85, 2.7)); c.lineTo(...P(4.0, 2.7)); c.bezierCurveTo(...P(1.4, 2.7), ...P(-0.6, 2.64), ...P(-1.74, 2.28)); c.stroke(); }
       c.strokeStyle = '#8a959f'; c.lineWidth = lw(0.06); c.beginPath(); c.moveTo(...P(15.85, 2.9)); c.lineTo(...P(4.0, 2.9)); c.bezierCurveTo(...P(1.2, 2.9), ...P(-0.5, 2.82), ...P(-1.55, 2.5)); c.stroke();
       c.lineCap = 'butt';
+      { // kaca memantulkan langit, badan berbentuk, kilau di lengkung hidung, sambungan panel, sensor
+        duskGlass(c, V, L(15.85), Y(5.12), 17.6 * ppm, 1.65 * ppm, band, 0.6);
+        duskBody(c, V, L(15.85), Y(6.08), 17.8 * ppm, 4.75 * ppm, nose);
+        if (!V.night && !V.storm && V.tf < 0.5) { c.save(); nose(); c.clip(); c.globalCompositeOperation = 'lighter'; const ng = c.createRadialGradient(L(1.6), Y(4.9), 0, L(1.6), Y(4.9), 2.6 * ppm); ng.addColorStop(0, `rgba(${skyTone().hi},0.5)`); ng.addColorStop(1, `rgba(${skyTone().hi},0)`); c.fillStyle = ng; c.fillRect(L(4.4), Y(6.2), 6 * ppm, 3.4 * ppm); c.restore(); }
+        c.strokeStyle = 'rgba(40,46,56,0.26)'; c.lineWidth = 1; c.beginPath(); for (const m of [7.2, 10.2, 13.2]) { c.moveTo(L(m), Y(6.0)); c.lineTo(L(m), Y(5.2)); c.moveTo(L(m), Y(4.05)); c.lineTo(L(m), Y(2.95)); } c.stroke();
+        c.fillStyle = '#12151a'; roundRect(c, L(5.6), Y(5.72), 0.5 * ppm, 0.15 * ppm, 0.06 * ppm); c.fill(); c.fillStyle = '#58c8ff'; c.fillRect(L(5.45), Y(5.69), Math.max(1, 0.08 * ppm), Math.max(1, 0.07 * ppm));
+        c.fillStyle = '#e6e9ec'; c.beginPath(); c.ellipse(L(11.0), Y(6.14), 0.32 * ppm, 0.09 * ppm, 0, 0, 7); c.fill();
+      }
       // rok samping menutup bogie sebagian, lampu LED sipit di hidung
       // rok bogie penuh (gaya KCIC/Whoosh): menutup roda, hanya tepi bawah roda terlihat
       { const sk = () => { c.beginPath(); c.moveTo(L(15.85), Y(1.72)); c.lineTo(L(15.85), Y(0.32)); c.lineTo(L(-0.2), Y(0.32)); c.quadraticCurveTo(L(-1.1), Y(0.35), L(-1.55), Y(1.2)); c.lineTo(L(-1.85), Y(1.72)); c.closePath(); };
