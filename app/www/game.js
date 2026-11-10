@@ -4386,7 +4386,7 @@
     tickCrossings(st, dt);
     const x0 = st.x - 1.5, EH = 3.4;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
-    const p = storm ? 0.6 : night ? 0.35 : MIS.golden ? clamp(0.3 - st.clock / 40000, 0.2, 0.3) : MIS.day ? 1 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1);
+    const p = storm ? 0.6 : night ? 0.35 : MIS.golden ? clamp(0.3 - st.clock / 40000, 0.2, 0.3) : MIS.day ? 1 : MIS.dusk ? clamp(0.6 - st.clock / 20000, 0.46, 0.6) : clamp(st.clock / 1500, 0, 1);
     const T = ROUTE.tunnel, inTun = !!T && x0 > T.from && x0 < T.to;
     const f = W * 0.8;
     // kereta cepat: rel las panjang + suspensi udara, kabin hanya mengapung pelan (tanpa getar)
@@ -5937,7 +5937,7 @@
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
-    const p = storm ? 0.6 : night ? 0.35 : MIS.golden ? clamp(0.3 - st.clock / 40000, 0.2, 0.3) : MIS.day ? 1 : MIS.dusk ? clamp(0.26 - st.clock / 24000, 0.08, 0.26) : clamp(st.clock / 1500, 0, 1); // fajar -> pagi (senja: matahari rendah)
+    const p = storm ? 0.6 : night ? 0.35 : MIS.golden ? clamp(0.3 - st.clock / 40000, 0.2, 0.3) : MIS.day ? 1 : MIS.dusk ? clamp(0.6 - st.clock / 20000, 0.46, 0.6) : clamp(st.clock / 1500, 0, 1); // fajar -> pagi (senja: matahari rendah)
     const T = ROUTE.tunnel;
     const xc = st.x - 12; // posisi kabin
     const tf = T ? smooth(T.from, T.from + 25, xc) * (1 - smooth(T.to, T.to + 25, xc)) : 0;
@@ -5953,6 +5953,7 @@
     // cahaya tepi (rim light), pantulan kaca, lampu kabin per suasana
     if (night) Object.assign(V, { rim: '#9fb4ff', rimA: 0.5, refl: 0.05, cabA: 0.9, haze: '#4b3d6b', hazeA: 0.3, water: '#3a3f74' });
     else if (storm) Object.assign(V, { rim: '#d5dde4', rimA: 0.3, refl: 0.14, cabA: 0.6, haze: '#8b97a1', hazeA: 0.45, water: '#a3aeb7' });
+    else if (MIS.dusk) Object.assign(V, { rim: '#ffb070', rimA: 0.8, refl: 0.3, cabA: 0.12, haze: '#ffc48a', hazeA: 0.2, water: '#fa9c84' });
     else Object.assign(V, { rim: '#ffb67c', rimA: 0.85 * (1 - p * 0.55), refl: 0.28, cabA: 0.12, haze: '#fbd291', hazeA: 0.38 * (1 - p * 0.5), water: '#f7cb9c' });
     V.sunShadow = night ? 0 : storm ? 0.25 : 1 - p * 0.35;
     V.Xn = (sx) => W * 0.5 + (sx - W * 0.5) * 1.75; // proyeksi lapisan latar depan (lebih dekat ke kamera)
@@ -6625,6 +6626,41 @@
     }
   }
 
+  // ---------- langit senja Argo Senja: biru-ungu di atas, merah muda, jingga, emas di cakrawala; awan kumulus disinari dari bawah ----------
+  const DUSKCL = Array.from({ length: 12 }, (_, i) => ({ u: hash(i * 3.1 + 2), v: hash(i * 5.7 + 4), s: 0.6 + hash(i * 2.2 + 1) * 0.9, n: 5 + Math.floor(hash(i + 9) * 4) }));
+  function drawDuskSky(V) {
+    const { c, gy } = V, tt = performance.now() / 1000, sun = sunPos(V);
+    const g = c.createLinearGradient(0, 0, 0, gy);
+    g.addColorStop(0, '#2f3f8e'); g.addColorStop(0.28, '#5d51a4'); g.addColorStop(0.52, '#a8609e'); g.addColorStop(0.74, '#ee8468'); g.addColorStop(0.9, '#ffae5c'); g.addColorStop(1, '#ffd07a');
+    c.fillStyle = g; c.fillRect(0, 0, W, gy + 4);
+    // pendar matahari lebar: jingga keemasan menyebar di cakrawala
+    c.save(); c.translate(sun.x, sun.y); c.scale(1.9, 1);
+    let rg = c.createRadialGradient(0, 0, 0, 0, 0, gy * 0.75); rg.addColorStop(0, 'rgba(255,214,130,0.75)'); rg.addColorStop(0.35, 'rgba(255,170,96,0.38)'); rg.addColorStop(1, 'rgba(255,150,90,0)');
+    c.fillStyle = rg; c.beginPath(); c.arc(0, 0, gy * 0.75, 0, 7); c.fill(); c.restore();
+    const rgba = (cc, a) => `rgba(${cc[0] | 0},${cc[1] | 0},${cc[2] | 0},${Math.max(0, a).toFixed(3)})`, lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+    // garis awan tipis (sirus) keemasan dekat cakrawala
+    for (let i = 0; i < 7; i++) { const ww = W * (0.28 + hash(i * 1.9) * 0.3), xx = ((i * W * 0.29 - pcOf(V) * 0.006 - tt * 0.5) % (W * 1.6) + W * 1.6) % (W * 1.6) - W * 0.3, yy = gy * (0.62 + hash(i * 2.3 + 1) * 0.3);
+      const ns = clamp(1 - Math.abs(xx + ww / 2 - sun.x) / (W * 0.6), 0, 1);
+      c.save(); c.translate(xx + ww / 2, yy); c.scale(1, 0.035); const sg = c.createRadialGradient(0, 0, 0, 0, 0, ww / 2); sg.addColorStop(0, rgba(lerp3([226, 120, 150], [255, 214, 140], ns), 0.5 + 0.3 * ns)); sg.addColorStop(1, 'rgba(240,140,150,0)'); c.fillStyle = sg; c.beginPath(); c.arc(0, 0, ww / 2, 0, 7); c.fill(); c.restore(); }
+    // kumulus: badan ungu, dasar merah muda-jingga tersinari matahari rendah, tepi emas di sisi matahari
+    for (const cl of DUSKCL) {
+      const hgt = cl.v, w0 = gy * (0.2 + 0.16 * cl.s) * (1.15 - hgt * 0.45), span = W + w0 * 4;
+      const cx = ((cl.u * span - pcOf(V) * (0.008 + 0.006 * (1 - hgt)) - tt * (1 + cl.s)) % span + span) % span - w0 * 2, cy = gy * (0.1 + hgt * 0.62);
+      const low = hgt, ns = clamp(1 - Math.hypot(cx - sun.x, (cy - sun.y) * 1.6) / (W * 0.55), 0, 1);
+      const body = lerp3([86, 78, 150], [176, 92, 138], low), lit = lerp3([240, 140, 160], [255, 172, 96], Math.max(low, ns)), rim = [255, 226, 150];
+      c.save(); c.translate(cx, cy); c.scale(1, 0.5);
+      const puffs = []; for (let k = 0; k < cl.n + 3; k++) { const t = k / (cl.n + 2) - 0.5, hh = Math.cos(t * Math.PI); puffs.push([t * w0 * 2 + (hash(k * 3.3 + cl.u * 7) - 0.5) * w0 * 0.2, -w0 * (0.1 + 0.3 * hh + hash(k + cl.v * 5) * 0.12), w0 * (0.2 + 0.22 * hh + hash(k * 1.7 + cl.u) * 0.08)]); }
+      for (const [px, py, r] of puffs) { const pg = c.createRadialGradient(px, py, 0, px, py, r); pg.addColorStop(0, rgba(body, 0.92)); pg.addColorStop(0.65, rgba(body, 0.8)); pg.addColorStop(1, rgba(body, 0)); c.fillStyle = pg; c.beginPath(); c.arc(px, py, r, 0, 7); c.fill(); }
+      for (const [px, py, r] of puffs) { const pg = c.createRadialGradient(px, py + r * 0.6, 0, px, py + r * 0.6, r * 0.9); pg.addColorStop(0, rgba(lit, 0.7 + 0.25 * ns)); pg.addColorStop(1, rgba(lit, 0)); c.fillStyle = pg; c.beginPath(); c.arc(px, py + r * 0.6, r * 0.9, 0, 7); c.fill(); }
+      if (ns > 0.05) { const sd = sun.x > cx ? 1 : -1; for (const [px, py, r] of puffs) { const pg = c.createRadialGradient(px + sd * r * 0.55, py + r * 0.3, 0, px + sd * r * 0.55, py + r * 0.3, r * 0.6); pg.addColorStop(0, rgba(rim, 0.55 * ns)); pg.addColorStop(1, rgba(rim, 0)); c.fillStyle = pg; c.beginPath(); c.arc(px + sd * r * 0.55, py + r * 0.3, r * 0.6, 0, 7); c.fill(); } }
+      c.restore();
+    }
+    // cakram matahari terang dengan lingkar cahaya
+    const sr = Math.max(9, gy * 0.045);
+    rg = c.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, sr * 4.5); rg.addColorStop(0, 'rgba(255,246,206,1)'); rg.addColorStop(0.22, 'rgba(255,232,160,0.95)'); rg.addColorStop(0.3, 'rgba(255,200,110,0.5)'); rg.addColorStop(1, 'rgba(255,170,90,0)');
+    c.fillStyle = rg; c.beginPath(); c.arc(sun.x, sun.y, sr * 4.5, 0, 7); c.fill();
+  }
+
   function drawSky(V) {
     const { c, gy, p } = V;
     const PAL = MIS.pal || {};
@@ -6659,6 +6695,7 @@
       }
       return;
     }
+    if (MIS.dusk) { drawDuskSky(V); return; }
     const g = c.createLinearGradient(0, 0, 0, gy);
     const ks = PAL.sky || [['#2c3a6b', '#5d9fd3'], ['#c97a7a', '#a8d2ea'], ['#f7b36d', '#e3f0f0']];
     g.addColorStop(0, mix(ks[0][0], ks[0][1], p));
@@ -7398,6 +7435,8 @@
         }
       }
     }
+    const duskW = MIS.dusk && !V.night && !V.storm; // petak berair memantulkan langit senja: jingga di kejauhan, merah muda, ungu di dekat kamera
+    if (duskW) { const wg = c.createLinearGradient(0, yTop, 0, H); wg.addColorStop(0, '#ffc08a'); wg.addColorStop(0.35, '#f79a8c'); wg.addColorStop(0.7, '#c98ab0'); wg.addColorStop(1, '#8f86c8'); c.fillStyle = wg; }
     for (let i = sawit ? i1 : i0; i < i1; i++) {
       const xa = X(i * cell), xb = X((i + 1) * cell);
       for (let r = 0; r < rows; r++) {
@@ -7405,7 +7444,7 @@
         const t0 = r / rows + 0.025, t1 = (r + 1) / rows - 0.025;
         const q = [[at(xa, t0) + 2, rowY(t0)], [at(xb, t0) - 2, rowY(t0)], [at(xb, t1) - 3, rowY(t1)], [at(xa, t1) + 3, rowY(t1)]];
         if (Math.max(q[1][0], q[2][0]) < 0 || Math.min(q[0][0], q[3][0]) > W) continue;
-        c.globalAlpha = (V.night ? 0.2 : 0.34) * (1 - r / rows * 0.45);
+        c.globalAlpha = duskW ? 0.85 : (V.night ? 0.2 : 0.34) * (1 - r / rows * 0.45);
         c.beginPath(); q.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fill();
       }
     }
@@ -7562,7 +7601,7 @@
   }
   // ---------- sawah hidup: petak beragam warna, rumpun padi, kilau air, kuntul, petani bercaping ----------
   // matahari bergeser pelan mengikuti perjalanan (rel tidak pernah benar-benar lurus) dan arah kabin di tikungan
-  const sunPos = (V) => { const wx = V.sunX !== undefined ? V.sunX : V.camX || 0; return { x: W * 0.8 + W * 0.045 * Math.sin(wx / 1300) + W * 0.015 * Math.sin(wx / 410 + 1) - (V.sunPan || 0) * 0.05, y: lerp(V.gy - 10, V.gy * 0.25, V.p) + H * 0.012 * Math.sin(wx / 900) }; };
+  const sunPos = (V) => { const wx = V.sunX !== undefined ? V.sunX : V.camX || 0; return { x: W * 0.8 + W * 0.045 * Math.sin(wx / 1300) + W * 0.015 * Math.sin(wx / 410 + 1) - (V.sunPan || 0) * 0.05, y: (MIS.dusk ? V.gy * (V.ppm === 1 ? 0.8 : 0.6) : lerp(V.gy - 10, V.gy * 0.25, V.p)) + H * 0.012 * Math.sin(wx / 900) }; };
   // flare matahari bergaya lensa kamera: inti, sinar bintang berputar pelan, garis anamorfik, cincin & pantulan lensa
   // berwarna di sepanjang sumbu matahari→tengah layar; sedikit berkedip saat kereta melaju (terhalang tiang/pohon)
   const FLARE_G = [[-0.22, 0.018, [255, 214, 160], 0.07, 0], [0.32, 0.012, [255, 236, 200], 0.09, 0], [0.52, 0.045, [140, 220, 190], 0.035, 1], [0.7, 0.02, [255, 170, 120], 0.05, 0],
@@ -10807,6 +10846,23 @@
     c.restore();
   }
 
+  // pohon pisang latar depan: batang semu hijau muda, pelepah lebar melengkung dengan tulang daun & sisi tersinari senja
+  function bananaPlant(c, x, y, u, seed) {
+    const tt = performance.now() / 1000;
+    c.fillStyle = '#5d8f3a'; c.beginPath(); c.moveTo(x - 0.22 * u, y); c.quadraticCurveTo(x - 0.16 * u, y - 1.2 * u, x - 0.08 * u, y - 2.0 * u); c.lineTo(x + 0.1 * u, y - 2.0 * u); c.quadraticCurveTo(x + 0.18 * u, y - 1.2 * u, x + 0.22 * u, y); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(255,214,140,0.28)'; c.fillRect(x + 0.04 * u, y - 1.9 * u, 0.07 * u, 1.8 * u);
+    const n = 5 + Math.floor(hash(seed * 1.3) * 3);
+    for (let k = 0; k < n; k++) {
+      const a = -Math.PI / 2 + (k - (n - 1) / 2) * (2.3 / n) + (hash(seed + k * 0.7) - 0.5) * 0.25 + Math.sin(tt * 0.9 + seed + k) * 0.03, len = (2.0 + hash(seed * 2.1 + k) * 1.0) * u, wd = len * 0.46;
+      const bx = x, by = y - 1.95 * u, dx = Math.cos(a), dy = Math.sin(a), droop = (0.25 + Math.abs(dx) * 0.6) * len;
+      const tx = bx + dx * len, ty = by + dy * len + droop, mx = bx + dx * len * 0.5, my = by + dy * len * 0.62;
+      const nx = -dy, ny = dx;
+      c.fillStyle = k % 2 ? '#2f7a2c' : '#3b8c33'; c.beginPath(); c.moveTo(bx, by);
+      c.quadraticCurveTo(mx + nx * wd, my + ny * wd, tx, ty); c.quadraticCurveTo(mx - nx * wd, my - ny * wd, bx, by); c.fill();
+      c.fillStyle = 'rgba(190,230,110,0.5)'; c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(mx + nx * wd, my + ny * wd, tx, ty); c.quadraticCurveTo(mx + nx * wd * 0.25, my + ny * wd * 0.25, bx, by); c.fill();
+      c.strokeStyle = 'rgba(220,240,150,0.7)'; c.lineWidth = Math.max(1, 0.035 * u); c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(mx, my, tx, ty); c.stroke();
+    }
+  }
   function drawFrontProps(V) {
     const { c, ppm, gy, X, wx0, wx1, p } = V;
     // tiang pagar/patok paling dekat kamera: paralaks 2,6x, memanjang (kabur gerak) saat cepat
@@ -10821,9 +10877,9 @@
         const sx = W / 2 + (wx - camC) * pB * k2, ph = (1.8 + hash(i) * 0.9) * ppm * 1.6, top = H - ph - (H - gy) * 0.08;
         if (sx < -60 || sx > W + 60) continue;
         const wdt = Math.max(2, 0.28 * ppm * 1.6) + blur * 36;
-        const g2 = c.createLinearGradient(sx - wdt / 2, 0, sx + wdt / 2, 0); const col = mix('#2a2018', '#3e3022', p);
+        const g2 = c.createLinearGradient(sx - wdt / 2, 0, sx + wdt / 2, 0); const col = MIS.dusk ? '#e9e6dc' : mix('#2a2018', '#3e3022', p);
         g2.addColorStop(0, blur > 0.05 ? 'rgba(40,30,22,0)' : col); g2.addColorStop(0.5, col); g2.addColorStop(1, blur > 0.05 ? 'rgba(40,30,22,0)' : col);
-        c.globalAlpha = 0.95 - blur * 0.35; c.fillStyle = g2; c.fillRect(sx - wdt / 2, top, wdt, ph); if (blur < 0.3) { c.fillStyle = mix('#5a4a38', '#6a5640', p); c.fillRect(sx - wdt / 2, top, wdt, Math.max(2, 0.25 * ppm)); }
+        c.globalAlpha = 0.95 - blur * 0.35; c.fillStyle = g2; c.fillRect(sx - wdt / 2, top, wdt, ph); if (blur < 0.3) { c.fillStyle = MIS.dusk ? '#1c1d20' : mix('#5a4a38', '#6a5640', p); c.fillRect(sx - wdt / 2, top, wdt, MIS.dusk ? ph * 0.18 : Math.max(2, 0.25 * ppm)); if (MIS.dusk) c.fillRect(sx - wdt / 2, top + ph * 0.4, wdt, ph * 0.18); }
       }
       c.restore();
     }
@@ -10839,7 +10895,12 @@
       const sx = V.Xn(X(tx));
       if (sx < -80 || sx > W + 80) continue;
       const sy = H - (0.02 + hash(i + 5) * 0.06) * (H - gy);
-      if (h < 0.12) {
+      if (MIS.dusk && h < 0.1) { // patok jalan hitam-putih
+        const pw = 0.3 * s2, phh = 1.5 * s2; c.fillStyle = '#f1efe6'; c.fillRect(sx - pw / 2, sy - phh, pw, phh);
+        c.fillStyle = '#1c1d20'; c.fillRect(sx - pw / 2, sy - phh, pw, phh * 0.2); c.fillRect(sx - pw / 2, sy - phh * 0.6, pw, phh * 0.2);
+        c.fillStyle = 'rgba(255,190,120,0.35)'; c.fillRect(sx + pw * 0.2, sy - phh, pw * 0.3, phh);
+      } else if (MIS.dusk && h > 0.34) bananaPlant(c, sx, sy + 0.3 * s2, s2 * (1.25 + hash(i * 2.9) * 0.6), i);
+      else if (h < 0.12) {
         // patok pematang kayu
         c.fillStyle = mix('#3a2c20', '#4e3b2a', p);
         c.fillRect(sx - 0.12 * s2, sy - 1.6 * s2, 0.24 * s2, 1.6 * s2);
