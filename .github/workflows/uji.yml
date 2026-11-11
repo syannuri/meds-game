@@ -29,9 +29,13 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.63.0
           npx playwright install chromium
-          # paket sistem (font dsb.) dari mirror Ubuntu kadang gagal karena DNS runner: coba ulang, lalu lanjut
+          # paket sistem (font dsb.) dari mirror Ubuntu kadang tak terjangkau (DNS runner): jangan gagalkan job,
           # karena runner ubuntu-latest sudah memuat pustaka inti yang dibutuhkan Chromium
-          for i in 1 2 3; do npx playwright install-deps chromium && break; echo "Pasang dependensi gagal (percobaan $i), coba lagi..."; sleep 20; done || true
+          # dibatasi waktu agar mirror yang macet tidak menghabiskan batas 20 menit job
+          timeout 150 npx playwright install-deps chromium || echo "::warning::Dependensi sistem Chromium tidak terpasang (mirror Ubuntu bermasalah); uji tetap dijalankan."
+      - name: Periksa Chromium dapat dijalankan
+        working-directory: app
+        run: node -e "require('playwright').chromium.launch().then((b) => b.close()).then(() => console.log('Chromium siap'))"
       - name: Jalankan uji asap
         working-directory: app
         run: node tests/smoke.js
