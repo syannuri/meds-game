@@ -11137,6 +11137,21 @@
   // ---------- pemandangan bervariasi per bagian rute (kota, pesisir, hutan jati, tambak garam) ----------
   function seaAt(x) { let w = 0; for (const sc of ROUTE.scenes || []) if (sc.kind === 'coast' || sc.kind === 'salt') w = Math.max(w, smooth(sc.from - 250, sc.from + 150, x) * (1 - smooth(sc.to - 150, sc.to + 250, x))); return w; }
   function seaWeight(V) { let w = 0; for (const sc of ROUTE.scenes || []) if (sc.kind === 'coast' || sc.kind === 'salt') w = Math.max(w, sceneWeight(V, sc)); return w; }
+  // tepi lanskap di ruang dunia: objek pada lapis paralaks `par` di layar x dipetakan ke posisi dunia tetapnya,
+  // jadi batas kota/kebun/hutan berdiri di tempat yang sama dan ikut bergeser bersama lapisannya (tidak memudar se-layar)
+  function sceneEdge(V, sc, x, par, f = 170) { const u = V.camX + W / (2 * V.ppm) + (x - W / 2) / (V.ppm * par); return smooth(sc.from - f, sc.from + f, u) * (1 - smooth(sc.to - f, sc.to + f, u)); }
+  function sceneX(V, sc, par, m) { const cx = V.camX + W / (2 * V.ppm); return W / 2 + (m - cx) * V.ppm * par; }
+  let SCN = null; // kanvas bantu untuk menyamarkan tepi lanskap secara mendatar
+  function scnCtx(c0) { const cv = c0.canvas; if (!SCN) SCN = document.createElement('canvas'); if (SCN.width !== cv.width || SCN.height !== cv.height) { SCN.width = cv.width; SCN.height = cv.height; }
+    const x = SCN.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, SCN.width, SCN.height); x.setTransform(c0.getTransform()); return x; }
+  function scnFlush(c0, x, V, sc, par, f = 170) { // tepi lembut mengikuti posisi dunia lapis `par`, lalu tempel ke kanvas utama
+    const a = sceneX(V, sc, par, sc.from - f), b = sceneX(V, sc, par, sc.from + f), d = sceneX(V, sc, par, sc.to - f), e = sceneX(V, sc, par, sc.to + f), span = Math.max(1, e - a);
+    const g = x.createLinearGradient(a, 0, e, 0), st = (px, al) => g.addColorStop(clamp((px - a) / span, 0, 1), `rgba(0,0,0,${al})`);
+    const sm = [[0, 0], [0.25, 0.156], [0.5, 0.5], [0.75, 0.844], [1, 1]];
+    if (b < d) { sm.forEach(([t, al]) => st(a + (b - a) * t, al)); sm.forEach(([t, al]) => st(d + (e - d) * t, 1 - al)); } else { st(a, 0); st((a + e) / 2, 1); st(e, 0); }
+    x.globalCompositeOperation = 'destination-in'; x.fillStyle = g; x.fillRect(-W * 4, -W * 4, W * 9, W * 9); x.globalCompositeOperation = 'source-over';
+    c0.save(); c0.setTransform(1, 0, 0, 1, 0, 0); c0.globalAlpha = 1; c0.drawImage(SCN, 0, 0); c0.restore();
+  }
   function sceneWeight(V, sc) { const cx = V.camX + W / (2 * V.ppm); return smooth(sc.from - 250, sc.from + 150, cx) * (1 - smooth(sc.to - 150, sc.to + 250, cx)); }
 
   // ---------- gedung kota bergaya nyata (dipakai tampilan samping & kokpit) ----------
@@ -11227,10 +11242,15 @@
   }
   function drawScenes(V) {
     const L = ROUTE.scenes; if (!L) return;
-    const { c, ppm, gy } = V, night = V.night || V.p < 0.16, yH = gy - 5 * ppm;
+    const { ppm, gy } = V, C0 = V.c, night = V.night || V.p < 0.16, yH = gy - 5 * ppm;
+    // lapis paralaks acuan tiap jenis lanskap untuk tepi masuk/keluar; jenis 'tumbuh' (kota, tebu, kopi, jati) meruncing per objek
+    const PM = { coast: 0.25, salt: 0.25, terrace: 0.14, wind: 0.22, solar: 0.45 }, SELF = { city: 1, cane: 1, coffee: 1, teak: 1 };
     for (const sc of L) {
-      const w = sceneWeight(V, sc); if (w <= 0.01) continue;
-      c.save(); c.globalAlpha = w;
+      const pm = PM[sc.kind] || 0.25, xa = sceneX(V, sc, SELF[sc.kind] ? 0.16 : pm, sc.from - 340), xe = sceneX(V, sc, SELF[sc.kind] ? 0.6 : pm, sc.to + 340);
+      if (xe < -60 || xa > W + 60) continue;
+      const inside = sceneX(V, sc, pm, sc.from + 170) < -40 && sceneX(V, sc, pm, sc.to - 170) > W + 40, useMask = !SELF[sc.kind] && !inside;
+      const c = useMask ? scnCtx(C0) : C0;
+      c.save();
       if (sc.kind === 'city') {
         // kota: dua lapis gedung bergaya nyata (jauh pudar oleh kabut), pinggiran kota & pepohonan di depan kaki gedung
         const sunR = sunPos(V).x > W / 2, warm = MIS.golden || MIS.dusk || V.p < 0.5 ? '255,196,130' : '255,236,200';
@@ -11240,22 +11260,30 @@
             // indeks blok mutlak di dunia: gedung yang sama selalu memakai pola jendela yang sama (tidak berkedip saat blok bergeser)
             const base = k * period - (off - kOff * period), kk = k + kOff;
             // menara telekomunikasi berangka baja: berdiri di tengah kota (lapis yang sama dengan gedung, jadi bergeser bersama kota)
-            if (hash(kk * 3.7 + par * 5) < 0.85) { const tx = base + period * (par < 0.2 ? 0.31 : 0.68) + hash(kk + par) * 120; if (tx > -60 && tx < W + 60) commTower(c, tx, yH + yo * ppm, (par < 0.2 ? 26 : 15) * ppm * sc2, { night, haze, dusk: !!MIS.dusk, sunR, seed: kk + par * 7 }); }
+            if (hash(kk * 3.7 + par * 5) < 0.85) { const tx = base + period * (par < 0.2 ? 0.31 : 0.68) + hash(kk + par) * 120; if (tx > -60 && tx < W + 60 && sceneEdge(V, sc, tx, par, 320) > 0.65) commTower(c, tx, yH + yo * ppm, (par < 0.2 ? 26 : 15) * ppm * sc2, { night, haze, dusk: !!MIS.dusk, sunR, seed: kk + par * 7 }); }
             for (let i = 0; i < n; i++) {
               const r = hash(i * 7.3 + par * 10), cl = Math.sin(i * 0.9 + par * 4) * 0.5 + 0.5; // gedung tinggi berkelompok di pusat kota
               const x = base + i * (period / n) + r * 40; if (x < -120 || x > W + 120) continue;
               const gl = sc.glass ? 0.75 : 1, bw = (5 + r * 6) * ppm * sc2 * gl, bh = ((sc.big ? 12 : 8) + (sc.big ? 30 : 14) * cl * (0.5 + 0.5 * hash(i * 2.1 + par))) * ppm * sc2 * gl;
-              drawTower(c, x, yH + yo * ppm, bw, bh, { seed: i + par * 31 + kk * 0.13, night, haze, sunR, glass: !!sc.glass || hash(i + 9) < 0.45, warm, lit: 0.55, dusk: !!MIS.dusk });
+              // pinggiran kota: makin ke tepi gedung makin jarang & rendah, lalu habis berganti sawah/kampung
+              const ed = sceneEdge(V, sc, x + bw / 2, par, 320); if (ed < 0.04 || hash(i * 5.7 + kk * 1.3 + par * 3) > 0.2 + ed) continue;
+              drawTower(c, x, yH + yo * ppm, bw, bh * (0.18 + 0.82 * ed), { seed: i + par * 31 + kk * 0.13, night, haze, sunR, glass: !!sc.glass || hash(i + 9) < 0.45, warm, lit: 0.55, dusk: !!MIS.dusk });
             }
           }
         }
-        drawCityBase(c, -20, W + 20, yH + 0.4 * ppm, 3.2 * ppm, { night, off: pcOf(V) * 0.4, haze: MIS.golden || MIS.dusk ? '255,214,170' : '236,226,214' });
+        const cb = (sceneX(V, sc, 0.4, sc.from) > -20 || sceneX(V, sc, 0.4, sc.to) < W + 20) ? scnCtx(C0) : c;
+        drawCityBase(cb, -20, W + 20, yH + 0.4 * ppm, 3.2 * ppm, { night, off: pcOf(V) * 0.4, haze: MIS.golden || MIS.dusk ? '255,214,170' : '236,226,214' });
+        if (cb !== c) scnFlush(C0, cb, V, sc, 0.4, 200);
         // jalan tol layang
-        const off = pcOf(V) * 0.5, yT = yH + 0.6 * ppm, pc = 30 * ppm;
-        c.fillStyle = night ? '#3a3648' : '#8f8a92'; c.fillRect(0, yT - 2.6 * ppm, W, 0.8 * ppm);
-        c.fillStyle = night ? '#2a2636' : '#6f6a74'; for (let x = -(off % pc); x < W; x += pc) c.fillRect(x, yT - 1.8 * ppm, 0.8 * ppm, 2.4 * ppm);
+        // tol layang hanya di dalam kota; di kedua ujungnya turun landai ke tanah (bukan memudar)
+        const off = pcOf(V) * 0.5, yT = yH + 0.6 * ppm, pc = 30 * ppm, hx0 = sceneX(V, sc, 0.5, sc.from - 60), hx1 = sceneX(V, sc, 0.5, sc.to + 60), rp = 140 * ppm * 0.5;
+        const lift = (x) => clamp(Math.min(x - hx0, hx1 - x) / rp, 0, 1), dy = (x) => (1 - lift(x)) * 2.1 * ppm;
+        { const xa = Math.max(-10, hx0), xb = Math.min(W + 10, hx1);
+          if (xb > xa) { c.fillStyle = night ? '#3a3648' : '#8f8a92'; c.beginPath(); c.moveTo(xa, yT - 2.6 * ppm + dy(xa));
+            for (let x = xa; x <= xb; x += 12) c.lineTo(x, yT - 2.6 * ppm + dy(x)); c.lineTo(xb, yT - 1.8 * ppm + dy(xb)); for (let x = xb; x >= xa; x -= 12) c.lineTo(x, yT - 1.8 * ppm + dy(x)); c.closePath(); c.fill(); } }
+        c.fillStyle = night ? '#2a2636' : '#6f6a74'; for (let x = -(off % pc); x < W; x += pc) { const l = lift(x); if (l > 0.15) c.fillRect(x, yT - 1.8 * ppm + dy(x), 0.8 * ppm, 2.4 * ppm - dy(x)); }
         const tt = performance.now() / 1000;
-        for (let q = 0; q < 9; q++) { const x = ((q * 211 + tt * (q % 2 ? 90 : -70) - off) % (W + 200) + W + 200) % (W + 200) - 100; c.fillStyle = night ? (q % 2 ? '#ff6a5a' : '#fff4c8') : ['#c0392b', '#eef2f4', '#2e6db0', '#f2c230'][q % 4]; c.fillRect(x, yT - 3.1 * ppm, (q % 3 ? 2.4 : 4.5) * ppm, 0.6 * ppm); }
+        for (let q = 0; q < 9; q++) { const x = ((q * 211 + tt * (q % 2 ? 90 : -70) - off) % (W + 200) + W + 200) % (W + 200) - 100; c.fillStyle = night ? (q % 2 ? '#ff6a5a' : '#fff4c8') : ['#c0392b', '#eef2f4', '#2e6db0', '#f2c230'][q % 4]; if (x > hx0 && x < hx1) c.fillRect(x, yT - 3.1 * ppm + dy(x), (q % 3 ? 2.4 : 4.5) * ppm, 0.6 * ppm); }
       } else if (sc.kind === 'coast' || sc.kind === 'salt') {
         // laut Pantura di cakrawala: kilau senja, perahu nelayan, mercusuar, kincir angin
         const yS = yH - 0.6 * ppm, yB = yH + 2.2 * ppm;
@@ -11315,19 +11343,19 @@
       } else if (sc.kind === 'cane') {
         // kebun tebu: barisan batang tinggi berdaun panjang melengkung, malai bunga keperakan, jalur lori tebu
         c.globalAlpha = 1;
-        const grow = smooth(0, 1, w), wind = Math.sin(performance.now() / 900) * 0.6;
+        const wind = Math.sin(performance.now() / 900) * 0.6;
         const rows = [[0.3, 0.42, night ? '#24331f' : '#8fa458', night ? '#1a2617' : '#6f8a3c'], [0.4, 0.58, night ? '#1e2c1a' : '#7d9a46', night ? '#152013' : '#5b7a2e'], [0.55, 0.8, night ? '#182515' : '#6c8e3a', night ? '#101a0e' : '#4a6a24']];
         rows.forEach(([par, scl, col, colD], li) => {
-          const off = pcOf(V) * par, gap = 0.8 * ppm * scl, yb = yH + (li * 1.1 + 0.4) * ppm, hh = 5.6 * ppm * scl * grow;
-          if (hh < 1) return;
+          const off = pcOf(V) * par, gap = 0.8 * ppm * scl, yb = yH + (li * 1.1 + 0.4) * ppm, hh0 = 5.6 * ppm * scl;
           // massa daun rapat sebagai dasar barisan
           c.fillStyle = colD; c.beginPath(); c.moveTo(-10, yb + 1.5 * ppm);
-          for (let x = -(((off % 9) + 9) % 9) - 9; x <= W + 18; x += 9) c.lineTo(x, yb - hh * (0.7 + hash(Math.round((x + off) / 9) + li * 13) * 0.12));
+          for (let x = -(((off % 9) + 9) % 9) - 9; x <= W + 18; x += 9) c.lineTo(x, yb - hh0 * sceneEdge(V, sc, x, par) * (0.7 + hash(Math.round((x + off) / 9) + li * 13) * 0.12));
           c.lineTo(W + 20, yb + 1.5 * ppm); c.closePath(); c.fill();
           const j0 = Math.floor((off - gap) / gap), j1 = Math.ceil((off + W + gap) / gap);
           c.lineCap = 'round';
           for (let j = j0; j <= j1; j++) {
-            const r = hash(j * 2.3 + li * 7), x = j * gap - off + r * gap * 0.5, top = yb - hh * (0.85 + r * 0.25);
+            const r = hash(j * 2.3 + li * 7), x = j * gap - off + r * gap * 0.5, g = sceneEdge(V, sc, x, par), hh = hh0 * g, top = yb - hh * (0.85 + r * 0.25);
+            if (g < 0.05) continue;
             // batang beruas
             c.strokeStyle = colD; c.lineWidth = Math.max(1, 0.09 * ppm * scl); c.beginPath(); c.moveTo(x, yb); c.lineTo(x + wind * 0.15 * ppm * scl, top); c.stroke();
             // daun panjang melengkung ke kedua sisi
@@ -11345,45 +11373,42 @@
         // jalur lori tebu dengan gerbong kecil bermuatan tebu di depan barisan pertama
         if (sc.lori) {
           const par = 0.44, off = pcOf(V) * par, scl = 0.6, yb = yH + 1.9 * ppm, base = (((-off) % (W * 1.4)) + W * 1.4) % (W * 1.4) - W * 0.2;
-          c.fillStyle = night ? '#2a2420' : '#6a5a48'; c.fillRect(0, yb, W, Math.max(1, 0.1 * ppm));
-          for (let q = 0; q < 4; q++) { const x = base + q * 2.4 * ppm * scl;
+          const la = Math.max(0, sceneX(V, sc, par, sc.from)), lb = Math.min(W, sceneX(V, sc, par, sc.to)); if (lb > la) { c.fillStyle = night ? '#2a2420' : '#6a5a48'; c.fillRect(la, yb, lb - la, Math.max(1, 0.1 * ppm)); }
+          for (let q = 0; q < 4; q++) { const x = base + q * 2.4 * ppm * scl; if (x < la || x > lb - 2.4 * ppm * scl) continue;
             c.fillStyle = night ? '#2a1e18' : '#5a4636'; c.fillRect(x, yb - 0.75 * ppm * scl, 2.1 * ppm * scl, 0.45 * ppm * scl);
             c.fillStyle = night ? '#3a4a2a' : '#c7b46a'; for (let t = 0; t < 6; t++) c.fillRect(x - 0.1 * ppm * scl, yb - (0.95 + t * 0.09) * ppm * scl, 2.3 * ppm * scl, Math.max(1, 0.07 * ppm * scl));
             c.fillStyle = '#1a1a1a'; for (const wx of [0.4, 1.7]) { c.beginPath(); c.arc(x + wx * ppm * scl, yb - 0.12 * ppm * scl, 0.16 * ppm * scl, 0, 7); c.fill(); } }
         }
       } else if (sc.kind === 'coffee') {
         // kebun kopi di lereng berundak: perdu bulat berbuah merah, pohon pelindung bertajuk tipis, pondok jemur
-        c.globalAlpha = 1;
-        const grow = smooth(0, 1, w);
         // lereng berundak di belakang
         { const off = pcOf(V) * 0.2; c.fillStyle = night ? '#1a2620' : '#6f8c5a';
-          c.beginPath(); c.moveTo(-10, yH + 0.4 * ppm); for (let x = -10; x <= W + 10; x += 12) c.lineTo(x, yH - (5.5 + 2.5 * Math.sin((x + off) * 0.006) + 1.2 * Math.sin((x + off) * 0.017)) * ppm * grow); c.lineTo(W + 10, yH + 0.4 * ppm); c.closePath(); c.fill();
+          c.beginPath(); c.moveTo(-10, yH + 0.4 * ppm); for (let x = -10; x <= W + 10; x += 12) c.lineTo(x, yH - (5.5 + 2.5 * Math.sin((x + off) * 0.006) + 1.2 * Math.sin((x + off) * 0.017)) * ppm * sceneEdge(V, sc, x, 0.2)); c.lineTo(W + 10, yH + 0.4 * ppm); c.closePath(); c.fill();
           c.strokeStyle = night ? 'rgba(80,110,80,0.4)' : 'rgba(210,200,150,0.55)'; c.lineWidth = 1;
-          for (let t = 1; t < 5; t++) { c.beginPath(); for (let x = -10; x <= W + 10; x += 12) { const y = yH - (5.5 + 2.5 * Math.sin((x + off) * 0.006) + 1.2 * Math.sin((x + off) * 0.017)) * ppm * grow * (1 - t * 0.2); x < 0 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); } }
+          for (let t = 1; t < 5; t++) { c.beginPath(); for (let x = -10; x <= W + 10; x += 12) { const y = yH - (5.5 + 2.5 * Math.sin((x + off) * 0.006) + 1.2 * Math.sin((x + off) * 0.017)) * ppm * sceneEdge(V, sc, x, 0.2) * (1 - t * 0.2); x < 0 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); } }
         // pohon pelindung (dadap/lamtoro): batang ramping, tajuk datar bertingkat
         { const par = 0.3, off = pcOf(V) * par, gap = 22 * ppm * 0.5, j0 = Math.floor((off - gap) / gap), j1 = Math.ceil((off + W + gap) / gap);
-          for (let j = j0; j <= j1; j++) { const r = hash(j * 4.1 + 3), x = j * gap - off + r * gap * 0.6, yb = yH + 0.2 * ppm, h = (6 + r * 3) * ppm * 0.5 * grow; if (h < 2) continue;
+          for (let j = j0; j <= j1; j++) { const r = hash(j * 4.1 + 3), x = j * gap - off + r * gap * 0.6, yb = yH + 0.2 * ppm, h = (6 + r * 3) * ppm * 0.5 * sceneEdge(V, sc, x, par); if (h < 2) continue;
             c.strokeStyle = night ? '#1a1a16' : '#6a5440'; c.lineWidth = Math.max(1, 0.25 * ppm * 0.5); c.beginPath(); c.moveTo(x, yb); c.lineTo(x, yb - h); c.stroke();
             c.fillStyle = night ? '#1c2a1e' : '#7fa060'; for (const [dx, dy, rw] of [[0, 0, 2.6], [-1.2, 0.9, 1.8], [1.3, 0.8, 1.7]]) { c.beginPath(); c.ellipse(x + dx * ppm * 0.5, yb - h + dy * ppm * 0.5, rw * ppm * 0.5, 0.55 * ppm * 0.5, 0, 0, 7); c.fill(); } } }
         // barisan perdu kopi berundak, makin dekat makin besar
         [[0.36, 0.5, 0.2], [0.46, 0.66, 1.1], [0.58, 0.86, 2.1]].forEach(([par, scl, dy], li) => {
           const off = pcOf(V) * par, gap = 2.3 * ppm * scl, yb = yH + dy * ppm, j0 = Math.floor((off - gap) / gap), j1 = Math.ceil((off + W + gap) / gap);
-          c.fillStyle = night ? '#2a2418' : '#a08458'; c.fillRect(0, yb - 0.05 * ppm, W, 0.28 * ppm * scl); // tanggul teras
-          for (let j = j0; j <= j1; j++) { const r = hash(j * 1.9 + li * 11), x = j * gap - off + r * gap * 0.25, rr = (0.95 + r * 0.35) * ppm * scl * grow; if (rr < 1) continue;
+          { const ta = Math.max(0, sceneX(V, sc, par, sc.from)), tb = Math.min(W, sceneX(V, sc, par, sc.to)); if (tb > ta) { c.fillStyle = night ? '#2a2418' : '#a08458'; c.fillRect(ta, yb - 0.05 * ppm, tb - ta, 0.28 * ppm * scl); } } // tanggul teras
+          for (let j = j0; j <= j1; j++) { const r = hash(j * 1.9 + li * 11), x = j * gap - off + r * gap * 0.25, rr = (0.95 + r * 0.35) * ppm * scl * sceneEdge(V, sc, x, par); if (rr < 1) continue;
             c.fillStyle = night ? '#132016' : '#2f5a2c'; c.beginPath(); c.ellipse(x, yb - rr * 0.9, rr, rr * 0.95, 0, 0, 7); c.fill();
             c.fillStyle = night ? '#1c2c1e' : '#4a7c3a'; c.beginPath(); c.ellipse(x - rr * 0.25, yb - rr * 1.15, rr * 0.62, rr * 0.55, 0, 0, 7); c.fill();
             if (!night) { c.fillStyle = '#c8322a'; for (let q = 0; q < 5; q++) { const a = hash(j * 7 + q) * 6.28, d = rr * (0.35 + hash(j + q * 3) * 0.5); c.beginPath(); c.arc(x + Math.cos(a) * d, yb - rr * 0.9 + Math.sin(a) * d * 0.8, Math.max(0.8, 0.09 * ppm * scl), 0, 7); c.fill(); } } }
         });
         // pondok jemur kopi beratap ijuk dengan tampah biji kopi
         { const par = 0.4, off = pcOf(V) * par, P = W * 1.8, x = (((W * 0.7 - off) % P) + P) % P - W * 0.3, yb = yH + 0.9 * ppm, s2 = ppm * 0.6;
+          if (sceneEdge(V, sc, x + 1.8 * s2, par) > 0.6) {
           c.fillStyle = night ? '#1c1612' : '#5a4232'; c.fillRect(x, yb - 2.2 * s2, 0.18 * s2, 2.2 * s2); c.fillRect(x + 3.4 * s2, yb - 2.2 * s2, 0.18 * s2, 2.2 * s2);
           c.fillStyle = night ? '#1a1612' : '#3a2c22'; c.beginPath(); c.moveTo(x - 0.7 * s2, yb - 2.1 * s2); c.lineTo(x + 1.8 * s2, yb - 3.4 * s2); c.lineTo(x + 4.3 * s2, yb - 2.1 * s2); c.closePath(); c.fill();
-          c.fillStyle = night ? '#2a2018' : '#c8a46a'; for (const tx of [-2.6, 5.2]) { c.beginPath(); c.ellipse(x + tx * s2, yb - 0.1 * s2, 1.0 * s2, 0.22 * s2, 0, 0, 7); c.fill(); c.fillStyle = night ? '#2a1814' : '#7a3a22'; c.beginPath(); c.ellipse(x + tx * s2, yb - 0.16 * s2, 0.75 * s2, 0.12 * s2, 0, 0, 7); c.fill(); c.fillStyle = night ? '#2a2018' : '#c8a46a'; } }
+          c.fillStyle = night ? '#2a2018' : '#c8a46a'; for (const tx of [-2.6, 5.2]) { c.beginPath(); c.ellipse(x + tx * s2, yb - 0.1 * s2, 1.0 * s2, 0.22 * s2, 0, 0, 7); c.fill(); c.fillStyle = night ? '#2a1814' : '#7a3a22'; c.beginPath(); c.ellipse(x + tx * s2, yb - 0.16 * s2, 0.75 * s2, 0.12 * s2, 0, 0, 7); c.fill(); c.fillStyle = night ? '#2a2018' : '#c8a46a'; } } }
       } else if (sc.kind === 'teak') {
         // hutan jati Alas Roban: tajuk rapat berlapis yang 'tumbuh' dari cakrawala (tanpa transparan
         // sehingga tidak tampak seperti hantu di atas gunung), jarak pohon tak beraturan, batang lurus
-        c.globalAlpha = 1;
-        const grow = smooth(0, 1, w);
         const layers = [[0.26, 0.34, night ? '#1d2b26' : '#76805a', night ? '#16211d' : '#646f4b'], [0.36, 0.46, night ? '#17241f' : '#5b6a40', night ? '#111a16' : '#4b5933'], [0.5, 0.6, night ? '#111b17' : '#46562c', night ? '#0c1410' : '#384624']];
         layers.forEach(([par, scl, col, colD], li) => {
           const off = pcOf(V) * par, gap = 13 * ppm * scl, j0 = Math.floor((off - gap * 2) / gap), j1 = Math.ceil((off + W + gap * 2) / gap);
@@ -11391,8 +11416,8 @@
           const crowns = [];
           for (let j = j0; j <= j1; j++) {
             const r = hash(j * 1.7 + li * 31), x = j * gap + hash(j * 3.1 + li) * gap * 0.7 - off;
-            const h = (13 + r * 9) * ppm * scl * grow; if (h < 1) continue;
-            crowns.push([x, yb - h, (3.4 + hash(j * 5.3 + li) * 1.8) * ppm * scl * Math.max(0.3, grow), r]);
+            const g = sceneEdge(V, sc, x, par), h = (13 + r * 9) * ppm * scl * g; if (h < 1) continue; // hutan menipis & merendah di tepinya
+            crowns.push([x, yb - h, (3.4 + hash(j * 5.3 + li) * 1.8) * ppm * scl * Math.max(0.3, g), r]);
           }
           // batang
           c.fillStyle = colD;
@@ -11405,11 +11430,12 @@
           }
           // semak bawah rapat menutup kaki batang
           c.fillStyle = colD; c.beginPath(); c.moveTo(-10, yb + 2 * ppm);
-          for (let x = -(((off % 18) + 18) % 18) - 18; x <= W + 36; x += 18) c.lineTo(x, yb - (1.2 + hash(Math.round((x + off) / 18) + li * 7) * 1.4) * ppm * scl * grow);
+          for (let x = -(((off % 18) + 18) % 18) - 18; x <= W + 36; x += 18) c.lineTo(x, yb - (1.2 + hash(Math.round((x + off) / 18) + li * 7) * 1.4) * ppm * scl * sceneEdge(V, sc, x, par));
           c.lineTo(W + 20, yb + 2 * ppm); c.closePath(); c.fill();
         });
       }
       c.restore();
+      if (useMask) scnFlush(C0, c, V, sc, pm);
     }
   }
   // pantulan busur di permukaan sungai
