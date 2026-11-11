@@ -8154,23 +8154,33 @@
     const rowY = (t) => yTop + (H - yTop) * Math.pow(t, 1.55);
     const at = (sx, t) => sx + (V.Xn(sx) - sx) * Math.pow(t, 1.55);
     const xF = X(st.x), xR = X(st.x - TRAIN_LEN), tt = performance.now() / 1000;
-    if (xF < 0 || xR > W) return;
+    const Kp = ROUTE.double && st.kilat, kOn = Kp && X(Kp.x) < W && X(Kp.x + kilatLen()) > 0;
+    if ((xF < 0 || xR > W) && !kOn) return;
     const nearStn = allStations().some((q) => st.x > q.x - 140 && st.x - TRAIN_LEN < q.x + 40);
     if (nearStn) return;
     // tiap kendaraan: [belakang, depan, warna badan, warna pita jendela/aksen]
-    const segs = [[st.x - LOCO_LEN, st.x, V.night ? 'rgba(150,50,40,' : 'rgba(205,60,46,', V.night ? 'rgba(255,190,120,' : 'rgba(40,20,20,']];
+    // warna pantulan mengikuti cat kereta: Guntur/Kilat putih berpita kaca hitam & garis merah/biru, Cakra merah, gerbong stainless berpita oranye
+    const LK = MIS.loco, HSTR = LK === 'hst2' || LK === 'hst';
+    const white = V.night ? 'rgba(160,168,180,' : 'rgba(238,240,244,', dark = V.night ? 'rgba(255,205,120,' : 'rgba(14,18,24,';
+    const stripe = LK === 'hst' ? '21,103,196' : HSTR ? '212,32,43' : '242,165,22';
+    const segs = [[st.x - LOCO_LEN, st.x, HSTR ? white : V.night ? 'rgba(150,50,40,' : 'rgba(205,60,46,', HSTR ? dark : V.night ? 'rgba(255,190,120,' : 'rgba(40,20,20,', stripe]];
     for (let k = 0; k < N_COACH; k++) {
       const f = st.x - carFront(k);
-      if (MIS.freight) segs.push([f - CAR_LEN, f, V.night ? 'rgba(90,60,50,' : 'rgba(130,70,55,', 'rgba(30,25,22,']);
-      else segs.push([f - CAR_LEN, f, V.night ? 'rgba(150,160,175,' : 'rgba(225,230,236,', V.night ? 'rgba(255,205,120,' : 'rgba(45,60,75,']);
+      if (MIS.freight) segs.push([f - CAR_LEN, f, V.night ? 'rgba(90,60,50,' : 'rgba(130,70,55,', 'rgba(30,25,22,', null]);
+      else segs.push([f - CAR_LEN, f, HSTR ? white : V.night ? 'rgba(150,160,175,' : 'rgba(225,230,236,', HSTR ? dark : V.night ? 'rgba(255,205,120,' : 'rgba(45,60,75,', stripe]);
     }
-    const i0 = Math.floor((st.x - TRAIN_LEN - 60) / cell), i1 = Math.ceil((st.x + 60) / cell);
+    // Kilat yang berpapasan di jalur 2 ikut terpantul (lebih dekat ke air)
+    const K = ROUTE.double && st.kilat; if (K) segs.push([K.x, K.x + kilatLen(), white, dark, '21,103,196']);
+    const lo = Math.min(st.x - TRAIN_LEN, K ? K.x : Infinity), hi = Math.max(st.x, K ? K.x + kilatLen() : -Infinity);
+    const i0 = Math.floor((lo - 60) / cell), i1 = Math.ceil((hi + 60) / cell);
     c.save();
+    // jalur ganda: pantulan hanya di air sawah di depan tanggul jalur 2, tidak menimpa balas & rel jalur 2
+    if (ROUTE.double) { const yc = gy + (DBL_K * ROUTE.double.o + 1.5) * ppm; c.beginPath(); c.rect(-20, yc, W + 40, H - yc + 20); c.clip(); }
     for (let i = i0; i <= i1; i++) for (let r = 0; r < 4; r++) {
       if (hash(i * 7.31 + r * 1.93) > 0.45) continue;  // hanya petak berair
       const t0 = r / rows + 0.025, t1 = (r + 1) / rows - 0.025, xa = X(i * cell), xb = X((i + 1) * cell);
       const q = [[at(xa, t0) + 2, rowY(t0)], [at(xb, t0) - 2, rowY(t0)], [at(xb, t1) - 3, rowY(t1)], [at(xa, t1) + 3, rowY(t1)]];
-      if (q[1][0] < xR - 40 || q[0][0] > xF + 40) continue;
+      if (q[1][0] < X(lo) - 40 || q[0][0] > X(hi) + 40) continue;
       c.save(); c.beginPath(); q.forEach(([x, y], n) => (n ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.clip();
       const y0 = q[0][1], y1 = q[3][1], hgt = y1 - y0, strips = 10, fade = 1 - r * 0.22;
       // pantulan terbalik: lajur paling atas = bagian bawah kereta (rangka gelap), lalu badan, pita jendela, atap
@@ -8179,15 +8189,15 @@
         const tk = k / strips, yy = y0 + tk * hgt, wob = Math.sin(tt * 3.2 + k * 1.3 + i) * (1 + r) * 1.4;
         const a = (V.night ? 0.5 : 0.46) * fade * (1 - tk * 0.55);
         const band = bands.find(([b0, b1]) => tk >= b0 && tk < b1)[2];
-        for (const [m0, m1, col, acc] of segs) {
+        for (const [m0, m1, col, acc, stc] of segs) {
           const sx0 = at(X(m0), t0 + (t1 - t0) * tk) + wob, sx1 = at(X(m1), t0 + (t1 - t0) * tk) + wob;
           const fill = band === 'under' ? 'rgba(25,28,32,' : band === 'win' ? acc : band === 'roof' ? (V.night ? 'rgba(90,95,110,' : 'rgba(170,178,186,') : col;
           c.fillStyle = fill + a + ')'; c.fillRect(sx0 + 1, yy, sx1 - sx0 - 2, hgt / strips + 0.5);
           // jendela bersekat & garis livery pada pantulan gerbong
-          if (band === 'win' && sx1 - sx0 > 30 && col.indexOf('225') > 0 || (band === 'win' && V.night)) {
+          if (band === 'win' && sx1 - sx0 > 30 && stc || (band === 'win' && V.night)) {
             c.fillStyle = `rgba(10,14,18,${a * 0.6})`; for (let w = sx0 + 6; w < sx1 - 6; w += Math.max(8, (sx1 - sx0) / 8)) c.fillRect(w, yy, 2, hgt / strips + 0.5);
           }
-          if (band === 'body' && tk < 0.42 && tk > 0.3 && col.indexOf('225') > 0) { c.fillStyle = `rgba(242,165,22,${a})`; c.fillRect(sx0 + 1, yy, sx1 - sx0 - 2, Math.max(1, hgt / strips * 0.35)); }
+          if (band === 'body' && tk < 0.42 && tk > 0.3 && stc) { c.fillStyle = `rgba(${stc},${a})`; c.fillRect(sx0 + 1, yy, sx1 - sx0 - 2, Math.max(1, hgt / strips * 0.35)); }
         }
       }
       // kilau riak putih tipis yang bergerak mengikuti kereta
