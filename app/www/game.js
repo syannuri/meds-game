@@ -11614,15 +11614,17 @@
     if (!night) { const kg = c.createLinearGradient(x, top, x + w, top + h * 0.6); kg.addColorStop(0.35, 'rgba(255,255,255,0)'); kg.addColorStop(0.45, 'rgba(255,255,255,0.28)'); kg.addColorStop(0.55, 'rgba(255,255,255,0)'); c.fillStyle = kg; c.fillRect(x, top, w, h); }
     // banner LED tertanam: pita kaca gelap selebar muka gedung, sedikit di bawah mahkota
     const by = top + crown + 1.6 * u, bh = 5.6 * u;
-    const bg = c.createLinearGradient(0, by, 0, by + bh); bg.addColorStop(0, '#070b18'); bg.addColorStop(1, '#10162a'); c.fillStyle = bg; c.fillRect(x, by, w, bh);
+    // latar banner = kaca fasad yang sama, hanya sedikit lebih dalam ronanya; kisi kaca tetap menerus sehingga LED tampak di balik kaca
+    const bg = c.createLinearGradient(0, by, 0, by + bh); bg.addColorStop(0, night ? 'rgba(6,10,24,0.45)' : 'rgba(40,70,100,0.16)'); bg.addColorStop(1, night ? 'rgba(6,10,24,0.55)' : 'rgba(30,55,85,0.24)'); c.fillStyle = bg; c.fillRect(x, by, w, bh);
+    c.strokeStyle = night ? 'rgba(120,150,210,0.16)' : 'rgba(235,244,252,0.28)'; c.lineWidth = 1; c.beginPath(); for (let m = x + 1.4 * u; m < x + w; m += 1.4 * u) { c.moveTo(m, by); c.lineTo(m, by + bh); } c.stroke();
     const spec = c.createLinearGradient(x, 0, x + w, 0); ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899', '#f59e0b'].forEach((col, i) => spec.addColorStop(i / 4, col));
     const pulse = 0.75 + 0.25 * Math.sin(tt * 1.6);
-    c.fillStyle = spec; c.globalAlpha = 0.95; c.fillRect(x, by, w, Math.max(1, 0.18 * u)); c.fillRect(x, by + bh - Math.max(1, 0.18 * u), w, Math.max(1, 0.18 * u)); c.globalAlpha = 1;
+    c.fillStyle = spec; c.globalAlpha = night ? 0.9 : 0.7; c.fillRect(x, by, w, Math.max(1, 0.12 * u)); c.fillRect(x, by + bh - Math.max(1, 0.12 * u), w, Math.max(1, 0.12 * u)); c.globalAlpha = 1;
     // logo prisma: segitiga kaca, sinar putih masuk dari kiri, spektrum keluar ke kanan
     const px = x + 2.6 * u, py = by + bh / 2, ps = 1.7 * u;
-    c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = Math.max(1, 0.12 * u); c.beginPath(); c.moveTo(px - 2.2 * u, py + 0.3 * u); c.lineTo(px - 0.5 * u, py); c.stroke();
+    c.strokeStyle = night ? 'rgba(255,255,255,0.9)' : 'rgba(30,58,95,0.85)'; c.lineWidth = Math.max(1, 0.12 * u); c.beginPath(); c.moveTo(px - 2.2 * u, py + 0.3 * u); c.lineTo(px - 0.5 * u, py); c.stroke();
     ['#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7'].forEach((col, i) => { c.strokeStyle = col; c.globalAlpha = 0.9 * pulse; c.lineWidth = Math.max(1, 0.1 * u); c.beginPath(); c.moveTo(px + 0.5 * u, py); c.lineTo(px + 1.9 * u, py - 0.7 * u + i * 0.35 * u); c.stroke(); }); c.globalAlpha = 1;
-    c.fillStyle = 'rgba(200,235,255,0.35)'; c.strokeStyle = '#e0f2fe'; c.lineWidth = Math.max(1, 0.1 * u); c.beginPath(); c.moveTo(px, py - ps); c.lineTo(px + ps * 0.9, py + ps * 0.6); c.lineTo(px - ps * 0.9, py + ps * 0.6); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = night ? 'rgba(200,235,255,0.35)' : 'rgba(255,255,255,0.4)'; c.strokeStyle = night ? '#e0f2fe' : '#1e3a5f'; c.lineWidth = Math.max(1, 0.1 * u); c.beginPath(); c.moveTo(px, py - ps); c.lineTo(px + ps * 0.9, py + ps * 0.6); c.lineTo(px - ps * 0.9, py + ps * 0.6); c.closePath(); c.fill(); c.stroke();
     // tulisan bercahaya bergradasi spektrum, LAB lebih tipis
     // ukuran tulisan menyesuaikan lebar fasad agar PRISMATIX LAB muat utuh
     const tx = x + 5.2 * u, avail = w - 5.2 * u - 1.0 * u; let fs = Math.round(2.9 * u);
@@ -11630,15 +11632,16 @@
     const sub = B.sub.split('').join(' '), meas = (f) => { c.font = `900 ${f}px "Big Shoulders Display", sans-serif`; const a = c.measureText(B.name).width; c.font = `600 ${Math.round(f * 0.7)}px "Big Shoulders Display", sans-serif`; return a + 0.7 * u + c.measureText(sub).width; };
     while (fs > 6 && meas(fs) > avail) fs--;
     c.font = `900 ${fs}px "Big Shoulders Display", sans-serif`;
-    const nameW = c.measureText(B.name).width, tg = c.createLinearGradient(tx, 0, tx + nameW, 0); tg.addColorStop(0, '#a5f3fc'); tg.addColorStop(0.5, '#e0e7ff'); tg.addColorStop(1, '#f5d0fe');
-    c.save(); c.shadowColor = 'rgba(120,200,255,0.9)'; c.shadowBlur = 1.2 * u * pulse; c.fillStyle = tg; c.fillText(B.name, tx, py + 0.1 * u); c.restore();
-    c.font = `600 ${Math.round(fs * 0.7)}px "Big Shoulders Display", sans-serif`; c.fillStyle = `rgba(165,243,252,${0.78 + 0.22 * pulse})`;
+    const nameW = c.measureText(B.name).width, tg = c.createLinearGradient(tx, 0, tx + nameW, 0);
+    if (night) { tg.addColorStop(0, '#a5f3fc'); tg.addColorStop(0.5, '#e0e7ff'); tg.addColorStop(1, '#f5d0fe'); } else { tg.addColorStop(0, '#0e7490'); tg.addColorStop(0.5, '#3730a3'); tg.addColorStop(1, '#a21caf'); } // siang: LED pekat agar terbaca di kaca terang
+    c.save(); c.shadowColor = night ? 'rgba(120,200,255,0.9)' : 'rgba(255,255,255,0.7)'; c.shadowBlur = (night ? 1.2 : 0.5) * u * pulse; c.fillStyle = tg; c.fillText(B.name, tx, py + 0.1 * u); c.restore();
+    c.font = `600 ${Math.round(fs * 0.7)}px "Big Shoulders Display", sans-serif`; c.fillStyle = night ? `rgba(165,243,252,${0.78 + 0.22 * pulse})` : `rgba(14,116,144,${0.8 + 0.2 * pulse})`;
     c.fillText(sub, tx + nameW + 0.7 * u, py + 0.12 * u);
     c.restore();
     // banner melingkari sudut ke sisi samping gedung (menyatu dengan badan), garis spektrum ikut berbelok
     { const k = 1.6 * u / sd, q = (dx, y) => [x + w + dx, y + dx * k]; const qs = [q(0, by), q(sd, by), q(sd, by + bh), q(0, by + bh)];
-      c.fillStyle = '#060a16'; c.beginPath(); qs.forEach(([a1, b1], i) => (i ? c.lineTo(a1, b1) : c.moveTo(a1, b1))); c.closePath(); c.fill();
-      c.strokeStyle = '#f59e0b'; c.globalAlpha = 0.9; c.lineWidth = Math.max(1, 0.18 * u); c.beginPath(); c.moveTo(...q(0, by)); c.lineTo(...q(sd, by)); c.moveTo(...q(0, by + bh)); c.lineTo(...q(sd, by + bh)); c.stroke(); c.globalAlpha = 1;
+      c.fillStyle = night ? 'rgba(6,10,24,0.5)' : 'rgba(20,40,60,0.14)'; c.beginPath(); qs.forEach(([a1, b1], i) => (i ? c.lineTo(a1, b1) : c.moveTo(a1, b1))); c.closePath(); c.fill();
+      c.strokeStyle = '#f59e0b'; c.globalAlpha = night ? 0.9 : 0.6; c.lineWidth = Math.max(1, 0.18 * u); c.beginPath(); c.moveTo(...q(0, by)); c.lineTo(...q(sd, by)); c.moveTo(...q(0, by + bh)); c.lineTo(...q(sd, by + bh)); c.stroke(); c.globalAlpha = 1;
       for (let i = 0; i < 4; i++) { const t = (i + 0.5) / 4, [a1, b1] = q(sd * t, by + bh * 0.3), [a2, b2] = q(sd * t, by + bh * 0.7); c.strokeStyle = ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899'][i]; c.globalAlpha = 0.55 * pulse; c.lineWidth = Math.max(1, 0.12 * u); c.beginPath(); c.moveTo(a1, b1); c.lineTo(a2, b2); c.stroke(); } c.globalAlpha = 1; }
     // lajur cahaya tegak di sudut gedung, menyambung dari banner ke kaki gedung (menyatu dengan badan)
     const lg = c.createLinearGradient(0, by + bh, 0, yb); lg.addColorStop(0, `rgba(34,211,238,${0.9 * pulse})`); lg.addColorStop(1, 'rgba(168,85,247,0.15)');
