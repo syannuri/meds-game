@@ -31,6 +31,17 @@
   const ELEC = () => MIS.loco === 'hst2' || MIS.loco === 'hst' || MIS.loco === 'argo'; // bertenaga listrik 25 kV (pantograf): Guntur, Kilat, Agraveda
   const DAWN = () => MIS.sky === 'dawn' && !MIS.dusk && !MIS.golden && !MIS.day && MIS.land !== 'sawit'; // misi fajar-pagi di Jawa (1-1 s.d. 1-4)
   const RICH = () => !!(MIS.dusk || MIS.golden || DAWN()); // misi dengan langit, pantulan air & cahaya yang diperkaya (senja & sore keemasan)
+  // getaran HP (haptik): pola singkat untuk peristiwa penting. Android (Chrome/WebView) lewat navigator.vibrate,
+  // aplikasi Capacitor lewat plugin Haptics bila terpasang. iPhone Safari tidak mendukung getaran dari web.
+  const HAPT = {
+    on: store.get('rn.haptic') !== '0', last: 0, mo: null,
+    buzz(pat, minGap = 70) {
+      if (!this.on) return; const now = performance.now(); if (now - this.last < minGap) return; this.last = now;
+      try { const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics; if (H && H.vibrate) { H.vibrate({ duration: Array.isArray(pat) ? pat[0] : pat }); return; } } catch (e) { /* tanpa plugin */ }
+      try { navigator.vibrate && navigator.vibrate(pat); } catch (e) { /* perangkat tanpa getaran */ }
+    },
+    toggle() { this.on = !this.on; store.set('rn.haptic', this.on ? '1' : '0'); if (this.on) this.buzz(25, 0); },
+  };
   const SMOOTH = () => ELEC() || !!ROUTE.hst; // kereta cepat: tanpa guncangan sama sekali (rel las panjang, suspensi udara, coupler rapat)
   const WIRE_H = 4.42; // tinggi kawat aliran atas di layar samping (meter terskala, tepat di kepala pantograf)
   // susunan rangkaian berubah per misi: 3 gerbong penumpang atau N gerbong batu bara
@@ -938,7 +949,7 @@
     let musicOn = store.get('rn.music') !== '0';
     const L = {};                    // lapisan bunyi kontinu
     const tails = [];                // ekor desis yang boleh dipotong halus
-    let nextBird = 0, nextBell = 0, nextCricket = 0, nextFrog = 0, nextBedug = 6, nextDove = 4, nextRooster = 3, nextCicada = 8, nextBird2 = 1.5;
+    let nextBird = 0, nextBell = 0, nextCricket = 0, nextFrog = 0, nextBedug = 6, nextDove = 4, nextRooster = 3, nextCicada = 8, nextBird2 = 1.5, nextMoto = 4, nextDog = 7, nextCow = 12, nextHonk = 3, nextKids = 9;
     let eventBusyUntil = 0;
     let musicTimer = null, nextBeat = 0, beat = 0, musicLevel = MIX.musicIdle;
     let idVoice = null;
@@ -1167,6 +1178,7 @@
         L.crowd = loop(brown, 'bandpass', 520, 1.3, amb);
         L.rain = loop(white, 'bandpass', 2400, 0.35, amb);
         L.rainLow = loop(brown, 'lowpass', 500, 0.5, amb);
+        L.city = loop(brown, 'lowpass', 260, 0.4, amb); // dengung lalu lintas kota di kejauhan
         // gemerisik daun pepohonan: noise lembut yang naik-turun pelan seperti tertiup angin
         L.leaves = loop(white, 'bandpass', 1500, 0.4, amb);
         {
@@ -1411,6 +1423,39 @@
       out.connect(amb);
       o.start(t); am.start(t); o.stop(t + dur + 0.1); am.stop(t + dur + 0.1);
     }
+    // sepeda motor lewat di jalan desa: dengung dua-tak yang mendekat lalu menjauh (efek Doppler), bergeser kiri-kanan
+    function motoPass(vol) {
+      if (!ac) return;
+      const t = ac.currentTime + 0.05, dur = 2.6 + Math.random() * 1.6, dir = Math.random() < 0.5 ? 1 : -1, f0 = 95 + Math.random() * 40;
+      const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f0 * 1.12, t); o.frequency.linearRampToValueAtTime(f0, t + dur * 0.5); o.frequency.linearRampToValueAtTime(f0 * 0.88, t + dur);
+      const am = ac.createOscillator(); am.frequency.value = 26 + Math.random() * 10; const ag = ac.createGain(); ag.gain.value = 0.6; am.connect(g(0.4)).connect(ag.gain);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
+      const env = ac.createGain(); env.gain.setValueAtTime(0.0001, t); env.gain.exponentialRampToValueAtTime(vol, t + dur * 0.5); env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      let out = o.connect(ag).connect(lp).connect(env);
+      if (ac.createStereoPanner) { const pn = ac.createStereoPanner(); pn.pan.setValueAtTime(-0.8 * dir, t); pn.pan.linearRampToValueAtTime(0.8 * dir, t + dur); out = out.connect(pn); }
+      out.connect(amb); o.start(t); am.start(t); o.stop(t + dur + 0.1); am.stop(t + dur + 0.1);
+    }
+    // anjing kampung menggonggong di kejauhan (2-3 gonggongan)
+    function dogBark(vol) {
+      const pan = Math.random() * 1.6 - 0.8, f = 330 + Math.random() * 120, n = 2 + Math.floor(Math.random() * 2);
+      for (let i = 0; i < n; i++) { const d = i * (0.28 + Math.random() * 0.1); tone(f, vol, 0.12, { delay: d, to: f * 0.7, glide: 0.1, type: 'sawtooth', bus: amb, pan, attack: 0.01 }); tone(f * 2.1, vol * 0.35, 0.08, { delay: d, to: f * 1.4, type: 'square', bus: amb, pan, attack: 0.01 }); }
+    }
+    // sapi melenguh di padang (siang)
+    function cowMoo(vol) {
+      const pan = Math.random() * 1.4 - 0.7, f = 120 + Math.random() * 30;
+      tone(f, vol, 1.3, { to: f * 1.25, glide: 0.5, type: 'sawtooth', bus: amb, pan, attack: 0.18 });
+      tone(f * 2, vol * 0.3, 1.2, { to: f * 2.3, glide: 0.6, type: 'triangle', bus: amb, pan, attack: 0.2 });
+    }
+    // klakson kendaraan di kota (pendek, kadang dua kali)
+    function carHonk(vol) {
+      const pan = Math.random() * 1.6 - 0.8, f = 380 + Math.random() * 120, n = Math.random() < 0.4 ? 2 : 1;
+      for (let i = 0; i < n; i++) { tone(f, vol, 0.22, { delay: i * 0.3, type: 'square', bus: amb, pan, attack: 0.01 }); tone(f * 1.26, vol * 0.7, 0.22, { delay: i * 0.3, type: 'square', bus: amb, pan, attack: 0.01 }); }
+    }
+    // anak-anak bersorak melambai ke kereta di dekat perlintasan/desa
+    function kidsCheer(vol) {
+      const pan = Math.random() * 1.2 - 0.6;
+      for (let i = 0; i < 4; i++) { const f = 600 + Math.random() * 400; tone(f, vol * (0.7 + Math.random() * 0.4), 0.35, { delay: i * 0.12 + Math.random() * 0.1, to: f * (1.3 + Math.random() * 0.3), glide: 0.25, type: 'triangle', bus: amb, pan, attack: 0.04 }); }
+    }
     function cricket(vol) {
       const f = 4300 + Math.random() * 500, pan = Math.random() * 1.4 - 0.7;
       for (let i = 0; i < 4; i++) tone(f, vol, 0.03, { type: 'square', delay: i * 0.045, bus: amb, pan });
@@ -1598,6 +1643,14 @@
       }
       if (!quiet && (info.dawn || info.night) && !info.tunnel && t >= nextCricket) { cricket(0.01); nextCricket = t + 0.35 + Math.random() * 0.5; }
       if (!quiet && info.night && !info.tunnel && t >= nextFrog) { frog(0.04); nextFrog = t + 0.6 + Math.random() * 1.6; }
+      // kehidupan sekitar rel: motor lewat, anjing, sapi, klakson kota, sorak anak-anak
+      const village = !info.city && !info.tunnel, lowV = clamp(1 - v / 25, 0.2, 1);
+      if (t >= nextMoto) { if (!quiet && village && !info.rain) motoPass((0.012 + Math.random() * 0.01) * lowV); nextMoto = t + 6 + Math.random() * 9; }
+      if (t >= nextDog) { if (!quiet && village && Math.random() < (info.night ? 0.8 : 0.45)) dogBark((0.012 + Math.random() * 0.01) * lowV); nextDog = t + 10 + Math.random() * 16; }
+      if (t >= nextCow) { if (!quiet && village && !info.night && !info.rain && !info.sawit) cowMoo((0.014 + Math.random() * 0.008) * lowV); nextCow = t + 18 + Math.random() * 22; }
+      if (t >= nextHonk) { if (!quiet && info.city && !info.tunnel) carHonk((0.01 + Math.random() * 0.01) * lowV); nextHonk = t + 3 + Math.random() * 6; }
+      if (info.bell > 0.5 && t >= nextKids) { if (!quiet && !info.night && !info.rain && Math.random() < 0.6) kidsCheer(0.012); nextKids = t + 14 + Math.random() * 10; }
+      set(L.city.g.gain, scene && info.city && !info.tunnel ? 0.03 : 0, 1.2); // dengung lalu lintas kota
       if (!quiet && info.night && info.lebaran && t >= nextBedug) { bedug(0.28); nextBedug = t + 16 + Math.random() * 12; }
     }
 
@@ -2194,10 +2247,11 @@
     S.comfort = clamp(S.comfort - comfortHit, 0, 100);
     toast(text, 'bad', 3.2, null, 3);
     const title = key.startsWith('over') ? 'MELEBIHI BATAS KECEPATAN' : key.startsWith('crossing') ? 'LUPA KLAKSON DI PERLINTASAN' : key.startsWith('goat') ? 'HAMPIR MENABRAK KAMBING' : key === 'eleph-horn' ? 'GAJAH PANIK' : key === 'flood' ? 'TERLALU CEPAT DI GENANGAN' : key === 'floodstop' ? 'BERHENTI DI GENANGAN' : 'PELANGGARAN';
-    S.alarm = { t: 0, title, sub: `kenyamanan −${comfortHit}` };
+    S.alarm = { t: 0, title, sub: `kenyamanan −${comfortHit}` }; HAPT.buzz([60, 40, 60], 0);
     S.shake = Math.max(S.shake, 0.5);
   }
   function fail(reason) {
+    HAPT.buzz([120, 60, 120], 0);
     if (S) S.alarm = { t: 0, title: 'PELANGGARAN BERAT', sub: 'misi gagal' };
     if (S.mode !== 'play') return;
     S.failReason = reason;
@@ -2220,17 +2274,17 @@
     if (n === -5 && prev !== -5 && S.v > 1) {
       S.comfort = clamp(S.comfort - 10, 0, 100);
       S.shake = 0.8;
-      Sound.emergency();
+      Sound.emergency(); HAPT.buzz([45, 35, 80], 0);
       toast('Rem darurat! Penumpang terguncang.', 'bad', 2.6, 'eb', 3);
     }
     if (n > 0 && S.doors === 'open') toast('Tutup pintu dulu sebelum menambah tenaga.', 'warn', 2.4, 'doorpower', 2);
-    if (fromUser) { try { navigator.vibrate && navigator.vibrate(8); } catch (e) { /* no haptics */ } }
+    if (fromUser) HAPT.buzz(8, 0);
     renderLever();
   }
 
   function horn() {
     if (!S || S.mode !== 'play') return;
-    Sound.hornStart();
+    Sound.hornStart(); HAPT.buzz(22);
     S.hornFlash = 1.2;
     ui.btnHorn.classList.add('honk'); clearTimeout(horn.tm); horn.tm = setTimeout(() => ui.btnHorn.classList.remove('honk'), 1200);
     if (ROUTE.elephants && (S.eleph.phase === 'block' || S.eleph.phase === 'cross') && !S.eleph.honked) {
@@ -2662,7 +2716,7 @@
     if (ELEC() && n > 0 && S.panto < 1 && S.pantoT < 1) toast('Pantograf belum naik: tekan tombol Pantograf untuk mengambil listrik.', 'warn', 2.6, 'pantodown', 2);
     if (inNeutral && n > 0) {
       const qi = ROUTE.neutral.findIndex((q) => S.x - LOCO_LEN * 0.3 > q.from && S.x - LOCO_LEN * 0.3 < q.to);
-      if (!S.neutHit[qi]) { S.neutHit[qi] = true; S.arc = 0.35; S.shake = Math.max(S.shake, 0.4); Sound.arc(); Sound.arc(); violation('neutral' + qi, 'Tuas daya tidak di N saat melewati seksi netral: busur listrik menyentak penumpang.', 6); }
+      if (!S.neutHit[qi]) { S.neutHit[qi] = true; S.arc = 0.35; S.shake = Math.max(S.shake, 0.4); Sound.arc(); Sound.arc(); HAPT.buzz([14, 25, 14, 25, 14], 0); violation('neutral' + qi, 'Tuas daya tidak di N saat melewati seksi netral: busur listrik menyentak penumpang.', 6); }
     }
     if (ELEC()) {
       // energi: daya tarik (kW) dan rem regeneratif yang mengembalikan listrik ke jaringan
@@ -3015,7 +3069,7 @@
       cw.contact = true;
       const kmh = S.v * 3.6;
       S.x = cw.front + TRAIN_LEN; S.v = 0; S.aCmd = Math.min(S.aCmd, 0);
-      Sound.couple(kmh);
+      Sound.couple(kmh); HAPT.buzz(kmh > 3 ? [50, 30, 30] : 35, 0);
       S.shake = Math.max(S.shake, Math.min(1.2, 0.2 + kmh * 0.15));
       cw.speed = kmh;
       if (kmh > 5) violation('couplehard', `Menabrak gerbong kopi ${fmtM(kmh)} km/h: karung kopi berjatuhan.`, 12);
@@ -4046,7 +4100,7 @@
   // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
   const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
     btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
-    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
+    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
   document.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('button, .ticket'); if (!el || el.disabled) return;
     if (el.classList.contains('act')) return;
@@ -4105,7 +4159,9 @@
     $('btnMusic').setAttribute('aria-label', mu ? 'Matikan musik' : 'Nyalakan musik');
     $('btnMusicTitle').textContent = `Musik ${mu ? '✓' : '✕'}`;
     $('btnSoundTitle').textContent = `Suara ${m ? '✕' : '✓'}`;
+    const bh = $('btnHapticTitle'); if (bh) bh.textContent = `Getar ${HAPT.on ? '✓' : '✕'}`;
   }
+  { const bh = $('btnHapticTitle'); if (bh) { bh.hidden = !('vibrate' in navigator) && !(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics); bh.addEventListener('click', () => { HAPT.toggle(); syncAudioButtons(); }); } }
   $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
   $('btnSoundTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
   $('btnMusic').addEventListener('click', () => { Sound.init(); Sound.toggleMusic(); syncAudioButtons(); });
@@ -6496,7 +6552,7 @@
     if (weather.nextFlash <= 0) {
       weather.flash = 1;
       weather.nextFlash = 9 + Math.random() * 14;
-      Sound.thunder(0.6 + Math.random() * 2.2);
+      Sound.thunder(0.6 + Math.random() * 2.2); HAPT.buzz(18);
     }
   }
   function drawWeather(V) {
@@ -11439,7 +11495,7 @@
       power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0, electric: !!S && (ELEC() || MIS.loco === 'argo'), steam: !!S && MIS.loco === 'steam', // Agraveda bertenaga listrik: suara traksi listrik, tanpa mesin diesel
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
-      rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
+      rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, sawit: MIS.land === 'sawit', city: (ROUTE.scenes || []).some((q) => q.kind === 'city' && st.x > q.from - 150 && st.x < q.to + 150), night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
       curve: !!(zoneAt(st.x) && zoneAt(st.x).curve),
       climb: (() => { const gr = gradeAt(st.x - TRAIN_LEN / 2); return gr && gr.permil > 0 ? gr.permil / 20 : 0; })(),
       lat: latAccel(st),
@@ -11508,6 +11564,7 @@
     if (W && H && !frame.skip) { const t0 = performance.now(); render(dt); const ms = performance.now() - t0; PERF.ms += (ms - PERF.ms) * 0.08; PERF.max = Math.max(PERF.max * 0.995, ms); PERF.n++; }
     if (mode === 'title' && !frame.skip) { drawTitleMap(dt); drawTitleFx(dt); }
     Sound.update(audioInfo());
+    if (S && S.moment && S.moment !== HAPT.mo) { HAPT.mo = S.moment; const k = S.moment.kind; HAPT.buzz(k === 'perfect' ? [18, 45, 18, 45, 30] : k === 'good' ? [22, 50, 22] : 20, 0); }
     if (S && (mode === 'play' || mode === 'pause')) { updateHud(); updateGoalChips(); updateHudFocus(); renderStrip(); }
     if (S && mode === 'play') updateTutorial(dt); else if (ui.coach) ui.coach.hidden = true;
     requestAnimationFrame(frame);
