@@ -748,6 +748,7 @@
   [/^Perhatian\. Kereta lokal Cakra tujuan (.+?) di jalur satu akan segera diberangkatkan\.$/, "Attention please. The Cakra local service to $1 on track one will depart shortly."],
   [/^Musik (.)$/, "Music $1"],
   [/^Suara (.)$/, "Sound $1"],
+  [/^Getar (.)$/, "Vibrate $1"],
   [/^memuat gerbong (\d+)\.\.\.$/, "loading wagon $1..."],
   [/^ke gerbong kopi · (\S+) km\/h$/, "to the coffee wagon · $1 km/h"],
   [/^lagi ke marka "(\S+)"$/, "to marker \"$1\""],
