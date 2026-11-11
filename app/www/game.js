@@ -10935,15 +10935,20 @@
     c.fillStyle = night ? 'rgba(10,30,30,0.35)' : 'rgba(40,80,70,0.28)'; c.fillRect(left(yB), wY, right(yB) - left(yB) + ramp, yB - wY);
     // cermin: viaduk & kereta di atas garis air dipantulkan terbalik, beriak (irisan horizontal bergeser), memudar menjauhi garis air
     if (c.canvas === cv) {
-      const Tm = c.getTransform(), hgt = Math.min(wY - (gy - 9 * ppm), yB - wY), step = Math.max(2, 3 * Tm.d);
+      const Tm = c.getTransform(), hgt = Math.min(wY - (gy - 9 * ppm), yB - wY), step = Math.max(4, hgt * Tm.d / 22); // ±22 irisan: cukup untuk riak, ringan untuk HP
       const sx0 = Math.max(0, left(wY) * Tm.a + Tm.e), sw = Math.min(cv.width, right(wY) * Tm.a + Tm.e) - sx0, srcBot = wY * Tm.d + Tm.f;
       if (sw > 2 && hgt > 2) {
         c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
-        for (let k = 0; k * step < hgt * Tm.d; k++) {
-          const dyD = k * step, depth = dyD / (hgt * Tm.d), sy = srcBot - dyD - step; if (sy < 0) break;
+        // salin sekali area di atas garis air ke kanvas bantu (menyalin kanvas ke dirinya sendiri berkali-kali sangat lambat)
+        const hD = Math.min(Math.ceil(hgt * Tm.d), Math.floor(srcBot)), wD = Math.ceil(sw);
+        const R = drawViaductRiver.cv || (drawViaductRiver.cv = document.createElement('canvas'));
+        if (R.width < wD || R.height < hD) { R.width = Math.max(R.width, wD); R.height = Math.max(R.height, hD); }
+        const rc = R.getContext('2d'); rc.clearRect(0, 0, wD, hD); rc.drawImage(cv, sx0, srcBot - hD, wD, hD, 0, 0, wD, hD);
+        for (let k = 0; k * step < hD; k++) {
+          const dyD = k * step, depth = dyD / hD, h1 = Math.min(step, hD - dyD), sy = hD - dyD - h1;
           const off = Math.sin(dyD * 0.09 / Tm.d + tt * 2.2) * (1.2 + depth * 5) * Tm.a + Math.sin(dyD * 0.023 / Tm.d - tt * 1.1) * 2 * Tm.a;
           c.globalAlpha = (night ? 0.55 : 0.62) * (1 - depth * 0.75);
-          try { c.drawImage(cv, sx0, sy, sw, step, sx0 + off, srcBot + dyD, sw, step); } catch (e) { break; }
+          c.save(); c.translate(0, srcBot + dyD + h1); c.scale(1, -1); c.drawImage(R, 0, sy, wD, h1, sx0 + off, 0, wD, h1); c.restore(); // tiap irisan dibalik agar cermin utuh
         }
         c.restore();
       }
