@@ -5722,7 +5722,7 @@
       c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     };
     const gy0 = pt + phd * 0.36;
-    gauge(W * 0.16, gy0, H * 0.05, kmh, 100, 10, 'KECEPATAN', `${Math.round(kmh)} km/h`, undefined, lim);
+    gauge(W * 0.16, gy0, H * 0.05, kmh, 100, 20, 'KECEPATAN', `${Math.round(kmh)} km/h`, undefined, lim);
     // papan batas
     { const lr = H * 0.026, lx = W * 0.235, ly = gy0 - H * 0.03;
       c.fillStyle = '#fff'; c.beginPath(); c.arc(lx, ly, lr, 0, 7); c.fill(); c.strokeStyle = '#e5483b'; c.lineWidth = lr * 0.22; c.stroke();
