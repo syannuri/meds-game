@@ -5156,35 +5156,54 @@
         });
       }
     }
-    // Kilat Nusantara datang dari depan di jalur 2: sisi kiri rangkaian & moncong peluru bersorot lampu
+    // Kilat Nusantara datang dari depan di jalur 2: sisi kiri rangkaian & moncong peluru lonjong (bentuk asli Kilat) bersorot lampu
     const KC = DBc && st.kilat;
     if (KC) {
-      const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]), L0 = -1.5, NO = 7;
+      const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]), L0 = -1.5, LN = 10.5;
       const poly3 = (pts, col) => { if (pts.some((q) => !q)) return; c.fillStyle = col; c.beginPath(); pts.forEach((q, i) => (i ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill(); };
+      const ANG = [0, 0.12, 0.24, 0.34, 0.42, 0.5, 0.58, 0.66, 0.74, 0.8, 0.85, 0.89, 0.92, 0.945, 0.965, 0.983, 1].map((t) => t * Math.PI);
+      // moncong peluru 3D: penampang membulat (superelips) yang menyempit & merendah ke ujung, digambar dari permukaan terjauh ke terdekat
+      const noseMesh = (tipD, dir, lead) => {
+        const o0 = dblO(x0 + tipD + dir * LN / 2), NU = 10, secs = [];
+        for (let j = 0; j <= NU; j++) { const sj = j / NU, e = Math.sqrt(1 - (1 - sj) * (1 - sj)), hw = 0.42 + 1.08 * e, ht = 0.95 + 3.1 * Math.pow(e, 1.25), d = tipD + dir * sj * LN;
+          secs.push(ANG.map((a) => { const ca = Math.cos(a), sa = Math.sin(a); return { d, o: o0 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.55) * hw, h: 0.35 + (ht - 0.35) * Math.pow(sa, 0.55), a, s: sj, r: Math.pow(sa, 0.55) }; })); }
+        const faces = [];
+        for (let j = 0; j < NU; j++) for (let k = 0; k < ANG.length - 1; k++) {
+          const A = secs[j][k], B = secs[j][k + 1], C = secs[j + 1][k + 1], D = secs[j + 1][k];
+          const md = (A.d + C.d) / 2, mo = (A.o + C.o) / 2, mh = (A.h + C.h) / 2, ma = (A.a + B.a) / 2, ms = (A.s + C.s) / 2, mr = (A.r + B.r + C.r + D.r) / 4;
+          if (md < 1.2) continue;
+          let col;
+          const left = ma > Math.PI / 2;
+          if (lead && ms > 0.3 && ms < 0.66 && ma > 0.2 * Math.PI && ma < 0.8 * Math.PI) col = mr > 0.97 && ms > 0.45 ? '#2a3e52' : '#0c1218'; // kaca kokpit hitam melengkung
+          else if (left && mr > 0.36 && mr < 0.47) col = '#1567c4'; // pita biru menyapu ke ujung moncong
+          else if (left && mr >= 0.47 && mr < 0.51) col = '#22b6d6';
+          else if (mr < 0.12) col = '#9aa2aa'; // rok bawah
+          else { const lit = 0.72 + 0.2 * Math.sin(ma) + (left ? 0.08 * -Math.cos(ma) : -0.12 * Math.cos(ma)) + 0.06 * (1 - ms); const v = (x) => Math.round(clamp(x * lit, 0, 255));
+            col = night ? `rgb(${v(150)},${v(156)},${v(168)})` : `rgb(${v(250)},${v(252)},${v(255)})`; }
+          faces.push({ q: [A, B, C, D], z: md * md + mo * mo + (mh - EH) * (mh - EH), col });
+        }
+        faces.sort((f1, f2) => f2.z - f1.z).forEach((f) => { const P4 = f.q.map((t) => W3(t.d, t.o, t.h)); if (P4.some((t) => !t)) return; c.fillStyle = f.col; c.strokeStyle = f.col; c.lineWidth = 0.6; c.beginPath(); P4.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); });
+        if (lead) [-0.62, 0.62].forEach((lo) => { const hp = W3(tipD + dir * 1.1, o0 + lo, 0.78); if (!hp) return; const r = Math.max(2, 0.2 * hp.k);
+          c.save(); c.globalCompositeOperation = 'lighter'; const gr = r * (night ? 10 : 5), g = c.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, gr); g.addColorStop(0, `rgba(255,248,220,${night ? 0.95 : 0.7})`); g.addColorStop(0.3, `rgba(255,240,200,${night ? 0.4 : 0.2})`); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.beginPath(); c.arc(hp.x, hp.y, gr, 0, 7); c.fill(); c.restore();
+          c.fillStyle = '#fffbe8'; c.beginPath(); c.ellipse(hp.x, hp.y, r * 1.4, r * 0.7, 0, 0, 7); c.fill(); });
+      };
       let f = KC.x;
       lens.forEach((len, k) => {
         const dn = f - x0, dr = f + len - x0; f += len + GAP;
         if (dr < 1.5 || dn > FAR) return;
-        const da = Math.max(1.5, dn), lead = k === 0, tailC = k === lens.length - 1;
-        add(da, () => {
+        const lead = k === 0, tailC = k === lens.length - 1, da = Math.max(1.5, lead ? dn + LN : dn), db = tailC ? dr - LN : dr;
+        add(Math.max(1.5, dn), () => {
           const O = (d) => dblO(x0 + d) + L0;
-          // profil atas sisi: moncong melandai di kabin depan & belakang
-          const top = (d) => lead ? 0.9 + 3.15 * smooth(dn, dn + NO, d) : tailC ? 0.9 + 3.15 * (1 - smooth(dr - NO, dr, d)) : 4.05;
-          const xs = []; for (let d = da; d < dr; d += Math.max(1, (dr - da) / 10)) xs.push(d); xs.push(dr);
-          const band = (lo, hi, col) => poly3(xs.map((d) => W3(d, O(d), Math.min(hi, top(d)))).concat(xs.slice().reverse().map((d) => W3(d, O(d), Math.min(lo, top(d))))), col);
-          band(0.35, 1.0, '#b9bfc6'); band(1.0, 4.05, '#eef1f4');
-          band(2.5, 3.45, night ? '#2a3440' : '#0c0f13'); band(1.6, 2.02, '#1567c4'); band(1.52, 1.6, '#22b6d6');
-          if (!lead && !tailC) for (let w = 0; w < 7; w++) { const d1 = dn + 1.6 + w * 2.6; if (d1 < da || d1 + 1.8 > dr) continue; quad(W3(d1, O(d1) - 0.01, 2.6), W3(d1 + 1.8, O(d1) - 0.01, 2.6), W3(d1 + 1.8, O(d1) - 0.01, 3.35), W3(d1, O(d1) - 0.01, 3.35), night ? '#f2d58c' : '#24323e'); }
-          if (lead && dn > 1.5) {
-            // moncong peluru menghadap Guntur: muka depan menyempit, kaca kokpit hitam, lampu sorot menyilaukan
-            const o = dblO(x0 + dn);
-            poly3([W3(dn, o - 1.1, 0.35), W3(dn, o + 1.1, 0.35), W3(dn, o + 1.2, 0.95), W3(dn + 3, o + 1.45, 2.6), W3(dn + NO, o + 1.5, 4.05), W3(dn + NO, o - 1.5, 4.05), W3(dn + 3, o - 1.45, 2.6), W3(dn, o - 1.2, 0.95)], '#f4f6f8');
-            poly3([W3(dn + 2.2, o - 1.2, 2.25), W3(dn + 2.2, o + 1.2, 2.25), W3(dn + 5.2, o + 1.35, 3.6), W3(dn + 5.2, o - 1.35, 3.6)], '#0c1218');
-            poly3([W3(dn, o - 1.15, 0.7), W3(dn, o + 1.15, 0.7), W3(dn + 0.6, o + 1.25, 1.05), W3(dn + 0.6, o - 1.25, 1.05)], '#1567c4');
-            [-0.75, 0.75].forEach((lo) => { const hp = W3(dn + 0.4, o + lo, 1.15); if (!hp) return; const r = Math.max(2, 0.22 * hp.k);
-              c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, r * 10); g.addColorStop(0, 'rgba(255,248,220,0.95)'); g.addColorStop(0.25, 'rgba(255,240,200,0.4)'); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.beginPath(); c.arc(hp.x, hp.y, r * 10, 0, 7); c.fill(); c.restore();
-              c.fillStyle = '#fffbe8'; c.beginPath(); c.arc(hp.x, hp.y, r, 0, 7); c.fill(); });
+          if (db > da) {
+            const xs = []; for (let d = da; d < db; d += Math.max(1, (db - da) / 10)) xs.push(d); xs.push(db);
+            const band = (lo, hi, col) => poly3(xs.map((d) => W3(d, O(d), hi)).concat(xs.slice().reverse().map((d) => W3(d, O(d), lo))), col);
+            band(0.35, 1.0, '#b9bfc6'); band(1.0, 4.05, night ? '#9aa0ac' : '#eef1f4');
+            band(2.5, 3.45, night ? '#2a3440' : '#0c0f13'); band(1.6, 2.02, '#1567c4'); band(2.02, 2.12, '#22b6d6');
+            band(4.05, 4.25, '#d9dee3');
+            if (!lead && !tailC) for (let w = 0; w < 7; w++) { const d1 = dn + 1.6 + w * 2.6; if (d1 < da || d1 + 1.8 > dr) continue; quad(W3(d1, O(d1) - 0.01, 2.6), W3(d1 + 1.8, O(d1) - 0.01, 2.6), W3(d1 + 1.8, O(d1) - 0.01, 3.35), W3(d1, O(d1) - 0.01, 3.35), night ? '#f2d58c' : '#24323e'); }
           }
+          if (lead) noseMesh(dn, 1, true);
+          if (tailC) noseMesh(dr, -1, false);
         });
       });
     }
