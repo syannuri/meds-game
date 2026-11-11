@@ -4687,12 +4687,18 @@
           const d = wd - x0, b = W3(d, o, 0), t = W3(d, o, ht); if (!b || !t) return;
           const fadeA = 1 - smooth(dMax - 120, dMax, d); if (fadeA <= 0.01) return; c.globalAlpha = fadeA;
           const palm = sawit || hash(i * 5.3) < 0.35;
-          if (!sawit && b.k > 7 && b.k < 90) { // cukup dekat: pohon detail (sama dengan tampilan luar), cahaya mengikuti sisi matahari
-            const sS = SUN.x > b.x ? 1 : -1, kk = b.k * (palm ? 0.78 : 0.8);
+          // pohon detail (sama dengan tampilan luar) saat cukup dekat; berganti dari bentuk sederhana secara perlahan (lintas-pudar),
+          // ukurannya disamakan dengan bentuk sederhana sehingga pohon tidak tampak 'timbul' atau melompat saat kereta mendekat
+          const tD = !sawit && b.k < 90 ? smooth(3.2, 7, b.k) : 0;
+          if (tD > 0) {
+            const hDet = palm ? 8 + hash(i + 2) * 5 : (3.4 + hash(i + 7) * 1.6) * 1.35 + 1.2 + hash(i + 6) * 1.2, sS = SUN.x > b.x ? 1 : -1, kk = b.k * ht / hDet;
+            c.globalAlpha = fadeA * tD;
             if (SUNK > 0) { c.fillStyle = `rgba(20,30,10,${(0.22 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sS * ht * 0.35 * b.k, b.y + 0.15 * b.k, ht * 0.45 * b.k, 0.45 * b.k, 0, 0, 7); c.fill(); }
             c.save(); c.translate(b.x, 0); c.scale(sS, 1);
             (palm ? treeCoconut : treeBroadleaf)(c, { night, rimA: SUNK > 0 ? 0.6 : 0, rim: `rgb(${sunRim})` }, 0, b.y, i, kk, p);
-            c.restore(); c.globalAlpha = 1; return;
+            c.restore();
+            if (tD >= 1) { c.globalAlpha = 1; return; }
+            c.globalAlpha = fadeA * (1 - tD);
           }
           const sSide = SUN.x > t.x ? 1 : -1, back = SUNK * Math.max(0, 1 - Math.abs(SUN.x - t.x) / (W * 0.25)); // 1 = tepat berlawanan cahaya
           if (SUNK > 0) { c.fillStyle = `rgba(20,30,10,${(0.22 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sSide * ht * 0.35 * b.k, b.y + 0.15 * b.k, ht * 0.45 * b.k, 0.45 * b.k, 0, 0, 7); c.fill(); }
@@ -5400,13 +5406,14 @@
           if (SAWIT && h >= 0.22 && Math.abs(k) >= 1) { // barisan sawit kebun di kejauhan: tajuk bintang di tiap petak
             const tw = Math.abs(q2.x - q1.x), sc = tw * 0.16; if (sc > 0.7 && sc < 22) for (let r2 = 0; r2 < 2; r2++) {
               // sawit muda: batang pendek gelap + tajuk bulat rimbun (bukan tonggak telanjang); pelepah baru digambar bila cukup dekat
-              const px = lerp(q1.x, q2.x, 0.3 + r2 * 0.4), py = (q1.y + q3.y) / 2, th = sc * 0.95, cr = Math.max(1.1, sc * 1.05);
-              if (sc > 1.6) { c.fillStyle = night ? '#1a1410' : '#5a4a36'; c.fillRect(px - Math.max(0.5, sc * 0.09), py - th, Math.max(1, sc * 0.18), th); }
+              const px = lerp(q1.x, q2.x, 0.3 + r2 * 0.4), py = (q1.y + q3.y) / 2, th = sc * 0.95, cr = Math.max(1.1, sc * 1.05), ga0 = c.globalAlpha; c.globalAlpha = ga0 * smooth(0.7, 1.6, sc);
+              if (sc > 1.6) { const gk = c.globalAlpha; c.globalAlpha = gk * smooth(1.6, 2.8, sc); c.fillStyle = night ? '#1a1410' : '#5a4a36'; c.fillRect(px - Math.max(0.5, sc * 0.09), py - th, Math.max(1, sc * 0.18), th);  c.globalAlpha = gk; }
               c.fillStyle = night ? '#16261a' : mix('#2f5f2c', '#3c7434', p); c.beginPath(); c.ellipse(px, py - th - cr * 0.25, cr, cr * 0.62, 0, 0, 7); c.fill();
               if (!night && cr > 2) { c.fillStyle = mix('#4a8a3c', '#5c9c46', p); c.beginPath(); c.ellipse(px - cr * 0.15, py - th - cr * 0.45, cr * 0.62, cr * 0.32, 0, 0, 7); c.fill(); }
-              if (sc > 5) { c.strokeStyle = night ? '#16261a' : mix('#2a5628', '#376a30', p); c.lineWidth = Math.max(1, sc * 0.2); c.lineCap = 'round'; c.beginPath();
+              if (sc > 5) { c.globalAlpha = ga0 * smooth(5, 8, sc); c.strokeStyle = night ? '#16261a' : mix('#2a5628', '#376a30', p); c.lineWidth = Math.max(1, sc * 0.2); c.lineCap = 'round'; c.beginPath();
                 for (let f = 0; f < 7; f++) { const aa = Math.PI + (f + 0.5) * Math.PI / 7; c.moveTo(px, py - th - cr * 0.2); c.quadraticCurveTo(px + Math.cos(aa) * sc * 0.8, py - th - sc * 0.9, px + Math.cos(aa) * sc * 1.35, py - th + sc * 0.2); }
                 c.stroke(); c.lineCap = 'butt'; }
+              c.globalAlpha = ga0;
             }
           }
           if (h < 0.22 && !SAWIT && (q1.y - q3.y) > 2) { // pantulan pematang & pepohonan di tepi jauh petak air
@@ -5435,7 +5442,7 @@
         const wg = c.createLinearGradient(0, hy, 0, H); wg.addColorStop(0, MIS.dusk ? 'rgba(255,160,110,0.32)' : 'rgba(255,214,150,0.22)'); wg.addColorStop(1, MIS.dusk ? 'rgba(120,70,120,0.12)' : 'rgba(255,214,150,0.04)'); c.fillStyle = wg; c.fillRect(0, hy, W, H - hy); }
       if (MIS.dusk && !SAWIT) { // pagar pembatas jalur: patok beton hitam-putih & dua palang, seperti tampilan luar
         const SP = 6, z0 = Math.ceil((x0 + 3) / SP) * SP;
-        for (const o of [-7.5, 7.5]) {
+        for (const o of [12]) { // satu baris di sisi kanan masinis = sisi kamera pada tampilan luar (matahari di seberang rel)
           let prev = null;
           for (let wz = z0 + Math.floor(Math.min(140, ZF) / SP) * SP; wz >= z0; wz -= SP) {
             const d = wz - x0, skip = (ROUTE.bridges || []).some((q) => wz > q.from - 6 && wz < q.to + 6) || nearStation(wz) || (ROUTE.tunnel && wz > ROUTE.tunnel.from - 20 && wz < ROUTE.tunnel.to + 20);
