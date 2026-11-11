@@ -28,7 +28,10 @@ jobs:
         working-directory: app
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.63.0
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
+          # paket sistem (font dsb.) dari mirror Ubuntu kadang gagal karena DNS runner: coba ulang, lalu lanjut
+          # karena runner ubuntu-latest sudah memuat pustaka inti yang dibutuhkan Chromium
+          for i in 1 2 3; do npx playwright install-deps chromium && break; echo "Pasang dependensi gagal (percobaan $i), coba lagi..."; sleep 20; done || true
       - name: Jalankan uji asap
         working-directory: app
         run: node tests/smoke.js
