@@ -5156,34 +5156,45 @@
         });
       }
     }
-    // Kilat Nusantara datang dari depan di jalur 2: sisi kiri rangkaian & moncong peluru lonjong (bentuk asli Kilat) bersorot lampu
+    // Kilat Nusantara datang dari depan di jalur 2: rangkaian 3D mulus (moncong peluru lonjong & gerbong berpenampang membulat)
     const KC = DBc && st.kilat;
     if (KC) {
-      const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]), L0 = -1.5, LN = 10.5;
-      const poly3 = (pts, col) => { if (pts.some((q) => !q)) return; c.fillStyle = col; c.beginPath(); pts.forEach((q, i) => (i ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill(); };
-      const ANG = [0, 0.12, 0.24, 0.34, 0.42, 0.5, 0.58, 0.66, 0.74, 0.8, 0.85, 0.89, 0.92, 0.945, 0.965, 0.983, 1].map((t) => t * Math.PI);
-      // moncong peluru 3D: penampang membulat (superelips) yang menyempit & merendah ke ujung, digambar dari permukaan terjauh ke terdekat
-      const noseMesh = (tipD, dir, lead) => {
-        const o0 = dblO(x0 + tipD + dir * LN / 2), NU = 10, secs = [];
-        for (let j = 0; j <= NU; j++) { const sj = j / NU, e = Math.sqrt(1 - (1 - sj) * (1 - sj)), hw = 0.42 + 1.08 * e, ht = 0.95 + 3.1 * Math.pow(e, 1.25), d = tipD + dir * sj * LN;
-          secs.push(ANG.map((a) => { const ca = Math.cos(a), sa = Math.sin(a); return { d, o: o0 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.55) * hw, h: 0.35 + (ht - 0.35) * Math.pow(sa, 0.55), a, s: sj, r: Math.pow(sa, 0.55) }; })); }
+      const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]), LN = 10.5;
+      // sudut penampang: dari bahu atap kanan (tak terlihat) melintasi atap ke sisi kiri yang menghadap Guntur, rapat di lengkung
+      const ANG = []; for (let q = 0; q <= 26; q++) { const t = q / 26; ANG.push(Math.PI * (0.3 + 0.7 * (1 - Math.pow(1 - t, 1.35)))); }
+      const shape = (s) => { const e = Math.sqrt(1 - (1 - s) * (1 - s)); return [0.42 + 1.08 * e, 0.95 + 3.1 * Math.pow(e, 1.25)]; };
+      const kilatCar = (dn, dr, kind) => {
+        const lead = kind === 'lead', tail = kind === 'tail', mid = kind === 'mid';
+        const ds = [];
+        if (lead) { for (let j = 0; j <= 20; j++) ds.push([dn + Math.pow(j / 20, 1.35) * LN, Math.pow(j / 20, 1.35)]); for (let j = 1; j <= 4; j++) ds.push([dn + LN + (dr - dn - LN) * j / 4, 1]); }
+        else if (tail) { for (let j = 0; j < 4; j++) ds.push([dn + (dr - LN - dn) * j / 4, 1]); for (let j = 20; j >= 0; j--) ds.push([dr - Math.pow(j / 20, 1.35) * LN, Math.pow(j / 20, 1.35)]); }
+        else for (let j = 0; j <= 5; j++) ds.push([dn + (dr - dn) * j / 5, 1]);
+        const secs = ds.map(([d, sN]) => { const [hw, ht] = shape(sN), o0 = dblO(x0 + d);
+          return ANG.map((a) => { const ca = Math.cos(a), sa = Math.sin(a), r = Math.pow(sa, 0.5); return { d, o: o0 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.5) * hw, h: 0.35 + (ht - 0.35) * r, a, s: sN, r }; }); });
         const faces = [];
-        for (let j = 0; j < NU; j++) for (let k = 0; k < ANG.length - 1; k++) {
+        const wl = (ma, mr, left) => 0.66 + 0.24 * Math.sin(ma) + (left ? 0.1 * -Math.cos(ma) : 0) + 0.12 * Math.exp(-Math.pow((ma - 0.66 * Math.PI) / 0.09, 2)); // kilau di bahu atap
+        for (let j = 0; j < secs.length - 1; j++) for (let k = 0; k < ANG.length - 1; k++) {
           const A = secs[j][k], B = secs[j][k + 1], C = secs[j + 1][k + 1], D = secs[j + 1][k];
-          const md = (A.d + C.d) / 2, mo = (A.o + C.o) / 2, mh = (A.h + C.h) / 2, ma = (A.a + B.a) / 2, ms = (A.s + C.s) / 2, mr = (A.r + B.r + C.r + D.r) / 4;
-          if (md < 1.2) continue;
+          const md = (A.d + C.d) / 2; if (md < 1.2 || Math.max(A.d, C.d) < 1.0) continue;
+          const mo = (A.o + C.o) / 2, mh = (A.h + C.h) / 2, ma = (A.a + B.a) / 2, ms = (A.s + C.s) / 2, mr = (A.r + B.r + C.r + D.r) / 4, left = ma > Math.PI / 2, nose = ms < 0.999;
           let col;
-          const left = ma > Math.PI / 2;
-          if (lead && ms > 0.3 && ms < 0.66 && ma > 0.2 * Math.PI && ma < 0.8 * Math.PI) col = mr > 0.97 && ms > 0.45 ? '#2a3e52' : '#0c1218'; // kaca kokpit hitam melengkung
-          else if (left && mr > 0.36 && mr < 0.47) col = '#1567c4'; // pita biru menyapu ke ujung moncong
-          else if (left && mr >= 0.47 && mr < 0.51) col = '#22b6d6';
-          else if (mr < 0.12) col = '#9aa2aa'; // rok bawah
-          else { const lit = 0.72 + 0.2 * Math.sin(ma) + (left ? 0.08 * -Math.cos(ma) : -0.12 * Math.cos(ma)) + 0.06 * (1 - ms); const v = (x) => Math.round(clamp(x * lit, 0, 255));
-            col = night ? `rgb(${v(150)},${v(156)},${v(168)})` : `rgb(${v(250)},${v(252)},${v(255)})`; }
-          faces.push({ q: [A, B, C, D], z: md * md + mo * mo + (mh - EH) * (mh - EH), col });
+          if (lead && nose && ms > 0.3 && ms < 0.66 && ma < 0.82 * Math.PI) col = mr > 0.985 && ms > 0.45 ? '#2a3e52' : '#0c1218'; // kaca kokpit melengkung
+          else if (mid && left && mr > 0.6 && mr < 0.86) col = night ? '#e8c47c' : '#11161c'; // pita jendela gerbong
+          else if (left && mr > 0.38 && mr < 0.49) col = '#1567c4'; // pita biru menyapu ke ujung
+          else if (left && mr >= 0.49 && mr < 0.52) col = '#22b6d6';
+          else if (mr < 0.14) col = night ? '#5a606a' : '#9aa2aa'; // rok bawah
+          else { const lt = wl(ma, mr, left) + 0.05 * (1 - ms); const v = (x) => Math.round(clamp(x * lt, 0, 255)); col = night ? `rgb(${v(150)},${v(156)},${v(168)})` : `rgb(${v(252)},${v(253)},${v(255)})`; }
+          faces.push({ q: [A, B, C, D], z: md * md + (mo + SEAT) * (mo + SEAT) + (mh - EH) * (mh - EH), col });
         }
-        faces.sort((f1, f2) => f2.z - f1.z).forEach((f) => { const P4 = f.q.map((t) => W3(t.d, t.o, t.h)); if (P4.some((t) => !t)) return; c.fillStyle = f.col; c.strokeStyle = f.col; c.lineWidth = 0.6; c.beginPath(); P4.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); });
-        if (lead) [-0.62, 0.62].forEach((lo) => { const hp = W3(tipD + dir * 1.1, o0 + lo, 0.78); if (!hp) return; const r = Math.max(2, 0.2 * hp.k);
+        faces.sort((f1, f2) => f2.z - f1.z).forEach((f) => { const P4 = f.q.map((t) => W3(t.d, t.o, t.h)); if (P4.some((t) => !t)) return; c.fillStyle = f.col; c.strokeStyle = f.col; c.lineWidth = 0.8; c.beginPath(); P4.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); });
+        // sekat jendela gerbong
+        if (mid) { const sec = secs[0], kA = sec.findIndex((t) => t.r < 0.86 && t.a > Math.PI / 2), kB = sec.findIndex((t) => t.r < 0.6 && t.a > Math.PI / 2); if (kA > 0 && kB > 0) {
+          c.strokeStyle = night ? 'rgba(120,90,40,0.8)' : 'rgba(70,84,98,0.9)'; for (let w = 1; w < 8; w++) { const d = dn + w * (dr - dn) / 8; if (d < 1.5) continue; const o0 = dblO(x0 + d) - dblO(x0 + dn), q0 = W3(d, sec[kA].o + o0, sec[kA].h), q1 = W3(d, sec[kB].o + o0, sec[kB].h); if (!q0 || !q1) continue; c.lineWidth = Math.max(1, 0.05 * q0.k); c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } } }
+        // tutup ujung gerbong menghadap Guntur & bordes karet gelap di sambungan
+        if (!lead && dn > 1.5) { const sec = secs[0]; const cap = sec.map((t) => W3(t.d, t.o, t.h)).concat([W3(dn, sec[0].o, 0.35)]); if (!cap.some((t) => !t)) {
+          c.fillStyle = night ? '#6a707a' : '#c9ced4'; c.beginPath(); cap.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
+          const ins = sec.filter((_, i) => i % 2 === 0).map((t) => { const o0 = dblO(x0 + dn); return W3(dn - 0.02, o0 + (t.o - o0) * 0.82, 0.35 + (t.h - 0.35) * 0.9); }); if (!ins.some((t) => !t)) { c.fillStyle = '#23272c'; c.beginPath(); ins.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); } } }
+        if (lead) [-0.62, 0.62].forEach((lo) => { const hp = W3(dn + 1.1, dblO(x0 + dn) + lo, 0.78); if (!hp) return; const r = Math.max(2, 0.2 * hp.k);
           c.save(); c.globalCompositeOperation = 'lighter'; const gr = r * (night ? 10 : 5), g = c.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, gr); g.addColorStop(0, `rgba(255,248,220,${night ? 0.95 : 0.7})`); g.addColorStop(0.3, `rgba(255,240,200,${night ? 0.4 : 0.2})`); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.beginPath(); c.arc(hp.x, hp.y, gr, 0, 7); c.fill(); c.restore();
           c.fillStyle = '#fffbe8'; c.beginPath(); c.ellipse(hp.x, hp.y, r * 1.4, r * 0.7, 0, 0, 7); c.fill(); });
       };
@@ -5191,20 +5202,7 @@
       lens.forEach((len, k) => {
         const dn = f - x0, dr = f + len - x0; f += len + GAP;
         if (dr < 1.5 || dn > FAR) return;
-        const lead = k === 0, tailC = k === lens.length - 1, da = Math.max(1.5, lead ? dn + LN : dn), db = tailC ? dr - LN : dr;
-        add(Math.max(1.5, dn), () => {
-          const O = (d) => dblO(x0 + d) + L0;
-          if (db > da) {
-            const xs = []; for (let d = da; d < db; d += Math.max(1, (db - da) / 10)) xs.push(d); xs.push(db);
-            const band = (lo, hi, col) => poly3(xs.map((d) => W3(d, O(d), hi)).concat(xs.slice().reverse().map((d) => W3(d, O(d), lo))), col);
-            band(0.35, 1.0, '#b9bfc6'); band(1.0, 4.05, night ? '#9aa0ac' : '#eef1f4');
-            band(2.5, 3.45, night ? '#2a3440' : '#0c0f13'); band(1.6, 2.02, '#1567c4'); band(2.02, 2.12, '#22b6d6');
-            band(4.05, 4.25, '#d9dee3');
-            if (!lead && !tailC) for (let w = 0; w < 7; w++) { const d1 = dn + 1.6 + w * 2.6; if (d1 < da || d1 + 1.8 > dr) continue; quad(W3(d1, O(d1) - 0.01, 2.6), W3(d1 + 1.8, O(d1) - 0.01, 2.6), W3(d1 + 1.8, O(d1) - 0.01, 3.35), W3(d1, O(d1) - 0.01, 3.35), night ? '#f2d58c' : '#24323e'); }
-          }
-          if (lead) noseMesh(dn, 1, true);
-          if (tailC) noseMesh(dr, -1, false);
-        });
+        add(Math.max(1.5, dn), () => kilatCar(dn, dr, k === 0 ? 'lead' : k === lens.length - 1 ? 'tail' : 'mid'));
       });
     }
     // pohon tumbang melintang rel & tim jalan rel
