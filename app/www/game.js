@@ -6407,6 +6407,7 @@
     drawBridge(LV, 'back');
     drawTrainOnPaddy(LV);
     drawTrain(LV);
+    drawDoubleShadows(LV); // jalur ganda: bayangan Guntur & Kilat satu lapis
     drawCoffeeWagon(LV);
     drawPlatformFront(LV, dtReal);
     drawFlood(LV, 'front');
@@ -9477,6 +9478,39 @@
       c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(fx - 0.2 * ppm, fy, 0.6 * ppm, 0.12 * ppm);
     }
   }
+  // ---------- bayangan matahari gabungan Guntur & Kilat (jalur ganda) ----------
+  // satu lapis (tidak menumpuk jadi pita hitam), siluet meruncing di moncong, tepi lembut, arah & panjang dari posisi matahari
+  let SHD = null;
+  function dblShadowGeom(V) {
+    const sun = sunPos(V), yH = V.gy - 5 * V.ppm, elev = clamp((yH - sun.y) / (H * 0.5), 0.12, 1), L = clamp(2.4 / elev, 3.2, 7.5) * V.ppm;
+    return { sun, L, dirX: (cx) => -clamp((sun.x - cx) / (W * 0.5), -1.2, 1.2) * 1.3 * L }; // menjauhi matahari, makin miring bila matahari makin ke samping
+  }
+  function drawDoubleShadows(V) {
+    if (!ROUTE.double || !(V.sunShadow > 0.01) || !V.st) return;
+    const { c, ppm, gy, X, st } = V, G = dblShadowGeom(V), Lx = G.L;
+    if (!SHD) SHD = document.createElement('canvas'); const cv = c.canvas; if (SHD.width !== cv.width || SHD.height !== cv.height) { SHD.width = cv.width; SHD.height = cv.height; }
+    const g = SHD.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, SHD.width, SHD.height); g.setTransform(c.getTransform());
+    // siluet bayangan: alas di kaki rangkaian, tepi jauh tergeser menjauhi matahari; ujung moncong (rendah) memberi bayangan pendek meruncing
+    const shape = (xa, xb, y0, noseL, noseR, ext, L) => { const dx = G.dirX((xa + xb) / 2), k = (L / Lx);
+      const pts = [[xa, y0], [xb, y0]];
+      if (noseR > 0) pts.push([xb + dx * 0.18 * k, y0 + L * 0.18], [xb - noseR + dx * k, y0 + L]); else pts.push([xb + dx * k, y0 + L]);
+      if (noseL > 0) pts.push([xa + noseL + dx * k, y0 + L], [xa + dx * 0.18 * k, y0 + L * 0.18]); else pts.push([xa + dx * k, y0 + L]);
+      if (ext) pts.splice(2, 0, [xb + ext, y0 + L * 0.5]);
+      g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); };
+    const both = (xa, xb, y0, nL, nR, ext) => { g.fillStyle = 'rgba(10,14,20,0.45)'; shape(xa - 0.8 * ppm, xb + 0.8 * ppm, y0, nL, nR, ext, Lx * 1.12); g.fillStyle = 'rgba(10,14,20,1)'; shape(xa, xb, y0, nL, nR, ext, Lx * 0.9); };
+    // Guntur (moncong di kanan, ekor rata)
+    both(X(st.x - TRAIN_LEN), X(st.x), gy + 0.3 * ppm, 0, 10 * ppm, 0);
+    // tiap Kilat (moncong di kiri & kabin belakang di kanan), kabur gerak memanjang ke belakang sebanding kecepatan
+    let yMax = gy + Lx;
+    for (const K of st.kilats || []) { const len = kilatLen(), xa = X(K.x), xb = X(K.x + len); if (xb < -80 || xa > W + 80) continue;
+      const yb = gy + DBL_K * kO(K)(K.x + len / 2) * ppm, blur = REDUCE_MOTION ? 0 : clamp((K.v + (st.v || 0)) / 60, 0, 1);
+      both(xa, xb, yb + 0.3 * ppm, 10.5 * ppm, 10.5 * ppm, blur * 1.6 * ppm); yMax = Math.max(yMax, yb + Lx * 1.12); }
+    // kegelapan seragam di dekat kaki, memudar ke ujung jauh: satu lapis untuk semua (tidak menumpuk)
+    const a = 0.42 * V.sunShadow, fg = g.createLinearGradient(0, gy, 0, yMax);
+    fg.addColorStop(0, `rgba(0,0,0,${a})`); fg.addColorStop(clamp((gy + DBL_K * ROUTE.double.o * ppm - gy) / (yMax - gy), 0.05, 0.9), `rgba(0,0,0,${a * 0.85})`); fg.addColorStop(1, 'rgba(0,0,0,0)');
+    g.globalCompositeOperation = 'destination-in'; g.fillStyle = fg; g.fillRect(-W, gy - ppm, W * 3, yMax - gy + 2 * ppm); g.globalCompositeOperation = 'source-over';
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(SHD, 0, 0); c.restore();
+  }
   // jalur 2 & 3 di depan kamera (kanan Guntur): balas/lantai beton viaduk, bantalan, rel, wesel jalur 3 di stasiun
   function drawDoubleSide(V) {
     const D = ROUTE.double; if (!D) return;
@@ -9602,10 +9636,13 @@
       const ends = [0]; ends.push(LOCO_LEN + GAP); for (let q = 1; q <= (ROUTE.double.kilat.cars || 6); q++) ends.push(LOCO_LEN + GAP + q * (COACH_LEN + GAP)); ends.push(len);
       for (const m of ends) { const x = x0 + (toR ? m - GAP : m) * sc * spr.SP; if (x < bx0 - 4 || x > bx1 + 4) continue; g.fillStyle = `rgba(${warm},${0.7 * rimA})`; g.fillRect(toR ? x - Math.max(1.5, 0.12 * u) : x, yRoof + sl.off(toR ? m - 1 : m + 1) + 0.3 * u, Math.max(1.5, 0.12 * u), 4.6 * u); }
     }
-    // bayangan Guntur jatuh ke badan bawah Kilat saat matahari rendah di belakang rangkaian
-    if (V.sunShadow > 0.01 && V.st) { const ga = V.X(V.st.x - TRAIN_LEN) - 2.4 * ppm, gb = V.X(V.st.x) - 2.4 * ppm, hy = yb - 2.6 * u;
-      if (gb > bx0 && ga < bx1) { const sg = g.createLinearGradient(0, hy, 0, yb); sg.addColorStop(0, 'rgba(10,14,24,0)'); sg.addColorStop(0.35, `rgba(10,14,24,${0.32 * V.sunShadow})`); sg.addColorStop(1, `rgba(10,14,24,${0.38 * V.sunShadow})`); g.fillStyle = sg;
-        g.beginPath(); g.moveTo(ga + 0.8 * ppm, hy); g.lineTo(gb + 0.8 * ppm, hy); g.lineTo(gb, yb + 0.5 * ppm); g.lineTo(ga, yb + 0.5 * ppm); g.closePath(); g.fill(); } }
+    // matahari di belakang rangkaian: sisi Kilat yang menghadap kamera sudah teduh, jadi bayangan Guntur tidak tampak di sisi itu.
+    // Yang tampak: atap & bahu atap Kilat yang terhalang Guntur dari matahari kehilangan cahaya tepi & kilau (atap teduh, tepi lembut).
+    if (V.sunShadow > 0.01 && V.st && !night) { const sh = dblShadowGeom(V), sx = sh.dirX((V.X(V.st.x - TRAIN_LEN) + V.X(V.st.x)) / 2) * clamp((yb - V.gy) / sh.L, 0, 1);
+      const ga = V.X(V.st.x - TRAIN_LEN) + sx, gb = V.X(V.st.x) - 9 * ppm + sx, soft = 3 * ppm; // ujung moncong Guntur rendah: tidak menaungi atap
+      if (gb > bx0 && ga < bx1 && gb > ga) { const rg = g.createLinearGradient(ga - soft, 0, gb + soft, 0), f = soft / (gb - ga + 2 * soft), a = (0.5 * V.sunShadow).toFixed(3);
+        rg.addColorStop(0, `rgba(${T.shade},0)`); rg.addColorStop(f, `rgba(${T.shade},${a})`); rg.addColorStop(1 - f, `rgba(${T.shade},${a})`); rg.addColorStop(1, `rgba(${T.shade},0)`);
+        g.fillStyle = rg; g.fillRect(ga - soft, yRoof - 0.4 * u, gb - ga + 2 * soft, 1.3 * u); } }
     c.drawImage(KGL, 0, 0, cw, ch, bx0, dy, bw, h);
     // kilau bintang di lengkung moncong saat menghadap matahari
     if (sunK > 0) { const nx = x0 + 2.6 * u, ny = yb - 4.4 * u, f = 1 - Math.abs(nx - sun.x) / (W * 0.45); if (f > 0) { const r = (5 + 7 * f) * (W / 844);
@@ -9636,9 +9673,6 @@
     const spr = kilatSprite(V), sc = ppm * 1.04 / spr.SP, yb = gy + DBL_K * kO(K)(K.x + len / 2) * ppm, blur = clamp((K.v + (V.st.v || 0)) / 60, 0, 1);
     const dx = x0 - spr.nose * sc, dy = yb - spr.gy * sc, w = spr.cv.width * sc, h = spr.cv.height * sc, sl = kilatSlices(V, K, spr, len);
     c.save();
-    if (V.sunShadow > 0.01) { // bayangan panjang Kilat jatuh ke depan-kiri, searah bayangan Guntur
-      const sg = c.createLinearGradient(0, yb, 0, yb + 4 * ppm); sg.addColorStop(0, `rgba(10,14,20,${0.4 * V.sunShadow})`); sg.addColorStop(1, 'rgba(10,14,20,0)');
-      c.fillStyle = sg; c.beginPath(); c.moveTo(x0, yb + 0.3 * ppm); c.lineTo(x1, yb + 0.3 * ppm); c.lineTo(x1 - 5.6 * ppm, yb + 4 * ppm); c.lineTo(x0 - 5.6 * ppm, yb + 4 * ppm); c.closePath(); c.fill(); }
     if (!REDUCE_MOTION && blur > 0.05) { c.globalAlpha = 0.16 * blur; blitKilat(c, spr, sl, dx + 1.2 * ppm * blur, dy, sc); c.globalAlpha = 0.28 * blur; blitKilat(c, spr, sl, dx + 0.6 * ppm * blur, dy, sc); } // kabur gerak: melaju berlawanan sangat cepat
     c.globalAlpha = 1; blitKilat(c, spr, sl, dx, dy, sc);
     kilatGloss(V, spr, dx, dy, w, h, x0, yb, sc, sl);
@@ -10220,7 +10254,7 @@
 
     // ---- bayangan ----
     const x0 = L(TRAIN_LEN), x1 = fx;
-    if (V.sunShadow > 0.01) {
+    if (V.sunShadow > 0.01 && !(ROUTE.double && !LOCO_FORCE)) { // jalur ganda: bayangan digabung dengan Kilat di drawDoubleShadows
       // bayangan panjang matahari pagi jatuh ke depan-kiri di atas balas dan sawah
       const sg = c.createLinearGradient(0, gy, 0, gy + 5 * ppm);
       sg.addColorStop(0, `rgba(10,14,20,${0.42 * V.sunShadow})`); sg.addColorStop(1, 'rgba(10,14,20,0)');
