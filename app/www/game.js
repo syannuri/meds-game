@@ -743,8 +743,13 @@
       brakeBoards: true,
       hst: true,
       // jalur ganda: jalur 2 (arah berlawanan) di kanan Guntur; tiap stasiun 3 jalur (jalur 2 melebar mengitari peron pulau + jalur 3 lewat langsung)
-      double: { o: 4.6, st: 8.3, t3: 12.9, kilat: { at: 11600, ahead: 3400, v: 250, cars: 6,
-        msg: 'Anett, Kilat Nusantara KN 5001 dari Kota Halimun melintas di jalur 2 sebentar lagi, 250 km/h. Tetap di jalur 1, balas klakson saat berpapasan.' } },
+      double: { o: 4.6, st: 8.3, t3: 12.9, kilat: { cars: 6, events: [
+        // beberapa kali berpapasan: masuk stasiun perlahan, melintas langsung di jalur 3, lalu dua kali di jalur ganda
+        { at: 3, arrive: true, from: 640, v: 60, stop: -92, msg: 'Kilat Nusantara KN 5002 masuk Kencana Hub di jalur 2, berjalan pelan menuju peron seberang. Guntur berangkat di jalur 1: balas salam klaksonnya.' },
+        { at: 9300, ahead: 2700, v: 200, t3: true, msg: 'Kilat KN 5004 melintas langsung di jalur 3 Padi Raya tanpa berhenti, 200 km/h. Tetap di jalur 1 dan berhenti tepat di marka.' },
+        { at: 13300, ahead: 3400, v: 250, msg: 'Anett, Kilat Nusantara KN 5001 dari Kota Halimun melintas di jalur 2 sebentar lagi, 250 km/h. Tetap di jalur 1, balas klakson saat berpapasan.' },
+        { at: 18350, ahead: 3200, v: 250, msg: 'Satu lagi: Kilat KN 5007 menuruni lengkung Halimun di jalur 2. Siap berpapasan di tikungan.' },
+      ] } },
       // seksi netral: celah tanpa tegangan di kawat aliran atas (pergantian gardu listrik); tuas harus di N
       neutral: [{ from: 6200, to: 6340 }, { from: 13050, to: 13190 }],
       hints: [
@@ -2348,7 +2353,8 @@
     if (!S || S.mode !== 'play') return;
     Sound.hornStart(); HAPT.buzz(22);
     S.hornFlash = 1.2;
-    if (S.kilat && !S.kilat.greet && S.kilat.honk && S.kilat.x - S.x < 900 && S.kilat.x + kilatLen() > S.x - TRAIN_LEN) { S.kilat.greet = true; toast('Salam klakson terbalas! Masinis Kilat melambai dari kabinnya.', 'good', 2.6, 'kilat', 2); }
+    const KG = (S.kilats || []).find((K) => !K.greet && K.honk && K.x - S.x < 900 && K.x + kilatLen() > S.x - TRAIN_LEN);
+    if (KG) { KG.greet = true; toast('Salam klakson terbalas! Masinis Kilat melambai dari kabinnya.', 'good', 2.6, 'kilat', 2); }
     ui.btnHorn.classList.add('honk'); clearTimeout(horn.tm); horn.tm = setTimeout(() => ui.btnHorn.classList.remove('honk'), 1200);
     if (ROUTE.elephants && (S.eleph.phase === 'block' || S.eleph.phase === 'cross') && !S.eleph.honked) {
       S.eleph.honked = true;
@@ -2987,21 +2993,29 @@
       if (!S.side && S.x > SD.from - 260 && S.x < SD.to) S.side = { x: S.x - 30, v: Math.max(S.v, 22) };
       if (S.side) { S.side.v += clamp(SD.v / 3.6 - S.side.v, -0.5 * dt, 0.45 * dt); S.side.x += S.side.v * dt; if (S.side.x > SD.to + 600 || S.side.x < S.x - 900) S.side = null; }
     }
-    // jalur ganda: Kilat Nusantara datang dari depan di jalur 2 dan berpapasan dengan Guntur
+    // jalur ganda: Kilat Nusantara berpapasan beberapa kali (masuk stasiun perlahan, melintas di jalur 3, dan di jalur ganda)
     if (ROUTE.double && ROUTE.double.kilat) {
       const KD = ROUTE.double.kilat, T = ROUTE.tunnel;
-      if (!S.kilat && !S.kilatDone && S.x > KD.at) { S.kilat = { x: Math.min(S.x + KD.ahead, T ? T.from - 160 : Infinity), v: KD.v / 3.6, honk: false, pass: false, greet: false }; radio(KD.msg, 7, 'Sari', 'SR'); }
-      const K = S.kilat;
-      if (K) {
-        K.x -= K.v * dt;
-        if (!K.honk && K.x - S.x < 620) { K.honk = true; Sound.farHorn(); }
+      S.kilats = S.kilats || []; S.kevt = S.kevt || {};
+      KD.events.forEach((ev, ei) => {
+        if (S.kevt[ei] || S.x < ev.at) return; S.kevt[ei] = true;
+        const x = ev.arrive ? ev.from : Math.min(S.x + ev.ahead, T && S.x < T.from ? T.from - 160 : Infinity);
+        S.kilats.push({ x, v: ev.v / 3.6, t3: !!ev.t3, stopX: ev.arrive ? ev.stop : null, acc: ev.arrive ? (ev.v / 3.6) ** 2 / (2 * Math.max(1, x - ev.stop)) : 0, honk: false, pass: false, greet: false });
+        radio(ev.msg, 7, 'Sari', 'SR');
+      });
+      S.kilats = S.kilats.filter((K) => {
+        if (K.stopX !== null) { K.v = K.x > K.stopX ? Math.sqrt(2 * K.acc * Math.max(0, K.x - K.stopX)) + 0.15 : 0; K.x = Math.max(K.stopX, K.x - K.v * dt); } // masuk stasiun: melambat hingga berhenti di peron
+        else K.x -= K.v * dt;
+        if (!K.honk && K.x - S.x < 620 && K.x + kilatLen() > S.x) { K.honk = true; Sound.farHorn(); }
         const tail = K.x + kilatLen();
-        if (K.x < S.x && tail > S.x - TRAIN_LEN) { // sisi berpapasan: hembusan tekanan udara menggoyang kabin
-          S.shake = Math.max(S.shake, 0.32 * clamp((K.v + S.v) / 120, 0.3, 1));
-          if (!K.pass) { K.pass = true; Sound.passBy((K.v + S.v) * 3.6); HAPT.buzz([18, 30, 12], 0); }
+        if (K.x < S.x && tail > S.x - TRAIN_LEN) { // sisi berpapasan: hembusan tekanan udara sebanding kecepatan gabungan
+          const rel = K.v + S.v; S.shake = Math.max(S.shake, 0.32 * clamp((rel - 10) / 110, 0, 1));
+          if (!K.pass) { K.pass = true; if (rel > 12) { Sound.passBy(rel * 3.6); HAPT.buzz([18, 30, 12], 0); } }
         }
-        if (tail < S.x - TRAIN_LEN - 500) { S.kilat = null; S.kilatDone = true; if (!K.greet) toast('Kilat Nusantara sudah lewat. Jalur 2 kembali kosong.', 'info', 2.6, 'kilat', 2); }
-      }
+        if (tail < S.x - TRAIN_LEN - (K.stopX !== null ? 900 : 500)) { if (!K.greet && K.stopX === null) toast('Kilat Nusantara sudah lewat. Jalurnya kembali kosong.', 'info', 2.6, 'kilat', 2); return false; }
+        return true;
+      });
+      S.kilat = S.kilats[0] || null; // kompatibel: kilat terdekat
     }
     if (S.x >= ROUTE.bufferStop - 0.5) fail(`Kereta menabrak penahan di ujung rel ${titleCase(finalStation().name)}.`);
 
@@ -5157,9 +5171,9 @@
       }
     }
     // Kilat Nusantara datang dari depan di jalur 2: rangkaian 3D mulus (moncong peluru lonjong & gerbong berpenampang membulat)
-    const KC = DBc && st.kilat;
     const sunRimRGB = sunRim.split(',');
-    if (KC) {
+    for (const KC of (DBc && st.kilats) || []) {
+      const KO = kO(KC);
       const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]), LN = 10.5;
       // sudut penampang: dari bahu atap kanan (tak terlihat) melintasi atap ke sisi kiri yang menghadap Guntur, rapat di lengkung
       const ANG = []; for (let q = 0; q <= 26; q++) { const t = q / 26; ANG.push(Math.PI * (0.3 + 0.7 * (1 - Math.pow(1 - t, 1.35)))); }
@@ -5170,7 +5184,7 @@
         if (lead) { for (let j = 0; j <= 20; j++) ds.push([dn + Math.pow(j / 20, 1.35) * LN, Math.pow(j / 20, 1.35)]); for (let j = 1; j <= 4; j++) ds.push([dn + LN + (dr - dn - LN) * j / 4, 1]); }
         else if (tail) { for (let j = 0; j < 4; j++) ds.push([dn + (dr - LN - dn) * j / 4, 1]); for (let j = 20; j >= 0; j--) ds.push([dr - Math.pow(j / 20, 1.35) * LN, Math.pow(j / 20, 1.35)]); }
         else for (let j = 0; j <= 5; j++) ds.push([dn + (dr - dn) * j / 5, 1]);
-        const secs = ds.map(([d, sN]) => { const [hw, ht] = shape(sN), o0 = dblO(x0 + d);
+        const secs = ds.map(([d, sN]) => { const [hw, ht] = shape(sN), o0 = KO(x0 + d);
           return ANG.map((a) => { const ca = Math.cos(a), sa = Math.sin(a), r = Math.pow(sa, 0.5); return { d, o: o0 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.5) * hw, h: 0.35 + (ht - 0.35) * r, a, s: sN, r }; }); });
         const faces = [];
         // kilau matahari: terkuat pada permukaan yang di layar searah matahari, menyapu badan saat Kilat melaju mendekat
@@ -5196,12 +5210,12 @@
         faces.sort((f1, f2) => f2.z - f1.z).forEach((f) => { const P4 = f.q.map((t) => W3(t.d, t.o, t.h)); if (P4.some((t) => !t)) return; c.fillStyle = f.col; c.strokeStyle = f.col; c.lineWidth = 0.8; c.beginPath(); P4.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); });
         // sekat jendela gerbong
         if (mid) { const sec = secs[0], kA = sec.findIndex((t) => t.r < 0.86 && t.a > Math.PI / 2), kB = sec.findIndex((t) => t.r < 0.6 && t.a > Math.PI / 2); if (kA > 0 && kB > 0) {
-          c.strokeStyle = night ? 'rgba(120,90,40,0.8)' : 'rgba(70,84,98,0.9)'; for (let w = 1; w < 8; w++) { const d = dn + w * (dr - dn) / 8; if (d < 1.5) continue; const o0 = dblO(x0 + d) - dblO(x0 + dn), q0 = W3(d, sec[kA].o + o0, sec[kA].h), q1 = W3(d, sec[kB].o + o0, sec[kB].h); if (!q0 || !q1) continue; c.lineWidth = Math.max(1, 0.05 * q0.k); c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } } }
+          c.strokeStyle = night ? 'rgba(120,90,40,0.8)' : 'rgba(70,84,98,0.9)'; for (let w = 1; w < 8; w++) { const d = dn + w * (dr - dn) / 8; if (d < 1.5) continue; const o0 = KO(x0 + d) - KO(x0 + dn), q0 = W3(d, sec[kA].o + o0, sec[kA].h), q1 = W3(d, sec[kB].o + o0, sec[kB].h); if (!q0 || !q1) continue; c.lineWidth = Math.max(1, 0.05 * q0.k); c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } } }
         // tutup ujung gerbong menghadap Guntur & bordes karet gelap di sambungan
         if (!lead && dn > 1.5) { const sec = secs[0]; const cap = sec.map((t) => W3(t.d, t.o, t.h)).concat([W3(dn, sec[0].o, 0.35)]); if (!cap.some((t) => !t)) {
           c.fillStyle = night ? '#6a707a' : '#c9ced4'; c.beginPath(); cap.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
-          const ins = sec.filter((_, i) => i % 2 === 0).map((t) => { const o0 = dblO(x0 + dn); return W3(dn - 0.02, o0 + (t.o - o0) * 0.82, 0.35 + (t.h - 0.35) * 0.9); }); if (!ins.some((t) => !t)) { c.fillStyle = '#23272c'; c.beginPath(); ins.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); } } }
-        if (lead) [-0.62, 0.62].forEach((lo) => { const hp = W3(dn + 1.1, dblO(x0 + dn) + lo, 0.78); if (!hp) return; const r = Math.max(2, 0.2 * hp.k);
+          const ins = sec.filter((_, i) => i % 2 === 0).map((t) => { const o0 = KO(x0 + dn); return W3(dn - 0.02, o0 + (t.o - o0) * 0.82, 0.35 + (t.h - 0.35) * 0.9); }); if (!ins.some((t) => !t)) { c.fillStyle = '#23272c'; c.beginPath(); ins.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); } } }
+        if (lead) [-0.62, 0.62].forEach((lo) => { const hp = W3(dn + 1.1, KO(x0 + dn) + lo, 0.78); if (!hp) return; const r = Math.max(2, 0.2 * hp.k);
           c.save(); c.globalCompositeOperation = 'lighter'; const gr = r * (night ? 10 : 5), g = c.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, gr); g.addColorStop(0, `rgba(255,248,220,${night ? 0.95 : 0.7})`); g.addColorStop(0.3, `rgba(255,240,200,${night ? 0.4 : 0.2})`); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.beginPath(); c.arc(hp.x, hp.y, gr, 0, 7); c.fill(); c.restore();
           c.fillStyle = '#fffbe8'; c.beginPath(); c.ellipse(hp.x, hp.y, r * 1.4, r * 0.7, 0, 0, 7); c.fill(); });
       };
@@ -6383,10 +6397,10 @@
     drawTrain(LV);
     drawCoffeeWagon(LV);
     drawPlatformFront(LV, dtReal);
-    drawKilatSide(LV);
     drawFlood(LV, 'front');
     drawOppTrain(LV);
     drawChevrons(LV);
+    drawKilatSide(LV); // Kilat di jalur 2/3 lebih dekat ke kamera daripada papan chevron di sisi jalur 1
     drawSparks(LV, dtReal, lat);
     drawSilo(LV, 'front');
     drawCrossings(LV, 'front', dtReal);
@@ -8178,7 +8192,7 @@
     const rowY = (t) => yTop + (H - yTop) * Math.pow(t, 1.55);
     const at = (sx, t) => sx + (V.Xn(sx) - sx) * Math.pow(t, 1.55);
     const xF = X(st.x), xR = X(st.x - TRAIN_LEN), tt = performance.now() / 1000;
-    const Kp = ROUTE.double && st.kilat, kOn = Kp && X(Kp.x) < W && X(Kp.x + kilatLen()) > 0;
+    const KL = (ROUTE.double && st.kilats) || [], kOn = KL.some((Kp) => X(Kp.x) < W && X(Kp.x + kilatLen()) > 0);
     if ((xF < 0 || xR > W) && !kOn) return;
     const nearStn = allStations().some((q) => st.x > q.x - 140 && st.x - TRAIN_LEN < q.x + 40);
     if (nearStn) return;
@@ -8194,8 +8208,8 @@
       else segs.push([f - CAR_LEN, f, HSTR ? white : V.night ? 'rgba(150,160,175,' : 'rgba(225,230,236,', HSTR ? dark : V.night ? 'rgba(255,205,120,' : 'rgba(45,60,75,', stripe]);
     }
     // Kilat yang berpapasan di jalur 2 ikut terpantul (lebih dekat ke air)
-    const K = ROUTE.double && st.kilat; if (K) segs.push([K.x, K.x + kilatLen(), white, dark, '21,103,196']);
-    const lo = Math.min(st.x - TRAIN_LEN, K ? K.x : Infinity), hi = Math.max(st.x, K ? K.x + kilatLen() : -Infinity);
+    let lo = st.x - TRAIN_LEN, hi = st.x;
+    for (const K of KL) { if (X(K.x) > W + 40 || X(K.x + kilatLen()) < -40) continue; segs.push([K.x, K.x + kilatLen(), white, dark, '21,103,196']); lo = Math.min(lo, K.x); hi = Math.max(hi, K.x + kilatLen()); }
     const i0 = Math.floor((lo - 60) / cell), i1 = Math.ceil((hi + 60) / cell);
     c.save();
     // jalur ganda: pantulan hanya di air sawah di depan tanggul jalur 2, tidak menimpa balas & rel jalur 2
@@ -9410,6 +9424,7 @@
   const dbl3 = (x) => ROUTE.double ? dblSt(x, 470, 70) : 0; // jalur 3 (lewat langsung) hanya di stasiun
   const dblO3 = (x) => dblO(x) + (ROUTE.double.t3 - ROUTE.double.st) * dbl3(x);
   const dblInTun = (x) => { const T = ROUTE.tunnel; return !!T && x > T.from + 4 && x < T.to - 4; };
+  const kO = (K) => (K && K.t3 ? dblO3 : dblO); // jalur tempat Kilat melaju (2, atau 3 saat melintas langsung di stasiun)
   const kilatLen = () => LOCO_LEN * 2 + (ROUTE.double.kilat.cars || 6) * (COACH_LEN + GAP) + GAP;
   const MEET_NEAR = 4.6; // jarak layar (× ppm) jalur utama di depan sepur belok
   const meetK = (x) => { const M = ROUTE.meet; return M ? smooth(M.entry, M.entry + 45, x) * (1 - smooth(M.exit - 45, M.exit, x)) : 0; };
@@ -9468,7 +9483,7 @@
           c.fillStyle = v ? colV : colG; c.beginPath(); c.moveTo(X(x) - 0.5, yo(O(x)) + t0 * ppm); c.lineTo(X(e) + 0.5, yo(O(e)) + t0 * ppm); c.lineTo(X(e) + 0.5, yo(O(e)) + t1 * ppm); c.lineTo(X(x) - 0.5, yo(O(x)) + t1 * ppm); c.closePath(); c.fill(); } };
         band(-0.62, 0.5, balTop, slab, false); band(0.5, 1.45, balSide, slab, true);
         c.fillStyle = sleeper; for (let m = Math.ceil(s0 / 1.2) * 1.2; m < s1; m += 1.2) { if (!ok(m)) continue; c.fillRect(X(m), yo(O(m)) - 0.5 * ppm, 0.3 * ppm, 0.8 * ppm); }
-        railsAlong(V, s0, s1, ok, (x) => yo(O(x)), 1.05);
+        railsAlong(V, s0, s1, ok, (x) => yo(O(x)), 1.05, isC);
       };
       track(dblO, () => true);
       track(dblO3, (x) => dbl3(x) > 0.02, true);
@@ -9482,7 +9497,7 @@
   }
   // rel sisi realistis untuk lintasan yang bisa melengkung di layar (jalur 2/3): profil kepala-badan-kaki, pelat & klip penambat,
   // kilau matahari di bawah posisi matahari, kilatan pendek yang bergeser bersama rel, cahaya tepi, sorot lampu Kilat di rel depannya
-  function railsAlong(V, s0, s1, ok, yAt, kk = 1) {
+  function railsAlong(V, s0, s1, ok, yAt, kk = 1, isC = false) {
     const { c, ppm, X } = V, night = V.night, wet = MIS.rain || V.storm, tf = V.tf || 0;
     const sun = sunPos(V), sunK = night || tf > 0.2 ? 0 : V.storm ? 0.35 : clamp(1.1 - V.p * 0.5, 0.45, 1);
     const xa = X(s0), invX = (sx) => s0 + (sx - xa) / ppm;
@@ -9511,8 +9526,7 @@
       }
       if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; line(head * 0.12, Math.max(1, head * 0.25), V.rim); c.restore(); }
       // sorot lampu Kilat memantul di kepala rel di depan moncongnya
-      const K = V.st && V.st.kilat;
-      if (K && ok(K.x)) { const nx = X(K.x), lg = c.createLinearGradient(nx, 0, nx - 50 * ppm, 0); lg.addColorStop(0, `rgba(255,236,190,${night || tf > 0.2 ? 0.85 : 0.5})`); lg.addColorStop(1, 'rgba(255,236,190,0)');
+      for (const K of (V.st && V.st.kilats) || []) if (!!K.t3 === !!isC && ok(K.x)) { const nx = X(K.x), lg = c.createLinearGradient(nx, 0, nx - 50 * ppm, 0); lg.addColorStop(0, `rgba(255,236,190,${night || tf > 0.2 ? 0.85 : 0.5})`); lg.addColorStop(1, 'rgba(255,236,190,0)');
         c.save(); c.globalCompositeOperation = 'lighter'; c.beginPath(); for (let x = Math.max(s0, K.x - 50); x <= Math.min(s1, K.x); x += 2) { const y = yAt(x) + off * ppm * kk + head * 0.2; x <= Math.max(s0, K.x - 50) ? c.moveTo(X(x), y) : c.lineTo(X(x), y); }
         c.strokeStyle = lg; c.lineWidth = Math.max(1, head * 0.4); c.stroke(); c.restore(); }
     }
@@ -9574,12 +9588,15 @@
       const gg = c.createRadialGradient(nx, ny, 0, nx, ny, r * 1.6); gg.addColorStop(0, 'rgba(255,248,226,0.9)'); gg.addColorStop(1, 'rgba(255,248,226,0)'); c.fillStyle = gg; c.beginPath(); c.arc(nx, ny, r * 1.6, 0, 7); c.fill(); c.restore(); } }
   }
   function drawKilatSide(V) {
-    const K = V.st && V.st.kilat; if (!K || !ROUTE.double) return;
+    if (!ROUTE.double || !V.st || !V.st.kilats) return;
+    V.st.kilats.slice().sort((a, b) => +a.t3 - +b.t3).forEach((K) => drawKilatOne(V, K)); // jalur 3 (lebih dekat kamera) digambar terakhir
+  }
+  function drawKilatOne(V, K) {
     const { c, ppm, gy, X } = V, len = kilatLen(), x0 = X(K.x), x1 = X(K.x + len); if (x1 < -60 || x0 > W + 60) return;
-    const spr = kilatSprite(), sc = ppm * 1.04 / spr.SP, yb = gy + DBL_K * dblO(K.x + len / 2) * ppm;
+    const spr = kilatSprite(), sc = ppm * 1.04 / spr.SP, yb = gy + DBL_K * kO(K)(K.x + len / 2) * ppm, blur = clamp((K.v + (V.st.v || 0)) / 60, 0, 1);
     const dx = x0 - spr.nose * sc, dy = yb - spr.gy * sc, w = spr.cv.width * sc, h = spr.cv.height * sc;
     c.save();
-    if (!REDUCE_MOTION) { c.globalAlpha = 0.16; c.drawImage(spr.cv, dx + 1.2 * ppm, dy, w, h); c.globalAlpha = 0.28; c.drawImage(spr.cv, dx + 0.6 * ppm, dy, w, h); } // kabur gerak: melaju berlawanan sangat cepat
+    if (!REDUCE_MOTION && blur > 0.05) { c.globalAlpha = 0.16 * blur; c.drawImage(spr.cv, dx + 1.2 * ppm * blur, dy, w, h); c.globalAlpha = 0.28 * blur; c.drawImage(spr.cv, dx + 0.6 * ppm * blur, dy, w, h); } // kabur gerak: melaju berlawanan sangat cepat
     c.globalAlpha = 1; c.drawImage(spr.cv, dx, dy, w, h);
     kilatGloss(V, spr, dx, dy, w, h, x0, yb, sc);
     // lampu depan menyala terang
