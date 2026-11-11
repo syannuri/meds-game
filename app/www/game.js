@@ -11207,6 +11207,27 @@
     for (let x = x0 - ((off * 1.2 % 9) + 9) % 9; x < x1 + 9; x += 9) { const r = hash(Math.round((x + off * 1.2) / 9) * 2.7), rr = hgt * (0.28 + r * 0.22); c.beginPath(); c.arc(x, yb - rr * 0.6, rr, 0, 7); c.fill(); }
     c.fillStyle = night ? '#141c16' : '#3e5e36'; c.fillRect(x0, yb - hgt * 0.15, x1 - x0, hgt * 0.2);
   }
+  // menara telekomunikasi: rangka baja meruncing dengan silang-silang, platform & antena sektor, piringan microwave, lampu merah di puncak
+  function commTower(c, x, yb, h, o) {
+    const hz = o.haze || 0, night = o.night, col = night ? 'rgba(40,44,62,0.95)' : o.dusk ? `rgba(${Math.round(90 + 90 * hz)},${Math.round(76 + 90 * hz)},${Math.round(98 + 80 * hz)},0.95)` : `rgba(${Math.round(120 + 70 * hz)},${Math.round(126 + 66 * hz)},${Math.round(134 + 60 * hz)},0.95)`;
+    const bw = h * 0.11, tw = h * 0.018, segs = 10, top = yb - h, lw = Math.max(0.6, h * 0.006);
+    const wAt = (t) => bw * (1 - t) + tw * t; // t: 0 kaki .. 1 puncak
+    c.save(); c.strokeStyle = col; c.lineWidth = lw * 1.6; c.beginPath(); c.moveTo(x - bw, yb); c.lineTo(x - tw, top + h * 0.06); c.moveTo(x + bw, yb); c.lineTo(x + tw, top + h * 0.06); c.stroke();
+    c.lineWidth = lw; c.beginPath();
+    for (let q = 0; q < segs; q++) { const t0 = q / segs * 0.94, t1 = (q + 1) / segs * 0.94, y0 = yb - h * t0, y1 = yb - h * t1, w0 = wAt(t0), w1 = wAt(t1);
+      c.moveTo(x - w0, y0); c.lineTo(x + w1, y1); c.moveTo(x + w0, y0); c.lineTo(x - w1, y1); c.moveTo(x - w1, y1); c.lineTo(x + w1, y1); }
+    c.stroke();
+    // dua platform antena sektor & piringan microwave
+    for (const [t, n] of [[0.86, 3], [0.7, 2]]) { const y = yb - h * t, w = wAt(t) * 2.4; c.fillStyle = col; c.fillRect(x - w, y - lw, w * 2, lw * 2);
+      for (let k = 0; k < n; k++) { const ax = x - w + (k + 0.5) * (w * 2 / n); c.fillRect(ax - h * 0.006, y - h * 0.05, h * 0.012, h * 0.045); } }
+    c.fillStyle = col; c.beginPath(); c.ellipse(x + (o.sunR ? 1 : -1) * wAt(0.62) * 1.6, yb - h * 0.62, h * 0.018, h * 0.024, 0, 0, 7); c.fill();
+    // tiang antena puncak & lampu penerbangan merah (berkedip pelan)
+    c.lineWidth = lw; c.beginPath(); c.moveTo(x, top + h * 0.06); c.lineTo(x, top - h * 0.06); c.stroke();
+    const blink = 1, lr = Math.max(1.2, h * 0.012); // lampu stabil, tidak berkedip
+    c.fillStyle = `rgba(255,70,60,${(night ? 0.95 : 0.8) * blink})`; c.beginPath(); c.arc(x, top - h * 0.06, lr, 0, 7); c.fill();
+    if (night || o.dusk) { const g = c.createRadialGradient(x, top - h * 0.06, 0, x, top - h * 0.06, lr * 6); g.addColorStop(0, `rgba(255,80,60,${0.45 * blink})`); g.addColorStop(1, 'rgba(255,80,60,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, top - h * 0.06, lr * 6, 0, 7); c.fill(); }
+    c.restore();
+  }
   function drawScenes(V) {
     const L = ROUTE.scenes; if (!L) return;
     const { c, ppm, gy } = V, night = V.night || V.p < 0.16, yH = gy - 5 * ppm;
@@ -11221,6 +11242,8 @@
           for (let k = -1; k < Math.ceil(W / period) + 2; k++) {
             // indeks blok mutlak di dunia: gedung yang sama selalu memakai pola jendela yang sama (tidak berkedip saat blok bergeser)
             const base = k * period - (off - kOff * period), kk = k + kOff;
+            // menara telekomunikasi berangka baja: berdiri di tengah kota (lapis yang sama dengan gedung, jadi bergeser bersama kota)
+            if (hash(kk * 3.7 + par * 5) < 0.85) { const tx = base + period * (par < 0.2 ? 0.31 : 0.68) + hash(kk + par) * 120; if (tx > -60 && tx < W + 60) commTower(c, tx, yH + yo * ppm, (par < 0.2 ? 26 : 15) * ppm * sc2, { night, haze, dusk: !!MIS.dusk, sunR, seed: kk + par * 7 }); }
             for (let i = 0; i < n; i++) {
               const r = hash(i * 7.3 + par * 10), cl = Math.sin(i * 0.9 + par * 4) * 0.5 + 0.5; // gedung tinggi berkelompok di pusat kota
               const x = base + i * (period / n) + r * 40; if (x < -120 || x > W + 120) continue;
@@ -11230,12 +11253,6 @@
           }
         }
         drawCityBase(c, -20, W + 20, yH + 0.4 * ppm, 3.2 * ppm, { night, off: pcOf(V) * 0.4, haze: MIS.golden || MIS.dusk ? '255,214,170' : '236,226,214' });
-        // menara pemancar / landmark kota
-        { const off = pcOf(V) * 0.12, x = W * 0.72 - (off % (W * 1.6)) + W * 0.4; c.strokeStyle = night ? '#2a2440' : '#8a8494'; c.lineWidth = Math.max(1, 0.3 * ppm); c.beginPath(); c.moveTo(x - 1.2 * ppm, yH); c.lineTo(x, yH - 32 * ppm * 0.6); c.lineTo(x + 1.2 * ppm, yH); c.stroke();
-          if (MIS.dusk) { const th = 32 * ppm * 0.6, bw0 = 2.6 * ppm; c.strokeStyle = '#5a4a62'; c.lineWidth = Math.max(1, 0.16 * ppm); c.beginPath(); c.moveTo(x - bw0, yH); c.lineTo(x - 0.15 * ppm, yH - th); c.moveTo(x + bw0, yH); c.lineTo(x + 0.15 * ppm, yH - th);
-            for (let q = 0; q < 9; q++) { const t0 = q / 9, t1 = (q + 1) / 9, w0 = bw0 * (1 - t0) + 0.15 * ppm * t0, w1 = bw0 * (1 - t1) + 0.15 * ppm * t1; c.moveTo(x - w0, yH - th * t0); c.lineTo(x + w1, yH - th * t1); c.moveTo(x + w0, yH - th * t0); c.lineTo(x - w1, yH - th * t1); c.moveTo(x - w1, yH - th * t1); c.lineTo(x + w1, yH - th * t1); } c.stroke();
-            const lg = c.createRadialGradient(x, yH - th, 0, x, yH - th, 2.2 * ppm); lg.addColorStop(0, 'rgba(255,90,70,0.7)'); lg.addColorStop(1, 'rgba(255,90,70,0)'); c.fillStyle = lg; c.beginPath(); c.arc(x, yH - th, 2.2 * ppm, 0, 7); c.fill(); }
-          c.fillStyle = '#ff5a4a'; c.beginPath(); c.arc(x, yH - 32 * ppm * 0.6, Math.max(1.5, 0.35 * ppm), 0, 7); c.fill(); }
         // jalan tol layang
         const off = pcOf(V) * 0.5, yT = yH + 0.6 * ppm, pc = 30 * ppm;
         c.fillStyle = night ? '#3a3648' : '#8f8a92'; c.fillRect(0, yT - 2.6 * ppm, W, 0.8 * ppm);
