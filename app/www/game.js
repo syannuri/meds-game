@@ -920,6 +920,58 @@
   };
   MISSION_ORDER.forEach((id) => { MISSIONS[id].route.landmarks = ROUTE_LM[id] || []; });
   MISSION_ORDER.forEach((id) => { MISSIONS[id].id = id; MISSIONS[id].pal = PALETTES[id] || PALETTES['1-4']; });
+  // ---------- lintasan diperpanjang untuk kecepatan lebih tinggi (diesel s.d. 140 km/h, uap 80 km/h) ----------
+  // Tiap misi: k = faktor panjang antarstasiun, line = batas jalur baru, sched = jadwal tiba baru (detik jam game).
+  // Peta posisi: ±A m di sekitar stasiun tetap (area stasiun, sinyal masuk, peron tidak berubah), bagian tengah direntangkan.
+  const STRETCH = {
+    '1-2': { k: 3, line: 100, sched: [0, 1440] }, '1-3': { k: 3, line: 100, sched: [0, 860, 1960] }, '1-4': { k: 4, line: 140, sched: [0, 1500, 3030] },
+    '1-6': { k: 3, line: 130, sched: [0, 2090, 3380] }, '2-1': { k: 2.5, line: 100, sched: [0, 3100] }, '1-7': { k: 3, line: 120, sched: [0, 1900, 4400] },
+    '2-2': { k: 3, line: 100, sched: [0, 1800, 3600] }, '2-3': { k: 3, line: 110, sched: [0, 1310, 3600] }, '4-1': { k: 2, line: 80, sched: [0, 2210, 4770] },
+    // jadwal dihitung dari simulasi laju: selisih waktu tempuh lama→baru ditambahkan dengan cadangan 15% (kelonggaran sama seperti semula)
+  };
+  function stretchMission(M, cfg) {
+    const R = M.route, A = 350, st = R.stations.map((s) => s.x), s0 = st[0];
+    const ns = st.map((x) => s0 + (x - s0) * cfg.k);
+    const f = (x) => {
+      if (x === null || x === undefined || typeof x !== 'number') return x;
+      if (x !== x) return x;
+      if (x <= st[0]) return ns[0] + (x - st[0]);
+      if (x >= st[st.length - 1]) return ns[ns.length - 1] + (x - st[st.length - 1]);
+      let i = 0; while (i < st.length - 2 && x > st[i + 1]) i++;
+      const a = st[i], b = st[i + 1], na = ns[i], nb = ns[i + 1];
+      if (x - a <= A) return na + (x - a);
+      if (b - x <= A) return nb - (b - x);
+      return na + A + (x - a - A) * ((nb - na - 2 * A) / Math.max(1, b - a - 2 * A));
+    };
+    const F = f, f2 = (x) => (typeof x === 'number' ? Math.round(F(x)) : x);
+    const iv = (o) => { if (o && typeof o === 'object') { if ('from' in o) o.from = f2(o.from); if ('to' in o) o.to = f2(o.to); } return o; }; // direntangkan penuh (pemandangan, kabut, tanjakan)
+    const ivK = (o) => { if (o && typeof o === 'object' && 'from' in o && 'to' in o) { const L = o.to - o.from, c = F((o.from + o.to) / 2); o.from = Math.round(c - L / 2); o.to = Math.round(c + L / 2); } return o; }; // panjang tetap (tikungan, jembatan, terowongan)
+    R.stations.forEach((s, i) => { s.x = ns[i]; });
+    (R.passStations || []).forEach((s) => { s.x = f2(s.x); });
+    R.zones.forEach((z) => (Math.abs(z.from - st.reduce((m, x) => (Math.abs(x - z.from) < Math.abs(m - z.from) ? x : m), st[0])) <= A && Math.abs(z.to - st.reduce((m, x) => (Math.abs(x - z.to) < Math.abs(m - z.to) ? x : m), st[0])) <= A ? iv(z) : ivK(z)));
+    (R.scenes || []).forEach(iv); (R.grades || []).forEach(iv); (R.bridges || []).forEach(ivK); (R.neutral || []).forEach(ivK);
+    if (R.bridge) { const m = (R.bridges || []).find((q) => q.name === R.bridge.name); if (m) R.bridge = m; else ivK(R.bridge); }
+    iv(R.fog); ivK(R.tunnel); ivK(R.flood);
+    R.signals.forEach((q) => { q.x = f2(q.x); });
+    (R.crossings || []).forEach((q) => { q.hornFrom = f2(q.hornFrom); q.x = f2(q.x); });
+    (R.goats || []).forEach((q) => { if (q.hornFrom === undefined) q.hornFrom = q.x - 230; q.hornFrom = f2(q.hornFrom); q.x = f2(q.x); });
+    (R.hints || []).forEach((q) => { q.at = f2(q.at); });
+    (R.scripts || []).forEach((q) => { if ('at' in q) q.at = f2(q.at); });
+    (R.landmarks || []).forEach((q) => { q.x = f2(q.x); });
+    if (R.tree) { iv(R.tree); R.tree.warn = Math.round(R.tree.warn * cfg.line / R.lineSpeed); } // pohon tumbang: rentang lokasi direntangkan, jarak peringatan (m) sebanding kecepatan agar sempat berhenti
+    if (R.elephants) { R.elephants.x = f2(R.elephants.x); R.elephants.trigger = f2(R.elephants.trigger); }
+    if (R.meet) { ['entry', 'exit', 'foul'].forEach((k) => { if (k in R.meet) R.meet[k] = f2(R.meet[k]); }); }
+    if (R.rival) { const r = cfg.line / R.lineSpeed; R.rival.cruise = Math.round(R.rival.cruise * r); R.rival.finish = f2(R.rival.finish); R.rival.segments.forEach((q) => { ivK(q); if (!q.label) q.v = Math.round(q.v * r); }); (R.rival.stops || []).forEach((q) => { q.x = f2(q.x); }); }
+    if (typeof R.switchX === 'number') R.switchX = f2(R.switchX);
+    if (typeof R.startX === 'number') R.startX = f2(R.startX);
+    if (R.loading) R.loading.silo = f2(R.loading.silo);
+    R.bufferStop = f2(R.bufferStop);
+    if (cfg.sched) R.stations.forEach((s, i) => { if (cfg.sched[i] !== undefined) s.sched = cfg.sched[i]; });
+    R.lineSpeed = cfg.line;
+    if (cfg.line >= 100) R.brakeBoards = true; // papan REM: jarak pengereman dari kecepatan tinggi
+    M.stretched = cfg;
+  }
+  Object.entries(STRETCH).forEach(([id, cfg]) => { if (MISSIONS[id]) stretchMission(MISSIONS[id], cfg); });
   let MIS = MISSIONS['1-4'];
   let ROUTE = MIS.route;
   const finalStation = () => ROUTE.stations[ROUTE.stations.length - 1];
@@ -1932,6 +1984,7 @@
         duck({ amb: 0.6, music: 0.8, engine: 0.6 }, 2.5);
       },
       stars(n) {
+        if (!ac) return; // suara belum aktif (belum ada sentuhan pengguna)
         const notes = [523.25, 659.25, 783.99];
         for (let i = 0; i < n; i++) { metal(notes[i] * 2, 0.14, 1.4, sfx, 0.35 + i * 0.3); burst(5200, 1.4, 0.03, 0.05, 'bandpass', sfx, 0.35 + i * 0.3); }
         if (n === 3) { metal(1046.5 * 2, 0.1, 2, sfx, 1.25); [1318.5, 1568, 2093].forEach((f, k) => metal(f * 2, 0.045, 1.2, sfx, 1.3 + k * 0.07)); nz(ac.currentTime + 1.2, 'highpass', 3500, 0.5, 0.05, 0.9, sfx); }
@@ -2129,7 +2182,7 @@
     return `M${a[0].toFixed(1)} ${a[1].toFixed(1)}A${r} ${r} 0 ${large} 1 ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
   }
   function initGauge() {
-    GMAX = ROUTE.lineSpeed > 150 ? 300 : ROUTE.lineSpeed > 120 ? 180 : ROUTE.lineSpeed > 100 ? 140 : 100;
+    GMAX = ROUTE.lineSpeed > 150 ? 300 : ROUTE.lineSpeed > 140 ? 180 : ROUTE.lineSpeed >= 100 ? 160 : 100;
     const step = GMAX / 20, big = GMAX / 5;
     ui.gTrack.setAttribute('d', gArc(80, 0, GMAX));
     ui.gLabels.textContent = ''; gaugeCache.v = -1; gaugeCache.lim = -1;
@@ -2734,6 +2787,8 @@
     const KIL = MIS.loco === 'hst' ? 0.85 : 1; // Kilat G1 generasi pertama: tarikan & rem 15% lebih lemah
     if (n > 0) target = powerLocked ? 0 : (n * 0.26 * KIL * (HST ? Math.min(1.25, 46 / Math.max(1, S.v)) : EXP ? Math.min(1, 14 / Math.max(1, S.v)) : Math.max(0, 1 - S.v / 26))) / massF * (S.wetMotor ? 0.6 : 1);
     if (n > 0 && MIS.loco === 'argo') target *= clamp((57 - S.v) / 3, 0, 1);
+    if (n > 0 && MIS.loco === 'steam') target = powerLocked ? 0 : (n * 0.26 * Math.min(1, 7 / Math.max(1, S.v)) * clamp((85 / 3.6 - S.v) / 2.5, 0, 1)) / massF; // lokomotif uap Surya: tenaga konstan, maksimum ±80 km/h
+    else if (n > 0 && !ELEC() && !MIS.digitalCab && EXP) target *= clamp((143 / 3.6 - S.v) / 3, 0, 1); // Cakra: kecepatan maksimum 140 km/h
     if (n > 0 && MIS.digitalCab) target *= clamp(((ROUTE.lineSpeed + 5) / 3.6 - S.v) / 3, 0, 1); // Cakra lintas 150: tenaga habis menjelang 155 km/h // Agraveda: kecepatan maksimum 200 km/h (tenaga habis menjelang 205 km/h)
     else if (n === 0) target = 0;
     else if (n === -5) target = (-1.6 * grip) / brakeF;
@@ -5667,7 +5722,7 @@
       c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     };
     const gy0 = pt + phd * 0.36;
-    gauge(W * 0.16, gy0, H * 0.05, kmh, 50, 5, 'KECEPATAN', `${Math.round(kmh)} km/h`, undefined, lim);
+    gauge(W * 0.16, gy0, H * 0.05, kmh, 100, 10, 'KECEPATAN', `${Math.round(kmh)} km/h`, undefined, lim);
     // papan batas
     { const lr = H * 0.026, lx = W * 0.235, ly = gy0 - H * 0.03;
       c.fillStyle = '#fff'; c.beginPath(); c.arc(lx, ly, lr, 0, 7); c.fill(); c.strokeStyle = '#e5483b'; c.lineWidth = lr * 0.22; c.stroke();
