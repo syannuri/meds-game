@@ -4753,6 +4753,7 @@
 
     // jalur ganda: jalur 2 (arah berlawanan) di kanan, jalur 3 lewat langsung di stasiun
     if (DBc) {
+      const sunXc = SUN ? SUN.x : W * 0.8, wetC = MIS.rain && !inTun;
       const balC = (d) => { const Bk = brAt(d); return inTun ? '#24221f' : Bk ? (Bk.viaduct ? (night ? '#4a4e58' : mix('#a39e94', '#bdb8ae', p)) : '#4a535a') : mix('#8d8275', '#a59a8c', p); };
       const trk = (O, ok) => {
         for (let i = steps.length - 2; i >= 0; i--) { const a = steps[i], b = steps[i + 1]; if (!ok((a + b) / 2)) continue;
@@ -4761,7 +4762,22 @@
           quad(W3(d - 0.12, o - 1.2, 0.05), W3(d - 0.12, o + 1.2, 0.05), W3(d + 0.12, o + 1.2, 0.05), W3(d + 0.12, o - 1.2, 0.05), inTun ? '#3a3631' : mix('#6f6a63', '#8b857b', p)); }
         [-0.53, 0.53].forEach((ro) => { for (let i = 0; i < steps.length - 1; i++) { const a = steps[i], b = steps[i + 1]; if (!ok((a + b) / 2)) continue; const oa = O(x0 + a) + ro, ob = O(x0 + b) + ro;
           quad(W3(a, oa - 0.04, 0.02), W3(b, ob - 0.04, 0.02), W3(b, ob - 0.035, 0.16), W3(a, oa - 0.035, 0.16), inTun ? '#2a2826' : '#3a3e42');
-          quad(W3(a, oa - 0.035, 0.16), W3(b, ob - 0.035, 0.16), W3(b, ob + 0.035, 0.16), W3(a, oa + 0.035, 0.16), inTun ? '#6d6a66' : '#a6aeb2'); } });
+          quad(W3(a, oa - 0.035, 0.16), W3(b, ob - 0.035, 0.16), W3(b, ob + 0.035, 0.16), W3(a, oa + 0.035, 0.16), inTun ? '#6d6a66' : '#a6aeb2');
+          if (!inTun && a < 260) { const m0 = W3(a, oa, 0.17), m1 = W3(b, ob, 0.17); if (m0 && m1) { // kilau kepala rel menuju matahari, lebih kuat di kejauhan
+            const toward = 1 - clamp(Math.abs(m0.x - sunXc) / W, 0, 1), far = clamp(a / 120, 0, 1), al = clamp((night ? 0.35 : 0.55 + (wetC ? 0.25 : 0)) + toward * 0.35 * SUNK + far * 0.25 * SUNK, 0, 1);
+            c.strokeStyle = night ? `rgba(200,210,255,${al * 0.7})` : `rgba(255,${238 - Math.round(toward * 30)},${210 - Math.round(toward * 60)},${al})`;
+            c.lineWidth = Math.max(0.7, 0.022 * m0.k); c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke(); } } } });
+        // pelat landas & klip penambat kuning di bantalan dekat
+        for (let wd = Math.floor((x0 + 28) / slp) * slp; wd > x0 + 1.4; wd -= slp) { const d = wd - x0; if (!ok(d)) continue; const o = O(wd);
+          for (const ro of [-0.53, 0.53]) for (const sd of [-1, 1]) { const q = W3(d, o + ro + sd * 0.075, 0.07); if (!q || q.k < 1.5) continue;
+            c.fillStyle = inTun ? 'rgba(60,56,50,0.7)' : 'rgba(70,74,78,0.55)'; c.fillRect(q.x - 0.05 * q.k, q.y - 0.015 * q.k, 0.1 * q.k, 0.04 * q.k);
+            c.fillStyle = inTun ? '#6a5a32' : '#c9a040'; c.fillRect(q.x - 0.025 * q.k, q.y - 0.045 * q.k, 0.05 * q.k, 0.035 * q.k); } }
+        // garis cahaya yang mengalir di kepala rel seiring laju kereta
+        if (!inTun && (SUNK > 0 || night)) { c.save(); c.globalCompositeOperation = 'lighter'; const flow = (x0 * 0.6 + 9) % 24;
+          for (const ro of [-0.53, 0.53]) for (let d = 4 - flow; d < 200; d += 24) { const dd = Math.max(2, d); if (!ok(dd)) continue; const q0 = W3(dd, O(x0 + dd) + ro, 0.17), q1 = W3(dd + 6 + dd * 0.08, O(x0 + dd + 6 + dd * 0.08) + ro, 0.17); if (!q0 || !q1) continue;
+            const toward = 1 - clamp(Math.abs(q0.x - sunXc) / W, 0, 1), al = night ? 0.35 : (0.25 + 0.55 * toward) * SUNK * (wetC ? 1.3 : 1);
+            c.strokeStyle = night ? `rgba(255,236,180,${al})` : `rgba(255,246,220,${clamp(al, 0, 1)})`; c.lineWidth = Math.max(1, 0.04 * q0.k); c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); }
+          c.restore(); }
       };
       trk(dblO, () => true);
       trk(dblO3, (d) => dbl3(x0 + d) > 0.02);
@@ -9418,9 +9434,7 @@
           c.fillStyle = v ? colV : colG; c.beginPath(); c.moveTo(X(x) - 0.5, yo(O(x)) + t0 * ppm); c.lineTo(X(e) + 0.5, yo(O(e)) + t0 * ppm); c.lineTo(X(e) + 0.5, yo(O(e)) + t1 * ppm); c.lineTo(X(x) - 0.5, yo(O(x)) + t1 * ppm); c.closePath(); c.fill(); } };
         band(-0.62, 0.5, balTop, slab, false); band(0.5, 1.45, balSide, slab, true);
         c.fillStyle = sleeper; for (let m = Math.ceil(s0 / 1.2) * 1.2; m < s1; m += 1.2) { if (!ok(m)) continue; c.fillRect(X(m), yo(O(m)) - 0.5 * ppm, 0.3 * ppm, 0.8 * ppm); }
-        const rail = (off, h, col) => { c.strokeStyle = col; c.lineWidth = Math.max(1, h * ppm); c.beginPath(); let on = false;
-          for (let x = s0; x <= s1 + 0.01; x += 2) { if (!ok(x)) { on = false; continue; } const y = yo(O(x)) + off * ppm; on ? c.lineTo(X(x), y) : c.moveTo(X(x), y); on = true; } c.stroke(); };
-        rail(-0.42, 0.13, '#7d8487'); rail(0, 0.24, '#9aa0a2'); rail(-0.06, 0.06, 'rgba(255,255,255,0.45)');
+        railsAlong(V, s0, s1, ok, (x) => yo(O(x)), 1.05);
       };
       track(dblO, () => true);
       track(dblO3, (x) => dbl3(x) > 0.02, true);
@@ -9431,6 +9445,43 @@
     // kawat kontak jalur 2 (bergantung dari lengan tiang yang sama)
     const hc = gy - trainH(7.3) * ppm; c.strokeStyle = night ? 'rgba(150,170,200,0.6)' : 'rgba(52,58,66,0.7)'; c.lineWidth = Math.max(1, 0.07 * ppm);
     for (const [s0, s1] of segs) { c.beginPath(); for (let x = s0; x <= s1; x += 4) { const y = hc + DBL_K * dblO(x) * ppm; x === s0 ? c.moveTo(X(x), y) : c.lineTo(X(x), y); } c.stroke(); }
+  }
+  // rel sisi realistis untuk lintasan yang bisa melengkung di layar (jalur 2/3): profil kepala-badan-kaki, pelat & klip penambat,
+  // kilau matahari di bawah posisi matahari, kilatan pendek yang bergeser bersama rel, cahaya tepi, sorot lampu Kilat di rel depannya
+  function railsAlong(V, s0, s1, ok, yAt, kk = 1) {
+    const { c, ppm, X } = V, night = V.night, wet = MIS.rain || V.storm, tf = V.tf || 0;
+    const sun = sunPos(V), sunK = night || tf > 0.2 ? 0 : V.storm ? 0.35 : clamp(1.1 - V.p * 0.5, 0.45, 1);
+    const xa = X(s0), invX = (sx) => s0 + (sx - xa) / ppm;
+    for (const [off, k0] of [[-0.48, 0.62], [-0.12, 1]]) {
+      const k = k0 * kk, head = Math.max(1.5, 0.13 * ppm * k), web = Math.max(1, 0.11 * ppm * k), foot = Math.max(1, 0.06 * ppm * k);
+      const path = (dy) => { c.beginPath(); let on = false; for (let x = s0; x <= s1 + 0.01; x += 2) { if (!ok(x)) { on = false; continue; } const y = yAt(x) + off * ppm * kk + dy; on ? c.lineTo(X(x), y) : c.moveTo(X(x), y); on = true; } };
+      const line = (dy, w, col) => { path(dy); c.strokeStyle = col; c.lineWidth = w; c.stroke(); };
+      if (ppm * k > 4) for (let m = Math.ceil(s0 / 1.2) * 1.2; m < s1; m += 1.2) { if (!ok(m)) continue; const sx = X(m) + (k0 < 1 ? 0 : 0.15 * ppm), yh = yAt(m) + off * ppm * kk;
+        c.fillStyle = night ? '#2a2c30' : '#4a4d50'; c.fillRect(sx - 0.18 * ppm * k, yh + head + web, 0.5 * ppm * k, foot + 1);
+        c.fillStyle = night ? '#3a3020' : '#b08a3a'; c.fillRect(sx - 0.05 * ppm * k, yh + head + web * 0.4, 0.12 * ppm * k, web * 0.9); }
+      line(head + web + foot / 2, foot, night ? '#24272b' : '#4e5256');
+      line(head + web / 2, web, night ? '#1b1d20' : '#3c4044');
+      line(head / 2, head, night ? '#383c44' : '#767e84');
+      line(head * 0.3, head * 0.6, night ? '#5a606a' : '#b4bcc0');
+      line(head * 0.09, Math.max(1, head * 0.18), wet ? 'rgba(255,255,255,0.75)' : night ? 'rgba(200,210,230,0.5)' : 'rgba(255,255,255,0.6)');
+      if (sunK > 0) {
+        const bw = W * (wet ? 0.5 : 0.32), g = c.createLinearGradient(sun.x - bw, 0, sun.x + bw, 0), col = V.rim && !V.storm ? V.rim : '#ffffff';
+        g.addColorStop(0, 'rgba(255,240,210,0)'); g.addColorStop(0.5, `rgba(255,244,220,${(0.85 * sunK).toFixed(3)})`); g.addColorStop(1, 'rgba(255,240,210,0)');
+        c.save(); c.globalCompositeOperation = 'lighter'; path(head * 0.2); c.strokeStyle = g; c.lineWidth = Math.max(1.5, head * 0.45); c.stroke();
+        c.fillStyle = col; const offx = (V.camX || 0) * ppm;
+        for (let q = 0; q < 26; q++) { const x = ((q * 97.3 + 41 - offx) % (bw * 2) + bw * 2) % (bw * 2) + sun.x - bw, f = 1 - Math.abs(x - sun.x) / bw, wx = invX(x); if (f <= 0 || !ok(wx) || wx < s0 || wx > s1) continue;
+          const ln = (6 + hash(q * 2.7) * 18) * f * k; c.globalAlpha = 0.75 * sunK * f; c.fillRect(x - ln / 2, yAt(wx) + off * ppm * kk, ln, Math.max(1, head * 0.3)); }
+        const sx2 = sun.x + Math.sin(performance.now() / 650 + 1) * 8, wx2 = invX(sx2);
+        if (ok(wx2) && wx2 > s0 && wx2 < s1) { const sy = yAt(wx2) + off * ppm * kk + 1, sr = (3 + 3 * sunK) * k; c.globalAlpha = 0.9 * sunK; c.strokeStyle = '#fffbe8'; c.lineWidth = 1; c.beginPath(); c.moveTo(sx2 - sr * 2, sy); c.lineTo(sx2 + sr * 2, sy); c.moveTo(sx2, sy - sr); c.lineTo(sx2, sy + sr); c.stroke(); }
+        c.restore();
+      }
+      if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; line(head * 0.12, Math.max(1, head * 0.25), V.rim); c.restore(); }
+      // sorot lampu Kilat memantul di kepala rel di depan moncongnya
+      const K = V.st && V.st.kilat;
+      if (K && ok(K.x)) { const nx = X(K.x), lg = c.createLinearGradient(nx, 0, nx - 50 * ppm, 0); lg.addColorStop(0, `rgba(255,236,190,${night || tf > 0.2 ? 0.85 : 0.5})`); lg.addColorStop(1, 'rgba(255,236,190,0)');
+        c.save(); c.globalCompositeOperation = 'lighter'; c.beginPath(); for (let x = Math.max(s0, K.x - 50); x <= Math.min(s1, K.x); x += 2) { const y = yAt(x) + off * ppm * kk + head * 0.2; x <= Math.max(s0, K.x - 50) ? c.moveTo(X(x), y) : c.lineTo(X(x), y); }
+        c.strokeStyle = lg; c.lineWidth = Math.max(1, head * 0.4); c.stroke(); c.restore(); }
+    }
   }
   // Kilat Nusantara asli (gambar lokomotif & gerbong game) dibuat sekali sebagai sprite menghadap ke kiri, kabin di kedua ujung
   let KILAT_SPR = null;
