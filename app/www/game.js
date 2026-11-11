@@ -4994,10 +4994,19 @@
           const pts = [m(-60, 0), m(-40, 14), m(-14, 22), m(0, 24), m(16, 21), m(42, 12), m(60, 0)].filter(Boolean);
           c.fillStyle = night ? '#18241a' : mix('#3f5f37', '#4f7a43', p);
           c.beginPath(); pts.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill();
-          const fr = [m(-5, 0), m(-5, 8), m(5, 8), m(5, 0)].filter(Boolean);
-          c.fillStyle = '#8a8378'; c.beginPath(); fr.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill();
+          if (T.modern) { // terowongan kereta cepat: tudung portal melengkung (bell-mouth) beton halus, bukan dinding kotak
+            const arch = (dd, rw, rh, h0) => { const pts = [W3(dd, -rw, 0)]; for (let k = 0; k <= 20; k++) { const a = Math.PI * k / 20; pts.push(W3(dd, -Math.cos(a) * rw, h0 + Math.sin(a) * (rh - h0))); } pts.push(W3(dd, rw, 0)); return pts.filter(Boolean); };
+            const outer = arch(d, 5.6, 9.2, 3.4), lip = arch(d - 0.6, 5.0, 8.4, 3.4);
+            const cg = c.createLinearGradient(0, outer[10] ? outer[10].y : 0, 0, bl.y); cg.addColorStop(0, night ? '#4a4c52' : '#d9d6cf'); cg.addColorStop(1, night ? '#2e3034' : '#a8a49b');
+            c.fillStyle = cg; c.beginPath(); outer.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill();
+            c.strokeStyle = night ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.6)'; c.lineWidth = Math.max(1, 0.12 * bl.k); c.beginPath(); lip.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.stroke();
+            if (!night && SUNK > 0) { const sd = SUN.x > bl.x ? 1 : -1, hl = c.createLinearGradient(bl.x, 0, br.x, 0); hl.addColorStop(sd > 0 ? 0 : 1, 'rgba(40,40,50,0.18)'); hl.addColorStop(sd > 0 ? 1 : 0, `rgba(${sunRim},0.18)`); c.fillStyle = hl; c.beginPath(); outer.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill(); }
+          } else {
+            const fr = [m(-5, 0), m(-5, 8), m(5, 8), m(5, 0)].filter(Boolean);
+            c.fillStyle = '#8a8378'; c.beginPath(); fr.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.closePath(); c.fill();
+          }
           c.fillStyle = '#050607'; c.beginPath(); c.moveTo(br.x, br.y); hole.forEach((q) => c.lineTo(q.x, q.y)); c.lineTo(bl.x, bl.y); c.closePath(); c.fill();
-          const nm = m(0, 7.2);
+          const nm = m(0, T.modern ? 7.75 : 7.2);
           if (nm && nm.k > 5) { c.fillStyle = '#f2ead6'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.round(0.7 * nm.k)}px "Big Shoulders Display", sans-serif`; c.fillText(T.name, nm.x, nm.y); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
         } else {
           // dari dalam: hanya lubang keluar yang terang
@@ -5006,9 +5015,29 @@
         }
       };
       if (!inTun) portal(T.from - x0, true); else {
+        // dinding terowongan berbentuk tabung (lengkung tapal kuda), diterangi lampu kereta: terang di dekat, gelap menjauh,
+        // sambungan segmen lining tiap 12 m; menggantikan bidang gelap datar sehingga cahaya mengikuti bentuk terowongan
+        const RW = 4.3, RH = 7.0, N = 14, dEnd = Math.min(T.to - x0, 260);
+        const ring = (d) => { const pts = []; pts.push(W3(d, -RW, 0)); for (let k = 0; k <= N; k++) { const a = Math.PI * k / N; pts.push(W3(d, -Math.cos(a) * RW, 3.2 + Math.sin(a) * (RH - 3.2))); } pts.push(W3(d, RW, 0)); return pts; };
+        const steps = []; for (let d = 1.2; d < dEnd; d += d < 30 ? 3 : d < 90 ? 6 : 12) steps.push(d); steps.push(dEnd);
+        for (let i = steps.length - 2; i >= 0; i--) {
+          const d = steps[i], e = steps[i + 1], A = ring(d), B = ring(e);
+          const lit = smooth(1.5, 16, d) * Math.exp(-d / 55) * 0.55 + 0.05, wall = night ? 0.9 : 1; // lampu sorot menerangi dinding di depan, bukan di samping kabin
+          for (let k = 0; k < A.length - 1; k++) {
+            const a0 = A[k], a1 = A[k + 1], b0 = B[k], b1 = B[k + 1]; if (!a0 || !a1 || !b0 || !b1) continue;
+            const side = k === 0 || k === A.length - 2 ? 0.75 : 1 - Math.abs(k - (A.length - 1) / 2) / A.length * 0.5; // dinding samping sedikit lebih terang dari langit-langit jauh
+            const v = Math.round(10 + 110 * lit * side * wall), col = `rgb(${v},${Math.round(v * 0.97)},${Math.round(v * 0.92)})`;
+            c.fillStyle = col; c.beginPath(); c.moveTo(a0.x, a0.y); c.lineTo(a1.x, a1.y); c.lineTo(b1.x, b1.y); c.lineTo(b0.x, b0.y); c.closePath(); c.fill();
+            c.strokeStyle = col; c.lineWidth = 1; c.stroke(); // tutup celah antialias antar keping
+          }
+        }
+        c.strokeStyle = 'rgba(0,0,0,0.35)';
+        for (let wd = Math.ceil((x0 + 2) / 12) * 12; wd < x0 + dEnd; wd += 12) { const A = ring(wd - x0).filter(Boolean); if (A.length < 3) continue; c.lineWidth = Math.max(1, 0.06 * W3(wd - x0, 0, 0).k); c.beginPath(); A.forEach((q, k) => (k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.stroke(); }
         portal(T.to - x0, false);
         // lampu dinding terowongan
-        for (let wd = Math.ceil(x0 / 30) * 30; wd < T.to; wd += 30) { const d = wd - x0; if (d < 8) continue; [-3.2, 3.2].forEach((o) => { const q = W3(d, o, 3.8); if (q) { c.fillStyle = 'rgba(255,190,110,0.9)'; c.beginPath(); c.arc(q.x, q.y, Math.max(1.2, 0.18 * q.k), 0, 7); c.fill(); } }); }
+        for (let wd = Math.ceil(x0 / 30) * 30; wd < T.to; wd += 30) { const d = wd - x0; if (d < 8) continue; [-4.05, 4.05].forEach((o) => { const q = W3(d, o, 3.6); if (!q) return; const r = Math.max(1.2, 0.12 * q.k); // lampu dinding pipih menempel di lining, berpendar lembut
+          c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, r * 6); g.addColorStop(0, 'rgba(255,190,110,0.35)'); g.addColorStop(1, 'rgba(255,190,110,0)'); c.fillStyle = g; c.beginPath(); c.arc(q.x, q.y, r * 6, 0, 7); c.fill(); c.restore();
+          c.fillStyle = '#ffd59a'; c.beginPath(); c.ellipse(q.x, q.y, r * 0.7, r * 1.4, 0, 0, 7); c.fill(); }); }
       }
     }
 
@@ -5027,13 +5056,15 @@
       c.save(); c.globalCompositeOperation = 'lighter';
       const KL = night && !inTun ? 1 : inTun ? 0.85 : 0.6; // malam: lampu sorot jauh lebih terang & jauh
       // berkas lebar di tanah, mengikuti lengkung rel
-      for (let d = 3; d < Math.min(FAR, 190); d += 6) { const e = d + 6, a1 = W3(d, -(2.5 + d * 0.06), 0), a2 = W3(d, 2.5 + d * 0.06, 0), b1 = W3(e, -(2.5 + e * 0.06), 0), b2 = W3(e, 2.5 + e * 0.06, 0); if (!a1 || !a2 || !b1 || !b2) continue;
+      const bw = (d) => inTun ? Math.min(4.2, 2.5 + d * 0.06) : 2.5 + d * 0.06; // di terowongan berkas berhenti di kaki dinding
+      for (let d = 3; d < Math.min(FAR, 190); d += 6) { const e = d + 6, a1 = W3(d, -bw(d), 0), a2 = W3(d, bw(d), 0), b1 = W3(e, -bw(e), 0), b2 = W3(e, bw(e), 0); if (!a1 || !a2 || !b1 || !b2) continue;
         const al = 0.42 * KL * Math.pow(1 - d / 190, 1.4); c.fillStyle = `rgba(255,234,180,${al.toFixed(3)})`; c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(a2.x, a2.y); c.lineTo(b2.x, b2.y); c.lineTo(b1.x, b1.y); c.closePath(); c.fill(); }
       // inti terang tepat di atas rel
       for (let d = 3; d < Math.min(FAR, 120); d += 5) { const e = d + 5, a1 = W3(d, -1.4, 0.1), a2 = W3(d, 1.4, 0.1), b1 = W3(e, -1.4, 0.1), b2 = W3(e, 1.4, 0.1); if (!a1 || !a2 || !b1 || !b2) continue;
         c.fillStyle = `rgba(255,246,220,${(0.35 * KL * Math.pow(1 - d / 120, 1.2)).toFixed(3)})`; c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(a2.x, a2.y); c.lineTo(b2.x, b2.y); c.lineTo(b1.x, b1.y); c.closePath(); c.fill(); }
       // berkas di udara (kabut malam) dari lampu ke depan + titik hilang bercahaya
-      { const v0 = W3(2, 0, 2.2), v1 = W3(Math.min(FAR, 160), 0, 1.2); if (v0 && v1) {
+      if (inTun) { const v1 = W3(Math.min(FAR, 120), 0, 2.6), v0 = W3(6, 0, 2.6); if (v1 && v0) { c.save(); c.translate(v1.x, (v0.y + v1.y) / 2); c.scale(1, 0.62); const r = Math.abs(v0.y - v1.y) * 1.2, ag = c.createRadialGradient(0, 0, 0, 0, 0, r); ag.addColorStop(0, `rgba(255,236,190,${0.12 * KL})`); ag.addColorStop(1, 'rgba(255,236,190,0)'); c.fillStyle = ag; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.restore(); } }
+      else { const v0 = W3(2, 0, 2.2), v1 = W3(Math.min(FAR, 160), 0, 1.2); if (v0 && v1) {
         const ag = c.createLinearGradient(0, H, 0, v1.y); ag.addColorStop(0, `rgba(255,236,190,${0.1 * KL})`); ag.addColorStop(1, `rgba(255,236,190,${0.025 * KL})`);
         c.fillStyle = ag; c.beginPath(); c.moveTo(v0.x - W * 0.45, H * 0.74); c.lineTo(v0.x + W * 0.45, H * 0.74); c.lineTo(v1.x + 8 * v1.k, v1.y - 2 * v1.k); c.lineTo(v1.x - 8 * v1.k, v1.y - 2 * v1.k); c.closePath(); c.fill();
         const hg = c.createRadialGradient(v1.x, v1.y, 0, v1.x, v1.y, W * 0.12); hg.addColorStop(0, `rgba(255,240,200,${0.35 * KL})`); hg.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = hg; c.fillRect(v1.x - W * 0.12, v1.y - W * 0.12, W * 0.24, W * 0.24); } }
@@ -5603,7 +5634,7 @@
     // pantulan kaca & tint atas
     const tg = c.createLinearGradient(0, 0, 0, H * 0.25); tg.addColorStop(0, 'rgba(20,40,60,0.45)'); tg.addColorStop(1, 'rgba(20,40,60,0)');
     c.fillStyle = tg; c.fillRect(0, 0, W, H * 0.25);
-    c.fillStyle = 'rgba(180,230,255,0.04)'; c.beginPath(); c.moveTo(W * 0.62, H * 0.06); c.lineTo(W * 0.7, H * 0.06); c.lineTo(W * 0.58, H * 0.66); c.lineTo(W * 0.53, H * 0.66); c.closePath(); c.fill();
+    if (!inTun) { c.fillStyle = 'rgba(180,230,255,0.04)'; c.beginPath(); c.moveTo(W * 0.62, H * 0.06); c.lineTo(W * 0.7, H * 0.06); c.lineTo(W * 0.58, H * 0.66); c.lineTo(W * 0.53, H * 0.66); c.closePath(); c.fill(); } // kilau kaca: tak terlihat di terowongan gelap
     // dasbor karbon melengkung dengan lampu ambien
     const dy0 = H * 0.66;
     const dg = c.createLinearGradient(0, dy0, 0, H); dg.addColorStop(0, night ? '#151a21' : '#222a33'); dg.addColorStop(0.25, '#10141a'); dg.addColorStop(1, '#06080b');
