@@ -6064,9 +6064,11 @@
     }
     clapNow = !!(mo && st === S && mo.kind === 'perfect' && mo.t < 2.8);
     drawSky(V);
+    drawBirds(V);
     drawLandmarks(V, true);
     drawRidges(V);
     { const sw = seaWeight(V); if (sw < 0.99) { c.save(); c.globalAlpha = 1 - sw; drawFarLand(V); c.restore(); } }
+    { const sw = seaWeight(V); if (sw < 0.99 && !(ROUTE.scenes || []).some((q) => q.kind === 'city' && sceneWeight(V, q) > 0.5)) { c.save(); c.globalAlpha = 1 - sw; drawRoadTraffic(V); c.restore(); } }
     drawScenes(V);
     { const sw = seaWeight(V); if (sw < 0.99) { c.save(); c.globalAlpha = 1 - sw; drawLandmarks(V); c.restore(); } }
     drawPort(V);
@@ -7200,6 +7202,61 @@
     drawLandmark(c2, d.kind, w * (d.kind === 'market' ? 0.55 : 0.5), h * 0.74, s, { t: performance.now() / 1000, night: false });
   }
 
+  // jalan desa di kaki kampung: sepeda motor, mobil, angkot, truk & sepeda lalu-lalang dua arah (paralaks 0,3);
+  // malam: lampu depan & lampu belakang; tidak ada di terowongan
+  const ROADV = Array.from({ length: 14 }, (_, i) => ({ k: ['moto', 'moto', 'moto', 'car', 'car', 'angkot', 'truck', 'bike', 'moto', 'car', 'moto', 'pickup', 'moto', 'bus'][i], u: hash(i * 4.7 + 1), sp: 7 + hash(i * 2.9) * 9, dir: i % 2 ? 1 : -1, col: ['#c0392b', '#f2efe8', '#2a3a5a', '#3a3a40', '#e1a63b', '#1f5a8a', '#6a2a2a', '#2e86ab'][Math.floor(hash(i * 1.3 + 7) * 8)] }));
+  function drawRoadTraffic(V) {
+    if (V.tf > 0.3) return;
+    const { c, ppm, gy } = V, night = V.night, s = ppm * 0.3, yR = gy - 5 * ppm + 0.9 * s, tt = performance.now() / 1000;
+    const off = pcOf(V) * 0.3 - (V.pan || 0) * 0.9, span = W + 1200;
+    const hazeC = night ? '#1a2142' : V.storm ? '#8a96a0' : mix('#e8b98f', '#cfe0e6', V.p), hz = (col) => mix(col, hazeC, night ? 0.55 : 0.3);
+    c.fillStyle = hz('#5a5a5e'); c.fillRect(0, yR - 0.15 * s, W, 1.1 * s);
+    c.fillStyle = hz('#d8d4c8'); for (let x = -((off % (6 * s)) + 6 * s) % (6 * s); x < W; x += 6 * s) c.fillRect(x, yR + 0.35 * s, 2.4 * s, Math.max(1, 0.12 * s));
+    for (const v of ROADV) {
+      const lane = v.dir > 0 ? 0.62 : 0.15, base = v.u * span + v.dir * v.sp * tt * s * 0.4;
+      const x = ((base - off) % span + span) % span - 600, y = yR + lane * s;
+      if (x < -40 || x > W + 40) continue;
+      const d = v.dir, body = hz(v.col), dark = hz('#1c1e22'), glass = hz(night ? '#3a4060' : '#8aa4b8');
+      c.save(); c.translate(x, y); c.scale(d, 1);
+      const wheel = (wx, r) => { c.fillStyle = dark; c.beginPath(); c.arc(wx * s, -r * s, r * s, 0, 7); c.fill(); };
+      if (v.k === 'moto' || v.k === 'bike') {
+        wheel(-0.7, 0.32); wheel(0.7, 0.32);
+        if (v.k === 'moto') { c.fillStyle = body; c.beginPath(); c.moveTo(-0.7 * s, -0.5 * s); c.lineTo(0.6 * s, -0.55 * s); c.lineTo(0.7 * s, -0.9 * s); c.lineTo(-0.3 * s, -0.9 * s); c.closePath(); c.fill(); }
+        else { c.strokeStyle = dark; c.lineWidth = Math.max(1, 0.1 * s); c.beginPath(); c.moveTo(-0.7 * s, -0.32 * s); c.lineTo(0, -0.85 * s); c.lineTo(0.7 * s, -0.32 * s); c.stroke(); }
+        const bob = Math.sin(tt * 8 + v.u * 9) * 0.04 * s;
+        c.fillStyle = hz(['#3a5a8a', '#8a3a3a', '#2f4a2f', '#e1a63b'][Math.floor(v.u * 4)]); c.fillRect(-0.22 * s, -1.75 * s + bob, 0.44 * s, 0.85 * s);
+        c.fillStyle = hz(v.k === 'moto' ? ['#c0392b', '#f2efe8', '#1f1f24'][Math.floor(v.u * 3)] : '#a8704a'); c.beginPath(); c.arc(0.05 * s, -2.0 * s + bob, 0.26 * s, 0, 7); c.fill(); // helm / kepala
+        if (night && v.k === 'moto') { c.fillStyle = '#fff2c8'; c.beginPath(); c.arc(0.8 * s, -0.75 * s, 0.13 * s, 0, 7); c.fill(); }
+      } else {
+        const L = v.k === 'truck' ? 4.2 : v.k === 'bus' ? 5.2 : v.k === 'angkot' ? 2.8 : 2.6, Hh = v.k === 'truck' ? 1.9 : v.k === 'bus' ? 2.0 : v.k === 'angkot' ? 1.5 : 1.05;
+        wheel(-L * 0.32, 0.3); wheel(L * 0.32, 0.3);
+        c.fillStyle = v.k === 'angkot' ? hz('#3c8d5a') : v.k === 'bus' ? hz('#e8e2d2') : body;
+        roundRect(c, -L / 2 * s, -(0.3 + Hh) * s, L * s, Hh * s, 0.2 * s); c.fill();
+        if (v.k === 'car' || v.k === 'pickup') { c.beginPath(); c.moveTo(-0.7 * s, -(0.3 + Hh) * s); c.lineTo(-0.4 * s, -(0.3 + Hh + 0.55) * s); c.lineTo(0.55 * s, -(0.3 + Hh + 0.55) * s); c.lineTo(0.9 * s, -(0.3 + Hh) * s); c.closePath(); c.fill(); c.fillStyle = glass; c.fillRect(-0.35 * s, -(0.3 + Hh + 0.45) * s, 0.8 * s, 0.38 * s); }
+        else if (v.k === 'truck') { c.fillStyle = hz('#e1a63b'); roundRect(c, L * 0.18 * s, -(0.3 + Hh) * s, L * 0.32 * s, Hh * s, 0.15 * s); c.fill(); c.fillStyle = glass; c.fillRect(L * 0.3 * s, -(0.3 + Hh * 0.92) * s, L * 0.16 * s, Hh * 0.35 * s); }
+        else { c.fillStyle = glass; for (let q = -L / 2 + 0.3; q < L / 2 - 0.4; q += 0.7) c.fillRect(q * s, -(0.3 + Hh * 0.88) * s, 0.5 * s, Hh * 0.35 * s); if (v.k === 'bus') { c.fillStyle = hz('#c0392b'); c.fillRect(-L / 2 * s, -(0.3 + Hh * 0.35) * s, L * s, 0.18 * s); } }
+        if (night) { c.fillStyle = '#fff2c8'; c.beginPath(); c.arc(L / 2 * s, -0.65 * s, 0.14 * s, 0, 7); c.fill(); c.fillStyle = '#ff4a3a'; c.fillRect(-L / 2 * s - 0.05 * s, -0.75 * s, 0.12 * s, 0.18 * s); }
+      }
+      c.restore();
+      if (night) { c.save(); c.globalCompositeOperation = 'lighter'; const lx = x + d * 1.6 * s, g = c.createRadialGradient(lx, y - 0.6 * s, 0, lx, y - 0.6 * s, 3 * s); g.addColorStop(0, 'rgba(255,236,190,0.35)'); g.addColorStop(1, 'rgba(255,236,190,0)'); c.fillStyle = g; c.fillRect(lx - 3 * s, y - 3.6 * s, 6 * s, 6 * s); c.restore(); }
+    }
+  }
+  // kawanan burung terbang melintasi langit: sayap mengepak, formasi longgar; senja/pagi gelap berlatar langit terang
+  const FLOCKS = Array.from({ length: 4 }, (_, i) => ({ u: hash(i * 5.1 + 2), v: 0.18 + hash(i * 3.7) * 0.42, n: 4 + Math.floor(hash(i * 1.9) * 6), sp: 0.012 + hash(i * 2.3) * 0.012, sc: 0.7 + hash(i * 6.1) * 0.6 }));
+  function drawBirds(V) {
+    if (V.night || V.storm || V.tf > 0.3) return;
+    const { c, gy } = V, tt = performance.now() / 1000, span = W * 1.6;
+    c.save(); c.strokeStyle = MIS.dusk ? 'rgba(46,30,52,0.75)' : 'rgba(40,44,52,0.6)'; c.lineCap = 'round';
+    for (const f of FLOCKS) {
+      const fx = ((f.u * span - tt * W * f.sp - pcOf(V) * 0.01) % span + span) % span - W * 0.3, fy = gy * f.v + Math.sin(tt * 0.3 + f.u * 9) * gy * 0.02;
+      for (let k = 0; k < f.n; k++) {
+        const row = Math.ceil(k / 2), side = k % 2 ? 1 : -1, x = fx + row * 14 * f.sc + hash(k + f.u * 7) * 6, y = fy + side * row * 6 * f.sc + hash(k * 3 + f.u) * 4;
+        const w = 5 * f.sc * (0.8 + hash(k * 1.3) * 0.4), fl = Math.sin(tt * (7 + hash(k) * 3) + k * 1.7) * w * 0.55;
+        c.lineWidth = Math.max(1, 1.1 * f.sc); c.beginPath(); c.moveTo(x - w, y - fl); c.quadraticCurveTo(x - w * 0.4, y - fl * 0.2 - w * 0.25, x, y); c.quadraticCurveTo(x + w * 0.4, y - fl * 0.2 - w * 0.25, x + w, y - fl); c.stroke();
+      }
+    }
+    c.restore();
+  }
   function drawFarLand(V) {
     const { c, ppm, gy, p } = V;
     const sawit = MIS.land === 'sawit', night = V.night, storm = V.storm;
@@ -7928,9 +7985,9 @@
 
   // ---------- penumpang di peron depan: menunggu, berkumpul ke pintu, antre, naik ----------
   const crowds = new Map();
-  const PAX_SHIRT = ['#c0392b', '#2e86ab', '#e1a63b', '#6c4f9e', '#3c8d5a', '#d35f8d', '#e4d6b8', '#2bb3a3', '#e98a3c', '#6a8caf'];
-  const PAX_PANTS = ['#2c3e50', '#3b3b3b', '#5a4632', '#1f3a5f', '#4a4a55'];
-  const PAX_SKIN = ['#8d5a3b', '#a8704a', '#c48a5f', '#7a4d32'];
+  const PAX_SHIRT = ['#c0392b', '#2e86ab', '#e1a63b', '#6c4f9e', '#3c8d5a', '#d35f8d', '#e4d6b8', '#2bb3a3', '#e98a3c', '#6a8caf', '#f2efe8', '#8a2f3a', '#3f5a7a', '#c9a77a', '#4a6b3a'];
+  const PAX_PANTS = ['#2c3e50', '#3b3b3b', '#5a4632', '#1f3a5f', '#4a4a55', '#2a4a6a', '#6a5a46', '#1c1c20'];
+  const PAX_SKIN = ['#8d5a3b', '#a8704a', '#c48a5f', '#7a4d32', '#b88560', '#6a4228'];
   const PAX_HIJAB = ['#2f6f73', '#b04a5a', '#e2c6a0', '#3f4d7a', '#7a5a9a'];
   const DOOR_W = 20 / 12, PAX_SCALE = 1.0; // orang dalam skala nyata (1,65 m)
   const PLAT_FROM = -95, PLAT_TO = 25;
@@ -7950,13 +8007,13 @@
     const people = [];
     for (let k = 0; k < n; k++) {
       const seed = k + si * 13, r = hash(seed * 3.1 + 0.7);
-      const kind = r < 0.1 ? 'elder' : r < 0.28 ? 'hijab' : (s.traders || s.travelers) && hash(k + 3.3) < 0.6 ? 'trader' : r < 0.45 ? 'backpack' : 'adult';
+      const kind = r < 0.1 ? 'elder' : r < 0.28 ? 'hijab' : (s.traders || s.travelers) && hash(k + 3.3) < 0.6 ? 'trader' : r < 0.42 ? 'backpack' : r < 0.52 ? 'child' : 'adult';
       people.push({
         role: 'board', state: 'wait', kind, seed,
         x: s.x - 72 + k * spacing + hash(k + si * 7) * 1.8, z: 0.25 + hash(seed + 5.5) * 0.6,
         shirt: PAX_SHIRT[Math.floor(hash(seed) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1.1) * PAX_PANTS.length)],
         skin: PAX_SKIN[Math.floor(hash(seed + 2.2) * PAX_SKIN.length)], hijab: PAX_HIJAB[Math.floor(hash(seed + 4.4) * PAX_HIJAB.length)],
-        umbrella: s.umbrellas && hash(k + 1.7) < 0.75, speed: kind === 'elder' ? 0.65 : 1.25 + hash(seed + 6.6) * 0.3,
+        umbrella: s.umbrellas && hash(k + 1.7) < 0.75, speed: kind === 'elder' ? 0.65 : kind === 'child' ? 1.5 : 1.25 + hash(seed + 6.6) * 0.3,
         delay: 0.2 + hash(seed + 8.8) * 3, ph: hash(seed + 9.9) * 6, dir: 1, alpha: 1, k: 0,
       });
     }
@@ -7982,7 +8039,7 @@
     const s = cr.s, seed = Math.random() * 100;
     const exitX = s.x - 48 + (Math.random() - 0.5) * 16;
     cr.people.push({
-      role: 'alight', state: 'out', k: 0, door: d, x: d.cx, z: 0.04, kind: Math.random() < 0.25 ? 'hijab' : Math.random() < 0.3 ? 'backpack' : 'adult',
+      role: 'alight', state: 'out', k: 0, door: d, x: d.cx, z: 0.04, seed, kind: Math.random() < 0.25 ? 'hijab' : Math.random() < 0.3 ? 'backpack' : Math.random() < 0.15 ? 'child' : 'adult',
       shirt: PAX_SHIRT[Math.floor(hash(seed) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1) * PAX_PANTS.length)],
       skin: PAX_SKIN[Math.floor(hash(seed + 2) * PAX_SKIN.length)], hijab: PAX_HIJAB[Math.floor(hash(seed + 3) * PAX_HIJAB.length)],
       speed: 1.3 + Math.random() * 0.3, ph: 0, dir: exitX < d.cx ? -1 : 1, alpha: 1, exitX, exitZ: 0.85 + Math.random() * 0.1,
@@ -8093,25 +8150,70 @@
     cr.left = 0;
   }
 
-  function paxDraw(c, x, y, s, p, paddle) {
-    const h = (p.kind === 'elder' ? 1.56 : 1.66) * s;
-    const sw = p.moving ? Math.sin(p.ph) * 0.42 : 0;
-    const hipY = y - h * 0.48, shY = y - h * 0.81, headR = h * 0.075, headY = y - h * 0.9;
-    c.save(); c.globalAlpha = p.alpha; c.lineCap = 'round';
-    c.fillStyle = 'rgba(0,0,0,0.16)'; c.beginPath(); c.ellipse(x, y, h * 0.16, h * 0.035, 0, 0, 7); c.fill();
-    if (p.kind === 'hijab') {
-      c.fillStyle = '#3c4a5c';
-      const skw = sw * h * 0.05;
-      c.beginPath(); c.moveTo(x - h * 0.09, hipY - h * 0.02); c.lineTo(x + h * 0.09, hipY - h * 0.02); c.lineTo(x + h * 0.13 + skw, y - h * 0.03); c.lineTo(x - h * 0.13 + skw, y - h * 0.03); c.closePath(); c.fill();
-    } else {
-      c.strokeStyle = p.pants; c.lineWidth = h * 0.075;
-      [-1, 1].forEach((sg) => { const a = sw * sg, Lg = h * 0.47; c.beginPath(); c.moveTo(x, hipY); c.lineTo(x + Math.sin(a) * Lg, hipY + Math.cos(a) * Lg); c.stroke(); });
-    }
-    if (p.kind === 'backpack') { c.fillStyle = '#2f3f2f'; c.fillRect(x - p.dir * h * 0.17 - h * 0.06, shY + h * 0.02, h * 0.12, h * 0.24); }
+  // penumpang: langkah berlutut (paha & betis), lengan berayun berlawanan kaki, badan naik-turun tiap langkah,
+  // gaya berpakaian beragam dari benih tetap (batik, kemeja polos, kaus bergaris, sarung, rok panjang),
+  // tutup kepala (peci, topi), rambut panjang, kacamata, tas selempang, sepatu
+  function paxStyle(p) {
+    if (p._st) return p._st;
+    const sd = (p.seed || 0) + 0.5, r = (k) => hash(sd * 7.13 + k * 3.31);
     const uni = p.kind === 'kond' || p.kind === 'ppka';
-    const tw = h * (uni ? 0.22 : 0.2);
-    c.fillStyle = p.shirt; roundRect(c, x - tw / 2, shY, tw, hipY - shY + h * 0.04, h * 0.05); c.fill();
-    if (uni) { c.fillStyle = '#d8b04a'; c.fillRect(x - tw * 0.35, shY + h * 0.06, tw * 0.15, h * 0.04); }
+    const woman = !uni && (p.kind === 'hijab' || (p.kind === 'adult' && r(1) < 0.42));
+    const st = {
+      woman, uni,
+      top: uni ? 'plain' : r(2) < 0.3 ? 'batik' : r(2) < 0.48 ? 'stripe' : r(2) < 0.62 ? 'shirt' : 'plain',
+      bottom: uni ? 'pants' : p.kind === 'hijab' || (woman && r(3) < 0.6) ? 'skirt' : p.kind === 'elder' && r(3) < 0.6 ? 'sarong' : 'pants',
+      hat: uni || p.kind === 'hijab' || p.kind === 'trader' ? null : !woman && r(4) < 0.2 ? 'peci' : !woman && r(4) < 0.34 ? 'cap' : null,
+      hair: woman && p.kind !== 'hijab' ? 'long' : 'short',
+      glasses: !uni && r(5) < 0.16, bag: !uni && p.kind !== 'backpack' && p.kind !== 'trader' && r(6) < 0.28,
+      shoe: ['#1c1a18', '#5a3a24', '#e6e2da', '#2a2f3a'][Math.floor(r(7) * 4)],
+      motif: ['#7a3a1a', '#1d3c6a', '#5a2a4a', '#2f4a2a'][Math.floor(r(8) * 4)],
+      sarong: ['#6a2a2a', '#2a3a5a', '#3a4a2a'][Math.floor(r(9) * 3)],
+      cap: ['#c0392b', '#1f3a5f', '#e8e2d2', '#2f2f36'][Math.floor(r(10) * 4)],
+      hairC: ['#1f1a17', '#2e211a', '#3a2a1e'][Math.floor(r(11) * 3)],
+    };
+    p._st = st; return st;
+  }
+  function paxDraw(c, x, y, s, p, paddle) {
+    const child = p.kind === 'child', st = paxStyle(p);
+    const h = (p.kind === 'elder' ? 1.56 : child ? 1.12 : st.woman ? 1.6 : 1.68) * s;
+    const ph = p.ph || 0, mv = !!p.moving, sw = mv ? Math.sin(ph) * 0.42 : 0;
+    const bob = mv ? -Math.abs(Math.sin(ph)) * h * 0.018 : 0;
+    const hipY = y - h * 0.48 + bob, shY = y - h * 0.81 + bob, headR = h * (child ? 0.09 : 0.075), headY = y - h * 0.9 + bob;
+    const dir = p.dir || 1, shade = (col, k) => mix(col, '#101418', k);
+    c.save(); c.globalAlpha = p.alpha; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.fillStyle = 'rgba(0,0,0,0.16)'; c.beginPath(); c.ellipse(x, y, h * 0.16, h * 0.035, 0, 0, 7); c.fill();
+    // kaki: paha + betis, lutut menekuk saat kaki mengayun ke depan; sepatu
+    const leg = (sg, col) => {
+      const a = sw * sg, Lt = h * 0.245, Ls = h * 0.235, bend = mv ? Math.max(0, Math.sin(ph + sg * Math.PI / 2)) * 0.42 : 0;
+      const kx = x + Math.sin(a) * Lt * dir, ky = hipY + Math.cos(a) * Lt, b = a - bend, fx = kx + Math.sin(b) * Ls * dir, fy = ky + Math.cos(b) * Ls;
+      c.strokeStyle = col; c.lineWidth = h * 0.075; c.beginPath(); c.moveTo(x, hipY); c.lineTo(kx, ky); c.lineTo(fx, fy); c.stroke();
+      c.strokeStyle = st.shoe; c.lineWidth = h * 0.05; c.beginPath(); c.moveTo(fx - dir * h * 0.01, fy); c.lineTo(fx + dir * h * 0.06, fy + h * 0.005); c.stroke();
+    };
+    if (st.bottom === 'skirt' || st.bottom === 'sarong') {
+      [-1, 1].forEach((sg) => { const a = sw * sg * 0.5, fx = x + Math.sin(a) * h * 0.46 * dir; c.strokeStyle = st.shoe; c.lineWidth = h * 0.05; c.beginPath(); c.moveTo(fx, y - h * 0.02); c.lineTo(fx + dir * h * 0.06, y); c.stroke(); });
+      const skw = sw * h * 0.05 * dir, col = p.kind === 'hijab' ? '#3c4a5c' : st.bottom === 'sarong' ? st.sarong : p.pants;
+      c.fillStyle = col; c.beginPath(); c.moveTo(x - h * 0.09, hipY - h * 0.02); c.lineTo(x + h * 0.09, hipY - h * 0.02); c.lineTo(x + h * 0.12 + skw, y - h * 0.04); c.lineTo(x - h * 0.12 + skw, y - h * 0.04); c.closePath(); c.fill();
+      if (st.bottom === 'sarong') { c.strokeStyle = 'rgba(255,255,255,0.25)'; c.lineWidth = Math.max(0.6, h * 0.012); c.beginPath(); for (let q = 1; q < 4; q++) { const yy = hipY + (y - hipY) * q / 4; c.moveTo(x - h * 0.11, yy); c.lineTo(x + h * 0.11 + skw * q / 4, yy); } c.stroke(); }
+    } else { leg(-1, shade(p.pants, 0.25)); leg(1, p.pants); }
+    if (p.kind === 'backpack') { c.fillStyle = '#2f3f2f'; roundRect(c, x - dir * h * 0.17 - h * 0.06, shY + h * 0.02, h * 0.12, h * 0.24, h * 0.03); c.fill(); }
+    // rambut panjang terurai di punggung (di balik badan)
+    if (st.hair === 'long') { c.fillStyle = st.hairC; c.beginPath(); c.moveTo(x - dir * headR * 0.1, headY - headR * 0.9); c.quadraticCurveTo(x - dir * headR * 1.5, headY + headR * 0.2, x - dir * headR * 1.0, shY + h * 0.14 + (mv ? Math.sin(ph) * h * 0.01 : 0)); c.lineTo(x - dir * headR * 0.1, shY + h * 0.12); c.closePath(); c.fill(); }
+    // lengan belakang (lebih gelap, di balik badan)
+    const arm = (sg, col) => { const aa = -sw * sg * 0.85, Lu = h * 0.16, Lf = h * 0.15, ex = x + Math.sin(aa) * Lu * dir, ey = shY + h * 0.04 + Math.cos(aa) * Lu, ax = ex + Math.sin(aa + 0.35) * Lf * dir, ay = ey + Math.cos(aa + 0.35) * Lf;
+      c.strokeStyle = col; c.lineWidth = h * 0.055; c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(ex, ey); c.stroke(); c.strokeStyle = shade(p.skin, sg < 0 ? 0.25 : 0); c.lineWidth = h * 0.045; c.beginPath(); c.moveTo(ex, ey); c.lineTo(ax, ay); c.stroke(); };
+    const special = (p.kind === 'ppka' && paddle > 0.02) || p.kind === 'elder' || p.kind === 'trader' || (clapNow && p.role === 'board') || (p.kind === 'kond' && p.whistle);
+    if (!special) arm(-1, shade(p.shirt, 0.3));
+    // badan: baju dengan motif
+    const tw = h * (st.uni ? 0.22 : 0.2), th = hipY - shY + h * 0.04;
+    c.fillStyle = p.shirt; roundRect(c, x - tw / 2, shY, tw, th, h * 0.05); c.fill();
+    c.save(); roundRect(c, x - tw / 2, shY, tw, th, h * 0.05); c.clip();
+    if (st.top === 'batik') { c.fillStyle = st.motif; for (let yy = shY + h * 0.03; yy < hipY + h * 0.04; yy += h * 0.055) for (let xx = x - tw / 2 + ((yy / (h * 0.055)) % 2) * h * 0.03; xx < x + tw / 2; xx += h * 0.06) { c.beginPath(); c.arc(xx, yy, h * 0.014, 0, 7); c.fill(); } }
+    else if (st.top === 'stripe') { c.fillStyle = 'rgba(255,255,255,0.45)'; for (let yy = shY + h * 0.04; yy < hipY + h * 0.04; yy += h * 0.045) c.fillRect(x - tw / 2, yy, tw, h * 0.016); }
+    else if (st.top === 'shirt') { c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = Math.max(0.6, h * 0.01); c.beginPath(); c.moveTo(x + dir * h * 0.01, shY + h * 0.03); c.lineTo(x + dir * h * 0.01, hipY + h * 0.03); c.stroke(); c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.moveTo(x - h * 0.05, shY); c.lineTo(x, shY + h * 0.05); c.lineTo(x + h * 0.05, shY); c.closePath(); c.fill(); }
+    c.fillStyle = 'rgba(0,0,0,0.16)'; c.fillRect(x - dir * tw / 2, shY, dir * tw * 0.3, th); // sisi badan berbayang
+    c.restore();
+    if (st.uni) { c.fillStyle = '#d8b04a'; c.fillRect(x - tw * 0.35, shY + h * 0.06, tw * 0.15, h * 0.04); }
+    if (st.bag) { c.strokeStyle = '#3a2a1e'; c.lineWidth = Math.max(0.8, h * 0.015); c.beginPath(); c.moveTo(x - dir * tw * 0.45, shY + h * 0.01); c.lineTo(x + dir * tw * 0.45, hipY - h * 0.02); c.stroke(); c.fillStyle = '#6a4a2e'; roundRect(c, x + dir * tw * 0.3 - h * 0.05, hipY - h * 0.06, h * 0.1, h * 0.08, h * 0.015); c.fill(); }
     c.strokeStyle = p.skin; c.lineWidth = h * 0.06;
     if (p.kind === 'ppka' && paddle > 0.02) {
       c.strokeStyle = p.shirt; c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + h * 0.12 * paddle, shY - h * 0.28 * paddle); c.stroke();
@@ -8120,28 +8222,32 @@
       c.fillStyle = '#2fa84f'; c.beginPath(); c.arc(px, py - h * 0.28, h * 0.09, 0, 7); c.fill();
       c.strokeStyle = '#f4f1e8'; c.lineWidth = h * 0.015; c.stroke();
     } else if (p.kind === 'elder') {
-      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + p.dir * h * 0.16, hipY); c.stroke();
-      c.strokeStyle = '#6b4a2a'; c.lineWidth = h * 0.025; c.beginPath(); c.moveTo(x + p.dir * h * 0.16, hipY); c.lineTo(x + p.dir * h * (0.2 + Math.sin(p.ph) * 0.04), y); c.stroke();
+      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + dir * h * 0.16, hipY); c.stroke();
+      c.strokeStyle = '#6b4a2a'; c.lineWidth = h * 0.025; c.beginPath(); c.moveTo(x + dir * h * 0.16, hipY); c.lineTo(x + dir * h * (0.2 + Math.sin(ph) * 0.04), y); c.stroke();
     } else if (p.kind === 'trader') {
       c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + h * 0.04, headY - headR * 2.2); c.stroke();
     } else if (clapNow && p.role === 'board') {
       const up = Math.abs(Math.sin(performance.now() / 70 + (p.seed || 0))) * h * 0.04;
       c.beginPath(); c.moveTo(x - h * 0.06, shY + h * 0.04); c.lineTo(x - h * 0.03, headY - headR * 1.6 - up); c.moveTo(x + h * 0.06, shY + h * 0.04); c.lineTo(x + h * 0.03, headY - headR * 1.6 - up); c.stroke();
     } else if (p.kind === 'kond' && p.whistle) {
-      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + p.dir * h * 0.08, headY + headR * 0.6); c.stroke();
-    } else {
-      const armA = -sw * 0.8;
-      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + Math.sin(armA) * h * 0.3, shY + Math.cos(armA) * h * 0.3); c.stroke();
-    }
-    c.fillStyle = p.skin; c.beginPath(); c.arc(x, headY, headR, 0, 7); c.fill();
+      c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + dir * h * 0.08, headY + headR * 0.6); c.stroke();
+    } else arm(1, p.shirt);
+    // leher & kepala
+    c.fillStyle = p.skin; c.fillRect(x - headR * 0.35, headY + headR * 0.6, headR * 0.7, shY - headY - headR * 0.5);
+    c.beginPath(); c.arc(x, headY, headR, 0, 7); c.fill();
     if (p.kind === 'hijab') {
       c.fillStyle = p.hijab;
       c.beginPath(); c.arc(x, headY - headR * 0.1, headR * 1.25, Math.PI * 0.95, Math.PI * 2.05); c.lineTo(x + headR * 1.5, shY + h * 0.07); c.lineTo(x - headR * 1.5, shY + h * 0.07); c.closePath(); c.fill();
-      c.fillStyle = p.skin; c.beginPath(); c.arc(x + p.dir * headR * 0.25, headY + headR * 0.1, headR * 0.62, 0, 7); c.fill();
+      c.fillStyle = p.skin; c.beginPath(); c.arc(x + dir * headR * 0.25, headY + headR * 0.1, headR * 0.62, 0, 7); c.fill();
     } else {
-      c.fillStyle = p.kind === 'elder' ? '#d9d6cf' : '#1f1a17';
+      c.fillStyle = p.kind === 'elder' ? '#d9d6cf' : st.hairC;
       c.beginPath(); c.arc(x, headY - headR * 0.2, headR * 1.02, Math.PI * 1.05, Math.PI * 1.95); c.fill();
+      if (st.hat === 'peci') { c.fillStyle = '#16161a'; c.fillRect(x - headR * 1.0, headY - headR * 1.25, headR * 2.0, headR * 0.7); }
+      else if (st.hat === 'cap') { c.fillStyle = st.cap; c.beginPath(); c.arc(x, headY - headR * 0.25, headR * 1.05, Math.PI, 0); c.fill(); c.fillRect(x + (dir > 0 ? 0 : -headR * 1.7), headY - headR * 0.4, headR * 1.7, headR * 0.28); }
     }
+    if (st.glasses && h > 14) { c.strokeStyle = '#141414'; c.lineWidth = Math.max(0.6, headR * 0.12); c.beginPath(); c.moveTo(x + dir * headR * 0.25, headY - headR * 0.05); c.lineTo(x + dir * headR * 0.85, headY - headR * 0.05); c.stroke(); c.fillStyle = 'rgba(20,20,20,0.6)'; c.fillRect(x + dir * headR * 0.42 - headR * 0.16, headY - headR * 0.16, headR * 0.32, headR * 0.22); }
+    // mata kecil menghadap arah jalan
+    if (h > 18) { c.fillStyle = '#1a1412'; c.beginPath(); c.arc(x + dir * headR * 0.5, headY - headR * 0.05, Math.max(0.6, headR * 0.1), 0, 7); c.fill(); }
     if (p.kind === 'ppka') { c.fillStyle = '#c8322b'; c.fillRect(x - headR * 1.15, headY - headR * 1.35, headR * 2.3, headR * 0.75); }
     if (p.kind === 'kond') { c.fillStyle = '#1e2a3a'; c.fillRect(x - headR * 1.1, headY - headR * 1.3, headR * 2.2, headR * 0.7); c.fillStyle = '#d8b04a'; c.fillRect(x - headR * 0.3, headY - headR * 1.15, headR * 0.6, headR * 0.3); }
     if (p.kind === 'trader') {
@@ -11404,6 +11510,7 @@
     setShape: (k) => { LOCO_SHAPE = k; },
     drawGarage: (c, w, h) => { const kw = W, kh = H; W = w; H = h; try { drawGarage(c, w, h, 0); } finally { W = kw; H = kh; } },
     drawLandmark: (c, kind, x, y, sc, o) => drawLandmark(c, kind, x, y, sc, o || {}),
+    drawPax: (c, x, y, sc, p) => paxDraw(c, x, y, sc, p, 0),
     select: (id) => selectMission(id),
   };
 
