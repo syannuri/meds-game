@@ -5442,7 +5442,7 @@
         const wg = c.createLinearGradient(0, hy, 0, H); wg.addColorStop(0, MIS.dusk ? 'rgba(255,160,110,0.32)' : 'rgba(255,214,150,0.22)'); wg.addColorStop(1, MIS.dusk ? 'rgba(120,70,120,0.12)' : 'rgba(255,214,150,0.04)'); c.fillStyle = wg; c.fillRect(0, hy, W, H - hy); }
       if (MIS.dusk && !SAWIT) { // pagar pembatas jalur: patok beton hitam-putih & dua palang, seperti tampilan luar
         const SP = 6, z0 = Math.ceil((x0 + 3) / SP) * SP;
-        for (const o of [12]) { // satu baris di sisi kanan masinis = sisi kamera pada tampilan luar (matahari di seberang rel)
+        for (const o of [-8, 8]) { // pagar di kedua sisi jalur: kiri = seberang rel (dekat matahari), kanan = sisi kamera pada tampilan luar
           let prev = null;
           for (let wz = z0 + Math.floor(Math.min(140, ZF) / SP) * SP; wz >= z0; wz -= SP) {
             const d = wz - x0, skip = (ROUTE.bridges || []).some((q) => wz > q.from - 6 && wz < q.to + 6) || nearStation(wz) || (ROUTE.tunnel && wz > ROUTE.tunnel.from - 20 && wz < ROUTE.tunnel.to + 20);
@@ -6180,6 +6180,7 @@
     drawMeetTrack(LV);
     drawFlood(LV, 'back');
     drawTrackside(LV);
+    drawFarFence(LV);
     drawBoards35(LV);
     drawCrossings(LV, 'back', dtReal);
     drawGoats(LV);
@@ -8823,6 +8824,24 @@
     else { c.beginPath(); c.arc(cx, cy - s * 0.2, s * 0.42, 0, 7); c.lineWidth = Math.max(1, s * 0.16); c.stroke(); if (kind === 'on') c.fill(); else { c.beginPath(); c.moveTo(cx - s * 0.5, cy - s * 0.7); c.lineTo(cx + s * 0.5, cy + s * 0.3); c.stroke(); }
       c.font = `900 ${Math.max(5, Math.round(s * 0.34))}px "Big Shoulders Display", sans-serif`; c.fillText(kind === 'on' ? 'DAYA ON' : 'DAYA OFF', cx, cy + s * 0.58); }
     c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+  }
+  // pagar pengaman di seberang rel (Argo Senja, jalur 200 km/h dipagari kedua sisi): patok hitam-putih & dua palang,
+  // di belakang kereta; pasangannya di sisi dekat kamera digambar di drawFrontProps. Kokpit: kiri & kanan jalur.
+  function drawFarFence(V) {
+    if (!MIS.dusk || V.tf > 0.3) return;
+    const { c, ppm, gy, X, wx0, wx1 } = V, night = V.night, SP = 6, yb = gy - 1.25 * ppm, ph = 1.1 * ppm, pw = Math.max(1, 0.14 * ppm);
+    const skip = (wx) => (ROUTE.bridges || []).some((q) => wx > q.from - 6 && wx < q.to + 6) || nearStation(wx) || (ROUTE.tunnel && wx > ROUTE.tunnel.from - 20 && wx < ROUTE.tunnel.to + 20);
+    let prev = null;
+    c.save();
+    for (let wx = Math.floor(wx0 / SP) * SP; wx < wx1 + SP; wx += SP) {
+      if (skip(wx)) { prev = null; continue; }
+      const x = X(wx);
+      if (prev !== null) { c.strokeStyle = night ? '#6a6a70' : '#ebe8de'; c.lineWidth = Math.max(1, 0.07 * ppm); for (const fh of [0.45, 0.9]) { c.beginPath(); c.moveTo(prev, yb - fh * ph); c.lineTo(x, yb - fh * ph); c.stroke(); } }
+      c.fillStyle = '#eceae0'; c.fillRect(x - pw / 2, yb - ph, pw, ph); c.fillStyle = '#1c1d20'; c.fillRect(x - pw / 2, yb - ph, pw, ph * 0.2); c.fillRect(x - pw / 2, yb - ph * 0.55, pw, ph * 0.2);
+      if (!night) { c.fillStyle = 'rgba(255,180,120,0.35)'; c.fillRect(x, yb - ph, pw / 2, ph); }
+      prev = x;
+    }
+    c.restore();
   }
   function drawTrackside(V) {
     const { c, ppm, gy, X, wx0, wx1, st } = V;
