@@ -2401,6 +2401,11 @@
       if (id === 'toast' && !o.classList.contains('show')) continue;
       const r = o.getBoundingClientRect(); if (r.height) y = Math.max(y, r.bottom + 6);
     }
+    // bila kereta (yang bisa naik saat kamera mendekat) berada di bawah posisi radio, cari pita kosong: di atas kereta, atau di bawahnya
+    if (trainScr && mode === 'play' && viewMode !== 'cab') {
+      const h = el.offsetHeight || 40, vh = window.innerHeight, tTop = trainScr.top - 6, tBot = trainScr.bottom + 6;
+      if (y + h > tTop && y < tBot) { const below = tBot; if (below + h < vh - 96) y = below; else if (tTop - h >= 8 + top0) y = Math.max(8 + top0, tTop - h); }
+    }
     const ty = Math.round(y) + 'px'; if (el.style.top !== ty) el.style.top = ty;
     // geser ke kanan bila bertabrakan dengan chip sasaran di kiri atas
     const gc = $('goalChips'), rr = el.getBoundingClientRect();
@@ -3351,10 +3356,22 @@
     sp.hidden = false;
     Object.assign(sp.style, { left: `${r.left - pad}px`, top: `${r.top - pad}px`, width: `${r.width + pad * 2}px`, height: `${r.height + pad * 2}px` });
     const bub = $('coachBubble'), bw = bub.offsetWidth, bh = bub.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
-    let x = r.left + r.width / 2 - bw / 2, y = r.top - bh - 16;
-    if (y < 8) y = r.bottom + 16;
-    if (r.left > vw * 0.7) { x = r.left - bw - 18; y = Math.min(Math.max(8, r.top + r.height / 2 - bh / 2), vh - bh - 8); }
-    bub.style.left = `${clamp(x, 8, vw - bw - 8)}px`; bub.style.top = `${clamp(y, 8, vh - bh - 8)}px`;
+    // pilih posisi gelembung yang dekat kontrol yang disorot TETAPI tidak menutupi kereta (atau kontrol itu sendiri)
+    const fit = (x, y) => ({ x: clamp(x, 8, vw - bw - 8), y: clamp(y, 8, vh - bh - 8) });
+    const cands = [
+      fit(r.left + r.width / 2 - bw / 2, r.top - bh - 16), fit(r.left + r.width / 2 - bw / 2, r.bottom + 16),
+      fit(r.left - bw - 18, r.top + r.height / 2 - bh / 2), fit(r.right + 18, r.top + r.height / 2 - bh / 2),
+      fit(vw / 2 - bw / 2, 56), fit(r.left - bw - 18, 56), fit(vw / 2 - bw / 2, vh - bh - 96),
+    ];
+    const rd = $('radio'), rq0 = rd && !rd.hidden ? rd.getBoundingClientRect() : null, tsq = ui.toast.classList.contains('show') ? ui.toast.getBoundingClientRect() : null;
+    const rq = [rq0, tsq].filter((q) => q && q.height).reduce((a, q) => (a ? { left: Math.min(a.left, q.left), right: Math.max(a.right, q.right), top: Math.min(a.top, q.top), bottom: Math.max(a.bottom, q.bottom), height: 1 } : q), null); // radio & pesan singkat di atas
+    if (rq) { cands.splice(4, 0, fit(vw / 2 - bw / 2, rq.bottom + 8), fit(r.left - bw - 18, rq.bottom + 8)); }
+    const hitR = (c, q, m) => q && c.x < q.right + m && c.x + bw > q.left - m && c.y < q.bottom + m && c.y + bh > q.top - m;
+    const tq = trainScr && viewMode !== 'cab' ? { left: trainScr.x0, right: trainScr.x1, top: trainScr.top, bottom: trainScr.bottom } : null;
+    const gq = $('goalChips') && $('goalChips').offsetParent !== null ? $('goalChips').getBoundingClientRect() : null;
+    const free = (c, m) => !hitR(c, tq, m) && !hitR(c, r, 4) && !hitR(c, rq && rq.height ? rq : null, 4) && !hitR(c, gq && gq.height ? gq : null, 4);
+    const best = cands.find((c) => free(c, 6)) || cands.find((c) => free(c, 0)) || cands.find((c) => !hitR(c, tq, 0)) || cands[0];
+    bub.style.left = `${best.x}px`; bub.style.top = `${best.y}px`;
   }
 
   function computeResult() {
