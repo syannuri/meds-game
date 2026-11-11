@@ -6645,8 +6645,21 @@
         c.fillStyle = fg; c.beginPath(); c.moveTo(cx - wdt * 0.4, gy + 0.6 * ppm); c.lineTo(cx + wdt * 0.4, gy + 0.6 * ppm); c.lineTo(cx + wdt * 0.9 + 1.2 * ppm, gy + 4 * ppm); c.lineTo(cx - wdt * 0.9 + 1.2 * ppm, gy + 4 * ppm); c.closePath(); c.fill();
       }
     }
-    c.fillStyle = `rgba(255,215,143,${alpha * 0.35})`;
-    c.fillRect(fx - 3.6 * ppm, gy - trainH(5.8) * ppm + V.bdy(st.x - 3), 2.5 * ppm, (trainH(5.8) - trainH(4.1)) * ppm);
+    const CL = MIS.loco, dyN = V.bdy(st.x - 3), Lm = (m) => fx - m * ppm, Yh = (h) => gy - trainH(h) * ppm + dyN;
+    if (CL === 'hst' || CL === 'hst2' || CL === 'argo') {
+      // kereta cepat: cahaya kabin mengikuti bentuk kaca kokpit yang melengkung ke hidung (bukan kotak)
+      const glass = () => { c.beginPath();
+        if (CL === 'argo') { c.moveTo(Lm(5.0), Yh(5.62)); c.bezierCurveTo(Lm(2.6), Yh(5.62), Lm(1.0), Yh(5.1), Lm(-0.18), Yh(4.0)); c.lineTo(Lm(-0.36), Yh(3.7)); c.bezierCurveTo(Lm(0.6), Yh(3.82), Lm(2.4), Yh(4.4), Lm(4.4), Yh(4.62)); c.lineTo(Lm(5.0), Yh(4.66)); }
+        else { c.moveTo(Lm(7.4), Yh(5.12)); c.bezierCurveTo(Lm(4.6), Yh(5.12), Lm(2.4), Yh(4.7), Lm(0.6), Yh(3.75)); c.lineTo(Lm(0.25), Yh(3.5)); c.bezierCurveTo(Lm(1.6), Yh(3.62), Lm(4.0), Yh(4.05), Lm(6.2), Yh(4.12)); c.lineTo(Lm(7.4), Yh(4.12)); }
+        c.closePath(); };
+      const mx = Lm(CL === 'argo' ? 2.2 : 3.4), my = Yh(4.55), gl = c.createRadialGradient(mx, my, 0, mx, my, 6 * ppm);
+      gl.addColorStop(0, `rgba(255,215,143,${alpha * 0.22})`); gl.addColorStop(1, 'rgba(255,215,143,0)'); c.fillStyle = gl; c.fillRect(mx - 6 * ppm, my - 6 * ppm, 12 * ppm, 12 * ppm);
+      const gg = c.createLinearGradient(Lm(CL === 'argo' ? 5 : 7.4), 0, Lm(0), 0); gg.addColorStop(0, `rgba(255,205,130,${alpha * 0.25})`); gg.addColorStop(0.6, `rgba(255,222,160,${alpha * 0.45})`); gg.addColorStop(1, `rgba(255,232,180,${alpha * 0.3})`);
+      c.fillStyle = gg; glass(); c.fill();
+    } else {
+      c.fillStyle = `rgba(255,215,143,${alpha * 0.35})`;
+      c.fillRect(fx - 3.6 * ppm, gy - trainH(5.8) * ppm + V.bdy(st.x - 3), 2.5 * ppm, (trainH(5.8) - trainH(4.1)) * ppm);
+    }
     c.restore();
   }
 
