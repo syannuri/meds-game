@@ -746,7 +746,7 @@
       double: { o: 4.6, st: 8.3, t3: 12.9, kilat: { cars: 6, events: [
         // beberapa kali berpapasan: masuk stasiun perlahan, melintas langsung di jalur 3, lalu dua kali di jalur ganda
         { at: 3, arrive: true, from: 640, v: 60, stop: -92, msg: 'Kilat Nusantara KN 5002 masuk Kencana Hub di jalur 2, berjalan pelan menuju peron seberang. Guntur berangkat di jalur 1: balas salam klaksonnya.' },
-        { at: 9100, ahead: 3000, v: 200, t3: true, msg: 'Kilat KN 5004 melintas langsung di jalur 3 Padi Raya tanpa berhenti, melambat ke 120 km/h di wesel. Tetap di jalur 1 dan berhenti tepat di marka.' },
+        { at: 9100, ahead: 3000, v: 200, slow: 120, msg: 'Kilat KN 5004 melintas langsung di jalur 2 Padi Raya tanpa berhenti, melambat ke 120 km/h di stasiun. Tetap di jalur 1 dan berhenti tepat di marka.' },
         { at: 13300, ahead: 3400, v: 250, msg: 'Anett, Kilat Nusantara KN 5001 dari Kota Halimun melintas di jalur 2 sebentar lagi, 250 km/h. Tetap di jalur 1, balas klakson saat berpapasan.' },
         { at: 18350, ahead: 3200, v: 250, msg: 'Satu lagi: Kilat KN 5007 menuruni lengkung Halimun di jalur 2. Siap berpapasan di tikungan.' },
       ] } },
@@ -3000,14 +3000,14 @@
       KD.events.forEach((ev, ei) => {
         if (S.kevt[ei] || S.x < ev.at) return; S.kevt[ei] = true;
         const x = ev.arrive ? ev.from : Math.min(S.x + ev.ahead, T && S.x < T.from ? T.from - 160 : Infinity);
-        S.kilats.push({ x, v: ev.v / 3.6, vmax: ev.v / 3.6, t3: !!ev.t3, stopX: ev.arrive ? ev.stop : null, acc: ev.arrive ? (ev.v / 3.6) ** 2 / (2 * Math.max(1, x - ev.stop)) : 0, honk: false, pass: false, greet: false });
+        S.kilats.push({ x, v: ev.v / 3.6, vmax: ev.v / 3.6, slow: ev.slow ? ev.slow / 3.6 : 0, t3: !!ev.t3, stopX: ev.arrive ? ev.stop : null, acc: ev.arrive ? (ev.v / 3.6) ** 2 / (2 * Math.max(1, x - ev.stop)) : 0, honk: false, pass: false, greet: false });
         radio(ev.msg, 7, 'Sari', 'SR');
       });
       S.kilats = S.kilats.filter((K) => {
         if (K.stopX !== null) { K.v = K.x > K.stopX ? Math.sqrt(2 * K.acc * Math.max(0, K.x - K.stopX)) + 0.15 : 0; K.x = Math.max(K.stopX, K.x - K.v * dt); } // masuk stasiun: melambat hingga berhenti di peron
         else { // batas 120 km/h di wesel & jalur 3 stasiun; rem halus sebelumnya, berakselerasi lagi setelah ekor keluar wesel
           let lim = K.vmax;
-          if (K.t3) for (const st of ROUTE.stations) { const z1 = st.x + 230, z0 = st.x - 510, vz = 120 / 3.6;
+          if (K.t3 || K.slow) for (const st of ROUTE.stations) { const z1 = st.x + 260, z0 = st.x - 560, vz = K.slow || 120 / 3.6;
             if (K.x < z1 && K.x + kilatLen() > z0) lim = Math.min(lim, vz); else if (K.x >= z1) lim = Math.min(lim, Math.sqrt(vz * vz + 2 * 0.75 * (K.x - z1))); }
           K.v = K.v > lim ? Math.max(lim, K.v - 0.85 * dt) : Math.min(lim, K.v + 0.55 * dt);
           K.x -= K.v * dt;
