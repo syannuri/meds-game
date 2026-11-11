@@ -5158,6 +5158,7 @@
     }
     // Kilat Nusantara datang dari depan di jalur 2: rangkaian 3D mulus (moncong peluru lonjong & gerbong berpenampang membulat)
     const KC = DBc && st.kilat;
+    const sunRimRGB = sunRim.split(',');
     if (KC) {
       const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]), LN = 10.5;
       // sudut penampang: dari bahu atap kanan (tak terlihat) melintasi atap ke sisi kiri yang menghadap Guntur, rapat di lengkung
@@ -5172,18 +5173,24 @@
         const secs = ds.map(([d, sN]) => { const [hw, ht] = shape(sN), o0 = dblO(x0 + d);
           return ANG.map((a) => { const ca = Math.cos(a), sa = Math.sin(a), r = Math.pow(sa, 0.5); return { d, o: o0 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.5) * hw, h: 0.35 + (ht - 0.35) * r, a, s: sN, r }; }); });
         const faces = [];
+        // kilau matahari: terkuat pada permukaan yang di layar searah matahari, menyapu badan saat Kilat melaju mendekat
+        const specAt = (A, C) => { if (!SUNK) return 0; const q = W3((A.d + C.d) / 2, (A.o + C.o) / 2, (A.h + C.h) / 2); if (!q) return 0; const dx2 = (q.x - SUN.x) / (W * 0.16); return 0.45 * SUNK * Math.exp(-dx2 * dx2); };
         const wl = (ma, mr, left) => 0.66 + 0.24 * Math.sin(ma) + (left ? 0.1 * -Math.cos(ma) : 0) + 0.12 * Math.exp(-Math.pow((ma - 0.66 * Math.PI) / 0.09, 2)); // kilau di bahu atap
         for (let j = 0; j < secs.length - 1; j++) for (let k = 0; k < ANG.length - 1; k++) {
           const A = secs[j][k], B = secs[j][k + 1], C = secs[j + 1][k + 1], D = secs[j + 1][k];
           const md = (A.d + C.d) / 2; if (md < 1.2 || Math.max(A.d, C.d) < 1.0) continue;
           const mo = (A.o + C.o) / 2, mh = (A.h + C.h) / 2, ma = (A.a + B.a) / 2, ms = (A.s + C.s) / 2, mr = (A.r + B.r + C.r + D.r) / 4, left = ma > Math.PI / 2, nose = ms < 0.999;
           let col;
-          if (lead && nose && ms > 0.3 && ms < 0.66 && ma < 0.82 * Math.PI) col = mr > 0.985 && ms > 0.45 ? '#2a3e52' : '#0c1218'; // kaca kokpit melengkung
-          else if (mid && left && mr > 0.6 && mr < 0.86) col = night ? '#e8c47c' : '#11161c'; // pita jendela gerbong
+          if (lead && nose && ms > 0.3 && ms < 0.66 && ma < 0.82 * Math.PI) { const sp = night ? 0 : specAt(A, C), t = clamp((ma - 0.35 * Math.PI) / (0.45 * Math.PI), 0, 1) * (mr > 0.985 && ms > 0.45 ? 1 : 0.5), v = (a0, a1) => Math.round(clamp(a0 + (a1 - a0) * t + 220 * sp, 0, 255)); col = `rgb(${v(12, 70)},${v(18, 98)},${v(24, 128)})`; } // kaca kokpit melengkung memantulkan langit
+          else if (mid && left && mr > 0.6 && mr < 0.86) { // pita jendela gerbong: langit terpantul di kaca bagian atas
+            if (night) col = '#e8c47c'; else { const t = clamp((mr - 0.6) / 0.26, 0, 1), sp = specAt(A, C), v = (a0, a1) => Math.round(clamp(a0 + (a1 - a0) * t * 0.55 + 180 * sp, 0, 255)); col = `rgb(${v(17, 92)},${v(22, 120)},${v(28, 150)})`; } }
           else if (left && mr > 0.38 && mr < 0.49) col = '#1567c4'; // pita biru menyapu ke ujung
           else if (left && mr >= 0.49 && mr < 0.52) col = '#22b6d6';
           else if (mr < 0.14) col = night ? '#5a606a' : '#9aa2aa'; // rok bawah
-          else { const lt = wl(ma, mr, left) + 0.05 * (1 - ms); const v = (x) => Math.round(clamp(x * lt, 0, 255)); col = night ? `rgb(${v(150)},${v(156)},${v(168)})` : `rgb(${v(252)},${v(253)},${v(255)})`; }
+          else { const lt = wl(ma, mr, left) + 0.05 * (1 - ms), sp = night ? 0 : specAt(A, C) * (0.4 + 0.6 * Math.sin(ma)), up = Math.sin(ma);
+            // cat putih: langit hangat di bagian atas, pantulan sawah hijau di sisi bawah, kilau matahari yang menyapu badan
+            const v = (x, sky, gnd) => Math.round(clamp(x * lt + (sky - x) * 0.16 * up * SUNK + (gnd - x) * 0.14 * (1 - up) + 255 * sp, 0, 255));
+            col = night ? `rgb(${Math.round(150 * lt)},${Math.round(156 * lt)},${Math.round(168 * lt)})` : `rgb(${v(252, +sunRimRGB[0], 150)},${v(253, +sunRimRGB[1], 190)},${v(255, +sunRimRGB[2], 120)})`; }
           faces.push({ q: [A, B, C, D], z: md * md + (mo + SEAT) * (mo + SEAT) + (mh - EH) * (mh - EH), col });
         }
         faces.sort((f1, f2) => f2.z - f1.z).forEach((f) => { const P4 = f.q.map((t) => W3(t.d, t.o, t.h)); if (P4.some((t) => !t)) return; c.fillStyle = f.col; c.strokeStyle = f.col; c.lineWidth = 0.8; c.beginPath(); P4.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); });
@@ -9531,6 +9538,41 @@
     o.drawImage(B.cv, sx0, 0, sw, ch, pad * SP + (TL + GAP - 0.4) * SP, 0, sw, ch);
     return (KILAT_SPR = { cv: out, SP, gy: gyS, nose: pad * SP });
   }
+  // pantulan sinar di badan Kilat (tampilan samping): pita kilau matahari yang bergeser saat rangkaian melaju, garis cahaya
+  // di tepi atap, kilatan di sambungan panel yang menyala saat melintasi arah matahari, bayangan lembut di badan bawah, kilau bintang di moncong
+  let KGL = null;
+  function kilatGloss(V, spr, dx, dy, w, h, x0, yb, sc) {
+    const { c, ppm } = V, sun = sunPos(V), night = V.night || V.p < 0.14, tf = V.tf || 0;
+    const sunK = night || tf > 0.2 ? 0 : V.storm ? 0.3 : clamp(1.1 - V.p * 0.5, 0.45, 1);
+    const bx0 = Math.max(-2, Math.floor(dx)), bx1 = Math.min(W + 2, Math.ceil(dx + w)), bw = bx1 - bx0; if (bw <= 2) return;
+    const sa = Math.max(1, Math.abs(c.getTransform().a)), cw = Math.ceil(bw * sa), ch = Math.ceil(h * sa);
+    if (!KGL) KGL = document.createElement('canvas'); if (KGL.width < cw || KGL.height < ch) { KGL.width = Math.max(KGL.width, cw); KGL.height = Math.max(KGL.height, ch); }
+    const g = KGL.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, cw + 2, ch + 2);
+    g.setTransform(sa, 0, 0, sa, -bx0 * sa, -dy * sa); g.drawImage(spr.cv, dx, dy, w, h);
+    g.globalCompositeOperation = 'source-atop';
+    const u = ppm * 1.04, yRoof = yb - 6.08 * u, warm = MIS.golden || MIS.dusk || V.p < 0.5 ? '255,214,160' : '255,246,226', len = kilatLen();
+    // bayangan lembut badan bawah & pantulan tanah hijau di rok
+    const sh = g.createLinearGradient(0, yb - 2.2 * u, 0, yb); sh.addColorStop(0, 'rgba(20,30,40,0)'); sh.addColorStop(1, night ? 'rgba(0,0,10,0.35)' : 'rgba(40,70,40,0.22)'); g.fillStyle = sh; g.fillRect(bx0, yb - 2.2 * u, bw, 2.4 * u);
+    if (night) { // malam: lampu peron/langit gelap, kilau dingin tipis di atap
+      g.fillStyle = 'rgba(170,190,230,0.35)'; g.fillRect(bx0, yRoof + 0.05 * u, bw, 0.12 * u);
+    } else {
+      // langit terpantul di separuh atas badan (terang ke atas)
+      const sky = g.createLinearGradient(0, yRoof, 0, yb - 3 * u); sky.addColorStop(0, `rgba(${warm},${0.28 * sunK})`); sky.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = sky; g.fillRect(bx0, yRoof, bw, 3.2 * u);
+      // pita kilau matahari: bergeser relatif terhadap badan karena rangkaian melaju
+      const bwid = W * 0.22, band = g.createLinearGradient(sun.x - bwid, 0, sun.x + bwid, 0); band.addColorStop(0, `rgba(${warm},0)`); band.addColorStop(0.5, `rgba(${warm},${0.5 * sunK})`); band.addColorStop(1, `rgba(${warm},0)`);
+      g.fillStyle = band; g.fillRect(sun.x - bwid, yRoof, bwid * 2, 3.9 * u);
+      // garis cahaya di tepi atap sepanjang rangkaian
+      g.fillStyle = `rgba(${warm},${0.75 * sunK})`; g.fillRect(bx0, yRoof + 0.04 * u, bw, Math.max(1, 0.14 * u));
+      // kilatan di sambungan panel & ujung gerbong: menyala saat melintasi arah matahari
+      for (let m = 0; m < len; m += 4.1) { const x = x0 + m * sc * spr.SP, f = 1 - Math.abs(x - sun.x) / (W * 0.35); if (f <= 0 || x < bx0 || x > bx1) continue;
+        g.fillStyle = `rgba(255,250,236,${0.55 * f * f * sunK})`; g.fillRect(x - 0.06 * u, yRoof + 0.2 * u, Math.max(1, 0.12 * u), 3.4 * u); }
+    }
+    c.drawImage(KGL, 0, 0, cw, ch, bx0, dy, bw, h);
+    // kilau bintang di lengkung moncong saat menghadap matahari
+    if (sunK > 0) { const nx = x0 + 2.6 * u, ny = yb - 4.4 * u, f = 1 - Math.abs(nx - sun.x) / (W * 0.45); if (f > 0) { const r = (5 + 7 * f) * (W / 844);
+      c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.85 * f * sunK; c.strokeStyle = '#fffbe8'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(nx - r * 2.2, ny); c.lineTo(nx + r * 2.2, ny); c.moveTo(nx, ny - r); c.lineTo(nx, ny + r); c.stroke();
+      const gg = c.createRadialGradient(nx, ny, 0, nx, ny, r * 1.6); gg.addColorStop(0, 'rgba(255,248,226,0.9)'); gg.addColorStop(1, 'rgba(255,248,226,0)'); c.fillStyle = gg; c.beginPath(); c.arc(nx, ny, r * 1.6, 0, 7); c.fill(); c.restore(); } }
+  }
   function drawKilatSide(V) {
     const K = V.st && V.st.kilat; if (!K || !ROUTE.double) return;
     const { c, ppm, gy, X } = V, len = kilatLen(), x0 = X(K.x), x1 = X(K.x + len); if (x1 < -60 || x0 > W + 60) return;
@@ -9539,6 +9581,7 @@
     c.save();
     if (!REDUCE_MOTION) { c.globalAlpha = 0.16; c.drawImage(spr.cv, dx + 1.2 * ppm, dy, w, h); c.globalAlpha = 0.28; c.drawImage(spr.cv, dx + 0.6 * ppm, dy, w, h); } // kabur gerak: melaju berlawanan sangat cepat
     c.globalAlpha = 1; c.drawImage(spr.cv, dx, dy, w, h);
+    kilatGloss(V, spr, dx, dy, w, h, x0, yb, sc);
     // lampu depan menyala terang
     const hx = x0 - 0.6 * ppm, hy = yb - 1.95 * ppm; c.globalCompositeOperation = 'lighter';
     const g = c.createRadialGradient(hx, hy, 0, hx, hy, 4 * ppm); g.addColorStop(0, 'rgba(255,246,214,0.75)'); g.addColorStop(1, 'rgba(255,246,214,0)'); c.fillStyle = g; c.beginPath(); c.arc(hx, hy, 4 * ppm, 0, 7); c.fill();
