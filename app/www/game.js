@@ -9756,14 +9756,14 @@
     if (kind === 'dayak') {
       // pinggiran bergerigi (gigi) di atas & bawah, sulur berkait berpasangan saling bercermin
       const gh = h * 0.13, gw = gh * 1.2;
-      const NEOC = col === '#5fd4ff'; c.fillStyle = NEOC ? '#dfe8f2' : '#f4efe2';
+      c.fillStyle = '#f4efe2';
       for (let x = x0; x < x1; x += gw) {
         c.beginPath(); c.moveTo(x, yTop); c.lineTo(x + gw / 2, yTop + gh); c.lineTo(x + gw, yTop); c.fill();
         c.beginPath(); c.moveTo(x, yBot); c.lineTo(x + gw / 2, yBot - gh); c.lineTo(x + gw, yBot); c.fill();
       }
       const su = h * 0.62, step = su * 2.6;
       let i = 0;
-      for (let x = x0 + su; x < x1 + step; x += step / 2, i++) dayakScroll(c, x, ym + (i % 2 ? -1 : 1) * h * 0.04, su, i % 2 ? -1 : 1, col, NEOC ? '#2f7dff' : '#d0392b');
+      for (let x = x0 + su; x < x1 + step; x += step / 2, i++) dayakScroll(c, x, ym + (i % 2 ? -1 : 1) * h * 0.04, su, i % 2 ? -1 : 1, col, col === '#f2a516' ? '#ffd27a' : '#d0392b');
     } else if (kind === 'kawung') {
       // empat kelopak lonjong mengelilingi titik, berulang
       const step = u * 1.0, r = u * 0.42;
@@ -10217,8 +10217,8 @@
     const red = ARGO ? vgrad(6.0, 1.85, [[0, '#ffffff'], [0.3, '#eeece8'], [0.75, '#c9ccd2'], [1, '#8f949c']]) : vgrad(6.0, 1.85, [[0, '#e5513f'], [0.35, '#c8322a'], [0.8, '#a1221b'], [1, '#7e1813']]);
     const roofG = vgrad(6.4, 6.0, [[0, '#8a939a'], [1, '#5a6268']]);
     const glass2 = vgrad(5.8, 4.0, [[0, '#56708a'], [0.5, '#1f2d38'], [1, '#111a22']]);
-    const NEOL = LOCO_SHAPE === 'neo' && !ARGO; // Cakra NEO: cat putih mutiara & grafit, ukiran Dayak biru elektrik bercahaya
-    const gold = NEOL ? '#5fd4ff' : '#e9b949', cream = NEOL ? '#dfe8f2' : '#f6e3b0', bandBg = NEOL ? '#0b1626' : LOCO_ORN === 'dayak' ? '#160e0d' : '#6e1510', mask = '#1b1416';
+    const NEOL = LOCO_SHAPE === 'neo' && !ARGO; // Cakra NEO: putih-abu stainless seperti gerbong, livery toska & oranye gerbong, ukiran Dayak oranye
+    const gold = NEOL ? '#f2a516' : '#e9b949', cream = NEOL ? '#eef2f4' : '#f6e3b0', bandBg = NEOL ? '#1f6f6d' : LOCO_ORN === 'dayak' ? '#160e0d' : '#6e1510', mask = '#1b1416';
     const SH = HST2 ? 'hst2' : ARGO ? 'argo' : LOCO_SHAPE, BOXY = SH.startsWith('box');
     const argoBody = [[15.85, 1.85], [15.85, 5.2], [15.8, 5.56], [15.62, 5.83], [15.28, 6.0], [3.0, 6.0], [1.9, 5.93], [0.95, 5.5], [0.1, 4.68], [-0.5, 3.85], [-0.92, 3.05], [-1.12, 2.45], [-1.12, 1.85]];
     if (SH === 'hst2') {
@@ -10396,15 +10396,11 @@
       const P = (m, h) => [L(m), Y(h)];
       const body = () => { c.beginPath(); c.moveTo(...P(15.85, 1.85)); c.lineTo(...P(15.85, 5.35)); c.quadraticCurveTo(...P(15.85, 6.05), ...P(15.0, 6.05));
         c.lineTo(...P(3.4, 6.05)); c.bezierCurveTo(...P(1.9, 6.04), ...P(0.6, 5.3), ...P(-0.35, 4.1)); c.bezierCurveTo(...P(-0.85, 3.45), ...P(-1.05, 2.8), ...P(-1.05, 2.25)); c.lineTo(...P(-1.05, 1.85)); c.closePath(); };
-      body(); c.fillStyle = vgrad(6.05, 1.85, [[0, '#ffffff'], [0.35, '#eef1f5'], [0.75, '#c9d0d9'], [1, '#8a939f']]); c.fill();
-      // atas grafit: sapuan diagonal dari atap belakang turun ke bawah visor
-      c.save(); body(); c.clip();
-      c.fillStyle = vgrad(6.05, 3.6, [[0, '#3a4049'], [1, '#1e2228']]); c.beginPath(); c.moveTo(...P(16, 6.2)); c.lineTo(...P(16, 4.7)); c.lineTo(...P(9.5, 4.7)); c.bezierCurveTo(...P(6.5, 4.7), ...P(4.6, 4.2), ...P(3.2, 3.55)); c.lineTo(...P(-1.4, 3.55)); c.lineTo(...P(-1.4, 6.2)); c.closePath(); c.fill();
-      c.restore();
+      body(); c.fillStyle = vgrad(6.05, 1.85, [[0, '#f6f8fa'], [0.4, '#d9dfe3'], [0.8, '#b3bcc2'], [1, '#98a2a9']]); c.fill(); // stainless sama dengan gerbong
       bodySheen(c, V, L(15.85), Y(6.05), 16.9 * ppm, 4.2 * ppm, body, 0.85);
-      // garis LED cyan mengikuti batas dua warna
-      c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(80,220,255,0.35)'; c.lineWidth = lw(0.22); c.beginPath(); c.moveTo(...P(15.85, 4.7)); c.lineTo(...P(9.5, 4.7)); c.bezierCurveTo(...P(6.5, 4.7), ...P(4.6, 4.2), ...P(3.2, 3.55)); c.lineTo(...P(-0.85, 3.55)); c.stroke(); c.restore();
-      c.strokeStyle = '#7fe8ff'; c.lineWidth = lw(0.06); c.beginPath(); c.moveTo(...P(15.85, 4.7)); c.lineTo(...P(9.5, 4.7)); c.bezierCurveTo(...P(6.5, 4.7), ...P(4.6, 4.2), ...P(3.2, 3.55)); c.lineTo(...P(-0.85, 3.55)); c.stroke();
+      // panel stainless bergaris halus seperti gerbong, garis toska tipis menyapu dari atap ke bawah visor
+      c.save(); body(); c.clip(); c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = 1; c.beginPath(); for (let q = 4.6; q > 4.4; q -= 0.08) { c.moveTo(L(15.6), Y(q)); c.lineTo(L(4.2), Y(q)); } c.stroke(); c.restore();
+      c.strokeStyle = '#1f6f6d'; c.lineWidth = lw(0.07); c.beginPath(); c.moveTo(...P(15.85, 4.85)); c.lineTo(...P(9.5, 4.85)); c.bezierCurveTo(...P(6.5, 4.85), ...P(4.6, 4.3), ...P(3.4, 3.62)); c.stroke();
       // kaca visor membungkus moncong & samping kabin
       const visor = () => { c.beginPath(); c.moveTo(...P(3.6, 5.78)); c.lineTo(...P(2.4, 5.8)); c.bezierCurveTo(...P(1.3, 5.72), ...P(0.4, 5.1), ...P(-0.2, 4.2)); c.lineTo(...P(0.35, 4.1)); c.bezierCurveTo(...P(1.0, 4.35), ...P(2.2, 4.5), ...P(3.6, 4.5)); c.closePath(); };
       visor(); c.fillStyle = '#0c1016'; c.fill();
@@ -10422,9 +10418,9 @@
       c.lineCap = 'round'; c.strokeStyle = '#fff6da'; c.lineWidth = lw(0.09); c.beginPath(); c.moveTo(...P(-0.95, 3.05)); c.quadraticCurveTo(...P(-0.65, 3.3), ...P(0.3, 3.38)); c.stroke();
       c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(255,236,190,0.35)'; c.lineWidth = lw(0.3); c.beginPath(); c.moveTo(...P(-0.95, 3.05)); c.quadraticCurveTo(...P(-0.65, 3.3), ...P(0.3, 3.38)); c.stroke(); c.restore(); c.lineCap = 'butt';
       // atap fairing halus menutup radiator & knalpot; kisi tipis di samping fairing
-      c.fillStyle = vgrad(6.62, 6.05, [[0, '#4a515b'], [1, '#262b31']]); c.beginPath(); c.moveTo(...P(14.9, 6.05)); c.lineTo(...P(14.9, 6.35)); c.quadraticCurveTo(...P(14.6, 6.62), ...P(13.8, 6.62)); c.lineTo(...P(5.6, 6.62)); c.quadraticCurveTo(...P(4.4, 6.6), ...P(3.6, 6.05)); c.closePath(); c.fill();
+      c.fillStyle = vgrad(6.62, 6.05, [[0, '#eef1f3'], [1, '#aeb7bd']]); c.beginPath(); c.moveTo(...P(14.9, 6.05)); c.lineTo(...P(14.9, 6.35)); c.quadraticCurveTo(...P(14.6, 6.62), ...P(13.8, 6.62)); c.lineTo(...P(5.6, 6.62)); c.quadraticCurveTo(...P(4.4, 6.6), ...P(3.6, 6.05)); c.closePath(); c.fill();
       line([[13.9, 6.6], [5.6, 6.6]], 'rgba(255,255,255,0.35)', lw(0.03));
-      c.strokeStyle = 'rgba(10,12,16,0.7)'; c.lineWidth = 1; c.beginPath(); for (let m = 6.4; m < 13.6; m += 0.22) { c.moveTo(L(m), Y(6.5)); c.lineTo(L(m), Y(6.18)); } c.stroke();
+      c.strokeStyle = 'rgba(70,80,88,0.5)'; c.lineWidth = 1; c.beginPath(); for (let m = 6.4; m < 13.6; m += 0.22) { c.moveTo(L(m), Y(6.5)); c.lineTo(L(m), Y(6.18)); } c.stroke();
       c.fillStyle = '#0d0f11'; roundRect(c, L(9.0), Y(6.7), 0.8 * ppm, 0.1 * ppm, 0.04 * ppm); c.fill(); // lubang knalpot rata
       // kisi pendingin rata dengan badan (celah mendatar), menggantikan panel menonjol
       for (const [a, b] of [[5.6, 8.4], [11.8, 15.2]]) { c.fillStyle = 'rgba(10,12,16,0.55)'; roundRect(c, L(b), Y(5.55), (b - a) * ppm, 1.25 * ppm, 0.12 * ppm); c.fill();
@@ -10500,10 +10496,10 @@
     if (LOCO_ORN === 'dayak' && !ARGO) {
       // panel ukiran Dayak besar: sulur bercermin di atas dasar hitam, bingkai emas
       const pa = 9.15, pb = 11.45, pt = 5.65, pbt = 3.95;
-      c.fillStyle = NEOL ? '#0b1626' : '#160e0d'; roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.fill();
+      c.fillStyle = NEOL ? '#1f6f6d' : '#160e0d'; roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.fill();
       c.save(); roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.clip();
       const cx = L((pa + pb) / 2), cy = Y((pt + pbt) / 2), u = 0.88 * ppm;
-      const acc = NEOL ? '#2f7dff' : '#d0392b', ivo = NEOL ? '#dfe8f2' : '#f4efe2';
+      const acc = NEOL ? '#ffd27a' : '#d0392b', ivo = '#f4efe2';
       dayakScroll(c, cx - u * 0.78, cy + u * 0.08, u, 1, gold, acc);
       dayakScroll(c, cx + u * 0.78, cy + u * 0.08, u, -1, gold, acc);
       dayakScroll(c, cx - u * 0.55, cy - u * 0.55, u * 0.45, -1, ivo, null);
@@ -10514,7 +10510,7 @@
       c.strokeStyle = gold; c.lineWidth = Math.max(1, 0.06 * ppm); roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.stroke();
     } else if (!ARGO) for (const [a, b] of [[9.2, 10.3], [10.4, 11.45]]) { c.strokeStyle = ARGO ? 'rgba(70,80,95,0.4)' : 'rgba(60,8,6,0.55)'; c.strokeRect(L(b), Y(5.6), (b - a) * ppm, 1.65 * ppm); c.fillStyle = '#c9b07a'; c.fillRect(L(a + 0.15), Y(4.9), 0.07 * ppm, 0.3 * ppm); }
     // sabuk bawah gelap
-    if (!HST2) box(-1.02, 15.85, 1.85, 2.32, NEOL ? '#1a1f27' : '#2b2023');
+    if (!HST2) box(-1.02, 15.85, 1.85, 2.32, NEOL ? '#1f6f6d' : '#2b2023'); // Cakra NEO: sabuk toska menyambung pita toska gerbong
     // pita ornamen emas di sepanjang badan, membungkus moncong
     if (ARGO && !HST2) {
       // pita senja: sapuan jingga → magenta → ungu yang naik ke arah moncong, bergaris emas
@@ -10541,9 +10537,10 @@
     }
     if (ARGO) { /* pita senja sudah digambar */ } else if (SH === 'boxB' || SH === 'boxC') { line([[15.85, 3.79], [-0.85, 3.79]], cream, lw(0.07)); poly([[-0.85, 3.72], [-0.85, 2.45], [-1.12, 2.35], [-1.12, 3.63]], '#160e0d'); }
     else if (BOXY) { line([[15.85, 3.79], [-0.72, 3.79]], cream, lw(0.07)); poly([[-0.73, 3.72], [-0.83, 2.45], [-1.11, 2.35], [-1.01, 3.64]], '#160e0d'); line([[-0.72, 3.79], [-1.0, 3.71]], cream, lw(0.07)); }
-    else if (SH === 'neo') { line([[15.85, 3.42], [3.0, 3.42], [-0.7, 3.25]], '#7fe8ff', lw(0.05)); c.save(); c.globalCompositeOperation = 'lighter'; line([[15.85, 3.42], [3.0, 3.42], [-0.7, 3.25]], 'rgba(95,212,255,0.35)', lw(0.18)); c.restore(); }
+    else if (SH === 'neo') { line([[15.85, 3.46], [3.0, 3.46], [-0.7, 3.29]], '#f2a516', lw(0.08)); }
     else line([[15.85, 3.79], [0.22, 3.79], [-0.52, 3.44]], cream, lw(0.07));
-    if (!ARGO) line([[15.85, 2.38], [-0.75, 2.38]], cream, lw(0.07));
+    if (NEOL) box(-0.98, 15.85, 2.32, 2.45, '#f2a516'); // pita oranye gerbong menerus ke lokomotif
+    else if (!ARGO) line([[15.85, 2.38], [-0.75, 2.38]], cream, lw(0.07));
     if (HST2) { /* atap rata menyatu */ } else if (ARGO) {
       // atap bersih: fairing aerodinamis menutup AC, knalpot, dan kipas
       c.fillStyle = vgrad(6.6, 6.18, [[0, '#f4f5f7'], [1, '#b8bdc4']]); c.beginPath(); c.moveTo(L(15.0), Y(6.2)); c.lineTo(L(15.0), Y(6.42)); c.quadraticCurveTo(L(14.6), Y(6.62), L(13.8), Y(6.62)); c.lineTo(L(7.6), Y(6.62)); c.quadraticCurveTo(L(6.2), Y(6.6), L(5.4), Y(6.2)); c.closePath(); c.fill();
@@ -10621,7 +10618,7 @@
     c.stroke();
     if (SH === 'neo') { // bajak depan aerodinamis grafit dengan garis LED cyan, menyatu dengan bibir moncong
       poly([[1.4, 1.62], [-1.42, 1.62], [-1.25, 0.95], [-0.7, 0.32], [1.3, 0.32]], vgrad(1.62, 0.32, [[0, '#3a4049'], [1, '#15181d']]));
-      line([[-1.36, 1.4], [-0.62, 0.42]], '#7fe8ff', lw(0.05));
+      line([[-1.36, 1.4], [-0.62, 0.42]], '#f2a516', lw(0.05));
     } else {
     poly([[1.12, 1.15], [-0.35, 1.15], [-1.1, 0.3], [1.0, 0.3]], '#3c4246');
     poly([[-1.1, 0.28], [-0.55, 1.15], [-0.3, 1.15], [-0.75, 0.28]], gold);
