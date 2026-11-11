@@ -9739,14 +9739,14 @@
     if (kind === 'dayak') {
       // pinggiran bergerigi (gigi) di atas & bawah, sulur berkait berpasangan saling bercermin
       const gh = h * 0.13, gw = gh * 1.2;
-      c.fillStyle = '#f4efe2';
+      const NEOC = col === '#5fd4ff'; c.fillStyle = NEOC ? '#dfe8f2' : '#f4efe2';
       for (let x = x0; x < x1; x += gw) {
         c.beginPath(); c.moveTo(x, yTop); c.lineTo(x + gw / 2, yTop + gh); c.lineTo(x + gw, yTop); c.fill();
         c.beginPath(); c.moveTo(x, yBot); c.lineTo(x + gw / 2, yBot - gh); c.lineTo(x + gw, yBot); c.fill();
       }
       const su = h * 0.62, step = su * 2.6;
       let i = 0;
-      for (let x = x0 + su; x < x1 + step; x += step / 2, i++) dayakScroll(c, x, ym + (i % 2 ? -1 : 1) * h * 0.04, su, i % 2 ? -1 : 1, col, '#d0392b');
+      for (let x = x0 + su; x < x1 + step; x += step / 2, i++) dayakScroll(c, x, ym + (i % 2 ? -1 : 1) * h * 0.04, su, i % 2 ? -1 : 1, col, NEOC ? '#2f7dff' : '#d0392b');
     } else if (kind === 'kawung') {
       // empat kelopak lonjong mengelilingi titik, berulang
       const step = u * 1.0, r = u * 0.42;
@@ -10200,7 +10200,8 @@
     const red = ARGO ? vgrad(6.0, 1.85, [[0, '#ffffff'], [0.3, '#eeece8'], [0.75, '#c9ccd2'], [1, '#8f949c']]) : vgrad(6.0, 1.85, [[0, '#e5513f'], [0.35, '#c8322a'], [0.8, '#a1221b'], [1, '#7e1813']]);
     const roofG = vgrad(6.4, 6.0, [[0, '#8a939a'], [1, '#5a6268']]);
     const glass2 = vgrad(5.8, 4.0, [[0, '#56708a'], [0.5, '#1f2d38'], [1, '#111a22']]);
-    const gold = '#e9b949', cream = '#f6e3b0', bandBg = LOCO_ORN === 'dayak' ? '#160e0d' : '#6e1510', mask = '#1b1416';
+    const NEOL = LOCO_SHAPE === 'neo' && !ARGO; // Cakra NEO: cat putih mutiara & grafit, ukiran Dayak biru elektrik bercahaya
+    const gold = NEOL ? '#5fd4ff' : '#e9b949', cream = NEOL ? '#dfe8f2' : '#f6e3b0', bandBg = NEOL ? '#0b1626' : LOCO_ORN === 'dayak' ? '#160e0d' : '#6e1510', mask = '#1b1416';
     const SH = HST2 ? 'hst2' : ARGO ? 'argo' : LOCO_SHAPE, BOXY = SH.startsWith('box');
     const argoBody = [[15.85, 1.85], [15.85, 5.2], [15.8, 5.56], [15.62, 5.83], [15.28, 6.0], [3.0, 6.0], [1.9, 5.93], [0.95, 5.5], [0.1, 4.68], [-0.5, 3.85], [-0.92, 3.05], [-1.12, 2.45], [-1.12, 1.85]];
     if (SH === 'hst2') {
@@ -10378,7 +10379,7 @@
       const P = (m, h) => [L(m), Y(h)];
       const body = () => { c.beginPath(); c.moveTo(...P(15.85, 1.85)); c.lineTo(...P(15.85, 5.35)); c.quadraticCurveTo(...P(15.85, 6.05), ...P(15.0, 6.05));
         c.lineTo(...P(3.4, 6.05)); c.bezierCurveTo(...P(1.9, 6.04), ...P(0.6, 5.3), ...P(-0.35, 4.1)); c.bezierCurveTo(...P(-0.85, 3.45), ...P(-1.05, 2.8), ...P(-1.05, 2.25)); c.lineTo(...P(-1.05, 1.85)); c.closePath(); };
-      body(); c.fillStyle = vgrad(6.05, 1.85, [[0, '#d8473a'], [0.55, '#b5281f'], [1, '#6e140f']]); c.fill();
+      body(); c.fillStyle = vgrad(6.05, 1.85, [[0, '#ffffff'], [0.35, '#eef1f5'], [0.75, '#c9d0d9'], [1, '#8a939f']]); c.fill();
       // atas grafit: sapuan diagonal dari atap belakang turun ke bawah visor
       c.save(); body(); c.clip();
       c.fillStyle = vgrad(6.05, 3.6, [[0, '#3a4049'], [1, '#1e2228']]); c.beginPath(); c.moveTo(...P(16, 6.2)); c.lineTo(...P(16, 4.7)); c.lineTo(...P(9.5, 4.7)); c.bezierCurveTo(...P(6.5, 4.7), ...P(4.6, 4.2), ...P(3.2, 3.55)); c.lineTo(...P(-1.4, 3.55)); c.lineTo(...P(-1.4, 6.2)); c.closePath(); c.fill();
@@ -10398,7 +10399,7 @@
       c.restore();
       c.strokeStyle = '#c9d2dc'; c.lineWidth = lw(0.035); visor(); c.stroke();
       // moncong 3/4 (muka depan sedikit terlihat) & bibir spoiler bawah
-      poly([[-1.05, 1.85], [-1.05, 2.25], [-0.85, 3.45], [-1.1, 3.38], [-1.32, 2.3], [-1.32, 1.85]], vgrad(3.45, 1.85, [[0, '#9c2219'], [1, '#5a0f0b']]));
+      poly([[-1.05, 1.85], [-1.05, 2.25], [-0.85, 3.45], [-1.1, 3.38], [-1.32, 2.3], [-1.32, 1.85]], vgrad(3.45, 1.85, [[0, '#b9c2cd'], [1, '#6e7782']]));
       poly([[-1.32, 1.85], [-1.05, 1.85], [-0.9, 1.62], [-1.42, 1.62]], '#1b1e22');
       // garis LED lampu utama tipis di bawah visor, membungkus moncong
       c.lineCap = 'round'; c.strokeStyle = '#fff6da'; c.lineWidth = lw(0.09); c.beginPath(); c.moveTo(...P(-0.95, 3.05)); c.quadraticCurveTo(...P(-0.65, 3.3), ...P(0.3, 3.38)); c.stroke();
@@ -10457,11 +10458,11 @@
       line([[1.45, 5.55], [1.45, 4.2]], mask, lw(0.08));
     }
     // pintu kabin
-    c.strokeStyle = ARGO ? 'rgba(70,80,95,0.45)' : 'rgba(50,8,6,0.65)'; c.lineWidth = 1; c.strokeRect(L(4.75), Y(5.7), 0.85 * ppm, 3.8 * ppm);
+    c.strokeStyle = ARGO || NEOL ? 'rgba(70,80,95,0.45)' : 'rgba(50,8,6,0.65)'; c.lineWidth = 1; c.strokeRect(L(4.75), Y(5.7), 0.85 * ppm, 3.8 * ppm);
     c.fillStyle = glass2; roundRect(c, L(4.62), Y(5.5), 0.6 * ppm, 0.85 * ppm, 0.12 * ppm); c.fill();
     c.fillStyle = '#c9b07a'; c.fillRect(L(4.0), Y(3.7), 0.08 * ppm, 0.45 * ppm);
     // sambungan panel badan
-    c.strokeStyle = ARGO ? 'rgba(70,80,95,0.3)' : 'rgba(60,8,6,0.45)'; c.lineWidth = 1; c.beginPath();
+    c.strokeStyle = ARGO || NEOL ? 'rgba(70,80,95,0.3)' : 'rgba(60,8,6,0.45)'; c.lineWidth = 1; c.beginPath();
     [5.05, 8.95, 11.6].forEach((m) => { c.moveTo(L(m), Y(5.95)); c.lineTo(L(m), Y(1.9)); });
     c.stroke();
     if (!ARGO && SH !== 'neo') {
@@ -10482,20 +10483,21 @@
     if (LOCO_ORN === 'dayak' && !ARGO) {
       // panel ukiran Dayak besar: sulur bercermin di atas dasar hitam, bingkai emas
       const pa = 9.15, pb = 11.45, pt = 5.65, pbt = 3.95;
-      c.fillStyle = '#160e0d'; roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.fill();
+      c.fillStyle = NEOL ? '#0b1626' : '#160e0d'; roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.fill();
       c.save(); roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.clip();
       const cx = L((pa + pb) / 2), cy = Y((pt + pbt) / 2), u = 0.88 * ppm;
-      dayakScroll(c, cx - u * 0.78, cy + u * 0.08, u, 1, gold, '#d0392b');
-      dayakScroll(c, cx + u * 0.78, cy + u * 0.08, u, -1, gold, '#d0392b');
-      dayakScroll(c, cx - u * 0.55, cy - u * 0.55, u * 0.45, -1, '#f4efe2', null);
-      dayakScroll(c, cx + u * 0.55, cy - u * 0.55, u * 0.45, 1, '#f4efe2', null);
-      c.strokeStyle = '#f4efe2'; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(cx, cy - u * 0.75); c.lineTo(cx, cy + u * 0.75); c.stroke();
-      c.fillStyle = '#f4efe2'; c.beginPath(); c.moveTo(cx, cy - u * 0.32); c.lineTo(cx + u * 0.16, cy); c.lineTo(cx, cy + u * 0.32); c.lineTo(cx - u * 0.16, cy); c.closePath(); c.fill();
+      const acc = NEOL ? '#2f7dff' : '#d0392b', ivo = NEOL ? '#dfe8f2' : '#f4efe2';
+      dayakScroll(c, cx - u * 0.78, cy + u * 0.08, u, 1, gold, acc);
+      dayakScroll(c, cx + u * 0.78, cy + u * 0.08, u, -1, gold, acc);
+      dayakScroll(c, cx - u * 0.55, cy - u * 0.55, u * 0.45, -1, ivo, null);
+      dayakScroll(c, cx + u * 0.55, cy - u * 0.55, u * 0.45, 1, ivo, null);
+      c.strokeStyle = ivo; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(cx, cy - u * 0.75); c.lineTo(cx, cy + u * 0.75); c.stroke();
+      c.fillStyle = ivo; c.beginPath(); c.moveTo(cx, cy - u * 0.32); c.lineTo(cx + u * 0.16, cy); c.lineTo(cx, cy + u * 0.32); c.lineTo(cx - u * 0.16, cy); c.closePath(); c.fill();
       c.restore();
       c.strokeStyle = gold; c.lineWidth = Math.max(1, 0.06 * ppm); roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.stroke();
     } else if (!ARGO) for (const [a, b] of [[9.2, 10.3], [10.4, 11.45]]) { c.strokeStyle = ARGO ? 'rgba(70,80,95,0.4)' : 'rgba(60,8,6,0.55)'; c.strokeRect(L(b), Y(5.6), (b - a) * ppm, 1.65 * ppm); c.fillStyle = '#c9b07a'; c.fillRect(L(a + 0.15), Y(4.9), 0.07 * ppm, 0.3 * ppm); }
     // sabuk bawah gelap
-    if (!HST2) box(-1.02, 15.85, 1.85, 2.32, '#2b2023');
+    if (!HST2) box(-1.02, 15.85, 1.85, 2.32, NEOL ? '#1a1f27' : '#2b2023');
     // pita ornamen emas di sepanjang badan, membungkus moncong
     if (ARGO && !HST2) {
       // pita senja: sapuan jingga → magenta → ungu yang naik ke arah moncong, bergaris emas
@@ -10522,7 +10524,7 @@
     }
     if (ARGO) { /* pita senja sudah digambar */ } else if (SH === 'boxB' || SH === 'boxC') { line([[15.85, 3.79], [-0.85, 3.79]], cream, lw(0.07)); poly([[-0.85, 3.72], [-0.85, 2.45], [-1.12, 2.35], [-1.12, 3.63]], '#160e0d'); }
     else if (BOXY) { line([[15.85, 3.79], [-0.72, 3.79]], cream, lw(0.07)); poly([[-0.73, 3.72], [-0.83, 2.45], [-1.11, 2.35], [-1.01, 3.64]], '#160e0d'); line([[-0.72, 3.79], [-1.0, 3.71]], cream, lw(0.07)); }
-    else if (SH === 'neo') line([[15.85, 3.42], [3.0, 3.42], [-0.7, 3.25]], '#e9c26a', lw(0.05));
+    else if (SH === 'neo') { line([[15.85, 3.42], [3.0, 3.42], [-0.7, 3.25]], '#7fe8ff', lw(0.05)); c.save(); c.globalCompositeOperation = 'lighter'; line([[15.85, 3.42], [3.0, 3.42], [-0.7, 3.25]], 'rgba(95,212,255,0.35)', lw(0.18)); c.restore(); }
     else line([[15.85, 3.79], [0.22, 3.79], [-0.52, 3.44]], cream, lw(0.07));
     if (!ARGO) line([[15.85, 2.38], [-0.75, 2.38]], cream, lw(0.07));
     if (HST2) { /* atap rata menyatu */ } else if (ARGO) {
