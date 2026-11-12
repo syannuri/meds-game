@@ -10636,17 +10636,14 @@
           cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
           c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(5.75)); c.quadraticCurveTo(mid, Y(6.12), mid + sw / 2, Y(5.75)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
           c.fillStyle = '#1a1d21'; c.fillRect(mid - sw * 0.7, Y(0.85), sw * 1.4, 0.55 * ppm); }
-      } else if (SENJAC) { // Argo Senja: penutup sambungan menyatu ala kereta cepat, pita senja & garis emas menerus
-        const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0, mid = (g0 + g1) / 2;
-        c.fillStyle = vgrad(4.85, 0.35, [[0, '#ffffff'], [0.75, '#c8cbd1'], [1, '#8f949c']]); c.fillRect(g0, Y(4.85), gw, 4.5 * ppm);
-        c.fillStyle = '#14181e'; c.fillRect(g0, Y(4.5), gw, 1.7 * ppm);
-        const sg = c.createLinearGradient(0, Y(2.75), 0, Y(2.0)); sg.addColorStop(0, '#f0743a'); sg.addColorStop(1, '#c2427a'); c.fillStyle = sg; c.fillRect(g0, Y(2.75), gw, 0.75 * ppm);
-        c.fillStyle = '#e9c26a'; c.fillRect(g0, Y(2.85), gw, Math.max(1, 0.06 * ppm));
-        c.fillStyle = vgrad(6.08, 4.85, [[0, '#eef0f2'], [1, '#b4bac1']]); c.fillRect(g0 - 0.6 * ppm, Y(6.08), gw + 1.2 * ppm, 1.25 * ppm);
-        const sw = Math.max(3, 0.34 * ppm), cg = c.createLinearGradient(mid - sw / 2, 0, mid + sw / 2, 0);
-        cg.addColorStop(0, '#6d747c'); cg.addColorStop(0.35, '#f4f6f8'); cg.addColorStop(0.65, '#b9c0c7'); cg.addColorStop(1, '#5a6168');
-        c.fillStyle = cg; c.beginPath(); c.moveTo(mid - sw / 2, Y(0.4)); c.lineTo(mid - sw / 2, Y(5.75)); c.quadraticCurveTo(mid, Y(6.12), mid + sw / 2, Y(5.75)); c.lineTo(mid + sw / 2, Y(0.4)); c.closePath(); c.fill();
-        c.fillStyle = '#1a1d21'; c.fillRect(mid - sw * 0.7, Y(0.85), sw * 1.4, 0.55 * ppm);
+      } else if (SENJAC) { // Argo Senja: penutup sambungan berlipat ala Guntur, sewarna badan putih-perak, pita kaca gelap & pita senja menerus
+        const g1 = L(F), g0 = L(F - GAP - gd - (k === 0 ? 0.15 : 0)), gx = Math.min(g0, g1) - 1, gw = Math.abs(g1 - g0) + 2;
+        c.fillStyle = vgrad(5.92, 0.5, [[0, '#f4f5f7'], [0.55, '#d6d9de'], [1, '#9aa0a8']]); roundRect(c, gx, Y(5.92), gw, 5.42 * ppm, 0.25 * ppm); c.fill();
+        c.fillStyle = 'rgba(20,24,30,0.6)'; c.fillRect(gx, Y(4.5), gw, 1.7 * ppm); // pita kaca gelap menyatu dengan jendela
+        const sg = c.createLinearGradient(0, Y(2.75), 0, Y(2.0)); sg.addColorStop(0, '#f0743a'); sg.addColorStop(1, '#c2427a'); c.fillStyle = sg; c.globalAlpha = 0.85; c.fillRect(gx, Y(2.75), gw, 0.75 * ppm); c.globalAlpha = 1; // pita senja
+        c.fillStyle = '#e9c26a'; c.fillRect(gx, Y(2.85), gw, Math.max(1, 0.06 * ppm)); // garis emas
+        c.strokeStyle = 'rgba(70,64,74,0.42)'; c.lineWidth = 1; c.beginPath(); for (let q = gx + 0.18 * ppm; q < gx + gw - 1; q += 0.22 * ppm) { c.moveTo(q, Y(5.8)); c.lineTo(q, Y(0.6)); } c.stroke(); // lipatan
+        c.strokeStyle = 'rgba(255,214,170,0.35)'; c.beginPath(); for (let q = gx + 0.29 * ppm; q < gx + gw - 1; q += 0.22 * ppm) { c.moveTo(q, Y(5.8)); c.lineTo(q, Y(0.6)); } c.stroke(); // kilau senja di punggung lipatan
       } else if (STEAMC) { // kereta tua: dua penyangga bundar beradu, kopel rantai berulir, tanpa bordes
         const g0 = L(F), g1 = L(F - GAP - gd), mid = (g0 + g1) / 2;
         c.fillStyle = '#1a1a1a'; c.fillRect(g0 - 0.1 * ppm, Y(1.45), g1 - g0 + 0.2 * ppm, 0.16 * ppm);
