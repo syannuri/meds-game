@@ -4940,7 +4940,8 @@
     for (let i = steps.length - 2; i >= 0; i--) {
       const a = steps[i], b = steps[i + 1];
       const Bk = brAt((a + b) / 2), deck = !!Bk, dw = deckW(Bk);
-      const col = inTun ? '#24221f' : deck ? (night ? '#2a3038' : '#4a535a') : mix('#8d8275', '#a59a8c', p);
+      const balN = night ? 0.72 : MIS.dayCycle ? 0.62 * twiOf(p) : 0; // malam/petang: balas menggelap, hanya terang di bawah sorot lampu
+      const col = inTun ? '#24221f' : deck ? (night ? '#2a3038' : '#4a535a') : mix(mix('#8d8275', '#a59a8c', p), '#2a2830', balN);
       if (deck) { // lantai beton/baja jembatan selebar struktur, dengan lis tepi terang
         const dR = dw + (DBc ? dblO(x0 + (a + b) / 2) : 0);
         quad(W3(a, -dw, -0.05), W3(a, dR, -0.05), W3(b, dR, -0.05), W3(b, -dw, -0.05), Bk.viaduct ? (night ? '#4a4e58' : mix('#a39e94', '#bdb8ae', p)) : Bk.truss ? (night ? '#3a414a' : '#5a646c') : (night ? '#4a4c54' : mix('#a8a196', '#c2bcb0', p))); // busur: lantai beton terang (tidak menyatu dengan air)
@@ -4951,7 +4952,7 @@
     }
     // tekstur batu balas yang bergerak mendekat
     if (!inTun) {
-      const tones = [mix('#6f665d', '#7c736a', p), mix('#a39889', '#b2a798', p), mix('#827869', '#8e8478', p)];
+      const balN2 = night ? 0.72 : MIS.dayCycle ? 0.62 * twiOf(p) : 0, tones = [mix('#6f665d', '#7c736a', p), mix('#a39889', '#b2a798', p), mix('#827869', '#8e8478', p)].map((t) => mix(t, '#2a2830', balN2));
       for (const [lat, zz, sz, tn] of CAB_BAL) {
         const d = 1.5 + (((zz * 60 - x0) % 60) + 60) % 60;
         if (d > FAR || onB(d)) continue;
@@ -5627,27 +5628,38 @@
         c.restore(); }
     }
     { const tw = night ? 0 : twiOf(dayP(st.clock)); if (tw > 0.02 && !inTun) { c.fillStyle = `rgba(8,12,38,${0.52 * tw})`; c.fillRect(0, 0, W, H); } }
-    if (night || inTun || storm) {
+    { const twL = night ? 0 : twiOf(dayP(st.clock)); // petang (siklus waktu): lampu sorot ikut menyala bertahap
+    if (night || inTun || storm || twL > 0.25) {
       if (night && !inTun) { c.fillStyle = 'rgba(8,12,38,0.45)'; c.fillRect(0, 0, W, H); }
       if (storm && !inTun) { c.fillStyle = 'rgba(30,38,46,0.18)'; c.fillRect(0, 0, W, H); }
-      // sorot lampu kereta di rel depan
+      // sorot lampu kereta: genangan cahaya bertepi lembut di tanah (puncak ±15–25 m di depan, gelap di dekat moncong karena
+      // lampu mengarah ke depan), meredup alami ke jauh; kilau kepala rel di bawah berkas; pendar udara halus (lebih tebal saat kabut/hujan)
       c.save(); c.globalCompositeOperation = 'lighter';
-      const KL = night && !inTun ? 1 : inTun ? 0.85 : 0.6; // malam: lampu sorot jauh lebih terang & jauh
-      // berkas lebar di tanah, mengikuti lengkung rel
-      const bw = (d) => inTun ? Math.min(4.2, 2.5 + d * 0.06) : 2.5 + d * 0.06; // di terowongan berkas berhenti di kaki dinding
-      for (let d = 3; d < Math.min(FAR, 190); d += 6) { const e = d + 6, a1 = W3(d, -bw(d), 0), a2 = W3(d, bw(d), 0), b1 = W3(e, -bw(e), 0), b2 = W3(e, bw(e), 0); if (!a1 || !a2 || !b1 || !b2) continue;
-        const al = 0.42 * KL * Math.pow(1 - d / 190, 1.4); c.fillStyle = `rgba(255,234,180,${al.toFixed(3)})`; c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(a2.x, a2.y); c.lineTo(b2.x, b2.y); c.lineTo(b1.x, b1.y); c.closePath(); c.fill(); }
-      // inti terang tepat di atas rel
-      for (let d = 3; d < Math.min(FAR, 120); d += 5) { const e = d + 5, a1 = W3(d, -1.4, 0.1), a2 = W3(d, 1.4, 0.1), b1 = W3(e, -1.4, 0.1), b2 = W3(e, 1.4, 0.1); if (!a1 || !a2 || !b1 || !b2) continue;
-        c.fillStyle = `rgba(255,246,220,${(0.35 * KL * Math.pow(1 - d / 120, 1.2)).toFixed(3)})`; c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(a2.x, a2.y); c.lineTo(b2.x, b2.y); c.lineTo(b1.x, b1.y); c.closePath(); c.fill(); }
-      // berkas di udara (kabut malam) dari lampu ke depan + titik hilang bercahaya
-      if (inTun) { const v1 = W3(Math.min(FAR, 120), 0, 2.6), v0 = W3(6, 0, 2.6); if (v1 && v0) { c.save(); c.translate(v1.x, (v0.y + v1.y) / 2); c.scale(1, 0.62); const r = Math.abs(v0.y - v1.y) * 1.2, ag = c.createRadialGradient(0, 0, 0, 0, 0, r); ag.addColorStop(0, `rgba(255,236,190,${0.12 * KL})`); ag.addColorStop(1, 'rgba(255,236,190,0)'); c.fillStyle = ag; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.restore(); } }
-      else { const v0 = W3(2, 0, 2.2), v1 = W3(Math.min(FAR, 160), 0, 1.2); if (v0 && v1) {
-        const ag = c.createLinearGradient(0, H, 0, v1.y); ag.addColorStop(0, `rgba(255,236,190,${0.1 * KL})`); ag.addColorStop(1, `rgba(255,236,190,${0.025 * KL})`);
-        c.fillStyle = ag; c.beginPath(); c.moveTo(v0.x - W * 0.45, H * 0.74); c.lineTo(v0.x + W * 0.45, H * 0.74); c.lineTo(v1.x + 8 * v1.k, v1.y - 2 * v1.k); c.lineTo(v1.x - 8 * v1.k, v1.y - 2 * v1.k); c.closePath(); c.fill();
-        const hg = c.createRadialGradient(v1.x, v1.y, 0, v1.x, v1.y, W * 0.12); hg.addColorStop(0, `rgba(255,240,200,${0.35 * KL})`); hg.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = hg; c.fillRect(v1.x - W * 0.12, v1.y - W * 0.12, W * 0.24, W * 0.24); } }
+      const KL = inTun ? 0.85 : night ? 1 : storm ? 0.6 : 0.85 * smooth(0.25, 0.9, twL), haze = (MIS.rain || storm ? 1.6 : 1) * (fogAt(x0 + 60) > 0.05 || MIS.sky === 'night' && MIS.mist ? 1.5 : 1);
+      const I = (d) => smooth(1.5, 11, d) * (0.5 * Math.exp(-d / 55) + 0.5 * Math.exp(-Math.pow((d - 19) / 15, 2))); // intensitas di tanah
+      const bw = (d) => { const w = 1.7 + d * 0.085; return inTun ? Math.min(4.4, w) : w; }; // di terowongan berkas berhenti di kaki dinding
+      const strip = (d, e, wk, a, col) => { const a1 = W3(d, -bw(d) * wk, 0), a2 = W3(d, bw(d) * wk, 0), b1 = W3(e, -bw(e) * wk, 0), b2 = W3(e, bw(e) * wk, 0); if (!a1 || !a2 || !b1 || !b2 || a < 0.004) return;
+        const g = c.createLinearGradient(a1.x, 0, a2.x, 0); g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(0.28, `rgba(${col},${(a * 0.45).toFixed(3)})`); g.addColorStop(0.5, `rgba(${col},${a.toFixed(3)})`); g.addColorStop(0.72, `rgba(${col},${(a * 0.45).toFixed(3)})`); g.addColorStop(1, `rgba(${col},0)`);
+        c.fillStyle = g; c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(a2.x, a2.y); c.lineTo(b2.x, b2.y); c.lineTo(b1.x, b1.y); c.closePath(); c.fill(); };
+      const DMAX = Math.min(FAR, night || inTun ? 230 : 170);
+      for (let d = 1.6; d < DMAX; ) { const e = Math.min(DMAX, d + 1.2 + d * 0.07), m = (d + e) / 2, fade = 1 - smooth(DMAX * 0.6, DMAX, m);
+        if (!inTun) strip(d, e, 3.6, 0.06 * KL * I(m) * fade, '255,206,140'); // cahaya sebar tipis ke sawah/bahu di kiri-kanan
+        strip(d, e, 2.0, 0.16 * KL * I(m) * fade, '255,214,150'); // pendar luas yang tumpah ke bahu rel
+        strip(d, e, 1, 0.78 * KL * I(m) * fade, '255,238,200'); // berkas utama
+        d = e; }
+      // kilau kepala rel di bawah berkas (pantulan sudut rendah, terlihat jauh)
+      c.lineCap = 'round';
+      for (const rl of [-0.75, 0.75]) { let prev = null; for (let d = 2; d < DMAX; d += 2 + d * 0.05) { const q = W3(d, rl, 0.16); if (q && prev) { const a = 0.55 * KL * (0.25 + 0.75 * I(d)) * (1 - smooth(DMAX * 0.5, DMAX, d)); c.strokeStyle = `rgba(255,244,222,${a.toFixed(3)})`; c.lineWidth = Math.max(0.7, 0.05 * q.k); c.beginPath(); c.moveTo(prev.x, prev.y); c.lineTo(q.x, q.y); c.stroke(); } prev = q; } }
+      // pendar udara (hamburan) sepanjang berkas: lembut, tanpa tepi; titik jauh sedikit bercahaya
+      const vA = W3(4, 0, 2.0), vB = W3(Math.min(DMAX, 120), 0, 1.4);
+      if (vA && vB) { const cxh = vB.x, cyh = (vA.y + vB.y) / 2, rx = W * 0.42, ry = Math.abs(vA.y - vB.y) * 0.75 + 4;
+        c.save(); c.translate(cxh, cyh); c.scale(1, ry / rx); const ag = c.createRadialGradient(0, 0, 0, 0, 0, rx); ag.addColorStop(0, `rgba(255,232,190,${(0.07 * KL * haze).toFixed(3)})`); ag.addColorStop(0.5, `rgba(255,232,190,${(0.03 * KL * haze).toFixed(3)})`); ag.addColorStop(1, 'rgba(255,232,190,0)');
+        c.fillStyle = ag; c.beginPath(); c.arc(0, 0, rx, 0, 7); c.fill(); c.restore();
+        const hg = c.createRadialGradient(vB.x, vB.y, 0, vB.x, vB.y, W * 0.07); hg.addColorStop(0, `rgba(255,240,205,${(0.16 * KL * haze).toFixed(3)})`); hg.addColorStop(1, 'rgba(255,240,205,0)'); c.fillStyle = hg; c.fillRect(vB.x - W * 0.07, vB.y - W * 0.07, W * 0.14, W * 0.14); }
+      // terowongan: dinding dekat ikut tersinari pantulan berkas (cahaya tidak berhenti tajam di kaki dinding)
+      if (inTun) { const wq = W3(14, 0, 2.5); if (wq) { const wg = c.createRadialGradient(wq.x, wq.y, 0, wq.x, wq.y, W * 0.55); wg.addColorStop(0, `rgba(255,226,180,${(0.08 * KL).toFixed(3)})`); wg.addColorStop(1, 'rgba(255,226,180,0)'); c.fillStyle = wg; c.fillRect(0, 0, W, H); } }
       c.restore();
-    }
+    } }
 
     if (HSTCAB && !inTun && !night && !storm) drawHstLight(c, { hy, p, pan, st, sun: sunPos(Vs) });
     if (!inTun && !night && !storm) drawFlare(c, sunPos(Vs), HSTCAB ? 0.8 : 0.85, st.v, x0, hy);
