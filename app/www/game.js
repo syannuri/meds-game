@@ -4552,7 +4552,7 @@
   // Rel di depan diproyeksikan dengan perspektif dari mata masinis. Tikungan memakai data lengkung yang sama
   // dengan tampilan samping (BEND), sehingga rel benar-benar berbelok ke kiri/kanan di depan kabin.
   const CABW = { prev: null };
-  const cabRain = Array.from({ length: 110 }, (_, i) => ({ x: hash(i * 1.7), y: hash(i * 2.9 + 1), r: 1.4 + hash(i + 4) * 3.2 }));
+  const cabRain = Array.from({ length: 170 }, (_, i) => ({ x: hash(i * 1.7), y: hash(i * 2.9 + 1), r: 1.4 + hash(i + 4) * 3.2 }));
   function tickCrossings(st, dt) {
     ROUTE.crossings.forEach((cr, i) => {
       const A = crossState(i);
@@ -5386,43 +5386,48 @@
       const per = clamp(1.9 - kmh / 120, 1.05, 1.9), pause = 0.28, cyc = per * 2 + pause * 2, tc = now % cyc;
       const ease = (u) => u * u * (3 - 2 * u);
       const u = tc < per ? ease(tc / per) : tc < per + pause ? 1 : tc < per * 2 + pause ? 1 - ease((tc - per - pause) / per) : 0;
-      const A0 = -Math.PI * 0.9, A1 = -Math.PI * 0.12, ang2 = A0 + (A1 - A0) * u, Lr = H * 0.33, Lb = H * 0.3;
-      const pivots = [[W * 0.27, H * 0.7], [W * 0.68, H * 0.7]];
-      const blades = pivots.map(([px, py]) => { const bx = px + Math.cos(ang2) * Lr, by = py + Math.sin(ang2) * Lr; return { px, py, bx, by, tilt: Math.cos(ang2) * Lb * 0.12 }; });
-      const prev = CABW.prev || blades.map((q) => q.bx); CABW.prev = blades.map((q) => q.bx);
+      // bilah panjang searah lengan (seperti wiper sungguhan) menyapu bidang kipas hampir seluruh kaca dari poros di bawah
+      const A0 = -Math.PI * 0.99, A1 = -Math.PI * 0.16, ang2 = A0 + (A1 - A0) * u, R = H * 0.63, rIn = R * 0.16;
+      const pivots = [[W * 0.24, H * 0.685], [W * 0.655, H * 0.685]];
+      const prevA = CABW.prevA === undefined ? ang2 : CABW.prevA; CABW.prevA = ang2;
+      const aLo = Math.min(prevA, ang2) - 0.03, aHi = Math.max(prevA, ang2) + 0.03;
       cabRain.forEach((r, k) => {
-        if (r.lw === undefined) { r.lw = now - 3 * hash(k + 2); r.d = hash(k * 3.3 + 1) * 1.6; }
+        if (r.lw === undefined) { r.lw = now - 4 * hash(k + 2); r.d = 0.6 + hash(k * 3.3 + 1) * 2.6; }
         let x = r.x * W, y = r.y * H * 0.64;
-        // tersapu bila bilah melintas di antara posisi bingkai sebelumnya dan sekarang
-        blades.forEach((q, i) => { const lo = Math.min(prev[i], q.bx) - W * 0.012, hi = Math.max(prev[i], q.bx) + W * 0.012, top = q.by - Lb * 0.5, bot = q.by + Lb * 0.5;
-          if (x > lo && x < hi && y > top && y < bot) r.lw = now; });
+        // tersapu bila bilah (garis radial dari poros) melintasi sudut butir pada rentang panjang bilah
+        for (const [px, py] of pivots) { const dx = x - px, dy = y - py, rd = Math.hypot(dx, dy), a = Math.atan2(dy, dx); if (rd > rIn && rd < R * 1.02 && a > aLo && a < aHi) { r.lw = now; r.d = 0.6 + hash(k * 3.3 + Math.floor(now)) * 2.6; } }
         const age = now - r.lw - r.d; if (age <= 0) return;
-        const grow = clamp(age / 1.4, 0, 1);
-        // aliran angin: makin cepat makin terdorong ke atas & ke tepi
+        const grow = clamp(age / 2.2, 0, 1); // butir baru tumbuh perlahan setelah tersapu
         const wind = clamp((kmh - 40) / 90, 0, 1), drift = Math.min(age, 3) * wind;
         x += (x < W / 2 ? -1 : 1) * drift * W * 0.012; y -= drift * H * 0.05;
         if (y < H * 0.04) return;
-        const rr = r.r * (0.55 + grow * 0.75);
-        c.globalAlpha = 0.25 + grow * 0.6;
+        const rr = r.r * (0.35 + grow * 0.9);
+        c.globalAlpha = 0.15 + grow * 0.7;
         if (wind > 0.15 && k % 2 === 0) { c.strokeStyle = 'rgba(210,225,235,0.22)'; c.lineWidth = rr * 0.6; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (x < W / 2 ? 1 : -1) * rr * 2 * wind, y + rr * 4 * wind); c.stroke(); }
         const g = c.createRadialGradient(x, y + rr * 0.25, 0, x, y, rr); g.addColorStop(0, 'rgba(210,225,235,0.14)'); g.addColorStop(0.75, 'rgba(185,205,220,0.26)'); g.addColorStop(1, 'rgba(20,28,36,0.5)');
         c.fillStyle = g; c.beginPath(); c.arc(x, y, rr, 0, 7); c.fill();
         c.fillStyle = 'rgba(255,255,255,0.8)'; c.beginPath(); c.arc(x - rr * 0.35, y - rr * 0.38, Math.max(0.6, rr * 0.22), 0, 7); c.fill();
       });
       c.globalAlpha = 1;
-      // lapisan air tipis yang baru tersapu: busur jejak bilah berkilau
-      blades.forEach((q) => { c.strokeStyle = 'rgba(220,235,245,0.1)'; c.lineWidth = Lb * 0.9; c.beginPath(); c.arc(q.px, q.py, Lr, Math.min(A0, ang2), Math.max(A0, ang2) * 0 + ang2); c.stroke(); });
-      // lengan & bilah
-      blades.forEach((q) => {
+      // lapisan air tipis berkilau tepat di belakang bilah (memudar), menandai kaca yang baru tersapu
+      const dir = ang2 >= prevA ? 1 : -1, trail = 0.38;
+      c.save(); c.beginPath(); c.rect(0, 0, W, H * 0.66); c.clip();
+      for (const [px, py] of pivots) { for (let q = 0; q < 6; q++) { const a0 = ang2 - dir * trail * (q / 6), a1 = ang2 - dir * trail * ((q + 1) / 6);
+        c.fillStyle = `rgba(215,230,240,${0.07 * (1 - q / 6)})`; c.beginPath(); c.moveTo(px + Math.cos(a0) * rIn, py + Math.sin(a0) * rIn); c.arc(px, py, R, a0, a1, dir > 0); c.arc(px, py, rIn, a1, a0, dir < 0); c.closePath(); c.fill(); } }
+      c.restore();
+      // lengan & bilah: lengan dari poros, bilah radial dengan rangka, karet & jepit
+      for (const [px, py] of pivots) {
+        const ux = Math.cos(ang2), uy = Math.sin(ang2), nx = -uy, ny = ux, at = (rr, o = 0) => [px + ux * rr + nx * o, py + uy * rr + ny * o];
         c.lineCap = 'round';
-        c.strokeStyle = '#0c0d0f'; c.lineWidth = Math.max(3, W * 0.005); c.beginPath(); c.moveTo(q.px, q.py); c.lineTo(q.bx, q.by); c.stroke(); // lengan utama
-        c.strokeStyle = '#2a2d31'; c.lineWidth = Math.max(1.5, W * 0.0025); c.beginPath(); c.moveTo(q.px + W * 0.012, q.py); c.lineTo(q.bx + W * 0.012, q.by + Lb * 0.06); c.stroke(); // batang pantograf
-        c.strokeStyle = '#3a3e44'; c.lineWidth = Math.max(2, W * 0.004); c.beginPath(); c.moveTo(q.bx - q.tilt, q.by - Lb * 0.5); c.lineTo(q.bx + q.tilt, q.by + Lb * 0.5); c.stroke(); // rangka bilah
-        c.strokeStyle = '#050506'; c.lineWidth = Math.max(1.5, W * 0.0022); c.beginPath(); c.moveTo(q.bx - q.tilt + 2, q.by - Lb * 0.5); c.lineTo(q.bx + q.tilt + 2, q.by + Lb * 0.5); c.stroke(); // karet
-        c.strokeStyle = 'rgba(255,255,255,0.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(q.bx - q.tilt - 1, q.by - Lb * 0.48); c.lineTo(q.bx + q.tilt - 1, q.by + Lb * 0.48); c.stroke();
-        c.fillStyle = '#1a1c1f'; c.beginPath(); c.arc(q.px, q.py, Math.max(4, W * 0.006), 0, 7); c.fill(); // poros
-        c.fillStyle = '#4a4f56'; c.beginPath(); c.arc(q.px, q.py, Math.max(1.5, W * 0.0025), 0, 7); c.fill();
-      });
+        c.strokeStyle = '#0c0d0f'; c.lineWidth = Math.max(3, W * 0.005); c.beginPath(); c.moveTo(px, py); c.lineTo(...at(R * 0.6, W * 0.006)); c.stroke(); // lengan
+        c.strokeStyle = '#2a2d31'; c.lineWidth = Math.max(1.5, W * 0.0025); c.beginPath(); c.moveTo(...at(0, -W * 0.008)); c.lineTo(...at(R * 0.55, -W * 0.002)); c.stroke(); // batang pantograf
+        c.strokeStyle = '#3a3e44'; c.lineWidth = Math.max(2, W * 0.004); c.beginPath(); c.moveTo(...at(rIn + R * 0.02, W * 0.007)); c.lineTo(...at(R, W * 0.007)); c.stroke(); // rangka bilah
+        c.strokeStyle = '#050506'; c.lineWidth = Math.max(1.5, W * 0.0025); c.beginPath(); c.moveTo(...at(rIn, W * 0.003)); c.lineTo(...at(R * 1.0, W * 0.003)); c.stroke(); // karet
+        c.strokeStyle = 'rgba(255,255,255,0.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(...at(rIn, W * 0.0095)); c.lineTo(...at(R * 0.99, W * 0.0095)); c.stroke();
+        c.fillStyle = '#2a2d31'; const jp = at(R * 0.6, W * 0.006); c.beginPath(); c.arc(jp[0], jp[1], Math.max(2, W * 0.0035), 0, 7); c.fill(); // jepit lengan-bilah
+        c.fillStyle = '#1a1c1f'; c.beginPath(); c.arc(px, py, Math.max(4, W * 0.006), 0, 7); c.fill(); // poros
+        c.fillStyle = '#4a4f56'; c.beginPath(); c.arc(px, py, Math.max(1.5, W * 0.0025), 0, 7); c.fill();
+      }
       c.lineCap = 'butt';
     }
     if (MIS.loco === 'steam' && !inTun) drawSteamBoilerView(c, { hy, cx, SUN, SUNK, tNow, st, night });
