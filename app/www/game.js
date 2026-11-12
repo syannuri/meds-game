@@ -5172,6 +5172,8 @@
       });
     }
     // stasiun: peron & bangunan di kiri, peron penumpang di kanan
+    // malam/petang: warna peron & bangunan meredup, jendela loket menyala, deretan lampu tiang menerangi peron secara merata
+    const kL = night ? 1 : MIS.dayCycle ? smooth(0.36, 0.12, p) : 0, dk = (col) => (kL > 0.01 ? mix(col, '#2c2838', 0.55 * kL) : col);
     allStations().forEach((s) => {
       const pass = (ROUTE.passStations || []).includes(s);
       const a = s.x + PLAT_FROM - x0, b = s.x + PLAT_TO - x0;
@@ -5189,17 +5191,29 @@
           const ln = Math.sign(o0) * (Math.min(Math.abs(o0), Math.abs(o1)) + 0.25);
           for (let d = db; d > da; d -= 6) { const e = Math.max(da, d - 6); quad(W3(e, ln - 0.1, 1.01), W3(e, ln + 0.1, 1.01), W3(d, ln + 0.1, 1.01), W3(d, ln - 0.1, 1.01), '#e8c33a'); }
         };
-        seg(-2.1, -8, mix('#b9b2a2', '#cfc8b8', p), '#8d8679');
-        if (!pass && !MIS.freight) seg(2.1, DBc ? DBc.st - 1.9 : 7, mix('#c4bdad', '#ddd6c6', p), '#9d968a');
+        seg(-2.1, -8, dk(mix('#b9b2a2', '#cfc8b8', p)), dk('#8d8679'));
+        if (!pass && !MIS.freight) seg(2.1, DBc ? DBc.st - 1.9 : 7, dk(mix('#c4bdad', '#ddd6c6', p)), dk('#9d968a'));
       });
+      // lampu peron bertiang tiap 10 m di kedua peron: pendar lembut + genangan cahaya hangat di lantai (bertumpuk jadi merata)
+      if (kL > 0.02) for (let m = s.x + PLAT_FROM + 5; m <= s.x + PLAT_TO - 3; m += 10) for (const side of pass || MIS.freight ? [-1] : [-1, 1]) {
+        const d = m - x0; if (d < 2 || d > FAR) continue; const o = side < 0 ? -3.2 : 3.2;
+        add(d, () => {
+          const b0 = W3(d, o, 1), t0 = W3(d, o, 4.4); if (!b0 || !t0) return;
+          c.strokeStyle = dk('#5a5f66'); c.lineWidth = Math.max(1, 0.1 * b0.k); c.beginPath(); c.moveTo(b0.x, b0.y); c.lineTo(t0.x, t0.y); c.stroke();
+          c.save(); c.globalCompositeOperation = 'lighter'; const fd = kL * clamp(1.15 - d / 90, 0.08, 1); // lampu jauh meredup (tidak menumpuk jadi silau)
+          const fl = W3(d, o * 0.75, 1.02); if (fl) { const rx = 5 * fl.k, ry = 1.4 * fl.k, fg = c.createRadialGradient(fl.x, fl.y, 0, fl.x, fl.y, rx); fg.addColorStop(0, `rgba(255,206,140,${(0.13 * fd).toFixed(3)})`); fg.addColorStop(1, 'rgba(255,206,140,0)'); c.fillStyle = fg; c.beginPath(); c.ellipse(fl.x, fl.y, rx, ry, 0, 0, 7); c.fill(); }
+          const r = Math.min(1.2 * t0.k, 26), gg = c.createRadialGradient(t0.x, t0.y, 0, t0.x, t0.y, r * 2.2); gg.addColorStop(0, `rgba(255,236,196,${(0.6 * fd).toFixed(3)})`); gg.addColorStop(0.25, `rgba(255,206,140,${(0.12 * fd).toFixed(3)})`); gg.addColorStop(1, 'rgba(255,206,140,0)');
+          c.fillStyle = gg; c.beginPath(); c.arc(t0.x, t0.y, r * 2.2, 0, 7); c.fill(); c.restore();
+        });
+      }
       // bangunan stasiun & kanopi
       const bd = s.x - 48 - x0;
       add(bd + 12, () => {
         const q = (d1, d2, o1, o2, h1, h2, col) => quad(W3(d1, o1, h1), W3(d2, o2, h1), W3(d2, o2, h2), W3(d1, o1, h2), col);
-        q(bd - 12, bd + 12, -12, -12, 1, 6, mix('#d9cfb9', '#efe6d2', p));
-        q(bd + 12, bd + 12, -12, -20, 1, 6, mix('#c4bba6', '#ddd3bd', p));
-        q(bd - 13, bd + 13, -11, -11, 6, 8.4, '#8f4330');
-        for (let k = 0; k < 5; k++) q(bd - 10 + k * 4.6, bd - 8.2 + k * 4.6, -11.95, -11.95, 1.2, 4.2, '#3d4a4f');
+        q(bd - 12, bd + 12, -12, -12, 1, 6, dk(mix('#d9cfb9', '#efe6d2', p)));
+        q(bd + 12, bd + 12, -12, -20, 1, 6, dk(mix('#c4bba6', '#ddd3bd', p)));
+        q(bd - 13, bd + 13, -11, -11, 6, 8.4, dk('#8f4330'));
+        for (let k = 0; k < 5; k++) q(bd - 10 + k * 4.6, bd - 8.2 + k * 4.6, -11.95, -11.95, 1.2, 4.2, kL > 0.01 ? mix('#3d4a4f', '#ffd9a0', 0.85 * kL) : '#3d4a4f'); // jendela loket menyala hangat
       });
       // papan nama stasiun
       add(s.x + 13 - x0, () => {
@@ -6826,15 +6840,22 @@
       g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
       c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
     };
+    // lampu peron: berjajar rata tiap 10 m sepanjang peron; genangan cahaya lebar & lembut yang saling menyambung
+    // (tanpa kerucut bertepi tajam), sehingga lantai, tepi peron, dan penumpang tersinari merata dan hangat
     for (const s of allStations()) {
-      if (X(s.x + 30) < -40 || X(s.x - 100) > W + 40) continue;
-      for (let k = 0; k <= 5; k++) {
-        const lx2 = V.bx(s.x - 80 + k * 11.5), ly2 = gy - 4.9 * ppm + V.bdy(s.x - 80 + k * 11.5);
-        // kerucut cahaya lembut ke lantai peron, pendar lampu, dan inti lampu kecil
-        const cg = c.createLinearGradient(0, ly2, 0, gy + 2.2 * ppm); cg.addColorStop(0, 'rgba(255,206,130,0.22)'); cg.addColorStop(1, 'rgba(255,206,130,0)');
-        c.fillStyle = cg; c.beginPath(); c.moveTo(lx2 - 0.4 * ppm, ly2); c.lineTo(lx2 + 0.4 * ppm, ly2); c.lineTo(lx2 + 3.6 * ppm, gy + 2.2 * ppm); c.lineTo(lx2 - 3.6 * ppm, gy + 2.2 * ppm); c.closePath(); c.fill();
-        lamp(lx2, ly2, 4.2 * ppm, 'rgba(255,200,120,0.22)');
-        lamp(lx2, ly2, 1.1 * ppm, 'rgba(255,236,190,0.75)');
+      if (X(s.x + PLAT_TO + 20) < -40 || X(s.x + PLAT_FROM - 20) > W + 40) continue;
+      const pool = (x, y, rx, ry, a) => { const g = c.createRadialGradient(x, y, 0, x, y, rx); g.addColorStop(0, `rgba(255,208,146,${a})`); g.addColorStop(0.6, `rgba(255,198,130,${(a * 0.45).toFixed(3)})`); g.addColorStop(1, 'rgba(255,198,130,0)');
+        c.save(); c.translate(x, y); c.scale(1, ry / rx); c.translate(-x, -y); c.fillStyle = g; c.beginPath(); c.arc(x, y, rx, 0, 7); c.fill(); c.restore(); };
+      // cahaya merata seluruh peron (lapis dasar sangat tipis, ujung memudar)
+      { const xa = V.bx(s.x + PLAT_FROM), xb = V.bx(s.x + PLAT_TO), y0 = gy - 4.6 * ppm, y1 = gy + 2.3 * ppm, fe = 6 * ppm;
+        const hg = c.createLinearGradient(xa - fe, 0, xb + fe, 0), fr = fe / Math.max(1, xb - xa + 2 * fe); hg.addColorStop(0, 'rgba(255,200,135,0)'); hg.addColorStop(Math.min(0.45, fr * 2), 'rgba(255,200,135,0.07)'); hg.addColorStop(Math.max(0.55, 1 - fr * 2), 'rgba(255,200,135,0.07)'); hg.addColorStop(1, 'rgba(255,200,135,0)');
+        c.fillStyle = hg; c.fillRect(xa - fe, y0, xb - xa + 2 * fe, y1 - y0); }
+      for (let m = s.x + PLAT_FROM + 5; m <= s.x + PLAT_TO - 3; m += 10) {
+        const lx2 = V.bx(m), ly2 = gy - 4.9 * ppm + V.bdy(m); if (lx2 < -12 * ppm || lx2 > W + 12 * ppm) continue;
+        pool(lx2, gy - 1.55 * ppm + V.bdy(m), 7 * ppm, 0.7 * ppm, 0.16); // lantai peron belakang
+        pool(lx2, gy + 0.9 * ppm + V.bdy(m), 7.5 * ppm, 1.5 * ppm, 0.13); // lantai peron depan
+        lamp(lx2, ly2, 3.2 * ppm, 'rgba(255,200,125,0.16)');
+        lamp(lx2, ly2, 0.8 * ppm, 'rgba(255,238,200,0.6)');
       }
     }
     for (const sig of ROUTE.signals) {
@@ -9046,7 +9067,8 @@
     c.save(); c.beginPath(); c.rect(a, yTop, b - a, yBot - yTop); c.clip();
     // dasar keramik krem dengan variasi tone ubin
     const base = c.createLinearGradient(0, yTop, 0, yBot);
-    base.addColorStop(0, night ? '#6f6c78' : '#d8d1c2'); base.addColorStop(1, night ? '#827f8b' : '#e7e1d3');
+    const twF = night ? 1 : twiOf(V.p); // petang: keramik bergeser bertahap ke warna malam (tidak putih menyala)
+    base.addColorStop(0, mix('#d8d1c2', '#6f6c78', twF)); base.addColorStop(1, mix('#e7e1d3', '#827f8b', twF));
     c.fillStyle = base; c.fillRect(a, yTop, b - a, yBot - yTop);
     const rows = Math.max(3, Math.round((yBot - yTop) / (0.5 * ppm)));
     const rowY = (t) => yTop + (yBot - yTop) * (depthNear ? Math.pow(t, 0.85) : t);
@@ -9124,8 +9146,9 @@
       for (let x = a; x < b; x += Math.max(3, 0.6 * ppm)) c.fillRect(x, yb + 0.12 * ppm, Math.max(1, 0.08 * ppm), 0.22 * ppm);
       c.fillStyle = 'rgba(255,255,255,0.35)'; c.fillRect(a, yb + 0.12 * ppm, b - a, 1);
       // tepi beton peron dengan sudut tertangkap cahaya
-      c.fillStyle = V.night ? '#b8b4c0' : '#f2ede1'; c.fillRect(a, yb, b - a, 0.12 * ppm);
-      c.fillStyle = V.night ? '#5d5a63' : '#9d968a'; c.fillRect(a, yf, b - a, 0.9 * ppm);
+      const twP = V.night ? 0 : twiOf(V.p);
+      c.fillStyle = V.night ? '#b8b4c0' : mix('#f2ede1', '#b8b4c0', twP); c.fillRect(a, yb, b - a, 0.12 * ppm);
+      c.fillStyle = V.night ? '#5d5a63' : mix('#9d968a', '#5d5a63', twP); c.fillRect(a, yf, b - a, 0.9 * ppm);
       c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(a, yf + 0.9 * ppm, b - a, 0.25 * ppm);
       c.fillStyle = 'rgba(0,0,0,0.14)'; c.fillRect(a, yb, b - a, 0.1 * ppm);
       const cr = crowds.get(si);
