@@ -651,7 +651,7 @@
         { from: 11200, to: 11600, name: 'Jembatan Kali Kencana' },
       ],
       scenes: [
-        { from: -400, to: 1300, kind: 'city', name: 'Sukamaju' },
+        { from: -400, to: 1300, kind: 'city', name: 'Sukamaju', brands: [{ name: 'ANETT', at: -40, style: 'chrome', sparkle: true, w: 16, h: 23 }] }, // gedung ANETT terlihat saat Argo Senja berangkat
         { from: 3400, to: 6300, kind: 'coast' },
         { from: 6300, to: 7600, kind: 'teak' },
         { from: 8600, to: 10000, kind: 'salt' },
@@ -12090,6 +12090,13 @@
         c.fillStyle = cg; c.fillText(ch, cx2, ty); c.restore();
         c.strokeStyle = night ? 'rgba(200,220,255,0.5)' : 'rgba(40,60,85,0.5)'; c.lineWidth = Math.max(0.6, 0.06 * u); c.strokeText(ch, cx2, ty);
         c.fillStyle = sw; c.fillText(ch, cx2, ty); // kilau berjalan
+        if (B.sparkle) { // kilauan bintang berkelip di huruf
+          const cw2 = c.measureText(ch).width;
+          for (let q = 0; q < 2; q++) { const sd = hash(name.length * 7 + cx2 * 0.01 + q * 3.1), ph = (tt * (0.7 + sd * 0.6) + sd * 6) % 2.2, a = ph < 1 ? Math.sin(ph * Math.PI) : 0; if (a < 0.05) continue;
+            const sx = cx2 + cw2 * (0.2 + 0.6 * hash(sd * 13 + q)), sy = top2 + (bot2 - top2) * (0.15 + 0.6 * hash(sd * 29 + q)), rr = (0.35 + 0.35 * a) * u;
+            c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = a; c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(sx, sy - rr); c.lineTo(sx + rr * 0.18, sy - rr * 0.18); c.lineTo(sx + rr, sy); c.lineTo(sx + rr * 0.18, sy + rr * 0.18); c.lineTo(sx, sy + rr); c.lineTo(sx - rr * 0.18, sy + rr * 0.18); c.lineTo(sx - rr, sy); c.lineTo(sx - rr * 0.18, sy - rr * 0.18); c.closePath(); c.fill();
+            const gg = c.createRadialGradient(sx, sy, 0, sx, sy, rr * 0.9); gg.addColorStop(0, o.warm ? `rgba(${o.warm},0.9)` : 'rgba(255,240,210,0.9)'); gg.addColorStop(1, 'rgba(255,240,210,0)'); c.fillStyle = gg; c.beginPath(); c.arc(sx, sy, rr * 0.9, 0, 7); c.fill(); c.restore(); }
+        }
         cx2 += c.measureText(ch).width + gap;
       }
     }
