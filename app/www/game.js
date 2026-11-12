@@ -593,7 +593,7 @@
     chapter: 'Babak 3 · Ekspres Jawa',
     title: 'Argo Senja', nick: 'Argo Senja',
     startClock: 16 * 3600 + 50 * 60,
-    sky: 'dawn', dusk: true,
+    sky: 'dawn', dusk: true, dayCycle: { from: 0.6, to: 0.1 }, // berangkat sore, tiba petang: lampu kota & kereta menyala bertahap
     rain: false,
     tags: ['Ekspres 200 km/h', 'Listrik 25 kV', 'Lewat langsung', 'Senja'],
     loco: 'argo',
@@ -682,7 +682,7 @@
     chapter: 'Babak 3 · Ekspres Jawa',
     title: 'Guntur di Atas Sawah', nick: 'Guntur',
     startClock: 15 * 3600 + 40 * 60,
-    sky: 'dawn', golden: true, // sore keemasan: matahari rendah & hangat
+    sky: 'dawn', golden: true, dayCycle: { from: 0.62, to: 0.22 }, // sore keemasan → senja di Kota Halimun
     rain: false,
     tags: ['Kereta cepat 250 km/h', 'Jalur layang', 'Sawah & kota modern'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
@@ -4635,14 +4635,22 @@
       if (A.released) for (const v of A.veh) v.d += v.dir * dt * (v.kind === 'moto' ? 0.42 : 0.3);
     });
   }
+  // posisi hari (0 malam … 1 siang) menurut jam perjalanan; misi dengan siklus waktu bergeser bertahap dari awal ke akhir perjalanan
+  const twiOf = (p) => (MIS.dayCycle ? smooth(0.5, 0.12, p) : 0); // tingkat petang (0 sore … 1 malam) pada misi bersiklus waktu
+  function dayP(clock) {
+    const DC = MIS.dayCycle;
+    if (DC) { const T = finalStation().sched || 3000, u = clamp(clock / (T * 1.05), 0, 1), e = u * u * (3 - 2 * u); return DC.from + (DC.to - DC.from) * e; }
+    return MIS.golden ? clamp(0.62 - clock / 40000, 0.5, 0.62) : MIS.day ? 1 : MIS.dusk ? clamp(0.6 - clock / 20000, 0.46, 0.6) : clamp(clock / 1500, 0, 1);
+  }
   function drawCab(c, st, dtReal, lat) {
     const dt = Math.min(0.05, dtReal || 0.016);
     tickCrossings(st, dt);
     const x0 = st.x - 1.5, EH = 3.4;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
-    const p = storm ? 0.6 : night ? 0.35 : MIS.golden ? clamp(0.62 - st.clock / 40000, 0.5, 0.62) : MIS.day ? 1 : MIS.dusk ? clamp(0.6 - st.clock / 20000, 0.46, 0.6) : clamp(st.clock / 1500, 0, 1);
+    const p = storm ? 0.6 : night ? 0.35 : dayP(st.clock);
     const T = ROUTE.tunnel, inTun = !!T && x0 > T.from && x0 < T.to;
-    const f = W * 0.8;
+    const fov = REDUCE_MOTION ? 0 : clamp((st.v * 3.6 - 70) / 180, 0, 1); // rasa cepat: pandangan sedikit melebar saat laju tinggi
+    const f = W * 0.8 * (1 - 0.12 * fov * fov * (3 - 2 * fov));
     // kereta cepat: rel las panjang + suspensi udara, kabin hanya mengapung pelan (tanpa getar)
     const HSTCAB = MIS.loco === 'hst2' || MIS.loco === 'hst', fk = clamp(st.v / 30, 0, 1);
     const bob = REDUCE_MOTION || SMOOTH() ? 0 : HSTCAB ? (Math.sin(st.t * 1.05) * 0.45 + Math.sin(st.t * 0.47 + 1) * 0.3) * fk + (st.shake > 0 ? (Math.random() - 0.5) * st.shake * 2 : 0)
@@ -5425,6 +5433,16 @@
       fg.addColorStop(0, `rgba(${fc},${0.8 * fog})`); fg.addColorStop(0.35, `rgba(${fc},${0.7 * fog})`); fg.addColorStop(1, `rgba(${fc},${0.2 * fog})`);
       c.fillStyle = fg; c.fillRect(0, 0, W, H);
     }
+    if (!inTun && !REDUCE_MOTION) { // garis angin dari titik hilang ke tepi kaca
+      const kk = clamp((st.v * 3.6 - 60) / 120, 0, 1);
+      if (kk > 0.02) { c.save(); c.lineCap = 'round'; const tt = st.t * (1.4 + kk * 2.2), lc = night ? '190,205,255' : '255,250,235';
+        for (let i = 0; i < 34; i++) { const ang = hash(i * 3.1) * Math.PI * 2, ph = (hash(i + 7.7) + tt) % 1, r0 = (0.18 + ph * ph * 0.9) * W, r1 = r0 * (1.12 + 0.35 * kk);
+          const dx = Math.cos(ang), dy = Math.sin(ang) * 0.62; if (dy < -0.35) continue; // bukan ke langit atas
+          const a = kk * 0.42 * Math.sin(Math.PI * ph); if (a < 0.01) continue;
+          c.strokeStyle = `rgba(${lc},${a.toFixed(3)})`; c.lineWidth = 0.8 + ph * 1.6; c.beginPath(); c.moveTo(cx + dx * r0, hy + dy * r0); c.lineTo(cx + dx * r1, hy + dy * r1); c.stroke(); }
+        c.restore(); }
+    }
+    { const tw = night ? 0 : twiOf(dayP(st.clock)); if (tw > 0.02 && !inTun) { c.fillStyle = `rgba(8,12,38,${0.45 * tw})`; c.fillRect(0, 0, W, H); } }
     if (night || inTun || storm) {
       if (night && !inTun) { c.fillStyle = 'rgba(8,12,38,0.45)'; c.fillRect(0, 0, W, H); }
       if (storm && !inTun) { c.fillStyle = 'rgba(30,38,46,0.18)'; c.fillRect(0, 0, W, H); }
@@ -6383,7 +6401,7 @@
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
-    const p = storm ? 0.6 : night ? 0.35 : MIS.golden ? clamp(0.62 - st.clock / 40000, 0.5, 0.62) : MIS.day ? 1 : MIS.dusk ? clamp(0.6 - st.clock / 20000, 0.46, 0.6) : clamp(st.clock / 1500, 0, 1); // fajar -> pagi (senja: matahari rendah)
+    const p = storm ? 0.6 : night ? 0.35 : dayP(st.clock); // fajar -> pagi (senja: matahari rendah)
     const T = ROUTE.tunnel;
     const xc = st.x - 12; // posisi kabin
     const tf = T ? smooth(T.from, T.from + 25, xc) * (1 - smooth(T.to, T.to + 25, xc)) : 0;
@@ -6395,7 +6413,7 @@
     // paralaks latar hanya mengikuti posisi kereta (bukan zoom/geser kamera), jadi saat mengerem
     // dan berhenti di stasiun pemandangan jauh tidak ikut 'berlari' ketika kamera mendekat
     const pcTrain = (st.x + camLead) * ppmB - W * anchor; // ikut jangkar & geser kamera agar latar jauh & tanah bergeser bersama
-    const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2, ppmB, pc: mode === 'play' || mode === 'pause' ? pcTrain : (camX + W / (2 * ppm)) * ppmB - W / 2 };
+    const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2 || (MIS.dayCycle && p < 0.3), ppmB, pc: mode === 'play' || mode === 'pause' ? pcTrain : (camX + W / (2 * ppm)) * ppmB - W / 2 };
     // cahaya tepi (rim light), pantulan kaca, lampu kabin per suasana
     if (night) Object.assign(V, { rim: '#9fb4ff', rimA: 0.5, refl: 0.05, cabA: 0.9, haze: '#4b3d6b', hazeA: 0.3, water: '#3a3f74' });
     else if (storm) Object.assign(V, { rim: '#d5dde4', rimA: 0.3, refl: 0.14, cabA: 0.6, haze: '#8b97a1', hazeA: 0.45, water: '#a3aeb7' });
@@ -6626,7 +6644,10 @@
 
   // ---------- malam takbiran ----------
   function drawNight(V) {
-    if (!V.night) return;
+    if (!V.night) { const tw = twiOf(V.p); if (tw < 0.02) return; const c0 = V.c; c0.save(); c0.globalAlpha = tw; try { drawNightCore(Object.assign({}, V, { night: true })); } finally { c0.restore(); } return; }
+    drawNightCore(V);
+  }
+  function drawNightCore(V) {
     const { c, ppm, gy, X, st } = V;
     c.fillStyle = MIS.dark ? 'rgba(10,16,40,0.46)' : 'rgba(8,12,38,0.5)'; c.fillRect(0, 0, W, H);
     if (MIS.dark) { // cahaya bulan kebiruan dari kanan atas: siluet & tanah tetap terbaca
@@ -7147,6 +7168,7 @@
     c.fillStyle = rg; c.beginPath(); c.arc(sun.x, sun.y, sr * 4.5, 0, 7); c.fill();
   }
 
+  function drawSkyBase(V) { const tw0 = MIS.dayCycle; MIS.dayCycle = null; try { drawSky(V); } finally { MIS.dayCycle = tw0; } }
   function drawSky(V) {
     const { c, gy, p } = V;
     const PAL = MIS.pal || {};
@@ -7166,6 +7188,12 @@
       c.fillStyle = '#fff3c8'; c.beginPath(); c.arc(mx, my, mr, 0, 7); c.fill();
       c.fillStyle = PAL.night ? PAL.night[0] : '#0d1433'; c.beginPath(); c.arc(mx + mr * 0.45, my - mr * 0.15, mr * 0.92, 0, 7); c.fill();
       drawDuskSky(V, 'night'); // awan malam tipis diterangi bulan
+      return;
+    }
+    if (!V.storm && twiOf(p) > 0.01) { // petang: langit sore digambar dulu (di bawah), lapisan malam & bintang memudar masuk sesudahnya
+      const tw = twiOf(p); drawSkyBase(V);
+      c.save(); c.globalAlpha = tw * 0.92; const sg = c.createLinearGradient(0, 0, 0, gy); sg.addColorStop(0, '#0a1030'); sg.addColorStop(0.6, '#2a2a5e'); sg.addColorStop(1, 'rgba(120,70,110,0.55)'); c.fillStyle = sg; c.fillRect(0, 0, W, gy + 4); c.restore();
+      const tws = performance.now() / 600; for (let i = 0; i < 90; i++) { const sx = ((hash(i) * (W + 300) - pcOf(V) * 0.02) % (W + 300) + W + 300) % (W + 300) - 150, sy = hash(i + 0.5) * gy * 0.6, a = (0.3 + 0.45 * Math.abs(Math.sin(tws + i))) * smooth(0.35, 0.9, tw); if (a < 0.02) continue; c.fillStyle = `rgba(255,250,235,${a})`; c.fillRect(sx, sy, 1.3, 1.3); }
       return;
     }
     if (V.storm) {
@@ -8254,7 +8282,7 @@
   }
   // ---------- sawah hidup: petak beragam warna, rumpun padi, kilau air, kuntul, petani bercaping ----------
   // matahari bergeser pelan mengikuti perjalanan (rel tidak pernah benar-benar lurus) dan arah kabin di tikungan
-  const sunPos = (V) => { const wx = V.sunX !== undefined ? V.sunX : V.camX || 0; const cabV = V.sunPan !== undefined; return { x: W * (cabV ? 0.2 : 0.8) + (cabV ? -1 : 1) * (W * 0.045 * Math.sin(wx / 1300) + W * 0.015 * Math.sin(wx / 410 + 1)) - (V.sunPan || 0) * 0.05, y: (MIS.dusk ? V.gy * (cabV ? 0.68 : 0.6) : MIS.golden ? V.gy * (cabV ? 0.6 : 0.5) : lerp(V.gy - 10, V.gy * 0.25, V.p)) + H * 0.012 * Math.sin(wx / 900) }; };
+  const sunPos = (V) => { const wx = V.sunX !== undefined ? V.sunX : V.camX || 0; const cabV = V.sunPan !== undefined; return { x: W * (cabV ? 0.2 : 0.8) + (cabV ? -1 : 1) * (W * 0.045 * Math.sin(wx / 1300) + W * 0.015 * Math.sin(wx / 410 + 1)) - (V.sunPan || 0) * 0.05, y: (MIS.dusk ? V.gy * (cabV ? 0.68 : 0.6) : MIS.golden ? V.gy * (cabV ? 0.6 : 0.5) : lerp(V.gy - 10, V.gy * 0.25, V.p)) + H * 0.012 * Math.sin(wx / 900) + twiOf(V.p) * V.gy * 0.42 }; };
   // flare matahari bergaya lensa kamera: inti, sinar bintang berputar pelan, garis anamorfik, cincin & pantulan lensa
   // berwarna di sepanjang sumbu matahari→tengah layar; sedikit berkedip saat kereta melaju (terhalang tiang/pohon)
   const FLARE_G = [[-0.22, 0.018, [255, 214, 160], 0.07, 0], [0.32, 0.012, [255, 236, 200], 0.09, 0], [0.52, 0.045, [140, 220, 190], 0.035, 1], [0.7, 0.02, [255, 170, 120], 0.05, 0],
