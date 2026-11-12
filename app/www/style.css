@@ -1257,3 +1257,6 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .ph-preview img { max-width: min(88vw, 900px); max-height: 70vh; border-radius: 6px; box-shadow: 0 0 0 4px #f7f3e8, 0 18px 40px rgba(0, 0, 0, 0.6); transform: rotate(-1.2deg); animation: phPop 0.4s cubic-bezier(.2, .9, .3, 1.3); }
 @keyframes phPop { from { transform: scale(0.85) rotate(-4deg); opacity: 0; } }
 @media (max-width: 560px) { .ph-zoom input { width: 60px; } .ph-f i { width: 28px; height: 20px; } }
+
+/* tuas kendali lebih ringkas: tidak lagi membentang dari atas ke bawah layar, berada di tengah sisi kanan agar nyaman dijangkau ibu jari */
+.lever { align-self: center; height: clamp(210px, 62vh, 300px); }
