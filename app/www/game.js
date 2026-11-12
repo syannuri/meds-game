@@ -11844,7 +11844,7 @@
     // latar banner = kaca fasad yang sama, hanya sedikit lebih dalam ronanya; kisi kaca tetap menerus sehingga LED tampak di balik kaca
     const bg = c.createLinearGradient(0, by, 0, by + bh); bg.addColorStop(0, night ? 'rgba(6,10,24,0.45)' : 'rgba(40,70,100,0.16)'); bg.addColorStop(1, night ? 'rgba(6,10,24,0.55)' : 'rgba(30,55,85,0.24)'); c.fillStyle = bg; c.fillRect(x, by, w, bh);
     c.strokeStyle = night ? 'rgba(120,150,210,0.16)' : 'rgba(235,244,252,0.28)'; c.lineWidth = 1; c.beginPath(); for (let m = x + 1.4 * u; m < x + w; m += 1.4 * u) { c.moveTo(m, by); c.lineTo(m, by + bh); } c.stroke();
-    const spec = c.createLinearGradient(x, 0, x + w, 0); (chrome ? ['#9fb0bf', '#eef3f7', '#c7d2dc', '#ffffff', '#9fb0bf'] : ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899', '#f59e0b']).forEach((col, i) => spec.addColorStop(i / 4, col));
+    const spec = c.createLinearGradient(x, 0, x + w, 0); (chrome ? ['#f9a8b8', '#c084fc', '#60a5fa', '#2dd4bf', '#fcd34d'] : ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899', '#f59e0b']).forEach((col, i) => spec.addColorStop(i / 4, col));
     const pulse = 0.75 + 0.25 * Math.sin(tt * 1.6);
     c.fillStyle = spec; c.globalAlpha = night ? 0.9 : 0.7; c.fillRect(x, by, w, Math.max(1, 0.12 * u)); c.fillRect(x, by + bh - Math.max(1, 0.12 * u), w, Math.max(1, 0.12 * u)); c.globalAlpha = 1;
     if (!chrome) {
@@ -11878,10 +11878,15 @@
       else { cg.addColorStop(0, '#ffffff'); cg.addColorStop(0.32, '#dde6ee'); cg.addColorStop(0.5, '#7c8fa3'); cg.addColorStop(0.58, '#f2f6f9'); cg.addColorStop(1, '#a9b8c6'); }
       const sweepX = x - w * 0.4 + ((tt * 0.18) % 1.6) * w * 1.2, sw = c.createLinearGradient(sweepX - 1.5 * u, 0, sweepX + 1.5 * u, 0); sw.addColorStop(0, 'rgba(255,255,255,0)'); sw.addColorStop(0.5, 'rgba(255,255,255,0.95)'); sw.addColorStop(1, 'rgba(255,255,255,0)');
       let cx2 = tx0;
+      // warna iridesen (mutiara pelangi) mengalir pelan sepanjang tulisan, lalu ditimpa bayangan logam krom agar tetap mengilap
+      const hue = c.createLinearGradient(tx0, 0, tx0 + tw, 0), sh = (tt * 0.05) % 1, cols = ['#ec4899', '#a855f7', '#6366f1', '#0ea5e9', '#14b8a6', '#f59e0b', '#ec4899'];
+      cols.forEach((col, q) => hue.addColorStop(((q / (cols.length - 1)) + sh) % 1, col)); hue.addColorStop(0, cols[0]); hue.addColorStop(1, cols[0]);
+      const metal = c.createLinearGradient(0, top2, 0, bot2); metal.addColorStop(0, 'rgba(255,255,255,0.55)'); metal.addColorStop(0.3, 'rgba(255,255,255,0.05)'); metal.addColorStop(0.5, 'rgba(30,20,60,0.3)'); metal.addColorStop(0.6, 'rgba(255,255,255,0.4)'); metal.addColorStop(1, 'rgba(40,20,70,0.25)');
       for (const ch of name) {
-        c.save(); c.shadowColor = night ? 'rgba(170,200,255,0.7)' : 'rgba(30,50,75,0.35)'; c.shadowBlur = (night ? 1.0 : 0.35) * u; c.shadowOffsetY = night ? 0 : 0.08 * u;
-        c.fillStyle = cg; c.fillText(ch, cx2, ty); c.restore();
-        c.strokeStyle = night ? 'rgba(200,220,255,0.5)' : 'rgba(40,60,85,0.5)'; c.lineWidth = Math.max(0.6, 0.06 * u); c.strokeText(ch, cx2, ty);
+        c.save(); c.shadowColor = night ? 'rgba(200,160,255,0.85)' : 'rgba(60,40,90,0.35)'; c.shadowBlur = (night ? 1.2 : 0.35) * u; c.shadowOffsetY = night ? 0 : 0.08 * u;
+        c.fillStyle = hue; c.fillText(ch, cx2, ty); c.restore();
+        c.fillStyle = metal; c.fillText(ch, cx2, ty);
+        c.strokeStyle = night ? 'rgba(240,220,255,0.55)' : 'rgba(70,50,110,0.45)'; c.lineWidth = Math.max(0.6, 0.06 * u); c.strokeText(ch, cx2, ty);
         c.fillStyle = sw; c.fillText(ch, cx2, ty); // kilau berjalan
         cx2 += c.measureText(ch).width + gap;
       }
@@ -11890,10 +11895,10 @@ c.restore();
     // banner melingkari sudut ke sisi samping gedung (menyatu dengan badan), garis spektrum ikut berbelok
     { const k = 1.6 * u / sd, q = (dx, y) => [x + w + dx, y + dx * k]; const qs = [q(0, by), q(sd, by), q(sd, by + bh), q(0, by + bh)];
       c.fillStyle = night ? 'rgba(6,10,24,0.5)' : 'rgba(20,40,60,0.14)'; c.beginPath(); qs.forEach(([a1, b1], i) => (i ? c.lineTo(a1, b1) : c.moveTo(a1, b1))); c.closePath(); c.fill();
-      c.strokeStyle = chrome ? '#dfe7ee' : '#f59e0b'; c.globalAlpha = night ? 0.9 : 0.6; c.lineWidth = Math.max(1, 0.18 * u); c.beginPath(); c.moveTo(...q(0, by)); c.lineTo(...q(sd, by)); c.moveTo(...q(0, by + bh)); c.lineTo(...q(sd, by + bh)); c.stroke(); c.globalAlpha = 1;
-      for (let i = 0; i < 4; i++) { const t = (i + 0.5) / 4, [a1, b1] = q(sd * t, by + bh * 0.3), [a2, b2] = q(sd * t, by + bh * 0.7); c.strokeStyle = chrome ? ['#eef3f7', '#c7d2dc', '#eef3f7', '#c7d2dc'][i] : ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899'][i]; c.globalAlpha = 0.55 * pulse; c.lineWidth = Math.max(1, 0.12 * u); c.beginPath(); c.moveTo(a1, b1); c.lineTo(a2, b2); c.stroke(); } c.globalAlpha = 1; }
+      c.strokeStyle = chrome ? '#f0abfc' : '#f59e0b'; c.globalAlpha = night ? 0.9 : 0.6; c.lineWidth = Math.max(1, 0.18 * u); c.beginPath(); c.moveTo(...q(0, by)); c.lineTo(...q(sd, by)); c.moveTo(...q(0, by + bh)); c.lineTo(...q(sd, by + bh)); c.stroke(); c.globalAlpha = 1;
+      for (let i = 0; i < 4; i++) { const t = (i + 0.5) / 4, [a1, b1] = q(sd * t, by + bh * 0.3), [a2, b2] = q(sd * t, by + bh * 0.7); c.strokeStyle = chrome ? ['#f9a8b8', '#a78bfa', '#60a5fa', '#2dd4bf'][i] : ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899'][i]; c.globalAlpha = 0.55 * pulse; c.lineWidth = Math.max(1, 0.12 * u); c.beginPath(); c.moveTo(a1, b1); c.lineTo(a2, b2); c.stroke(); } c.globalAlpha = 1; }
     // lajur cahaya tegak di sudut gedung, menyambung dari banner ke kaki gedung (menyatu dengan badan)
-    const lg = c.createLinearGradient(0, by + bh, 0, yb); lg.addColorStop(0, chrome ? `rgba(235,242,250,${0.85 * pulse})` : `rgba(34,211,238,${0.9 * pulse})`); lg.addColorStop(1, chrome ? 'rgba(150,170,190,0.15)' : 'rgba(168,85,247,0.15)');
+    const lg = c.createLinearGradient(0, by + bh, 0, yb); lg.addColorStop(0, chrome ? `rgba(240,171,252,${0.85 * pulse})` : `rgba(34,211,238,${0.9 * pulse})`); lg.addColorStop(1, chrome ? 'rgba(45,212,191,0.18)' : 'rgba(168,85,247,0.15)');
     c.fillStyle = lg; c.fillRect(x + w - 0.35 * u, by + bh, 0.35 * u, yb - by - bh); c.fillRect(x + w - 0.35 * u, top + crown, 0.35 * u, by - top - crown);
     c.globalCompositeOperation = 'lighter'; const gl = c.createRadialGradient(x + w / 2, by + bh / 2, 0, x + w / 2, by + bh / 2, w * 0.7); gl.addColorStop(0, `rgba(120,160,255,${(night ? 0.35 : 0.12) * pulse})`); gl.addColorStop(1, 'rgba(120,160,255,0)'); c.fillStyle = gl; c.fillRect(x - w * 0.3, by - w * 0.5, w * 1.6, w * 1.2);
     c.restore();
