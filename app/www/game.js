@@ -9503,7 +9503,7 @@
     // tiap Kilat (moncong di kiri & kabin belakang di kanan), kabur gerak memanjang ke belakang sebanding kecepatan
     let yMax = gy + Lx;
     for (const K of st.kilats || []) { const len = kilatLen(), xa = X(K.x), xb = X(K.x + len); if (xb < -80 || xa > W + 80) continue;
-      const yb = gy + DBL_K * kO(K)(K.x + len / 2) * ppm, blur = REDUCE_MOTION ? 0 : clamp((K.v + (st.v || 0)) / 60, 0, 1);
+      const yb = gy + DBL_K * kO(K)(K.x + len / 2) * ppm, blur = REDUCE_MOTION ? 0 : clamp((K.v + (st.v || 0) - 45) / 50, 0, 0.85);
       both(xa, xb, yb + 0.3 * ppm, 10.5 * ppm, 10.5 * ppm, blur * 1.6 * ppm); yMax = Math.max(yMax, yb + Lx * 1.12); }
     // kegelapan seragam di dekat kaki, memudar ke ujung jauh: satu lapis untuk semua (tidak menumpuk)
     const a = 0.42 * V.sunShadow, fg = g.createLinearGradient(0, gy, 0, yMax);
@@ -9581,10 +9581,12 @@
   // Kilat Nusantara asli (gambar lokomotif & gerbong game) dibuat sekali sebagai sprite menghadap ke kiri, kabin di kedua ujung
   const KILAT_SPRS = {};
   function kilatSprite(V) {
-    const night = !!(V && (V.night || V.p < 0.14)), pk = V ? Math.round(clamp(V.p, 0, 1) * 5) / 5 : 0.6, key = night + '|' + pk;
+    const night = !!(V && (V.night || V.p < 0.14)), pk = V ? Math.round(clamp(V.p, 0, 1) * 5) / 5 : 0.6;
+    // resolusi sprite = piksel perangkat per meter di layar (tidak diperbesar → tetap tajam di layar HP resolusi tinggi)
+    const dev = V && V.c ? V.ppm * 1.04 * Math.max(1, Math.abs(V.c.getTransform().a)) : 22, SPq = clamp(Math.ceil(dev / 4) * 4, 20, 44), key = night + '|' + pk + '|' + SPq;
     if (KILAT_SPRS[key]) return KILAT_SPRS[key];
     for (const k in KILAT_SPRS) delete KILAT_SPRS[k]; // hanya satu suasana aktif dalam satu waktu
-    const SP = 22, n = ROUTE.double.kilat.cars || 6, TL = LOCO_LEN + n * (COACH_LEN + GAP), pad = 3;
+    const SP = SPq, n = ROUTE.double.kilat.cars || 6, TL = LOCO_LEN + n * (COACH_LEN + GAP), pad = 3;
     const cw = Math.ceil((TL + GAP + LOCO_LEN + pad * 2) * SP), ch = Math.ceil(10.5 * SP), gyS = Math.round(9 * SP);
     const mk = (noText) => {
       const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch; const c = cv.getContext('2d'); if (noText) c.fillText = () => {}; // tulisan tercermin tak terbaca: dilewati
@@ -9664,14 +9666,14 @@
       return { s0: i === 0 ? 0 : spr.nose + m0 * spr.SP, s1: i === b.length - 2 ? spr.cv.width : spr.nose + m1 * spr.SP + 1, o0: off(a), o1: off(m1), off: off((a + m1) / 2) }; }) };
   }
   function blitKilat(ctx, spr, sl, dx, dy, sc) {
-    const ch = spr.cv.height;
+    const ch = spr.cv.height; ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     for (const q of sl.list) { const sw = (q.s1 - q.s0) * sc, xs = dx + q.s0 * sc, ys = dy + q.o0, sh = sw > 0 ? (q.o1 - q.o0) / sw : 0;
       if (Math.abs(sh) < 1e-4) { ctx.drawImage(spr.cv, q.s0, 0, q.s1 - q.s0, ch, xs, ys, sw, ch * sc); continue; }
       ctx.save(); ctx.translate(xs, ys); ctx.transform(1, sh, 0, 1, 0, 0); ctx.drawImage(spr.cv, q.s0, 0, q.s1 - q.s0, ch, 0, 0, sw, ch * sc); ctx.restore(); }
   }
   function drawKilatOne(V, K) {
     const { c, ppm, gy, X } = V, len = kilatLen(), x0 = X(K.x), x1 = X(K.x + len); if (x1 < -60 || x0 > W + 60) return;
-    const spr = kilatSprite(V), sc = ppm * 1.04 / spr.SP, yb = gy + DBL_K * kO(K)(K.x + len / 2) * ppm, blur = clamp((K.v + (V.st.v || 0)) / 60, 0, 1);
+    const spr = kilatSprite(V), sc = ppm * 1.04 / spr.SP, yb = gy + DBL_K * kO(K)(K.x + len / 2) * ppm, blur = clamp((K.v + (V.st.v || 0) - 45) / 50, 0, 0.85); // < ~160 km/h gabungan: tajam tanpa bayangan ganda
     const dx = x0 - spr.nose * sc, dy = yb - spr.gy * sc, w = spr.cv.width * sc, h = spr.cv.height * sc, sl = kilatSlices(V, K, spr, len);
     c.save();
     if (!REDUCE_MOTION && blur > 0.05) { c.globalAlpha = 0.16 * blur; blitKilat(c, spr, sl, dx + 1.2 * ppm * blur, dy, sc); c.globalAlpha = 0.28 * blur; blitKilat(c, spr, sl, dx + 0.6 * ppm * blur, dy, sc); } // kabur gerak: melaju berlawanan sangat cepat
@@ -9679,7 +9681,8 @@
     kilatGloss(V, spr, dx, dy, w, h, x0, yb, sc, sl);
     // lampu depan menyala terang
     const hx = x0 - 0.6 * ppm, hy = yb - 1.95 * ppm + sl.off(0); c.globalCompositeOperation = 'lighter';
-    const g = c.createRadialGradient(hx, hy, 0, hx, hy, 4 * ppm); g.addColorStop(0, 'rgba(255,246,214,0.75)'); g.addColorStop(1, 'rgba(255,246,214,0)'); c.fillStyle = g; c.beginPath(); c.arc(hx, hy, 4 * ppm, 0, 7); c.fill();
+    const nightK = V.night || V.p < 0.3 || (V.tf || 0) > 0.2, gr = (nightK ? 4 : 1.8) * ppm; // siang: silau kecil agar moncong tetap jelas
+    const g = c.createRadialGradient(hx, hy, 0, hx, hy, gr); g.addColorStop(0, `rgba(255,246,214,${nightK ? 0.75 : 0.5})`); g.addColorStop(1, 'rgba(255,246,214,0)'); c.fillStyle = g; c.beginPath(); c.arc(hx, hy, gr, 0, 7); c.fill();
     c.restore();
   }
   // KA 112 "Lintas Selatan": rangkaian berlawanan arah di jalur utama (lebih dekat ke kamera).
