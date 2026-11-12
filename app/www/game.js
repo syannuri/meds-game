@@ -9787,8 +9787,9 @@
     const n = 5, TL = LOCO_LEN + n * (COACH_LEN + GAP), pad = 3, cw = Math.ceil((TL + GAP + LOCO_LEN + pad * 2) * SP), ch = Math.ceil(10.5 * SP), gyS = Math.round(9 * SP);
     const mk = (noText) => { const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch; const c = cv.getContext('2d'); if (noText) c.fillText = () => {};
       const noseX = cw - pad * SP - (LOCO_LEN + GAP) * SP; // sisakan ruang di belakang untuk kabin ekor
-      const VV = { c, ppm: SP, gy: gyS, X: (wx) => noseX + wx * SP, st: { x: 0, doors: 'closed', aboard: night ? 30 : 12, spin: 0, carDyn: null }, p: pk, storm: false, tf: 0, camX: 0,
-        rimA: V.rimA || 0.4, rim: V.rim || '#ffc880', refl: 0.2, lit: night, sunShadow: 0, night, bdy: () => 0 };
+      // sprite netral (tanpa cahaya tepi/kilau terpanggang); cahaya matahari ditambahkan dinamis tiap frame di garudaGloss
+      const VV = { c, ppm: SP, gy: gyS, X: (wx) => noseX + wx * SP, st: { x: 0, doors: 'closed', aboard: night ? 30 : 12, spin: 0, carDyn: null }, p: pk, storm: false, tf: 2, camX: 0,
+        rimA: 0, rim: '#ffffff', refl: 0, lit: night, sunShadow: 0, night, bdy: () => 0 };
       const kw = W, kh = H, keep = N_COACH; W = cw; H = ch; N_COACH = n; LOCO_FORCE = 'hst2'; LIVERY_FORCE = { acc: '#1d4f9a', pin: '#e23b3b', name: 'GARUDA', code: 'GR' };
       try { drawTrain(VV); } catch (e) { /* sprite opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; LIVERY_FORCE = null; }
       return { cv, noseX };
@@ -9797,7 +9798,33 @@
     // kabin ekor: salinan lokomotif dicerminkan (tanpa tulisan) dipasang di belakang gerbong terakhir
     const sx0 = B.noseX - (LOCO_LEN + 0.4) * SP, sw = (LOCO_LEN + 0.4 + pad) * SP, tailX = A.noseX - (TL + GAP) * SP;
     o.save(); o.translate(tailX, 0); o.scale(-1, 1); o.drawImage(B.cv, sx0, 0, sw, ch, -(LOCO_LEN + 0.4) * SP, 0, sw, ch); o.restore();
-    return (GARUDA_SPRS[key] = { cv: A.cv, SP, gy: gyS, nose: A.noseX });
+    return (GARUDA_SPRS[key] = { cv: A.cv, SP, gy: gyS, nose: A.noseX, tail: tailX - (LOCO_LEN + 0.4) * SP });
+  }
+  // cahaya dinamis Garuda (sumber sama dengan Agraveda: V.rim/rimA, skyTone, posisi matahari): langit & tanah terpantul,
+  // sisi hangat dekat matahari & teduh menjauh, pita kilau yang menyapu badan saat melaju, cahaya tepi atap, kilatan sambungan
+  let GGL = null;
+  function garudaGloss(V, spr, dx, dy, w, h, yRoof, yb, u, xa, xb) {
+    const c = V.c, sun = sunPos(V), night = V.night || V.p < 0.14, tf = V.tf || 0, T = skyTone();
+    const sunK = night || tf > 0.2 ? 0 : V.storm ? 0.3 : clamp(1.1 - V.p * 0.5, 0.45, 1);
+    const bx0 = Math.max(-2, Math.floor(dx)), bx1 = Math.min(W + 2, Math.ceil(dx + w)), bw = bx1 - bx0; if (bw <= 2) return;
+    const sa = Math.max(1, Math.abs(c.getTransform().a)), cw = Math.ceil(bw * sa), ch = Math.ceil(h * sa);
+    if (!GGL) GGL = document.createElement('canvas'); if (GGL.width < cw || GGL.height < ch) { GGL.width = Math.max(GGL.width, cw); GGL.height = Math.max(GGL.height, ch); }
+    const g = GGL.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, cw + 2, ch + 2);
+    g.setTransform(sa, 0, 0, sa, -bx0 * sa, -dy * sa); g.drawImage(spr.cv, dx, dy, w, h); g.globalCompositeOperation = 'source-atop';
+    const rimRGB = (V.rim || '#ffffff').replace('#', ''), warm = night ? '200,215,255' : [0, 2, 4].map((q) => parseInt(rimRGB.substr(q, 2), 16)).join(','), rimA = V.rimA || 0, toR = sun.x > (xa + xb) / 2;
+    { const k = night ? 0.45 : V.storm ? 0.6 : 1, sg = g.createLinearGradient(0, yRoof, 0, yb); sg.addColorStop(0, night ? 'rgba(120,140,220,0.18)' : `rgba(170,205,235,${0.22 * k})`); sg.addColorStop(0.42, 'rgba(255,255,255,0)'); sg.addColorStop(1, night ? 'rgba(20,30,20,0.3)' : `rgba(70,100,40,${0.2 * k})`); g.fillStyle = sg; g.fillRect(bx0, yRoof, bw, yb - yRoof); }
+    if (!night && !V.storm) {
+      const hg = g.createLinearGradient(xa, 0, xb, 0); hg.addColorStop(toR ? 0 : 1, `rgba(${T.shade},0.2)`); hg.addColorStop(0.5, 'rgba(255,255,255,0)'); hg.addColorStop(toR ? 1 : 0, `rgba(${T.sun},0.26)`); g.fillStyle = hg; g.fillRect(xa, yRoof, xb - xa, yb - yRoof);
+      const tg = g.createLinearGradient(0, yRoof, 0, yb); tg.addColorStop(0, `rgba(${T.rim},${0.45 * sunK})`); tg.addColorStop(0.12, 'rgba(255,255,255,0)'); tg.addColorStop(0.75, 'rgba(40,30,60,0)'); tg.addColorStop(1, `rgba(40,30,60,${0.28 * sunK})`); g.fillStyle = tg; g.fillRect(bx0, yRoof, bw, yb - yRoof);
+      const bwid = W * 0.2, band = g.createLinearGradient(sun.x - bwid, 0, sun.x + bwid, 0); band.addColorStop(0, `rgba(${warm},0)`); band.addColorStop(0.5, `rgba(${warm},${0.5 * sunK})`); band.addColorStop(1, `rgba(${warm},0)`);
+      g.fillStyle = band; g.fillRect(sun.x - bwid, yRoof, bwid * 2, yb - yRoof);
+      for (let m = 0; xa + m * u < xb; m += COACH_LEN + GAP) { const x = xb - (LOCO_LEN + GAP / 2) * u - m * u, f = 1 - Math.abs(x - sun.x) / (W * 0.35); if (f <= 0 || x < bx0 || x > bx1) continue;
+        g.fillStyle = `rgba(255,250,236,${0.6 * f * f * sunK})`; g.fillRect(x - 0.1 * u, yRoof + 0.3 * u, Math.max(1, 0.2 * u), (yb - yRoof) * 0.85); }
+    } else if (night) { g.fillStyle = 'rgba(170,190,230,0.35)'; g.fillRect(bx0, yRoof + 0.05 * u, bw, Math.max(1, 0.15 * u)); }
+    if (rimA > 0.02) g.fillStyle = `rgba(${warm},${0.9 * rimA})`, g.fillRect(xa + 0.6 * u, yRoof - 0.05 * u, xb - xa - 1.2 * u, Math.max(1, 0.18 * u));
+    c.drawImage(GGL, 0, 0, cw, ch, bx0, dy, bw, h);
+    if (sunK > 0) { const nx = xb - 2.4 * u, ny = yb - 3.6 * u, f = 1 - Math.abs(nx - sun.x) / (W * 0.45); if (f > 0) { const r = (4 + 6 * f) * (W / 844); // kilau bintang di lengkung moncong
+      c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.8 * f * sunK; c.strokeStyle = '#fffbe8'; c.lineWidth = 1.1; c.beginPath(); c.moveTo(nx - r * 2.2, ny); c.lineTo(nx + r * 2.2, ny); c.moveTo(nx, ny - r); c.lineTo(nx, ny + r); c.stroke(); c.restore(); } }
   }
   // jalur layang kereta cepat di belakang (lebih jauh, skala k): gelagar boks beton berdinding peredam, pilar berkepala yang
   // menapak tanah, abutmen landai di kedua ujung, tiang listrik & kawat, rel; terang-teduh mengikuti matahari, kabut jarak
@@ -9838,8 +9865,9 @@
     }
     const sd = st && st.side; if (!sd) return;
     // Garuda menapak rel di atas lantai jalur layang (sprite tajam, kabin di kedua ujung)
-    const spr = garudaSprite(V, u), sc = u / spr.SP, nx = X(sd.x);
-    c.save(); c.globalAlpha = 1; c.drawImage(spr.cv, nx - spr.nose * sc, base - spr.gy * sc + 0.35 * u, spr.cv.width * sc, spr.cv.height * sc);
+    const spr = garudaSprite(V, u), sc = u / spr.SP, nx = X(sd.x), gdx = nx - spr.nose * sc, gdy = base - spr.gy * sc + 0.35 * u, gw = spr.cv.width * sc, gh = spr.cv.height * sc, ybG = gdy + spr.gy * sc;
+    c.save(); c.globalAlpha = 1; c.drawImage(spr.cv, gdx, gdy, gw, gh);
+    garudaGloss(V, spr, gdx, gdy, gw, gh, ybG - 6.1 * u, ybG - 0.3 * u, u, gdx + spr.tail * sc, nx + 2 * u);
     c.restore();
     const lx = X(sd.x) - 9 * u; if (lx > 30 && lx < W - 30) { c.fillStyle = 'rgba(20,30,50,0.75)'; roundRect(c, lx - 46, base - 6.8 * u - 8, 92, 15, 7); c.fill(); c.fillStyle = '#fff'; c.font = '700 9px "Plus Jakarta Sans", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(`${SD.name} · ${Math.round(sd.v * 3.6)} km/h`, lx, base - 6.8 * u - 0.5); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
   }
