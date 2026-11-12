@@ -2158,6 +2158,7 @@
   let radioDur = 1, trainScr = null;
   let camFast = 0;
   let radioTimer = 0, camLead = 0, camZoom = 1, camZoomV = 0;
+  const PHOTO = { on: false, dx: 0, z: 1, filter: 'asli', frame: true }; // mode foto: geser & zoom kamera saat jeda
   let viewMode = store.get('rn.view') === 'cab' ? 'cab' : 'side'; // 'side' (2.5D) atau 'cab' (kabin masinis)
   let rotateSkipped = false;
 
@@ -3466,6 +3467,57 @@
     if (id && fresh.length) store.set('rn.medal.' + id, JSON.stringify(prev.concat(fresh)));
     return { id, got, prev, fresh };
   }
+  // ---------- Kisah Kru: alur kecil tiap karakter yang berlanjut antarmisi ----------
+  const KISAH = [
+    { who: 'Mamed', role: 'pensiunan masinis', av: 'KK', arc: 'Buku Catatan Kulit', ch: [
+      { m: '1-1', t: 'Kursi di sebelah masinis', x: 'Dua puluh tahun Mamed tidak duduk di kabin. Hari ini ia membawa buku catatan kulit yang sampulnya sudah mengelupas, dan diam-diam tersenyum setiap kali Cakra berhenti tepat di marka.' },
+      { m: '1-7', t: 'Peta tahun 1987', x: 'Di Kedung Banteng, Mamed menyelipkan selembar peta ke tasmu. Gambarannya tangan, bertanggal 1987: jalur cabang menembus Bukit Barisan. "Kalau kau ke Sumatra, cari jalur ini."' },
+      { m: '2-3', t: 'Sekarung kopi Liwa', x: 'Kopi titipan Pak Kades sampai di depo. Mamed membuka karungnya, menghirup lama, lalu terdiam. Liwa adalah kampung tempat ia pertama kali bertugas, empat puluh tahun lalu.' },
+      { m: '4-1', t: 'Surya bernyanyi lagi', x: 'Halaman terakhir buku kulit itu berisi sketsa Surya 1912. Kini halaman itu ditempeli foto baru: Mamed dan kamu di depan Surya yang mengepul, dikelilingi warga Watugede.' },
+    ] },
+    { who: 'Dimas', role: 'pengatur perjalanan & mekanik', av: 'DM', arc: 'Jejak TransKilat', ch: [
+      { m: '1-2', t: 'Suara di balik radio', x: 'Dimas mengatur perjalanan dari menara sinyal yang sempit. Di mejanya ada model Cakra dari kaleng bekas. "Suatu hari aku yang duduk di kabin," katanya sambil tertawa.' },
+      { m: '1-5', t: 'Bekas linggis', x: 'Dimas memotret bekas linggis di wesel Watu dan logo TransKilat yang tertinggal. Malam itu ia tidak pulang: ia menunggui sinyal blok sampai pagi.' },
+      { m: '1-6', t: 'Lampu mobil di perlintasan', x: 'Saat duel malam takbiran, Dimas melihat mobil hitam berhenti lama di dekat perlintasan Watugede. Pelatnya ia catat di punggung tangan.' },
+      { m: '1-7', t: 'Laporan untuk polsuska', x: 'Catatan Dimas sampai ke polisi khusus kereta. Pohon tumbang di Krajan ternyata tumbang sendiri, tapi pelat mobil hitam itu milik pengawas TransKilat. Kasusnya kini diselidiki.' },
+    ] },
+    { who: 'Bu Anna', role: 'kepala stasiun', av: 'BW', arc: 'Stasiun yang Hidup', ch: [
+      { m: '1-3', t: 'Nama-nama penumpang', x: 'Bu Anna hafal penumpang tetapnya: Mbok Sum pedagang sayur, dan Raka, anak SMP yang selalu duduk di gerbong depan supaya bisa melihat masinis.' },
+      { m: '1-4', t: 'Kios Mbok Sum', x: 'Sayur Mbok Sum sampai segar. Minggu ini ia membuka kios sarapan di Cibening, dan Bu Anna jadi pembeli pertamanya: nasi pecel dan teh manis.' },
+      { m: '1-6', t: 'Raka pulang mudik', x: 'Di antara pemudik malam takbiran ada Raka, kini kuliah di kota. Ia melambai ke kabin dan berteriak, "Aku mau jadi masinis seperti Kak Anett!"' },
+      { m: '3-1', t: 'Surat di gerbong eksekutif', x: 'Bu Anna ikut Argo Senja sebagai penumpang. Di Kota Kencana ia menitipkan surat: "Dulu Sukamaju hampir ditutup. Sekarang ekspres berhenti di sini. Terima kasih, Anett."' },
+    ] },
+    { who: 'Sari', role: 'PPKA magang', av: 'SR', arc: 'Dari Magang ke PPKA', ch: [
+      { m: '2-1', t: 'Suara pertama di Sumatra', x: 'Hari pertama Sari memandu sendiri. Tangannya gemetar memegang mikrofon, tapi suaranya tenang. Selesai bertugas ia menulis di buku harian: "Hari ini aku tidak salah satu kata pun."' },
+      { m: '2-2', t: 'Tuas semafor tua', x: 'Tuas semafor Lubuk Tua berkarat dan berat. Sari menariknya dengan dua tangan sambil menahan tawa. "Ternyata begini rasanya jadi PPKA zaman Mamed."' },
+      { m: '3-2', t: 'Ujian di menara Padi Raya', x: 'Perjalanan Guntur hari ini sekaligus ujian akhir Sari. Penguji mencatat setiap instruksinya. Saat Guntur berhenti tepat di marka Padi Raya, penguji mengangguk pelan.' },
+      { m: '3-3', t: 'Topi merah resmi', x: 'Sari dilantik menjadi PPKA penuh di Kota Barisan. Topi merah barunya masih kaku. Ia memberi hormat pertama ke kabin Kilat, dan kamu membalas dengan dua kali klakson.' },
+    ] },
+  ];
+  const kisahSeen = () => { try { const a = JSON.parse(store.get('rn.kisah') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  const kisahOpen = (c) => bestOf(c.m) > 0;
+  // kisah yang baru terbuka oleh misi ini (ditandai sudah dibaca saat ditampilkan)
+  function kisahFresh() {
+    if (!MIS.id || MIS.daily) return [];
+    const seen = kisahSeen(), out = [];
+    for (const a of KISAH) a.ch.forEach((c, i) => { const key = a.av + i; if (c.m === MIS.id && kisahOpen(c) && !seen.includes(key)) { out.push({ a, c, i }); seen.push(key); } });
+    if (out.length) store.set('rn.kisah', JSON.stringify(seen));
+    return out;
+  }
+  function kisahCard(a, c, i, isNew) {
+    return `<div class="kc${isNew ? ' new' : ''}"><div class="kc-av">${PORTRAIT(a.av) || a.av}</div><div class="kc-t"><small>${isNew ? '<em>KISAH BARU</em> · ' : ''}${a.who} · <span>${a.arc}</span> ${i + 1}/${a.ch.length}</small><b>${c.t}</b><p>${c.x}</p></div></div>`;
+  }
+  function renderKisah() {
+    const el = $('kisahBox'); if (!el) return;
+    const seen = kisahSeen();
+    el.innerHTML = KISAH.map((a) => {
+      const got = a.ch.filter(kisahOpen).length;
+      const chs = a.ch.map((c, i) => kisahOpen(c)
+        ? `<li class="kch open${seen.includes(a.av + i) ? '' : ' unread'}"><b>${i + 1}. ${c.t}</b><p>${c.x}</p></li>`
+        : `<li class="kch lock"><b>${i + 1}. ???</b><p><span>Selesaikan misi</span> ${c.m} · <span>${MISSIONS[c.m] ? MISSIONS[c.m].nick || MISSIONS[c.m].title : ''}</span></p></li>`).join('');
+      return `<section class="karc"><header><div class="kc-av">${PORTRAIT(a.av) || a.av}</div><div><b>${a.who}</b><small><span>${a.role}</span> · <span>${a.arc}</span></small></div><span class="kprog">${got}/${a.ch.length}</span></header><ol>${chs}</ol></section>`;
+    }).join('');
+  }
   function resultExtras() {
     const { id, got, prev, fresh } = MEDAL_RUN || storeMedals();
     const avail = MEDALS.filter((m) => m.k !== 'siaga' || (S.events || []).length || prev.includes('siaga'));
@@ -3480,7 +3532,9 @@
       const fmtLate = (l) => (l <= 0 ? `${fmtDur(-l)} lebih awal` : `terlambat ${fmtDur(l)}`);
       recHtml = `<div class="rrec"><div class="rrec-h">Lembar rekor · percobaan ke-${N.runs}</div>${cell('Rata-rata henti', `${fmtM(cur.stop || 0)} m`, better.stop, R0.stop === undefined ? undefined : fmtM(R0.stop) + ' m')}${cell('Kenyamanan', `${cur.comfort}%`, better.comfort, R0.comfort === undefined ? undefined : R0.comfort + '%')}${cell('Tiba akhir', fmtLate(cur.late || 0), better.late, R0.late === undefined ? undefined : fmtLate(R0.late))}</div>`; }
     const evHtml = (S.events || []).length ? `<div class="revents"><b>Kejadian acak:</b> ${S.events.map((e) => e.kind === 'tsr' ? `perbaikan rel ${e.z.limit} km/h` : 'kambing di rel').join(' · ')}</div>` : '';
-    return medalHtml + recHtml + evHtml;
+    const kis = !S.failReason ? kisahFresh() : [];
+    const kisHtml = kis.length ? `<div class="rkisah">${kis.map((q) => kisahCard(q.a, q.c, q.i, true)).join('')}</div>` : '';
+    return medalHtml + recHtml + evHtml + kisHtml;
   }
   const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
 
@@ -4270,8 +4324,100 @@
       + `<div class="pstats"><div><span>Waktu</span><b>${fmtClock(S.clock)}</b></div><div><span>${ns ? titleCase(ns.name) : 'Tujuan'}</span><b class="${rem !== null && rem < 0 ? 'late' : ''}">${rem === null ? '—' : rem >= 0 ? 'sisa ' + fmtDur(rem) : 'telat ' + fmtDur(rem)}</b></div><div><span>Kenyamanan</span><b class="${S.comfort < 80 ? 'late' : ''}">${Math.round(S.comfort)}%</b></div><div><span>Koin</span><b>${S.coins || 0}</b></div></div>`
       + `<ul class="pgoals">${gs.map((g) => `<li class="${g.state}"><i>${mk[g.state] || '•'}</i><span>${g.label}</span><s>★</s></li>`).join('')}</ul>`;
   }
-  function resume() { if (mode === 'pause') { showScreen('play'); last = performance.now(); } }
+  function resume() { photoClose(); if (mode === 'pause') { showScreen('play'); last = performance.now(); } }
   $('btnPause').addEventListener('click', pause);
+  // ---------- mode foto: jeda, atur bingkai (geser/zoom), filter, bingkai sinematik, simpan/bagikan ----------
+  const PH_FILTERS = [
+    { k: 'asli', n: 'Asli', css: 'none' },
+    { k: 'hangat', n: 'Hangat', css: 'sepia(0.22) saturate(1.18) brightness(1.03)' },
+    { k: 'sinema', n: 'Sinema', css: 'contrast(1.16) saturate(1.22) hue-rotate(-5deg)' },
+    { k: 'klasik', n: 'Klasik', css: 'sepia(0.62) saturate(0.85) contrast(0.95) brightness(1.06)' },
+    { k: 'hitam', n: 'Hitam-putih', css: 'grayscale(1) contrast(1.16)' },
+  ];
+  // olah piksel (tidak bergantung pada ctx.filter yang belum ada di semua peramban)
+  function phGrade(d, k) {
+    if (k === 'asli') return;
+    for (let i = 0; i < d.length; i += 4) {
+      let r = d[i], g = d[i + 1], b = d[i + 2]; const l = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (k === 'hangat') { r = r * 1.08 + 8; g = g * 1.02 + 3; b = b * 0.88; }
+      else if (k === 'sinema') { const t = (l - 128) * 0.14; r = (r - 128) * 1.16 + 128 + t; g = (g - 128) * 1.12 + 128 + t * 0.25; b = (b - 128) * 1.16 + 128 - t; const L2 = 0.299 * r + 0.587 * g + 0.114 * b; r = L2 + (r - L2) * 1.18; g = L2 + (g - L2) * 1.18; b = L2 + (b - L2) * 1.18; }
+      else if (k === 'klasik') { const sr = 0.393 * r + 0.769 * g + 0.189 * b, sg = 0.349 * r + 0.686 * g + 0.168 * b, sb = 0.272 * r + 0.534 * g + 0.131 * b; r = r * 0.38 + sr * 0.62 * 0.92 + 14; g = g * 0.38 + sg * 0.62 * 0.92 + 12; b = b * 0.38 + sb * 0.62 * 0.92 + 8; }
+      else if (k === 'hitam') { const v = (l - 128) * 1.16 + 128; r = g = b = v; }
+      d[i] = r < 0 ? 0 : r > 255 ? 255 : r; d[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g; d[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+    }
+  }
+  const phCaption = () => { if (!S) return ''; const km = (S.x / 1000).toFixed(1).replace('.', ','); return `${MIS.nick || MIS.title} · km ${km} · ${fmtClock(S.clock)}`; };
+  function photoSync() {
+    $('world').style.filter = PHOTO.on ? (PH_FILTERS.find((f) => f.k === PHOTO.filter) || PH_FILTERS[0]).css : '';
+    $('phFrame').classList.toggle('on', PHOTO.frame); $('phFrameBtn').setAttribute('aria-pressed', String(PHOTO.frame));
+    $('phCap').textContent = phCaption();
+    $('phFilters').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.f === PHOTO.filter)));
+    $('phZoom').value = PHOTO.z;
+  }
+  function photoOpen() {
+    if (!S || mode !== 'pause') return;
+    Object.assign(PHOTO, { on: true, dx: 0, z: 1 });
+    ui.screens.pause.hidden = true; ui.hud.hidden = true; $('radio').hidden = true;
+    $('phPreview').hidden = true; $('photoMode').hidden = false; document.body.classList.add('photo');
+    $('photoMode').classList.toggle('cab', viewMode === 'cab');
+    $('phHint').textContent = viewMode === 'cab' ? 'Pilih filter & bingkai, lalu ketuk tombol rana' : 'Geser layar untuk mengatur bingkai · cubit atau slider untuk zoom';
+    $('phHint').classList.remove('out'); void $('phHint').offsetWidth; $('phHint').classList.add('out');
+    photoSync();
+  }
+  function photoClose() {
+    if (!PHOTO.on) return;
+    PHOTO.on = false; $('photoMode').hidden = true; document.body.classList.remove('photo'); $('world').style.filter = '';
+    if (mode === 'pause') { ui.screens.pause.hidden = false; ui.hud.hidden = false; }
+  }
+  function photoShot() {
+    const src = $('world'), w = src.width, h = src.height; if (!w || !h) return;
+    const oc = document.createElement('canvas'); oc.width = w; oc.height = h; const c = oc.getContext('2d');
+    c.drawImage(src, 0, 0);
+    try { const im = c.getImageData(0, 0, w, h); phGrade(im.data, PHOTO.filter); c.putImageData(im, 0, 0); } catch (e) { /* kanvas tercemar: simpan tanpa filter */ }
+    if (PHOTO.filter === 'sinema' || PHOTO.filter === 'klasik') { const vg = c.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.72); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.42)'); c.fillStyle = vg; c.fillRect(0, 0, w, h); }
+    if (PHOTO.frame) {
+      const bh = Math.round(h * 0.075); c.fillStyle = '#07090c'; c.fillRect(0, 0, w, bh); c.fillRect(0, h - bh, w, bh);
+      const fs = Math.round(bh * 0.36); c.textBaseline = 'middle';
+      c.font = `800 ${fs}px "Big Shoulders Display", "Plus Jakarta Sans", sans-serif`; c.fillStyle = '#f2a516'; c.fillText('REL', bh * 0.6, h - bh / 2);
+      const rw = c.measureText('REL').width; c.fillStyle = '#f7f3e8'; c.fillText('NUSANTARA', bh * 0.6 + rw, h - bh / 2);
+      c.font = `600 ${Math.round(fs * 0.8)}px "Plus Jakarta Sans", sans-serif`; c.fillStyle = 'rgba(247,243,232,0.78)'; c.textAlign = 'right'; c.fillText(phCaption(), w - bh * 0.6, h - bh / 2); c.textAlign = 'left';
+    }
+    const fl = $('phFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go'); Sound.ui('confirm'); HAPT.buzz(30, 0);
+    PHOTO.last = oc; $('phImg').src = oc.toDataURL('image/jpeg', 0.92); $('phPreview').hidden = false;
+  }
+  function photoSave() {
+    const oc = PHOTO.last; if (!oc) return;
+    const name = `rel-nusantara-${(MIS.id || 'foto').replace(/[^\w-]/g, '')}-${Date.now().toString(36)}.jpg`;
+    oc.toBlob(async (blob) => {
+      if (!blob) return;
+      try { const f = new File([blob], name, { type: 'image/jpeg' }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: 'Rel Nusantara', text: phCaption() }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }, 'image/jpeg', 0.92);
+  }
+  $('phFilters').innerHTML = PH_FILTERS.map((f) => `<button type="button" class="ph-f" data-f="${f.k}" aria-pressed="false"><i style="filter:${f.css}"></i>${f.n}</button>`).join('');
+  $('phFilters').addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; PHOTO.filter = b.dataset.f; photoSync(); });
+  $('btnPhoto').addEventListener('click', photoOpen);
+  $('phClose').addEventListener('click', photoClose);
+  $('phShot').addEventListener('click', photoShot);
+  $('phSave').addEventListener('click', photoSave);
+  $('phAgain').addEventListener('click', () => { $('phPreview').hidden = true; });
+  $('phFrameBtn').addEventListener('click', () => { PHOTO.frame = !PHOTO.frame; photoSync(); });
+  $('phZoom').addEventListener('input', (e) => { PHOTO.z = clamp(+e.target.value, 1, 2.2); });
+  { // geser & cubit di layar foto (tampak samping)
+    const pts = new Map(); let pinch0 = 0, z0 = 1;
+    const pad = $('phPad');
+    pad.addEventListener('pointerdown', (e) => { pad.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); z0 = PHOTO.z; } });
+    pad.addEventListener('pointermove', (e) => {
+      const p0 = pts.get(e.pointerId); if (!p0 || viewMode === 'cab') return;
+      if (pts.size >= 2) { pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); const [a, b] = [...pts.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 > 0) { PHOTO.z = clamp(z0 * d / pinch0, 1, 2.2); $('phZoom').value = PHOTO.z; } return; }
+      const ppm = clamp(H / 44, 3.4, 13) * camZoom * PHOTO.z;
+      PHOTO.dx = clamp(PHOTO.dx - (e.clientX - p0.x) / ppm, -TRAIN_LEN - 40, 140); pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    });
+    const up = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch0 = 0; };
+    pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
+    pad.addEventListener('wheel', (e) => { if (viewMode === 'cab') return; e.preventDefault(); PHOTO.z = clamp(PHOTO.z * (e.deltaY < 0 ? 1.06 : 1 / 1.06), 1, 2.2); $('phZoom').value = PHOTO.z; }, { passive: false });
+    window.addEventListener('keydown', (e) => { if (PHOTO.on && (e.key === 'Escape' || e.key === 'p')) { e.stopImmediatePropagation(); e.preventDefault(); photoClose(); } }, true);
+  }
   $('btnResume').addEventListener('click', resume);
   $('btnRestart').addEventListener('click', () => { Sound.init(); startMission(); });
   $('btnQuit').addEventListener('click', () => { S = null; showScreen('title'); });
@@ -4284,8 +4430,9 @@
     titleMap.tab = b.dataset.maptab;
     document.querySelectorAll('[data-maptab]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     // tab Misi: daftar karcis; tab Peta/Garasi: kanvas mengisi ruang yang sama (layar judul muat satu halaman)
-    $('mapBox').hidden = titleMap.tab === 'missions'; $('missionList').hidden = titleMap.tab !== 'missions';
-    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? `${MISSION_ORDER.length} misi · 4 babak` : titleMap.tab === 'map' ? 'Jawa & Sumatra' : 'Depo Sukamaju';
+    $('mapBox').hidden = titleMap.tab === 'missions' || titleMap.tab === 'kisah'; $('missionList').hidden = titleMap.tab !== 'missions'; $('kisahBox').hidden = titleMap.tab !== 'kisah';
+    if (titleMap.tab === 'kisah') { renderKisah(); $('kisahBox').scrollTop = 0; }
+    $('titleTabLbl').textContent = titleMap.tab === 'missions' ? `${MISSION_ORDER.length} misi · 4 babak` : titleMap.tab === 'map' ? 'Jawa & Sumatra' : titleMap.tab === 'kisah' ? `Kisah Kru · ${KISAH.reduce((n, a) => n + a.ch.filter(kisahOpen).length, 0)}/${KISAH.reduce((n, a) => n + a.ch.length, 0)}` : 'Depo Sukamaju';
   }));
   titleFxInit();
   $('radio').addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); $('radio').hidden = true; radioTimer = 0; Sound.ui('dismiss'); });
@@ -6367,7 +6514,7 @@
     if (braking && !pivotZoom && wantZoom > camZoom) { wantZoom = camZoom; if (camZoomV > 0) camZoomV = 0; }
     camZoomV += ((wantZoom - camZoom) * 2.2 - camZoomV * 2.4) * zdt;
     camZoom += camZoomV * zdt;
-    const ppm = clamp(H / 44, 3.4, 13) * camZoom;
+    const ppm = clamp(H / 44, 3.4, 13) * camZoom * (PHOTO.on ? PHOTO.z : 1);
     const gy = Math.round(H * 0.64);
     const shake = st.shake > 0 && !SMOOTH() ? (Math.random() - 0.5) * st.shake * (MIS.loco === 'hst2' || MIS.loco === 'hst' ? 3 : 7) : 0;
     const fast = S && st === S && S.phase === 'run' && !REDUCE_MOTION ? clamp((S.v * 3.6 - 75) / 45, 0, 1) : 0;
@@ -6397,7 +6544,7 @@
       lead = clamp(TR0.x + 14 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
     }
     if (pivotStn) camLead = lead; else camLead += (lead - camLead) * Math.min(1, (dtReal || 0.016) * 1.4);
-    const camX = st.x - (W * anchor) / ppm + camLead;
+    const camX = st.x - (W * anchor) / ppm + camLead + (PHOTO.on ? PHOTO.dx : 0);
     const X = (wx) => (wx - camX) * ppm + shake;
     const wx0 = camX - 30, wx1 = camX + W / ppm + 30;
     const storm = MIS.sky === 'storm', night = MIS.sky === 'night';
@@ -6412,7 +6559,7 @@
     { const zx = (x) => CINE.px + (x - CINE.px) * CZ, zy = (y) => CINE.py + (y - CINE.py) * CZ, r = CINE.raw; trainScr = CZ > 1.001 ? { x0: zx(r.x0), x1: zx(r.x1), top: zy(r.top), bottom: zy(r.bottom) } : r; }
     // paralaks latar hanya mengikuti posisi kereta (bukan zoom/geser kamera), jadi saat mengerem
     // dan berhenti di stasiun pemandangan jauh tidak ikut 'berlari' ketika kamera mendekat
-    const pcTrain = (st.x + camLead) * ppmB - W * anchor; // ikut jangkar & geser kamera agar latar jauh & tanah bergeser bersama
+    const pcTrain = (st.x + camLead + (PHOTO.on ? PHOTO.dx : 0)) * ppmB - W * anchor; // ikut jangkar & geser kamera agar latar jauh & tanah bergeser bersama
     const V = { c, ppm, gy, camX, X, wx0, wx1, p, st, storm, night, tf, lit: storm || night || tf > 0.2 || (MIS.dayCycle && p < 0.3), ppmB, pc: mode === 'play' || mode === 'pause' ? pcTrain : (camX + W / (2 * ppm)) * ppmB - W / 2 };
     // cahaya tepi (rim light), pantulan kaca, lampu kabin per suasana
     if (night) Object.assign(V, { rim: '#9fb4ff', rimA: 0.5, refl: 0.05, cabA: 0.9, haze: '#4b3d6b', hazeA: 0.3, water: '#3a3f74' });
