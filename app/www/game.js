@@ -10055,14 +10055,15 @@
   }
   // roda cakram dengan tanda putar kecil supaya gerakannya terlihat
   let UPPER_PASS = false; // lintasan badan (dipadatkan): roda kecil seluruhnya di bawah garis poros, jadi tidak pernah digambar di sini (mencegah roda tampak ganda)
-  // lekukan rok aerodinamis kereta cepat: bukaan melengkung halus di tepi bawah rok (bukan kotak), ceruk gelap bergradasi,
-  // roda tampak sebagian di balik lengkungan, bibir lekukan berkilau & garis bayangan di dalamnya
+  // rok bogie penuh kereta cepat (gaya sebelumnya): roda tertutup rok, panel bogie sedikit lebih gelap & membulat lembut
+  // dengan garis kilau tipis; hanya tepi bawah roda yang tampak di bawah rok, menapak rel
   function hstWell(c, xa, xb, Y, ppm, wheels, ang) {
-    const w = xb - xa, y0 = Y(0.34), yt = Y(1.12), path = () => { c.beginPath(); c.moveTo(xa, y0); c.bezierCurveTo(xa + w * 0.08, yt, xa + w * 0.18, yt, xa + w * 0.3, yt); c.lineTo(xb - w * 0.3, yt); c.bezierCurveTo(xb - w * 0.18, yt, xb - w * 0.08, y0, xb, y0); c.closePath(); };
-    path(); const g = c.createLinearGradient(0, yt, 0, y0); g.addColorStop(0, '#0d1014'); g.addColorStop(0.55, '#20262d'); g.addColorStop(1, '#3a4149'); c.fillStyle = g; c.fill();
-    c.save(); path(); c.rect(xa + w * 0.04, y0 - 1, w * 0.92, 0.4 * ppm); c.clip(); for (const x of wheels) trainWheel(c, x, Y(0.48), 0.46 * ppm, ang); // roda menapak rel di bawah tepi rok
-    const sh = c.createLinearGradient(0, yt, 0, yt + 0.35 * ppm); sh.addColorStop(0, 'rgba(0,0,0,0.6)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = sh; c.fillRect(xa, yt, w, 0.35 * ppm); c.restore();
-    c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(xa, y0 - 1); c.bezierCurveTo(xa + w * 0.08, yt - 1.5, xa + w * 0.18, yt - 1.5, xa + w * 0.3, yt - 1.5); c.lineTo(xb - w * 0.3, yt - 1.5); c.bezierCurveTo(xb - w * 0.18, yt - 1.5, xb - w * 0.08, y0 - 1, xb, y0 - 1); c.stroke();
+    const w = xb - xa, y0 = Y(0.34), yt = Y(1.32), r = 0.3 * ppm;
+    c.save(); c.beginPath(); c.rect(xa - ppm, y0, w + 2 * ppm, 0.5 * ppm); c.clip(); for (const x of wheels) trainWheel(c, x, Y(0.48), 0.46 * ppm, ang); c.restore();
+    const g = c.createLinearGradient(0, yt, 0, y0); g.addColorStop(0, 'rgba(30,36,44,0.16)'); g.addColorStop(0.6, 'rgba(30,36,44,0.24)'); g.addColorStop(1, 'rgba(30,36,44,0.34)');
+    c.fillStyle = g; roundRect(c, xa, yt, w, y0 - yt, r); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = Math.max(1, 0.035 * ppm); c.beginPath(); c.moveTo(xa + r, yt + 0.5); c.lineTo(xb - r, yt + 0.5); c.stroke();
+    c.strokeStyle = 'rgba(60,68,78,0.35)'; c.lineWidth = 1; roundRect(c, xa + 0.5, yt + 0.5, w - 1, y0 - yt - 1, r); c.stroke();
   }
   function trainWheel(c, x, y, r, ang) {
     if (UPPER_PASS) return;
