@@ -6680,24 +6680,23 @@
     }
     // sorot lampu depan lokomotif
     const lx = V.bx(st.x - 0.9), ly = gy - trainH(3.25) * ppm + V.bdy(st.x);
-    const k0 = MIS.dark ? 1.9 : V.night ? 1.75 : 1, len = (V.night || MIS.dark ? 70 : 42) * ppm;
+    const k0 = MIS.dark ? 1.05 : V.night ? 0.85 : 0.75, len = (V.night || MIS.dark ? 52 : 38) * ppm; // berkas malam dibuat lembut agar marka & rel di depan tetap terbaca
     // berkas lebar yang lembut (cahaya menyebar di udara lembap)
     const lgW = c.createRadialGradient(lx, ly, 0, lx, ly, len);
-    lgW.addColorStop(0, `rgba(255,228,170,${0.26 * k0})`); lgW.addColorStop(0.5, `rgba(255,228,170,${0.08 * k0})`); lgW.addColorStop(1, 'rgba(255,228,170,0)');
-    c.fillStyle = lgW; c.beginPath(); c.moveTo(lx, ly - 0.2 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly - 7 * ppm, lx + len, ly - 10 * ppm); c.lineTo(lx + len, ly + 8 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly + 4 * ppm, lx, ly + 0.2 * ppm); c.closePath(); c.fill();
+    lgW.addColorStop(0, `rgba(255,228,170,${0.2 * k0})`); lgW.addColorStop(0.45, `rgba(255,228,170,${0.05 * k0})`); lgW.addColorStop(1, 'rgba(255,228,170,0)');
+    c.fillStyle = lgW; c.beginPath(); c.moveTo(lx, ly - 0.2 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly - 3.5 * ppm, lx + len, ly - 5.5 * ppm); c.lineTo(lx + len, ly + 6 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly + 3 * ppm, lx, ly + 0.2 * ppm); c.closePath(); c.fill();
     // inti berkas yang lebih terang dan sempit
     const lgC = c.createRadialGradient(lx, ly, 0, lx, ly, len * 0.7);
-    lgC.addColorStop(0, `rgba(255,244,214,${0.42 * k0})`); lgC.addColorStop(1, 'rgba(255,244,214,0)');
+    lgC.addColorStop(0, `rgba(255,244,214,${0.22 * k0})`); lgC.addColorStop(1, 'rgba(255,244,214,0)');
     c.fillStyle = lgC; c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + len * 0.7, ly - 3 * ppm); c.lineTo(lx + len * 0.7, ly + 2.6 * ppm); c.closePath(); c.fill();
     // genangan cahaya di rel & balas di depan kereta
     const pg = c.createRadialGradient(lx + 14 * ppm, gy, 0, lx + 14 * ppm, gy, 16 * ppm);
-    pg.addColorStop(0, `rgba(255,232,180,${0.3 * k0})`); pg.addColorStop(1, 'rgba(255,232,180,0)');
+    pg.addColorStop(0, `rgba(255,232,180,${0.22 * k0})`); pg.addColorStop(1, 'rgba(255,232,180,0)');
     c.save(); c.translate(0, gy); c.scale(1, 0.18); c.translate(0, -gy); c.fillStyle = pg; c.beginPath(); c.arc(lx + 14 * ppm, gy, 16 * ppm, 0, 7); c.fill(); c.restore();
     // pendar lampu (bloom) di moncong
-    lamp(lx, ly, 2.4 * ppm, 'rgba(255,246,220,0.85)');
-    lamp(lx, ly, 6 * ppm, 'rgba(255,220,150,0.18)');
-    if (V.night || MIS.dark) { lamp(lx, ly, 1.6 * ppm, 'rgba(255,255,245,1)'); lamp(lx, ly, 12 * ppm, 'rgba(255,226,160,0.22)'); // bintang silau lampu
-      c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(255,246,220,0.55)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(lx - 5 * ppm, ly); c.lineTo(lx + 5 * ppm, ly); c.moveTo(lx, ly - 2.5 * ppm); c.lineTo(lx, ly + 2.5 * ppm); c.stroke(); c.restore(); }
+    lamp(lx, ly, 1.8 * ppm, 'rgba(255,246,220,0.7)');
+    lamp(lx, ly, 4.5 * ppm, 'rgba(255,220,150,0.12)');
+    if (V.night || MIS.dark) { lamp(lx, ly, 1.1 * ppm, 'rgba(255,255,245,0.9)'); lamp(lx, ly, 7 * ppm, 'rgba(255,226,160,0.1)'); } // titik lampu kecil + pendar tipis, tanpa bintang silau
     // butir debu & serangga di dalam berkas
     const tt = performance.now() / 1000;
     for (let i = 0; i < 26; i++) {
@@ -8276,7 +8275,7 @@
       if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; c.fillStyle = V.rim; c.fillRect(0, yh, W, Math.max(1, head * 0.25)); c.restore(); }
       // malam / terowongan: pantulan lampu depan kereta di kepala rel di depan moncong
       if ((night || tf > 0.2) && V.st) { const nx = X(V.st.x); c.save(); c.globalCompositeOperation = 'lighter';
-        const lg = c.createLinearGradient(nx, 0, nx + 60 * ppm, 0); lg.addColorStop(0, 'rgba(255,236,180,0.8)'); lg.addColorStop(1, 'rgba(255,236,180,0)');
+        const lg = c.createLinearGradient(nx, 0, nx + 60 * ppm, 0); lg.addColorStop(0, 'rgba(255,236,180,0.4)'); lg.addColorStop(1, 'rgba(255,236,180,0)');
         c.fillStyle = lg; c.fillRect(nx, yh, 60 * ppm, Math.max(1, head * 0.4)); c.restore(); }
     }
   }
