@@ -4806,7 +4806,8 @@
     const p = storm ? 0.6 : night ? 0.35 : dayP(st.clock);
     const T = ROUTE.tunnel, inTun = !!T && x0 > T.from && x0 < T.to;
     const fov = REDUCE_MOTION ? 0 : clamp((st.v * 3.6 - 70) / 180, 0, 1); // rasa cepat: pandangan sedikit melebar saat laju tinggi
-    const f = W * 0.8 * (1 - 0.12 * fov * fov * (3 - 2 * fov));
+    const fov2 = REDUCE_MOTION ? 0 : smooth(200, 280, st.v * 3.6); // di atas 200 km/h: pelebaran tambahan
+    const f = W * 0.8 * (1 - 0.12 * fov * fov * (3 - 2 * fov) - 0.05 * fov2);
     // kereta cepat: rel las panjang + suspensi udara, kabin hanya mengapung pelan (tanpa getar)
     const HSTCAB = MIS.loco === 'hst2' || MIS.loco === 'hst', fk = clamp(st.v / 30, 0, 1);
     const bob = REDUCE_MOTION || SMOOTH() ? 0 : HSTCAB ? (Math.sin(st.t * 1.05) * 0.45 + Math.sin(st.t * 0.47 + 1) * 0.3) * fk + (st.shake > 0 ? (Math.random() - 0.5) * st.shake * 2 : 0)
@@ -5651,6 +5652,7 @@
     if (HSTCAB && !inTun && !night && !storm) drawHstLight(c, { hy, p, pan, st, sun: sunPos(Vs) });
     if (!inTun && !night && !storm) drawFlare(c, sunPos(Vs), HSTCAB ? 0.8 : 0.85, st.v, x0, hy);
     applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0, cab: true, night, storm, sun: SUN });
+    cabZoomBlur(c, cx, hy, inTun ? 0 : fov2); // kabur gerak radial benda dekat di tepi pandangan
     // ---- kabin: kaca depan, pilar, dasbor ----
     const rain = MIS.rain && !inTun;
     if (rain) {
@@ -6519,6 +6521,9 @@
     const kmh = st.v * 3.6, k = clamp((kmh - 22) / 40, 0, 1);
     if (k <= 0.01 && !SPD.streaks.length) return;
     const c = V.c, gy = V.gy, ppm = V.ppm; SPD.t += dt || 0.016;
+    // di atas 200 km/h: rumput, pematang & pagar latar depan kabur memanjang searah gerak (salinan bergeser tipis)
+    { const k3 = smooth(195, 270, kmh); if (k3 > 0.02) { const T = c.getTransform(), y0 = Math.max(0, Math.round(T.d * (gy + 4.6 * ppm) + T.f)), cv2 = c.canvas, hh = cv2.height - y0;
+      if (hh > 4) { c.save(); c.setTransform(1, 0, 0, 1, 0, 0); for (const [dx, a] of [[6, 0.34], [13, 0.22], [21, 0.12]]) { c.globalAlpha = a * k3; c.drawImage(cv2, 0, y0, cv2.width, hh, dx * k3 * T.a, y0, cv2.width, hh); } c.restore(); } } }
     // garis gerak: di bawah (sawah dekat) dan sedikit di langit, melesat ke kiri
     const k2 = clamp((kmh - 85) / 35, 0, 1);
     for (let q = 0; q < 3 + Math.round(k2 * 4); q++) if (Math.random() < k * 22 * (dt || 0.016)) {
@@ -6555,6 +6560,60 @@
     if (MIS.loco === 'hst2' || MIS.loco === 'hst') return Math.sin(st.t * 0.9) * 0.22 * clamp(kmh / 120, 0, 1);
     const ph = (st.x % 25) / Math.max(1, st.v), d = Math.min(ph, ((st.x - 12.5 + 25) % 25) / Math.max(1, st.v));
     return Math.exp(-d * 18) * clamp((kmh - 15) / 60, 0, 1) * 1.6;
+  }
+  // ---------- rasa melaju: hentakan halus saat bogie melindas wesel & sambungan jembatan, getaran rendah di atas jembatan baja ----------
+  // (juga untuk kereta cepat yang tanpa sambungan rel biasa); posisi wesel: wesel jalur 2/3 stasiun, wesel cabang, sepur silang
+  let JOLT_PTS = null, JOLT_RT = null;
+  function trackJolt(st) {
+    if (!S || st !== S || REDUCE_MOTION) return 0;
+    const kmh = st.v * 3.6; if (kmh < 8) return 0;
+    if (JOLT_RT !== ROUTE) { JOLT_RT = ROUTE; JOLT_PTS = [];
+      if (ROUTE.double) for (const s2 of allStations()) JOLT_PTS.push([s2.x - 470, 1], [s2.x + 190, 1]);
+      if (ROUTE.switchX !== null && ROUTE.switchX !== undefined) JOLT_PTS.push([ROUTE.switchX, 1.2]);
+      if (ROUTE.meet) JOLT_PTS.push([ROUTE.meet.entry, 1.2], [ROUTE.meet.exit, 1.2]);
+      for (const b of ROUTE.bridges || (ROUTE.bridge ? [ROUTE.bridge] : [])) JOLT_PTS.push([b.from, 0.8], [b.to, 0.8]); }
+    const sp = clamp(kmh / 90, 0.35, 1.3), wid = Math.max(0.35, st.v * 0.012); let j = 0;
+    for (const [wx, a] of JOLT_PTS) { const r = st.x - wx; if (r < -2 || r > 16) continue; // bogie depan & belakang lokomotif (± 2,5 m & 13 m dari moncong)
+      for (const [bo, sg] of [[2.5, 1], [13, -0.7]]) { const u = (r - bo) / wid; if (Math.abs(u) < 3) j += sg * a * Math.exp(-u * u) * 1.1 * sp; } }
+    for (const b of ROUTE.bridges || (ROUTE.bridge ? [ROUTE.bridge] : [])) if (st.x > b.from && st.x - TRAIN_LEN < b.to) { const steel = !b.viaduct; // dengung rangka: getaran cepat berderau
+      j += (Math.sin(st.t * 41) * 0.5 + Math.sin(st.t * 67 + 1) * 0.3 + (Math.random() - 0.5) * 0.4) * (steel ? 0.28 : 0.1) * sp; }
+    return j;
+  }
+  // ---------- terowongan: kilasan gelap saat masuk (mata belum menyesuaikan), silau putih saat keluar, lampu dinding melesat ----------
+  const TUNFX = { inT: false, t: -99, rt: null };
+  function drawTunnelFx(c, st, cab) {
+    const T = ROUTE.tunnel; if (!T || !S || st !== S) return;
+    const xf = cab ? st.x : st.x - 12, inT = xf > T.from && xf < T.to, now = performance.now() / 1000;
+    if (TUNFX.rt !== ROUTE) { TUNFX.rt = ROUTE; TUNFX.inT = inT; TUNFX.t = -99; }
+    if (inT !== TUNFX.inT) { TUNFX.inT = inT; TUNFX.t = now; }
+    const age = now - TUNFX.t, kr = REDUCE_MOTION ? 0.4 : 1;
+    c.save();
+    if (inT && age < 1.2) { const k = Math.exp(-age / 0.32) * kr; c.fillStyle = `rgba(0,0,0,${(0.75 * k).toFixed(3)})`; c.fillRect(-20, -20, W + 40, H + 40); } // gelap pekat sesaat setelah masuk
+    if (!inT && age < 2.4) { const k = Math.exp(-age / 0.55) * kr; // keluar: silau putih menyilaukan lalu memudar (mata menyesuaikan)
+      c.globalCompositeOperation = 'screen'; const g = c.createRadialGradient(W * 0.5, H * 0.38, 0, W * 0.5, H * 0.38, Math.max(W, H) * 0.8);
+      g.addColorStop(0, `rgba(255,252,238,${(0.95 * k).toFixed(3)})`); g.addColorStop(0.5, `rgba(255,246,222,${(0.7 * k).toFixed(3)})`); g.addColorStop(1, `rgba(255,236,200,${(0.45 * k).toFixed(3)})`);
+      c.fillStyle = g; c.fillRect(-20, -20, W + 40, H + 40); c.globalCompositeOperation = 'source-over'; }
+    if (inT && cab && !REDUCE_MOTION && xf > T.from + 25 && xf < T.to - 70) { // lampu dinding terowongan melesat dari titik hilang ke tepi kaca (tidak di mulut terowongan yang terang)
+      const cx = W * 0.5, cy = H * 0.4, kmh = st.v * 3.6, len = clamp(kmh / 200, 0.1, 1);
+      c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
+      for (let q = 0; q < 6; q++) { const ph = (((st.x + q * 5) % 30) + 30) % 30 / 30, r0 = Math.pow(ph, 2.2) * W * 0.75, r1 = r0 + W * 0.05 * (0.4 + len) * (0.3 + ph);
+        for (const a of [Math.PI * 0.93, Math.PI * 0.07]) { const dx = Math.cos(a), dy = -Math.sin(a) * 0.35 + 0.18; c.strokeStyle = `rgba(255,214,150,${(0.7 * ph).toFixed(3)})`; c.lineWidth = 1 + ph * 3.5;
+          c.beginPath(); c.moveTo(cx + dx * r0, cy + dy * r0); c.lineTo(cx + dx * r1, cy + dy * r1); c.stroke(); } }
+      c.globalCompositeOperation = 'source-over'; }
+    c.restore();
+  }
+  // ---------- kabur gerak radial di tepi pandangan kabin (benda dekat: tiang, pohon, rumput) di atas 200 km/h ----------
+  let ZB = null;
+  function cabZoomBlur(c, cx, cy, k) {
+    if (k < 0.02 || REDUCE_MOTION) return;
+    const cv = c.canvas; if (!ZB) ZB = document.createElement('canvas'); if (ZB.width !== cv.width || ZB.height !== cv.height) { ZB.width = cv.width; ZB.height = cv.height; }
+    const T = c.getTransform(), px = T.a * cx + T.e, py = T.d * cy + T.f, g = ZB.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, ZB.width, ZB.height);
+    for (const [sc, a] of [[1 + 0.03 * k, 0.55], [1 + 0.065 * k, 0.4]]) { g.globalAlpha = a; g.setTransform(sc, 0, 0, sc, px * (1 - sc), py * (1 - sc)); g.drawImage(cv, 0, 0); }
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'destination-in';
+    const R = Math.hypot(ZB.width, ZB.height) * 0.5, mg = g.createRadialGradient(px, py, R * 0.22, px, py, R * 0.8); mg.addColorStop(0, 'rgba(0,0,0,0)'); mg.addColorStop(1, 'rgba(0,0,0,1)');
+    g.fillStyle = mg; g.fillRect(0, 0, ZB.width, ZB.height); g.globalCompositeOperation = 'source-over';
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 0.8 * k; c.drawImage(ZB, 0, 0); c.restore();
   }
   function activeBridge(x) { // beberapa jembatan per rute: pakai yang terdekat dengan kereta/kamera
     const L = ROUTE.bridges; if (!L || !L.length) return;
@@ -6635,7 +6694,7 @@
     const c = ctx;
     const st = S || idleState;
     activeBridge(st.x - TRAIN_LEN * 0.3);
-    c.setTransform(DPR, 0, 0, DPR, 0, railBump(st) * (viewMode === 'cab' ? 0.3 : 1) * DPR); // kabin: hentakan sambungan jauh lebih halus
+    c.setTransform(DPR, 0, 0, DPR, 0, (railBump(st) * (viewMode === 'cab' ? 0.3 : 1) + trackJolt(st) * (viewMode === 'cab' ? 0.8 : 1)) * DPR); // kabin: hentakan sambungan jauh lebih halus; wesel & jembatan tetap terasa
     cineUpdate(dtReal);
     const CZ = viewMode === 'cab' ? 1 : CINE.s;
     if (CZ > 1.001) { c.translate(CINE.px, CINE.py); c.scale(CZ, CZ); c.translate(-CINE.px, -CINE.py); }
@@ -6758,7 +6817,7 @@
       c.translate(W / 2 + sway, H / 2); c.rotate(-r); c.scale(k, k); c.translate(-W / 2, -H / 2);
     }
 
-    if (viewMode === 'cab' && S && st === S && !S.rev && !(S.phase === 'dwell' && S.dwell.step === 'couple')) { drawCab(c, st, dtReal, lat); return; }
+    if (viewMode === 'cab' && S && st === S && !S.rev && !(S.phase === 'dwell' && S.dwell.step === 'couple')) { drawCab(c, st, dtReal, lat); drawTunnelFx(c, st, true); return; }
     // momen Perfect: kamera mendekat sebentar ke marka henti
     const mo = st.moment;
     if (mo && st === S) {
@@ -6834,6 +6893,7 @@
     applyGrade(c, V);
     drawSpeedFx(V, dtReal);
     drawMoments(c, V, dtReal);
+    drawTunnelFx(c, st, false);
     drawLetterbox(c);
   }
   // gradasi warna khas misi di atas seluruh dunia (tidak mengenai HUD), plus kabut lembap Sumatra
