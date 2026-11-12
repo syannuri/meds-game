@@ -5598,7 +5598,7 @@
           c.strokeStyle = `rgba(${lc},${a.toFixed(3)})`; c.lineWidth = 0.8 + ph * 1.6; c.beginPath(); c.moveTo(cx + dx * r0, hy + dy * r0); c.lineTo(cx + dx * r1, hy + dy * r1); c.stroke(); }
         c.restore(); }
     }
-    { const tw = night ? 0 : twiOf(dayP(st.clock)); if (tw > 0.02 && !inTun) { c.fillStyle = `rgba(8,12,38,${0.45 * tw})`; c.fillRect(0, 0, W, H); } }
+    { const tw = night ? 0 : twiOf(dayP(st.clock)); if (tw > 0.02 && !inTun) { c.fillStyle = `rgba(8,12,38,${0.52 * tw})`; c.fillRect(0, 0, W, H); } }
     if (night || inTun || storm) {
       if (night && !inTun) { c.fillStyle = 'rgba(8,12,38,0.45)'; c.fillRect(0, 0, W, H); }
       if (storm && !inTun) { c.fillStyle = 'rgba(30,38,46,0.18)'; c.fillRect(0, 0, W, H); }
@@ -5840,12 +5840,21 @@
       c.restore(); }
     if (SC.city > 0.02) { c.save(); c.globalAlpha = SC.city; // kota kaca di cakrawala: gedung berkelompok, sisi 3D, kisi jendela, kaki tertutup pinggiran kota
       const warm = MIS.golden || MIS.dusk || p < 0.5 ? '255,196,130' : '255,236,200';
-      for (const [lay, n, haze, sz] of [[0, 14, 0.55, 0.7], [1, 12, 0.22, 1]]) for (let i = 0; i < n; i++) {
-        const cl = Math.sin(i * 0.7 + lay * 2) * 0.5 + 0.5, bw = W * (0.026 + hash(i * 1.7 + lay) * 0.026) * sz, bh = H * (0.07 + 0.24 * cl * (0.5 + 0.5 * hash(i * 2.9 + lay))) * sz;
-        const x = ((i * W * 0.1 + lay * W * 0.04 - pan * (0.4 + lay * 0.15) - x0 * (0.015 + lay * 0.008)) % (W * 1.4) + W * 1.4) % (W * 1.4) - W * 0.2;
-        drawTower(c, x, hy + 1, bw, bh, { seed: i + lay * 17, night, haze, sunR: sun.x > x, glass: true, warm, lit: 0.5 });
-      }
-      drawCityBase(c, -10, W + 10, hy + 1, H * 0.028, { night, off: pan * 0.6 + x0 * 0.03, haze: MIS.golden ? '255,206,150' : '236,232,224' });
+      // misi bersiklus waktu: gedung senja lalu versi malam (fasad gelap, jendela menyala) dibaurkan bertahap
+      const kN = night ? 1 : MIS.dayCycle ? smooth(0.3, 0.08, p) : 0, a0 = c.globalAlpha;
+      const city = (nt) => {
+        for (const [lay, n, haze, sz] of [[0, 14, 0.55, 0.7], [1, 12, 0.22, 1]]) for (let i = 0; i < n; i++) {
+          const cl = Math.sin(i * 0.7 + lay * 2) * 0.5 + 0.5, bw = W * (0.026 + hash(i * 1.7 + lay) * 0.026) * sz, bh = H * (0.07 + 0.24 * cl * (0.5 + 0.5 * hash(i * 2.9 + lay))) * sz;
+          const x = ((i * W * 0.1 + lay * W * 0.04 - pan * (0.4 + lay * 0.15) - x0 * (0.015 + lay * 0.008)) % (W * 1.4) + W * 1.4) % (W * 1.4) - W * 0.2;
+          drawTower(c, x, hy + 1, bw, bh, { seed: i + lay * 17, night: nt, haze, sunR: sun.x > x, glass: true, warm, lit: 0.5 });
+        }
+        drawCityBase(c, -10, W + 10, hy + 1, H * 0.028, { night: nt, off: pan * 0.6 + x0 * 0.03, haze: MIS.golden ? '255,206,150' : '236,232,224' });
+      };
+      if (kN > 0.02 && kN < 0.98 || kN >= 0.98) { // pendar lampu kota di langit di belakang gedung
+        const gh = H * 0.3, gg = c.createLinearGradient(0, hy, 0, hy - gh); gg.addColorStop(0, `rgba(255,168,96,${(0.32 * kN).toFixed(3)})`); gg.addColorStop(0.5, `rgba(214,120,140,${(0.12 * kN).toFixed(3)})`); gg.addColorStop(1, 'rgba(120,80,160,0)');
+        c.save(); c.globalCompositeOperation = 'screen'; c.fillStyle = gg; c.fillRect(0, hy - gh, W, gh + 1); c.restore(); }
+      if (kN < 0.98) city(false);
+      if (kN > 0.02) { c.globalAlpha = a0 * kN; city(true); c.globalAlpha = a0; }
       c.restore(); }
     const cx = W * 0.5;
     if (SC.cane > 0.02) { c.save(); c.globalAlpha = SC.cane; // kebun tebu di kiri-kanan cakrawala: dinding hijau bermalai putih
@@ -12444,9 +12453,40 @@ c.restore();
     if (night || o.dusk) { const g = c.createRadialGradient(x, top - h * 0.06, 0, x, top - h * 0.06, lr * 6); g.addColorStop(0, `rgba(255,80,60,${0.45 * blink})`); g.addColorStop(1, 'rgba(255,80,60,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, top - h * 0.06, lr * 6, 0, 7); c.fill(); }
     c.restore();
   }
+  // misi bersiklus waktu: kota tidak berganti ke palet malam secara tiba-tiba; versi senja & malam dibaurkan bertahap
+  // (fasad hangat meredup, jendela menyala satu per satu) selama langit menggelap
+  let SCN_NT = null;
   function drawScenes(V) {
+    if (!ROUTE.scenes) return;
+    if (!MIS.dayCycle || V.night) return drawScenesRaw(V, V.night || V.p < 0.16);
+    cityGlow(V); drawScenesBlend(V); // pendar di langit, di belakang gedung
+  }
+  // pendar lampu kota (polusi cahaya jingga) yang tumbuh di atas cakrawala kota saat malam turun
+  function cityGlow(V) {
+    const k = smooth(0.42, 0.1, V.p); if (k < 0.02) return;
+    const { c, ppm, gy } = V, yH = gy - 5 * ppm;
+    for (const sc of ROUTE.scenes) { if (sc.kind !== 'city') continue;
+      const xa = sceneX(V, sc, 0.3, sc.from), xb = sceneX(V, sc, 0.3, sc.to); if (xb < -40 || xa > W + 40) continue;
+      const fade = W * 0.35, a0 = Math.max(-fade, xa), b0 = Math.min(W + fade, xb), hgt = (sc.big ? 34 : 22) * ppm;
+      c.save(); c.globalCompositeOperation = 'screen';
+      const vg = c.createLinearGradient(0, yH, 0, yH - hgt); vg.addColorStop(0, `rgba(255,168,96,${(0.3 * k).toFixed(3)})`); vg.addColorStop(0.45, `rgba(214,120,140,${(0.12 * k).toFixed(3)})`); vg.addColorStop(1, 'rgba(120,80,160,0)');
+      c.fillStyle = vg; c.fillRect(Math.max(-2, a0 + fade * 0.5), yH - hgt, Math.min(W + 2, b0 - fade * 0.5) - Math.max(-2, a0 + fade * 0.5), hgt + 1);
+      for (const [e0, dir] of [[a0 + fade * 0.5, -1], [b0 - fade * 0.5, 1]]) { if (Math.abs(e0) > W * 2) continue; const eg = c.createLinearGradient(e0, 0, e0 + dir * fade * 0.5, 0); eg.addColorStop(0, `rgba(255,168,96,${(0.2 * k).toFixed(3)})`); eg.addColorStop(1, 'rgba(255,168,96,0)'); c.fillStyle = eg; c.fillRect(Math.min(e0, e0 + dir * fade * 0.5), yH - hgt * 0.6, fade * 0.5, hgt * 0.6 + 1); }
+      c.restore(); }
+  }
+  function drawScenesBlend(V) {
+    const k = smooth(0.3, 0.08, V.p);
+    if (k < 0.01) return drawScenesRaw(V, false);
+    if (k > 0.99) return drawScenesRaw(V, true);
+    drawScenesRaw(V, false);
+    const C0 = V.c, cv = C0.canvas; if (!SCN_NT) SCN_NT = document.createElement('canvas'); if (SCN_NT.width !== cv.width || SCN_NT.height !== cv.height) { SCN_NT.width = cv.width; SCN_NT.height = cv.height; }
+    const g = SCN_NT.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, cv.width, cv.height); g.setTransform(C0.getTransform());
+    drawScenesRaw(Object.assign({}, V, { c: g }), true);
+    C0.save(); C0.setTransform(1, 0, 0, 1, 0, 0); C0.globalAlpha = k; C0.drawImage(SCN_NT, 0, 0); C0.restore();
+  }
+  function drawScenesRaw(V, night) {
     const L = ROUTE.scenes; if (!L) return;
-    const { ppm, gy } = V, C0 = V.c, night = V.night || V.p < 0.16, yH = gy - 5 * ppm;
+    const { ppm, gy } = V, C0 = V.c, yH = gy - 5 * ppm;
     // lapis paralaks acuan tiap jenis lanskap untuk tepi masuk/keluar; jenis 'tumbuh' (kota, tebu, kopi, jati) meruncing per objek
     const PM = { coast: 0.25, salt: 0.25, terrace: 0.14, wind: 0.22, solar: 0.45 }, SELF = { city: 1, cane: 1, coffee: 1, teak: 1 };
     for (const sc of L) {
