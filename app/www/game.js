@@ -4942,7 +4942,7 @@
       const col = inTun ? '#24221f' : deck ? (night ? '#2a3038' : '#4a535a') : mix('#8d8275', '#a59a8c', p);
       if (deck) { // lantai beton/baja jembatan selebar struktur, dengan lis tepi terang
         const dR = dw + (DBc ? dblO(x0 + (a + b) / 2) : 0);
-        quad(W3(a, -dw, -0.05), W3(a, dR, -0.05), W3(b, dR, -0.05), W3(b, -dw, -0.05), Bk.viaduct ? (night ? '#4a4e58' : mix('#a39e94', '#bdb8ae', p)) : Bk.truss ? (night ? '#3a414a' : '#5a646c') : (night ? '#3a3f48' : '#8a9096'));
+        quad(W3(a, -dw, -0.05), W3(a, dR, -0.05), W3(b, dR, -0.05), W3(b, -dw, -0.05), Bk.viaduct ? (night ? '#4a4e58' : mix('#a39e94', '#bdb8ae', p)) : Bk.truss ? (night ? '#3a414a' : '#5a646c') : (night ? '#4a4c54' : mix('#a8a196', '#c2bcb0', p))); // busur: lantai beton terang (tidak menyatu dengan air)
         quad(W3(a, -dw, -0.04), W3(a, -dw + 0.18, -0.04), W3(b, -dw + 0.18, -0.04), W3(b, -dw, -0.04), 'rgba(255,255,255,0.18)');
         quad(W3(a, dR - 0.18, -0.04), W3(a, dR, -0.04), W3(b, dR, -0.04), W3(b, dR - 0.18, -0.04), 'rgba(255,255,255,0.18)');
       }
@@ -5276,6 +5276,7 @@
     });
     // struktur jembatan sesuai jenisnya: kayu, viaduk beton, rangka baja, atau busur
     const capW = (k, w) => Math.min(W * 0.02, Math.max(1, w * k)); // batasi tebal garis saat sangat dekat kamera
+    const BR2 = DBc ? DBc.o : 0; // jalur ganda: sisi kanan jembatan berada di luar jalur 2 (kedua jalur di dalam jembatan)
     for (const Br of CAB_BRS) {
       if (Br.wood) {
         for (let wx = Br.to; wx >= Br.from; wx -= 3) {
@@ -5289,7 +5290,7 @@
         // viaduk beton: dinding pengaman rendah di kedua sisi + tiang lampu, tanpa struktur di atas
         for (let wx = Br.to; wx > Br.from; wx -= 6) {
           const d = wx - x0, e = Math.max(1.2, d - 6); if (d < 1.5 || d > FAR) continue;
-          add(d, () => [-2.95, 2.95].forEach((o) => {
+          add(d, () => [-2.95, 2.95 + BR2].forEach((o) => {
             const a0 = W3(d, o, 0), a1 = W3(d, o, 1.0), b1 = W3(e, o, 1.0), b0 = W3(e, o, 0);
             quad(a0, a1, b1, b0, night ? '#4a4e58' : mix('#a9a49a', '#cfcac0', p));
             if (a1 && b1) { c.strokeStyle = night ? '#6a6e78' : '#e6e1d6'; c.lineWidth = capW(a1.k, 0.12); c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(b1.x, b1.y); c.stroke(); }
@@ -5304,14 +5305,14 @@
           const k = Math.round((wx - Br.from) / P);
           add(d, () => {
             const col = night ? '#5b6676' : '#7d8a94';
-            [-3.35, 3.35].forEach((o) => {
+            [-3.35, 3.35 + BR2].forEach((o) => {
               const e0 = W3(Math.max(1.2, e), o, 0.0), e1 = W3(Math.max(1.2, e), o, TH), d0 = W3(d, o, 0.0), d1 = W3(d, o, TH);
               if (!d0 || !d1) return; c.strokeStyle = col; c.lineWidth = capW(d0.k, 0.28);
               c.beginPath(); c.moveTo(d0.x, d0.y); c.lineTo(d1.x, d1.y); // tiang tegak
               if (e0 && e1) { c.moveTo(d1.x, d1.y); c.lineTo(e1.x, e1.y); c.moveTo(d0.x, d0.y); c.lineTo(e0.x, e0.y); if (k % 2) { c.moveTo(d0.x, d0.y); c.lineTo(e1.x, e1.y); } else { c.moveTo(d1.x, d1.y); c.lineTo(e0.x, e0.y); } }
               c.stroke();
             });
-            const l = W3(d, -3.35, TH), r = W3(d, 3.35, TH);
+            const l = W3(d, -3.35, TH), r = W3(d, 3.35 + BR2, TH);
             if (l && r) { c.strokeStyle = night ? '#4a5462' : '#6c7882'; c.lineWidth = capW(l.k, 0.22); c.beginPath(); c.moveTo(l.x, l.y); c.lineTo(r.x, r.y); c.stroke(); }
           });
         }
@@ -5321,11 +5322,11 @@
         for (let wx = Br.to; wx >= Br.from; wx -= 4) {
           const d = wx - x0; if (d < 2.5 || d > FAR) continue;
           add(d, () => {
-            [-3.8, 3.8].forEach((o) => {
+            [-3.8, 3.8 + BR2].forEach((o) => {
               const a = W3(d, o, arcH(wx) + 1), b = W3(Math.max(1.2, d - 4), o, arcH(wx - 4) + 1);
               if (a && b) { c.strokeStyle = '#d7dcdb'; c.lineWidth = capW(a.k, 0.7); c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); }
               if (Math.round(wx) % 8 === 0) { const g0 = W3(d, o, 1.2); if (a && g0) { c.strokeStyle = 'rgba(210,215,215,0.8)'; c.lineWidth = capW(a.k, 0.08); c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(g0.x, g0.y); c.stroke(); } }
-              const r0 = W3(d, o * 0.82, 1.1), r1 = W3(Math.max(1.2, d - 4), o * 0.82, 1.1);
+              const ro = o < 0 ? o * 0.82 : o - 0.68, r0 = W3(d, ro, 1.1), r1 = W3(Math.max(1.2, d - 4), ro, 1.1);
               if (r0 && r1) { c.strokeStyle = TOS_COL; c.lineWidth = capW(r0.k, 0.12); c.beginPath(); c.moveTo(r0.x, r0.y); c.lineTo(r1.x, r1.y); c.stroke(); }
             });
           });
@@ -12157,6 +12158,9 @@
     c.restore();
   }
   function drawBridge(V, layer) {
+    // jalur ganda: bidang depan jembatan rangka/busur (rangka, batang gantung, gelagar, sandaran) berdiri di depan jalur 2,
+    // sehingga kedua jalur berada di dalam jembatan; bidang belakang tetap di belakang jalur 1
+    if (layer === 'front' && ROUTE.double && ROUTE.bridge && !ROUTE.bridge.viaduct) V = Object.assign({}, V, { gy: V.gy + DBL_K * (ROUTE.double.o + 0.4) * V.ppm });
     if (ROUTE.bridge && ROUTE.bridge.wood) { drawTrestle(V, layer); return; }
     if (ROUTE.bridge && ROUTE.bridge.truss) { drawTruss(V, layer); return; }
     if (ROUTE.bridge && ROUTE.bridge.viaduct) { drawViaduct(V, layer); return; }
