@@ -5678,7 +5678,7 @@
         for (const o of [-8, 8]) { // pagar di kedua sisi jalur: kiri = seberang rel (dekat matahari), kanan = sisi kamera pada tampilan luar
           let prev = null;
           for (let wz = z0 + Math.floor(Math.min(140, ZF) / SP) * SP; wz >= z0; wz -= SP) {
-            const d = wz - x0, skip = (ROUTE.bridges || []).some((q) => wz > q.from - 6 && wz < q.to + 6) || nearStation(wz) || (ROUTE.tunnel && wz > ROUTE.tunnel.from - 20 && wz < ROUTE.tunnel.to + 20);
+            const d = wz - x0, skip = (ROUTE.bridges || []).some((q) => wz > q.from - 6 && wz < q.to + 6) || nearStation(wz) || nearUnderpass(wz, 9) || (ROUTE.tunnel && wz > ROUTE.tunnel.from - 20 && wz < ROUTE.tunnel.to + 20);
             const b = skip ? null : P(d, o, 0), t = skip ? null : P(d, o, 1.1);
             if (b && t && prev) { c.strokeStyle = night ? '#6a6a70' : '#ebe8de'; c.lineWidth = Math.max(1, 0.07 * b.k); for (const fh of [0.45, 0.9]) { const p0 = P(d, o, fh), p1 = P(prev.d, o, fh); if (p0 && p1) { c.beginPath(); c.moveTo(p0.x, p0.y); c.lineTo(p1.x, p1.y); c.stroke(); } } }
             if (b && t) { const w = Math.max(1, 0.16 * b.k); c.fillStyle = '#eceae0'; c.fillRect(b.x - w / 2, t.y, w, b.y - t.y); c.fillStyle = '#1c1d20'; c.fillRect(b.x - w / 2, t.y, w, (b.y - t.y) * 0.2); c.fillRect(b.x - w / 2, t.y + (b.y - t.y) * 0.45, w, (b.y - t.y) * 0.2);
@@ -7784,6 +7784,7 @@
   }
 
   function inBridge(x) { const b = ROUTE.bridge; return !!b && x > b.from && x < b.to; }
+  const nearUnderpass = (x, d) => (ROUTE.underpasses || []).some((u) => Math.abs(x - u.x) < d);
   const nearCrossing = (x, d) => ROUTE.crossings.some((cr) => Math.abs(x - cr.x) < d) || (ROUTE.underpasses || []).some((u) => Math.abs(x - u.x) < d);
   const nearTunnel = (x) => !!ROUTE.tunnel && x > ROUTE.tunnel.from - 75 && x < ROUTE.tunnel.to + 75;
   function nearStation(x) { return allStations().some((s) => x > s.x - 95 && x < s.x + 25); }
@@ -9182,7 +9183,7 @@
   function drawFarFence(V) {
     if (!MIS.dusk || V.tf > 0.3) return;
     const { c, ppm, gy, X, wx0, wx1 } = V, night = V.night, SP = 6, yb = gy - 1.25 * ppm, ph = 1.1 * ppm, pw = Math.max(1, 0.14 * ppm);
-    const skip = (wx) => (ROUTE.bridges || []).some((q) => wx > q.from - 6 && wx < q.to + 6) || nearStation(wx) || (ROUTE.tunnel && wx > ROUTE.tunnel.from - 20 && wx < ROUTE.tunnel.to + 20);
+    const skip = (wx) => (ROUTE.bridges || []).some((q) => wx > q.from - 6 && wx < q.to + 6) || nearStation(wx) || nearUnderpass(wx, 9) || (ROUTE.tunnel && wx > ROUTE.tunnel.from - 20 && wx < ROUTE.tunnel.to + 20);
     let prev = null;
     c.save();
     for (let wx = Math.floor(wx0 / SP) * SP; wx < wx1 + SP; wx += SP) {
@@ -12360,7 +12361,11 @@ c.restore();
     // tiang pagar/patok paling dekat kamera: paralaks 2,6x, memanjang (kabur gerak) saat cepat
     if (MIS.dusk && S && V.st === S && !inBridge(S.x) && !nearStation(S.x)) { // pagar pembatas: dua palang putih memanjang di tepi bawah layar
       const ph0 = 2.2 * ppm * 1.6, base = H - (H - gy) * 0.08;
-      for (const [f, th] of [[0.78, 0.09], [0.42, 0.09]]) { const y = base - ph0 * f; c.fillStyle = '#eceae0'; c.fillRect(0, y, W, ph0 * th); c.fillStyle = 'rgba(255,190,120,0.45)'; c.fillRect(0, y, W, Math.max(1, ph0 * th * 0.3)); c.fillStyle = 'rgba(30,30,40,0.35)'; c.fillRect(0, y + ph0 * th, W, Math.max(1, ph0 * 0.025)); }
+      // celah palang di atas jalan underpass (jalan & dinding penahan tidak terhalang)
+      const gaps = []; for (const up of ROUTE.underpasses || []) { const sx = X(up.x); if (sx < -W || sx > 2 * W) continue; const nx = V.Xn(sx); gaps.push([Math.min(sx, nx) - 9 * ppm, Math.max(sx, nx) + 9 * ppm]); }
+      const runs = (fn) => { let a = 0; for (const [g0, g1] of gaps.sort((p, q) => p[0] - q[0])) { if (g0 > a) fn(a, Math.min(W, g0)); a = Math.max(a, g1); } if (a < W) fn(a, W); };
+      const fillRect0 = c.fillRect.bind(c);
+      for (const [f, th] of [[0.78, 0.09], [0.42, 0.09]]) { const y = base - ph0 * f; c.fillStyle = '#eceae0'; runs((a, b) => fillRect0(a, y, b - a, ph0 * th)); c.fillStyle = 'rgba(255,190,120,0.45)'; runs((a, b) => fillRect0(a, y, b - a, Math.max(1, ph0 * th * 0.3))); c.fillStyle = 'rgba(30,30,40,0.35)'; runs((a, b) => fillRect0(a, y + ph0 * th, b - a, Math.max(1, ph0 * 0.025))); }
     }
     if (S && V.st === S) {
       const kmh = S.v * 3.6, blur = clamp((kmh - 40) / 70, 0, 1), k2 = 2.6, slot2 = 9;
