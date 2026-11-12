@@ -10055,6 +10055,15 @@
   }
   // roda cakram dengan tanda putar kecil supaya gerakannya terlihat
   let UPPER_PASS = false; // lintasan badan (dipadatkan): roda kecil seluruhnya di bawah garis poros, jadi tidak pernah digambar di sini (mencegah roda tampak ganda)
+  // lekukan rok aerodinamis kereta cepat: bukaan melengkung halus di tepi bawah rok (bukan kotak), ceruk gelap bergradasi,
+  // roda tampak sebagian di balik lengkungan, bibir lekukan berkilau & garis bayangan di dalamnya
+  function hstWell(c, xa, xb, Y, ppm, wheels, ang) {
+    const w = xb - xa, y0 = Y(0.34), yt = Y(1.12), path = () => { c.beginPath(); c.moveTo(xa, y0); c.bezierCurveTo(xa + w * 0.08, yt, xa + w * 0.18, yt, xa + w * 0.3, yt); c.lineTo(xb - w * 0.3, yt); c.bezierCurveTo(xb - w * 0.18, yt, xb - w * 0.08, y0, xb, y0); c.closePath(); };
+    path(); const g = c.createLinearGradient(0, yt, 0, y0); g.addColorStop(0, '#0d1014'); g.addColorStop(0.55, '#20262d'); g.addColorStop(1, '#3a4149'); c.fillStyle = g; c.fill();
+    c.save(); path(); c.rect(xa + w * 0.04, y0 - 1, w * 0.92, 0.4 * ppm); c.clip(); for (const x of wheels) trainWheel(c, x, Y(0.48), 0.46 * ppm, ang); // roda menapak rel di bawah tepi rok
+    const sh = c.createLinearGradient(0, yt, 0, yt + 0.35 * ppm); sh.addColorStop(0, 'rgba(0,0,0,0.6)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = sh; c.fillRect(xa, yt, w, 0.35 * ppm); c.restore();
+    c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(xa, y0 - 1); c.bezierCurveTo(xa + w * 0.08, yt - 1.5, xa + w * 0.18, yt - 1.5, xa + w * 0.3, yt - 1.5); c.lineTo(xb - w * 0.3, yt - 1.5); c.bezierCurveTo(xb - w * 0.18, yt - 1.5, xb - w * 0.08, y0 - 1, xb, y0 - 1); c.stroke();
+  }
   function trainWheel(c, x, y, r, ang) {
     if (UPPER_PASS) return;
     c.fillStyle = '#2b2f32'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
@@ -10303,9 +10312,8 @@
         c.save(); body(); c.clip();
         c.fillStyle = vgrad(1.5, 0.34, [[0, '#dfe3e7'], [0.7, '#b3b9c0'], [1, '#8a9199']]); c.fillRect(xr, Y(1.5), cw, 1.16 * ppm);
         c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 1; c.beginPath(); c.moveTo(xr, Y(1.5)); c.lineTo(xf, Y(1.5)); c.stroke();
-        for (const [a, b] of wells) { const wx = Math.min(A(u(a)), A(u(b))), ww = Math.abs(A(u(a)) - A(u(b))); c.fillStyle = '#1c2127'; roundRect(c, wx, Y(1.22), ww, 1.0 * ppm, 0.28 * ppm); c.fill(); }
         c.restore();
-        for (const [a, b] of wells) { const wx = Math.min(A(u(a)), A(u(b))), ww = Math.abs(A(u(a)) - A(u(b))); c.save(); roundRect(c, wx, Y(1.22), ww, 1.2 * ppm, 0.28 * ppm); c.clip(); [a + 12, b - 12].forEach((px) => trainWheel(c, A(u(px)), Y(0.48), 0.46 * ppm, ang * 1.17)); c.restore(); }
+        for (const [a, b] of wells) { const xa = Math.min(A(u(a - 4)), A(u(b + 4))), xb = Math.max(A(u(a - 4)), A(u(b + 4))); hstWell(c, xa, xb, Y, ppm, [a + 12, b - 12].map((px) => A(u(px))), ang * 1.17); }
         // garis aksen: merah Guntur + garis arang tipis + garis perak di bawah pita jendela
         c.fillStyle = ACC; c.fillRect(xr, Y(2.6), cw, 0.22 * ppm);
         c.fillStyle = '#4a525a'; c.fillRect(xr, Y(2.28), cw, Math.max(1, 0.05 * ppm));
@@ -10574,6 +10582,8 @@
     c.save(); carXform(0);
     if ((LOCO_FORCE || MIS.loco) === 'steam') drawSteamLoco(V, L, Y, poly, line, box, vgrad, ang, lw); else {
     const steelDark = vgrad(1.85, 1.15, [[0, '#353b40'], [1, '#1c2024']]);
+    // Guntur baru: rangka, bogie CC & tangki tertutup rok aerodinamis (roda digambar di lekukan rok)
+    if ((LOCO_FORCE || MIS.loco) !== 'hst2') {
     // rangka utama & sill
         c.fillStyle = steelDark; c.fillRect(L(15.85), Y(1.85), 15.7 * ppm, 0.7 * ppm);
     line([[15.85, 1.84], [0.15, 1.84]], 'rgba(255,255,255,0.22)', 1);
@@ -10644,6 +10654,7 @@
     // ambient occlusion di bawah badan
     c.fillStyle = vgrad(1.15, 0.45, [[0, 'rgba(0,0,0,0.35)'], [1, 'rgba(0,0,0,0)']]);
     c.fillRect(L(15.85), Y(1.15), 15.7 * ppm, 0.7 * ppm);
+    }
 
     // ---- badan lokomotif diesel modern berbadan lebar (full-width carbody), moncong aerodinamis ----
     const LK = LOCO_FORCE || MIS.loco, HSTL = LK === 'hst', HST2 = LK === 'hst2' || HSTL, ARGO = LK === 'argo' || HST2;
@@ -10669,7 +10680,9 @@
       // rok bawah & lekukan bogie
       c.fillStyle = vgrad(1.5, 0.34, [[0, '#dfe3e7'], [0.7, '#b3b9c0'], [1, '#8a9199']]); c.fillRect(L(15.9), Y(1.5), 18 * ppm, 1.2 * ppm);
       c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 1; c.beginPath(); c.moveTo(...P(15.85, 1.5)); c.lineTo(...P(0.6, 1.5)); c.bezierCurveTo(...P(-0.4, 1.5), ...P(-1.2, 1.4), ...P(-1.9, 1.1)); c.stroke();
-      for (const [a, b] of [[13.4, 10.4], [5.4, 2.4]]) { c.fillStyle = 'rgba(28,33,39,0.92)'; roundRect(c, L(a), Y(1.22), (a - b) * ppm, 1.0 * ppm, 0.28 * ppm); c.fill(); }
+      c.restore(); c.save();
+      for (const [a, b] of [[13.7, 10.1], [5.7, 2.1]]) hstWell(c, L(a), L(b), Y, ppm, [L(a - 1.05), L(b + 1.05)], ang);
+      c.restore(); c.save(); body(); c.clip();
       // garis aksen merah menyapu dari ekor ke bibir moncong, garis arang tipis di bawahnya, garis perak di bawah pita jendela
       c.lineCap = 'round';
       c.strokeStyle = ACC; c.lineWidth = lw(0.22); c.beginPath(); c.moveTo(...P(16, 2.49)); c.lineTo(...P(4.6, 2.49)); c.bezierCurveTo(...P(1.8, 2.49), ...P(-0.7, 2.1), ...P(-2.0, 1.42)); c.stroke();
