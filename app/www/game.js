@@ -4836,7 +4836,7 @@
     if (!inTun) drawSky(Vs); else { c.fillStyle = '#07090b'; c.fillRect(0, 0, W, H); }
     const pan = h0 * f;
     // cahaya matahari yang memantul ke objek: posisi layar matahari & kekuatannya (rendah = lebih hangat & kuat)
-    const SUN = sunPos(Vs), SUNK = inTun || night || storm ? 0 : clamp(1.15 - p * 0.55, 0.45, 1), tNow = performance.now() / 1000;
+    const SUN = sunPos(Vs), SUNK = inTun || night || storm ? 0 : clamp(1.15 - p * 0.55, 0.45, 1), tNow = performance.now() / 1000; CAB_SUN = SUN;
     const sunRim = SUNK > 0 ? (MIS.golden || MIS.dusk || p < 0.5 ? '255,196,120' : '255,236,200') : '0,0,0';
     if (!inTun) {
       if (HSTCAB || !storm || MIS.digitalCab) { drawHstScenery(c, { x0, hy, f, pan, p, P: BEND ? (z, la, h) => (z < 0.8 ? null : W3(z, la - SEAT * 0, h)) : P, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); } // tikungan: sawah & kebun ikut melengkung bersama rel
@@ -5693,21 +5693,19 @@
     }
     if (MIS.loco === 'steam' && !inTun) drawSteamBoilerView(c, { hy, cx, SUN, SUNK, tNow, st, night });
     if (HSTCAB) { drawHstCab(c, st, night, inTun); return; }
-    const frame = night ? '#0c0f13' : '#1a2026';
-    c.fillStyle = frame;
-    c.fillRect(0, 0, W, H * 0.055);
-    c.beginPath(); c.moveTo(0, 0); c.lineTo(W * 0.045, 0); c.lineTo(W * 0.02, H); c.lineTo(0, H); c.closePath(); c.fill();
-    c.beginPath(); c.moveTo(W, 0); c.lineTo(W * 0.955, 0); c.lineTo(W * 0.98, H); c.lineTo(W, H); c.closePath(); c.fill();
-    c.fillRect(W * 0.665, 0, W * 0.009, H * 0.66); // pilar tengah kaca depan (di kanan masinis)
-    // pelindung matahari & pantulan kaca
-    c.fillStyle = 'rgba(20,26,32,0.55)'; c.fillRect(W * 0.08, H * 0.055, W * 0.32, H * 0.05); c.fillRect(W * 0.6, H * 0.055, W * 0.32, H * 0.05);
-    c.fillStyle = 'rgba(255,255,255,0.035)'; c.beginPath(); c.moveTo(W * 0.1, H * 0.06); c.lineTo(W * 0.2, H * 0.06); c.lineTo(W * 0.08, H * 0.7); c.lineTo(W * 0.04, H * 0.7); c.closePath(); c.fill();
-    // dasbor
     const dy0 = H * 0.66; // dasbor dinaikkan agar instrumennya tidak tertutup tombol & strip HUD bawah
+    const twC = night ? 1 : twiOf(p), sunKC = SUNK * (1 - twC);
+    cabGlass(c, { sun: SUN, sunK: sunKC, night, inTun, dy0, tw: twC });
+    const amb = drawCabInterior(c, { night, inTun, sunK: sunKC, dy0, tw: twC, rain, sun: SUN });
+    // dasbor: pelindung silau bertekstur di atas, bibir depan menangkap cahaya, kisi defroster di kaki kaca
     const dg = c.createLinearGradient(0, dy0, 0, H);
-    dg.addColorStop(0, night ? '#1d232a' : '#2e363e'); dg.addColorStop(1, night ? '#0b0e12' : '#151a1f');
+    dg.addColorStop(0, mix(night ? '#1d232a' : '#141a20', '#3a434c', amb * 0.8)); dg.addColorStop(0.35, mix('#10151a', '#252c33', amb)); dg.addColorStop(1, night ? '#0b0e12' : '#151a1f');
     c.fillStyle = dg; c.beginPath(); c.moveTo(0, dy0 + H * 0.03); c.quadraticCurveTo(W * 0.5, dy0 - H * 0.03, W, dy0 + H * 0.03); c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.fill();
-    c.fillStyle = 'rgba(255,255,255,0.06)'; c.fillRect(0, dy0 + H * 0.01, W, 1.5);
+    c.save(); c.beginPath(); c.moveTo(0, dy0 + H * 0.03); c.quadraticCurveTo(W * 0.5, dy0 - H * 0.03, W, dy0 + H * 0.03); c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.clip();
+    c.fillStyle = 'rgba(0,0,0,0.12)'; for (let i = 0; i < 260; i++) { const x = hash(i * 1.9) * W, y = dy0 - H * 0.02 + hash(i * 3.7) * H * 0.07; c.fillRect(x, y, 1.2, 1.2); } // tekstur doff anti-silau
+    c.strokeStyle = 'rgba(0,0,0,0.55)'; c.lineWidth = 1.6; for (let x = W * 0.06; x < W * 0.94; x += W * 0.012) { if (x > W * 0.42 && x < W * 0.5) continue; const y = dy0 + H * 0.03 - H * 0.06 * (1 - Math.pow((x - W / 2) / (W / 2), 2)) * 0.5 + H * 0.012; c.beginPath(); c.moveTo(x, y); c.lineTo(x + W * 0.006, y); c.stroke(); } // kisi defroster
+    c.restore();
+    c.strokeStyle = `rgba(255,236,210,${(0.06 + 0.12 * amb + 0.15 * sunKC).toFixed(3)})`; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, dy0 + H * 0.032); c.quadraticCurveTo(W * 0.5, dy0 - H * 0.028, W, dy0 + H * 0.032); c.stroke(); // bibir dasbor
     // tuas notch (pengendali utama) dan tuas rem ikut bergerak (Agraveda: tuas digital di layar)
     if (MIS.loco !== 'argo' && !MIS.digitalCab) {
       const bx = W * 0.68, top = dy0 + H * 0.015, hgt = H * 0.1, n = st.notch;
@@ -6207,6 +6205,93 @@
     return (drvImgs[id] = im);
   }
   // ---------- kokpit kereta cepat (Guntur / Kilat): kaca panorama, layar DMI, tuas samping ----------
+  // ---------- kaca kokpit yang nyata: tint laminasi atas, silau & debu tersinari matahari, bekas sapuan wiper,
+  // kotoran tepi, pantulan interior (dasbor) di kaca bawah; semua mengikuti cahaya luar (siang/senja/malam/terowongan) ----------
+  let CAB_SUN = null;
+  function cabGlass(c, o) {
+    const { sun, sunK, night, inTun, dy0, tw } = o, now = performance.now() / 1000;
+    c.save(); c.beginPath(); c.rect(0, 0, W, dy0 + 2); c.clip();
+    // pita tint hijau-biru laminasi di tepi atas kaca
+    const tb = c.createLinearGradient(0, 0, 0, H * 0.2); tb.addColorStop(0, `rgba(16,58,66,${night || inTun ? 0.5 : 0.42})`); tb.addColorStop(0.55, 'rgba(16,58,66,0.12)'); tb.addColorStop(1, 'rgba(16,58,66,0)');
+    c.fillStyle = tb; c.fillRect(0, 0, W, H * 0.2);
+    // kaca tebal sedikit menyerap cahaya & kontras (kebiruan halus)
+    c.fillStyle = night || inTun ? 'rgba(10,18,24,0.08)' : 'rgba(40,70,80,0.035)'; c.fillRect(0, 0, W, dy0);
+    if (sunK > 0.02 && !inTun) {
+      const sx = sun.x, sy = Math.min(sun.y, dy0 - 10);
+      // selubung silau: kaca yang tak sempurna bersih berpendar di sekitar arah matahari
+      c.globalCompositeOperation = 'screen';
+      const vg = c.createRadialGradient(sx, sy, 0, sx, sy, W * 0.62); vg.addColorStop(0, `rgba(255,236,206,${(0.16 * sunK).toFixed(3)})`); vg.addColorStop(0.35, `rgba(255,226,190,${(0.06 * sunK).toFixed(3)})`); vg.addColorStop(1, 'rgba(255,226,190,0)');
+      c.fillStyle = vg; c.fillRect(0, 0, W, dy0);
+      // bekas sapuan wiper: busur halus yang hanya tampak saat membelakangi cahaya (dekat matahari)
+      const sg = c.createRadialGradient(sx, sy, 0, sx, sy, W * 0.45); sg.addColorStop(0, `rgba(255,244,224,${(0.12 * sunK).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,244,224,0)');
+      c.strokeStyle = sg; c.lineWidth = 1;
+      for (const [px, py] of [[W * 0.24, H * 0.685], [W * 0.655, H * 0.685]]) for (let q = 0; q < 14; q++) {
+        const r = H * (0.16 + q * 0.034) + hash(q * 3.1 + px) * 3; c.globalAlpha = 0.35 + 0.65 * hash(q + px * 0.01); c.beginPath(); c.arc(px, py, r, -Math.PI * (0.97 - hash(q) * 0.05), -Math.PI * (0.17 + hash(q + 5) * 0.05)); c.stroke(); }
+      c.globalAlpha = 1;
+      // butir debu & bintik air kering yang menyala di dekat matahari
+      for (let i = 0; i < 160; i++) { const x = hash(i * 1.37) * W, y = hash(i * 2.71 + 0.3) * dy0, d = Math.hypot(x - sx, y - sy), f = 1 - d / (W * 0.42); if (f <= 0) continue;
+        c.fillStyle = `rgba(255,246,228,${(0.55 * f * f * sunK).toFixed(3)})`; const r = 0.5 + hash(i * 5.3) * 1.3; c.fillRect(x, y, r, r); }
+      c.globalCompositeOperation = 'source-over';
+    }
+    // pantulan langit lebar yang miring (kaca melengkung), bergeser halus
+    if (!inTun) { const k = night ? 0.025 : 0.05, ox = Math.sin(now * 0.05) * W * 0.01; c.fillStyle = `rgba(220,236,255,${k})`;
+      c.beginPath(); c.moveTo(W * 0.12 + ox, 0); c.lineTo(W * 0.24 + ox, 0); c.lineTo(W * 0.1 + ox, dy0); c.lineTo(W * 0.02 + ox, dy0); c.closePath(); c.fill();
+      c.fillStyle = `rgba(220,236,255,${k * 0.6})`; c.beginPath(); c.moveTo(W * 0.78 + ox, 0); c.lineTo(W * 0.83 + ox, 0); c.lineTo(W * 0.74 + ox, dy0); c.lineTo(W * 0.7 + ox, dy0); c.closePath(); c.fill(); }
+    // kotoran & jejak air di tepi bawah kaca (tak terjangkau wiper)
+    const gb = c.createLinearGradient(0, dy0 - H * 0.1, 0, dy0); gb.addColorStop(0, 'rgba(90,82,70,0)'); gb.addColorStop(1, `rgba(90,82,70,${night ? 0.1 : 0.16})`); c.fillStyle = gb; c.fillRect(0, dy0 - H * 0.1, W, H * 0.1);
+    // pantulan interior di kaca bawah: dasbor & layar instrumen (makin jelas saat gelap di luar)
+    const ir = 0.05 + 0.13 * (night || inTun ? 1 : tw);
+    const rg = c.createLinearGradient(0, dy0 - H * 0.12, 0, dy0); rg.addColorStop(0, 'rgba(120,190,230,0)'); rg.addColorStop(1, `rgba(120,190,230,${(ir * 0.6).toFixed(3)})`); c.fillStyle = rg; c.fillRect(0, dy0 - H * 0.12, W, H * 0.12);
+    if (night || inTun || tw > 0.3) { c.fillStyle = `rgba(255,190,110,${(ir * 0.55).toFixed(3)})`; roundRect(c, W * 0.12, dy0 - H * 0.07, W * 0.6, H * 0.05, H * 0.02); c.fill(); // cermin samar panel instrumen
+      c.fillStyle = `rgba(120,220,255,${(ir * 0.4).toFixed(3)})`; roundRect(c, W * 0.3, dy0 - H * 0.06, W * 0.14, H * 0.035, 4); c.fill(); }
+    c.restore();
+  }
+  // ---------- ruang kabin standar (Cakra/Agraveda/uap): bingkai jendela bergasket karet, pilar & plafon berbahan nyata,
+  // tirai penahan silau, lampu kabin, kisi defroster, wiper parkir; terang-gelap interior mengikuti cahaya luar ----------
+  function drawCabInterior(c, o) {
+    const { night, inTun, sunK, dy0, tw, rain, sun } = o;
+    const amb = inTun ? 0.22 : night ? 0.16 : clamp(1 - tw * 0.75, 0.25, 1); // terang ruang kabin
+    const col = (dark, lite) => mix(dark, lite, amb);
+    const top = H * 0.055, cL = W * 0.665, cR = W * 0.674, rr = H * 0.035;
+    const xl = (y) => W * 0.045 + (W * 0.02 - W * 0.045) * (y / H), xr = (y) => W * 0.955 + (W * 0.98 - W * 0.955) * (y / H), yb = dy0 + H * 0.02;
+    const win = (x0f, x1f) => { c.moveTo(x0f(top) + rr, top); c.lineTo(x1f(top) - rr, top); c.quadraticCurveTo(x1f(top), top, x1f(top + rr), top + rr); c.lineTo(x1f(yb), yb); c.lineTo(x0f(yb), yb); c.lineTo(x0f(top + rr), top + rr); c.quadraticCurveTo(x0f(top), top, x0f(top) + rr, top); c.closePath(); };
+    const holes = () => { win(xl, () => cL); win(() => cR, xr); };
+    // panel interior (plafon, pilar) dengan lubang jendela
+    const pg = c.createLinearGradient(0, 0, 0, H); pg.addColorStop(0, col('#0b0d10', '#2c333a')); pg.addColorStop(0.5, col('#0e1115', '#353d45')); pg.addColorStop(1, col('#07090b', '#1f252b'));
+    c.fillStyle = pg; c.beginPath(); c.rect(0, 0, W, yb + 1); holes(); c.fill('evenodd');
+    // pilar menerima cahaya dari kaca: tepi dalam lebih terang, tepi luar gelap (volume)
+    for (const [xa, xb] of [[0, xl(0) + 2], [W, xr(0) - 2]]) { const g = c.createLinearGradient(xa, 0, xb, 0); g.addColorStop(0, 'rgba(0,0,0,0.35)'); g.addColorStop(1, `rgba(255,240,220,${(0.08 * amb).toFixed(3)})`); c.fillStyle = g;
+      c.beginPath(); if (xa === 0) { c.moveTo(0, 0); c.lineTo(xl(0), 0); c.lineTo(xl(yb), yb); c.lineTo(0, yb); } else { c.moveTo(W, 0); c.lineTo(xr(0), 0); c.lineTo(xr(yb), yb); c.lineTo(W, yb); } c.closePath(); c.fill(); }
+    { const g = c.createLinearGradient(cL, 0, cR, 0); g.addColorStop(0, `rgba(255,240,220,${(0.1 * amb).toFixed(3)})`); g.addColorStop(0.5, 'rgba(0,0,0,0.25)'); g.addColorStop(1, `rgba(255,240,220,${(0.06 * amb).toFixed(3)})`); c.fillStyle = g; c.fillRect(cL, top, cR - cL, yb - top); }
+    // plafon: panel berlapis dengan sambungan & baut
+    c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, top - 3, W, 3);
+    c.fillStyle = `rgba(255,255,255,${(0.05 * amb).toFixed(3)})`; c.fillRect(0, H * 0.012, W, 1);
+    c.fillStyle = col('#050608', '#5a636c'); for (let x = W * 0.07; x < W * 0.95; x += W * 0.06) { c.beginPath(); c.arc(x, H * 0.03, Math.max(1, H * 0.0035), 0, 7); c.fill(); }
+    // lampu kabin di plafon (menyala hangat saat gelap)
+    { const lx = W * 0.4, ly = H * 0.006, lw = W * 0.07, lh = H * 0.024; c.fillStyle = col('#15181c', '#4a525a'); roundRect(c, lx - lw / 2 - 2, ly - 1, lw + 4, lh + 2, 4); c.fill();
+      const on = night || inTun || tw > 0.5; c.fillStyle = on ? 'rgba(255,226,170,0.85)' : col('#2a2f35', '#c9ced2'); roundRect(c, lx - lw / 2, ly, lw, lh, 3); c.fill();
+      if (on) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(lx, ly + lh, 0, lx, ly + lh, H * 0.16); g.addColorStop(0, 'rgba(255,214,150,0.14)'); g.addColorStop(1, 'rgba(255,214,150,0)'); c.fillStyle = g; c.fillRect(lx - H * 0.16, 0, H * 0.32, H * 0.18); c.restore(); } }
+    // tirai penahan silau (roller blind) setengah turun di kaca masinis, tembus pandang berasap
+    { const bx0 = xl(top) + rr * 0.6, bx1 = cL - 2, bh = H * 0.085; c.save(); c.beginPath(); c.rect(bx0, top, bx1 - bx0, bh); c.clip();
+      const bg = c.createLinearGradient(0, top, 0, top + bh); bg.addColorStop(0, 'rgba(18,22,26,0.72)'); bg.addColorStop(1, 'rgba(18,22,26,0.5)'); c.fillStyle = bg; c.fillRect(bx0, top, bx1 - bx0, bh);
+      c.fillStyle = 'rgba(255,255,255,0.03)'; for (let y = top + 2; y < top + bh; y += 3) c.fillRect(bx0, y, bx1 - bx0, 1); c.restore();
+      const bar = c.createLinearGradient(0, top + bh - 3, 0, top + bh + 3); bar.addColorStop(0, col('#3a4046', '#c4cbd1')); bar.addColorStop(1, col('#121518', '#6d757c')); c.fillStyle = bar; c.fillRect(bx0, top + bh - 3, bx1 - bx0, 5);
+      c.fillStyle = col('#0c0e10', '#3a4046'); roundRect(c, (bx0 + bx1) / 2 - 7, top + bh + 1, 14, 6, 3); c.fill(); }
+    // tirai kaca kanan tergulung (hanya batang)
+    { const bx0 = cR + 2, bx1 = xr(top) - rr * 0.6; c.fillStyle = col('#15181c', '#8d959c'); c.fillRect(bx0, top, bx1 - bx0, 5); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(bx0, top + 5, bx1 - bx0, 2); }
+    // gasket karet hitam di sekeliling kaca + garis tepi kaca tebal yang menangkap cahaya
+    c.lineJoin = 'round';
+    c.strokeStyle = '#040506'; c.lineWidth = Math.max(3, H * 0.011); c.beginPath(); holes(); c.stroke();
+    c.strokeStyle = `rgba(255,255,255,${(0.1 + 0.12 * amb).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(1.2, 1.4); c.beginPath(); holes(); c.stroke(); c.restore();
+    if (sunK > 0.05) { c.strokeStyle = `rgba(255,226,180,${(0.25 * sunK).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(-1, 1.5); c.beginPath(); win(() => cR, xr); c.stroke(); c.restore(); }
+    // wiper parkir di dasar kaca saat tidak hujan
+    if (!rain) for (const [px, py] of [[W * 0.24, H * 0.685], [W * 0.655, H * 0.685]]) { const R = H * 0.63, a = -Math.PI * 0.985, ux = Math.cos(a), uy = Math.sin(a);
+      c.lineCap = 'round'; c.strokeStyle = '#0b0c0e'; c.lineWidth = Math.max(3, W * 0.005); c.beginPath(); c.moveTo(px, py); c.lineTo(px + ux * R * 0.6, py + uy * R * 0.6 - W * 0.006); c.stroke();
+      c.strokeStyle = '#2d3136'; c.lineWidth = Math.max(2, W * 0.004); c.beginPath(); c.moveTo(px + ux * R * 0.16, py - W * 0.009); c.lineTo(px + ux * R, py + uy * R - W * 0.009); c.stroke();
+      c.strokeStyle = `rgba(255,255,255,${(0.12 + 0.2 * sunK).toFixed(3)})`; c.lineWidth = 1; c.beginPath(); c.moveTo(px + ux * R * 0.16, py - W * 0.012); c.lineTo(px + ux * R, py + uy * R - W * 0.012); c.stroke();
+      c.fillStyle = '#16181b'; c.beginPath(); c.arc(px, py, Math.max(4, W * 0.006), 0, 7); c.fill(); c.lineCap = 'butt'; }
+    return amb;
+  }
   function drawHstCab(c, st, night, inTun) {
     const kmh = st.v * 3.6, { lim } = currentLimit(), nl = nextLimitAhead(), ns = nextStation();
     const tt = performance.now() / 1000, CY = '#4fe3ff', AMB = '#ffb547';
@@ -6224,12 +6309,22 @@
       c.font = FONT(700, H * 0.022); c.fillStyle = CY; c.fillText('KM/H', hx - W * 0.1, hy + H * 0.035); c.fillStyle = AMB; c.fillText('BATAS', hx + W * 0.1, hy + H * 0.035);
       c.restore(); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     }
+    { const pH = dayP(st.clock), twH = night ? 1 : twiOf(pH), sH = inTun || night || MIS.sky === 'storm' ? 0 : clamp(1.15 - pH * 0.55, 0.45, 1) * (1 - twH);
+      cabGlass(c, { sun: CAB_SUN || { x: W * 0.2, y: H * 0.3 }, sunK: sH, night, inTun, dy0: H * 0.66, tw: twH }); }
     // bingkai kaca panorama: pilar ramping melengkung, tanpa tiang tengah
     const fr = night ? '#07090c' : '#0f1418';
     c.fillStyle = fr;
     c.beginPath(); c.moveTo(0, 0); c.lineTo(W, 0); c.lineTo(W, H * 0.03); c.quadraticCurveTo(W * 0.5, H * 0.075, 0, H * 0.03); c.closePath(); c.fill();
     c.beginPath(); c.moveTo(0, 0); c.lineTo(W * 0.035, 0); c.quadraticCurveTo(W * 0.06, H * 0.35, W * 0.03, H); c.lineTo(0, H); c.closePath(); c.fill();
     c.beginPath(); c.moveTo(W, 0); c.lineTo(W * 0.965, 0); c.quadraticCurveTo(W * 0.94, H * 0.35, W * 0.97, H); c.lineTo(W, H); c.closePath(); c.fill();
+    { // volume pilar & plafon: tepi dalam tersinari dari kaca, gasket karet hitam bertepi cahaya
+      const lit = night || inTun ? 0.05 : 0.12;
+      for (const sd of [0, 1]) { const x0 = sd ? W : 0, xi = sd ? W * 0.955 : W * 0.045, g = c.createLinearGradient(x0, 0, xi, 0); g.addColorStop(0, 'rgba(0,0,0,0.3)'); g.addColorStop(1, `rgba(255,240,222,${lit})`); c.fillStyle = g;
+        c.beginPath(); if (!sd) { c.moveTo(0, 0); c.lineTo(W * 0.035, 0); c.quadraticCurveTo(W * 0.06, H * 0.35, W * 0.03, H); c.lineTo(0, H); } else { c.moveTo(W, 0); c.lineTo(W * 0.965, 0); c.quadraticCurveTo(W * 0.94, H * 0.35, W * 0.97, H); c.lineTo(W, H); } c.closePath(); c.fill(); }
+      const edge = () => { c.beginPath(); c.moveTo(W * 0.03, H); c.quadraticCurveTo(W * 0.06, H * 0.35, W * 0.035, H * 0.03); c.quadraticCurveTo(W * 0.5, H * 0.075 + 1, W * 0.965, H * 0.03); c.quadraticCurveTo(W * 0.94, H * 0.35, W * 0.97, H); };
+      c.lineJoin = 'round'; c.strokeStyle = '#030405'; c.lineWidth = Math.max(3, H * 0.01); edge(); c.stroke();
+      c.strokeStyle = `rgba(255,255,255,${lit + 0.06})`; c.lineWidth = 1; c.save(); c.translate(0, 2); edge(); c.stroke(); c.restore();
+    }
     // pantulan kaca & tint atas
     const tg = c.createLinearGradient(0, 0, 0, H * 0.25); tg.addColorStop(0, 'rgba(20,40,60,0.45)'); tg.addColorStop(1, 'rgba(20,40,60,0)');
     c.fillStyle = tg; c.fillRect(0, 0, W, H * 0.25);
