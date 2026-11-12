@@ -243,9 +243,10 @@
       </div>
       <div class="title-right">
         <div class="maphead"><span class="lbl" id="titleTabLbl">11 misi · 2 pulau</span>
-          <div class="maptabs" role="group" aria-label="Misi, peta, atau garasi"><button type="button" data-maptab="missions" aria-pressed="true">Misi</button><button type="button" data-maptab="map" aria-pressed="false">Peta</button><button type="button" data-maptab="garage" aria-pressed="false">Garasi</button></div></div>
+          <div class="maptabs" role="group" aria-label="Misi, peta, atau garasi"><button type="button" data-maptab="missions" aria-pressed="true">Misi</button><button type="button" data-maptab="map" aria-pressed="false">Peta</button><button type="button" data-maptab="garage" aria-pressed="false">Garasi</button><button type="button" data-maptab="kisah" aria-pressed="false">Kisah</button></div></div>
         <div class="mapbox glass" id="mapBox" hidden><canvas id="mapCv" aria-label="Peta misi Jawa dan Sumatra. Ketuk rute untuk menyorot, ketuk lagi untuk memilih."></canvas></div>
         <ul class="tickets glass" id="missionList"></ul>
+        <div class="kisah glass" id="kisahBox" hidden></div>
         <button class="carrow prev off" id="carPrev" type="button" aria-label="Misi sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="#3a2205" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button class="carrow next" id="carNext" type="button" aria-label="Misi berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="#3a2205" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
     </div>
@@ -307,6 +308,7 @@
         <h2 id="pauseTitle">Kereta berhenti sejenak</h2>
         <div class="btn-row">
           <button class="btn primary" id="btnResume">Lanjutkan</button>
+          <button class="btn" id="btnPhoto">📷 Mode foto</button>
           <button class="btn" id="btnRestart">Ulangi misi</button>
           <button class="btn" id="btnQuit">Ke menu</button>
         </div>
@@ -314,6 +316,21 @@
       <div class="card pausecard" id="pauseCard"></div>
     </div>
   </section>
+
+  <div id="photoMode" hidden>
+    <div class="ph-pad" id="phPad" aria-label="Geser untuk mengatur bingkai foto"></div>
+    <div class="ph-frame" id="phFrame" aria-hidden="true"><i></i><i></i><span id="phCap"></span></div>
+    <div class="ph-flash" id="phFlash" aria-hidden="true"></div>
+    <div class="ph-hint" id="phHint">Geser layar untuk mengatur bingkai · cubit atau slider untuk zoom</div>
+    <div class="ph-bar glass">
+      <button class="btn sm" id="phClose" type="button" aria-label="Tutup mode foto">✕</button>
+      <div class="ph-filters" id="phFilters" role="group" aria-label="Filter"></div>
+      <label class="ph-zoom"><span>Zoom</span><input type="range" id="phZoom" min="1" max="2.2" step="0.01" value="1"></label>
+      <button class="btn sm" id="phFrameBtn" type="button" aria-pressed="true">Bingkai</button>
+      <button class="btn primary ph-shot" id="phShot" type="button" aria-label="Ambil foto"><span></span></button>
+    </div>
+    <div class="ph-preview" id="phPreview" hidden><img id="phImg" alt="Hasil foto"><div class="btn-row"><button class="btn primary" id="phSave" type="button">Simpan / Bagikan</button><button class="btn" id="phAgain" type="button">Foto lagi</button></div></div>
+  </div>
 
   <section class="screen" id="screenResult" hidden>
     <div class="screen-inner">
