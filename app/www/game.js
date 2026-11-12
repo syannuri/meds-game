@@ -640,7 +640,8 @@
           yellowMsg: 'B2 berubah kuning. Lewati maks 40 km/h, lalu tancap lagi setelah J2.',
         },
       ],
-      crossings: [{ x: 2600, hornFrom: 2050 }, { x: 12600, hornFrom: 12050 }],
+      crossings: [], // jalur ekspres: perlintasan sebidang diganti underpass (jalan raya lewat di bawah rel)
+      underpasses: [{ x: 2600, name: 'UNDERPASS JATISARI' }, { x: 12600, name: 'UNDERPASS TANJUNG API' }],
       goats: [],
       fog: null,
       bridge: { from: 11200, to: 11600 },
@@ -4028,7 +4029,7 @@
     Sound.setAxles(ax);
     const turnouts = [];
     allStations().forEach((q) => { turnouts.push(q.x - 112, q.x + 42); });
-    Sound.setTrack({ turnouts, decks: ROUTE.crossings.map((cr) => cr.x), bridge: ROUTE.bridge || null });
+    Sound.setTrack({ turnouts, decks: ROUTE.crossings.map((cr) => cr.x).concat((ROUTE.underpasses || []).map((u) => u.x)), bridge: ROUTE.bridge || null });
     buildBend();
     idleState = makeIdle();
     textCache.clear();
@@ -5240,6 +5241,21 @@
         add(Math.max(1.5, dn), () => kilatCar(dn, dr, k === 0 ? 'lead' : k === lens.length - 1 ? 'tail' : 'mid'));
       });
     }
+    // underpass: kereta melintas di atas jembatan; dinding pengaman beton & pagar di kedua sisi rel, celah jalan di bawah
+    for (const up of ROUTE.underpasses || []) {
+      const da = up.x - 7.5 - x0, db = up.x + 7.5 - x0; if (db < 1.5 || da > FAR) continue;
+      const a = Math.max(1.5, da);
+      add(a, () => {
+        const concC = night ? '#5b5d68' : mix('#b9b3a8', '#d2ccc1', p), concT = night ? '#6c6e7a' : mix('#d6d0c4', '#ece6da', p);
+        for (const o of [-2.75, 2.75]) {
+          quad(W3(a, o, 0), W3(db, o, 0), W3(db, o, 1.05), W3(a, o, 1.05), concC);
+          quad(W3(a, o, 1.05), W3(db, o, 1.05), W3(db, o + Math.sign(o) * 0.3, 1.05), W3(a, o + Math.sign(o) * 0.3, 1.05), concT);
+          const r0 = W3(a, o, 1.6), r1 = W3(db, o, 1.6); if (r0 && r1) { c.strokeStyle = night ? 'rgba(170,175,190,0.7)' : 'rgba(110,116,124,0.85)'; c.lineWidth = Math.max(1, 0.03 * r0.k); c.beginPath(); c.moveTo(r0.x, r0.y); c.lineTo(r1.x, r1.y); c.stroke();
+            for (let d = Math.ceil(a / 1.5) * 1.5; d < db; d += 1.5) { const q0 = W3(d, o, 1.05), q1 = W3(d, o, 1.6); if (q0 && q1) { c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } } }
+        }
+        const pl = W3(a, -2.75, 1.05); if (pl && pl.k > 6 && da > 1.5) { c.fillStyle = '#1d4f9a'; const pw = 1.6 * pl.k, ph = 0.35 * pl.k; c.fillRect(pl.x - pw, pl.y - ph - 0.1 * pl.k, pw, ph); c.fillStyle = '#fff'; c.font = `800 ${Math.max(5, Math.round(0.22 * pl.k))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('UNDERPASS', pl.x - pw / 2, pl.y - ph / 2 - 0.1 * pl.k); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
+      });
+    }
     // pohon tumbang melintang rel & tim jalan rel
     const TRc = st.tree;
     if (TRc && !(TRc.phase === 'clear')) {
@@ -5662,7 +5678,7 @@
         for (const o of [-8, 8]) { // pagar di kedua sisi jalur: kiri = seberang rel (dekat matahari), kanan = sisi kamera pada tampilan luar
           let prev = null;
           for (let wz = z0 + Math.floor(Math.min(140, ZF) / SP) * SP; wz >= z0; wz -= SP) {
-            const d = wz - x0, skip = (ROUTE.bridges || []).some((q) => wz > q.from - 6 && wz < q.to + 6) || nearStation(wz) || (ROUTE.tunnel && wz > ROUTE.tunnel.from - 20 && wz < ROUTE.tunnel.to + 20);
+            const d = wz - x0, skip = (ROUTE.bridges || []).some((q) => wz > q.from - 6 && wz < q.to + 6) || nearStation(wz) || nearUnderpass(wz, 9) || (ROUTE.tunnel && wz > ROUTE.tunnel.from - 20 && wz < ROUTE.tunnel.to + 20);
             const b = skip ? null : P(d, o, 0), t = skip ? null : P(d, o, 1.1);
             if (b && t && prev) { c.strokeStyle = night ? '#6a6a70' : '#ebe8de'; c.lineWidth = Math.max(1, 0.07 * b.k); for (const fh of [0.45, 0.9]) { const p0 = P(d, o, fh), p1 = P(prev.d, o, fh); if (p0 && p1) { c.beginPath(); c.moveTo(p0.x, p0.y); c.lineTo(p1.x, p1.y); c.stroke(); } } }
             if (b && t) { const w = Math.max(1, 0.16 * b.k); c.fillStyle = '#eceae0'; c.fillRect(b.x - w / 2, t.y, w, b.y - t.y); c.fillStyle = '#1c1d20'; c.fillRect(b.x - w / 2, t.y, w, (b.y - t.y) * 0.2); c.fillRect(b.x - w / 2, t.y + (b.y - t.y) * 0.45, w, (b.y - t.y) * 0.2);
@@ -6401,6 +6417,7 @@
     drawFarFence(LV);
     drawBoards35(LV);
     drawCrossings(LV, 'back', dtReal);
+    drawUnderpasses(LV, dtReal);
     drawGoats(LV);
     drawTree(LV);
     drawSilo(LV, 'back');
@@ -7767,7 +7784,8 @@
   }
 
   function inBridge(x) { const b = ROUTE.bridge; return !!b && x > b.from && x < b.to; }
-  const nearCrossing = (x, d) => ROUTE.crossings.some((cr) => Math.abs(x - cr.x) < d);
+  const nearUnderpass = (x, d) => (ROUTE.underpasses || []).some((u) => Math.abs(x - u.x) < d);
+  const nearCrossing = (x, d) => ROUTE.crossings.some((cr) => Math.abs(x - cr.x) < d) || (ROUTE.underpasses || []).some((u) => Math.abs(x - u.x) < d);
   const nearTunnel = (x) => !!ROUTE.tunnel && x > ROUTE.tunnel.from - 75 && x < ROUTE.tunnel.to + 75;
   function nearStation(x) { return allStations().some((s) => x > s.x - 95 && x < s.x + 25); }
 
@@ -9165,7 +9183,7 @@
   function drawFarFence(V) {
     if (!MIS.dusk || V.tf > 0.3) return;
     const { c, ppm, gy, X, wx0, wx1 } = V, night = V.night, SP = 6, yb = gy - 1.25 * ppm, ph = 1.1 * ppm, pw = Math.max(1, 0.14 * ppm);
-    const skip = (wx) => (ROUTE.bridges || []).some((q) => wx > q.from - 6 && wx < q.to + 6) || nearStation(wx) || (ROUTE.tunnel && wx > ROUTE.tunnel.from - 20 && wx < ROUTE.tunnel.to + 20);
+    const skip = (wx) => (ROUTE.bridges || []).some((q) => wx > q.from - 6 && wx < q.to + 6) || nearStation(wx) || nearUnderpass(wx, 9) || (ROUTE.tunnel && wx > ROUTE.tunnel.from - 20 && wx < ROUTE.tunnel.to + 20);
     let prev = null;
     c.save();
     for (let wx = Math.floor(wx0 / SP) * SP; wx < wx1 + SP; wx += SP) {
@@ -9389,6 +9407,92 @@
     c.restore();
     c.fillStyle = '#d8d8d2'; c.fillRect(px - 0.25 * s, py - 0.3 * s, 0.5 * s, 1.4 * s);
     c.fillStyle = '#4a4d50'; c.fillRect(px - 0.32 * s, py - 0.42 * s, 0.64 * s, 0.4 * s);
+  }
+  // ---------- underpass: jalan raya menurun di antara dinding penahan beton, lewat di bawah jembatan rel ----------
+  const upAnim = {};
+  function upState(i) {
+    if (!upAnim[i]) upAnim[i] = { veh: [
+      { d: 0.2, lane: -0.45, kind: 'car', col: '#2e6db0', dir: 1, sp: 0.16 }, { d: 0.75, lane: -0.5, kind: 'moto', col: '#c0392b', dir: 1, sp: 0.22 },
+      { d: 1.5, lane: 0.45, kind: 'angkot', col: '#2f8f5a', dir: -1, sp: 0.14 }, { d: 0.45, lane: 0.5, kind: 'moto', col: '#2f2f36', dir: -1, sp: 0.2 },
+      { d: 1.8, lane: -0.45, kind: 'car', col: '#e8e4dc', dir: 1, sp: 0.15 }, { d: 1.2, lane: 0.42, kind: 'car', col: '#8a2a2a', dir: -1, sp: 0.15 } ] };
+    return upAnim[i];
+  }
+  function drawUnderpasses(V, dtReal) {
+    const U = ROUTE.underpasses; if (!U) return;
+    const { c, ppm, gy, wx0, wx1 } = V, night = V.night || V.p < 0.16, dt = Math.min(0.05, dtReal || 0.016), sun = sunPos(V);
+    const conc = night ? '#5b5d68' : mix('#b9b3a8', '#d2ccc1', V.p), concD = night ? '#3d3f4a' : mix('#8f897f', '#a8a296', V.p), concL = night ? '#6c6e7a' : mix('#d6d0c4', '#ece6da', V.p);
+    const asphalt = night ? '#2a2b31' : mix('#4a4a4d', '#5a5a5e', V.p), asphaltFar = mix('#5d5c62', '#7a7a80', V.p);
+    U.forEach((up, i) => {
+      if (up.x < wx0 - 70 || up.x > wx1 + 70) return;
+      const G = crossGeom(V, up), A = upState(i), sx = G.sx, sunR = sun.x > sx;
+      const yD0 = gy + 0.3 * ppm, yD1 = gy + 1.2 * ppm, yO = G.yTop + 2.8 * ppm, ow = 4.2 * ppm, aw = 7.4 * ppm;
+      // jalan dekat diturunkan ke lantai underpass (yO) — titik d∈[0,1]
+      const near = (d) => { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (G.nearX - sx) * t, y: yO + (H - yO) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm, t }; };
+      const G2 = Object.assign({}, G, { at: (d) => (d <= 1 ? near(d) : G.at(d)) });
+      // ruas jauh di belakang rel (keluar dari underpass, naik ke tanah)
+      { const f0 = G.at(1), f1 = G.at(2); drawRoadPoly(c, [[f1.x - f1.hw, f1.y], [f1.x + f1.hw, f1.y], [f0.x + f0.hw, f0.y], [f0.x - f0.hw, f0.y]], asphaltFar);
+        c.strokeStyle = 'rgba(240,236,224,0.6)'; c.lineWidth = 1; for (const sd of [-0.92, 0.92]) { c.beginPath(); for (let d = 1; d <= 2.001; d += 0.1) { const q = G.at(d); d === 1 ? c.moveTo(q.x + sd * q.hw, q.y) : c.lineTo(q.x + sd * q.hw, q.y); } c.stroke(); }
+        const e = G.at(1.92); c.fillStyle = night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', V.p); for (let k = -3; k <= 3; k++) { c.beginPath(); c.arc(e.x + k * 1.1 * ppm, e.y - 0.2 * ppm, (0.9 + hash(k + i * 3.7) * 0.6) * ppm, 0, 7); c.fill(); } }
+      for (const v of A.veh) { v.d += v.dir * dt * v.sp; if (v.d > 2.05) v.d = -0.25; if (v.d < -0.3) v.d = 2.0; }
+      A.veh.filter((v) => v.d > 1.08).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
+      // dinding sayap & tanah di sisi galian: tanah berumput di luar dinding, menutup lereng balas di sekitar underpass
+      const grass = night ? '#24331f' : mix('#5a8540', '#78a84c', V.p);
+      c.fillStyle = grass; c.beginPath(); c.moveTo(sx - aw - 3 * ppm, yD1); c.lineTo(sx + aw + 3 * ppm, yD1); c.lineTo(sx + aw + 3 * ppm, H); c.lineTo(sx - aw - 3 * ppm, H); c.closePath(); c.save(); c.globalAlpha = 0.0; c.fill(); c.restore();
+      // jalan dekat di dasar galian
+      const n1 = near(0); drawRoadPoly(c, [[sx - 3.5 * ppm, yO], [sx + 3.5 * ppm, yO], [n1.x + n1.hw, H], [n1.x - n1.hw, H]], asphalt);
+      c.strokeStyle = 'rgba(240,236,224,0.75)'; c.lineWidth = 1; for (const sd of [-0.92, 0.92]) { c.beginPath(); for (let d = 0; d <= 1.001; d += 0.05) { const q = near(d); d === 0 ? c.moveTo(q.x + sd * q.hw, q.y) : c.lineTo(q.x + sd * q.hw, q.y); } c.stroke(); }
+      c.fillStyle = 'rgba(240,236,224,0.8)'; for (let d = 0.04; d < 0.95; d += 0.14) { const a = near(d), b = near(d + 0.06); c.beginPath(); c.moveTo(a.x - 0.03 * a.hw, a.y); c.lineTo(a.x + 0.03 * a.hw, a.y); c.lineTo(b.x + 0.03 * b.hw, b.y); c.lineTo(b.x - 0.03 * b.hw, b.y); c.closePath(); c.fill(); }
+      // dinding penahan beton di kedua sisi jalan: makin tinggi mendekati jembatan, sisi dalam terlihat, coping terang di atas
+      for (const sd of [-1, 1]) {
+        const lit = (sd < 0) === sunR ? 0 : 1; // dinding yang menghadap matahari lebih terang
+        c.beginPath(); for (let d = 0; d <= 1.0001; d += 0.05) { const q = near(d); c.lineTo(q.x + sd * q.hw * 1.02, q.y); }
+        for (let d = 1; d >= -0.0001; d -= 0.05) { const q = near(d), hgt = lerp(0.25, 3.2, d) * ppm * (0.6 + 0.4 * (1 - q.t)), out = sd * (0.5 + 0.9 * q.t) * ppm; c.lineTo(q.x + sd * q.hw * 1.02 + out, q.y - hgt); }
+        c.closePath(); const wg = c.createLinearGradient(0, yD1, 0, H); wg.addColorStop(0, lit ? concL : conc); wg.addColorStop(1, lit ? conc : concD); c.fillStyle = wg; c.fill();
+        c.strokeStyle = 'rgba(40,40,46,0.18)'; c.lineWidth = 1; c.beginPath(); for (let d = 0.1; d < 1; d += 0.15) { const q = near(d), hgt = lerp(0.25, 3.2, d) * ppm * (0.6 + 0.4 * (1 - q.t)), out = sd * (0.5 + 0.9 * q.t) * ppm; c.moveTo(q.x + sd * q.hw * 1.02, q.y); c.lineTo(q.x + sd * q.hw * 1.02 + out, q.y - hgt); } c.stroke();
+        c.strokeStyle = concL; c.lineWidth = Math.max(1, 0.18 * ppm); c.beginPath(); for (let d = 0; d <= 1.0001; d += 0.05) { const q = near(d), hgt = lerp(0.25, 3.2, d) * ppm * (0.6 + 0.4 * (1 - q.t)), out = sd * (0.5 + 0.9 * q.t) * ppm; d === 0 ? c.moveTo(q.x + sd * q.hw * 1.02 + out, q.y - hgt) : c.lineTo(q.x + sd * q.hw * 1.02 + out, q.y - hgt); } c.stroke();
+        // pagar pengaman di atas dinding
+        c.strokeStyle = night ? 'rgba(160,165,180,0.6)' : 'rgba(110,116,124,0.75)'; c.lineWidth = 1; c.beginPath();
+        for (let d = 0; d <= 1.0001; d += 0.05) { const q = near(d), hgt = lerp(0.25, 3.2, d) * ppm * (0.6 + 0.4 * (1 - q.t)), out = sd * (0.5 + 0.9 * q.t) * ppm, yy = q.y - hgt - 0.9 * ppm * (0.6 + 0.4 * (1 - q.t)); d === 0 ? c.moveTo(q.x + sd * q.hw * 1.02 + out, yy) : c.lineTo(q.x + sd * q.hw * 1.02 + out, yy); }
+        for (let d = 0; d <= 1.0001; d += 0.1) { const q = near(d), hgt = lerp(0.25, 3.2, d) * ppm * (0.6 + 0.4 * (1 - q.t)), out = sd * (0.5 + 0.9 * q.t) * ppm, x2 = q.x + sd * q.hw * 1.02 + out; c.moveTo(x2, q.y - hgt); c.lineTo(x2, q.y - hgt - 0.9 * ppm * (0.6 + 0.4 * (1 - q.t))); } c.stroke();
+      }
+      // kepala jembatan (abutmen) & mulut underpass: lorong gelap berlantai jalan, lampu langit-langit, terang di ujung seberang
+      c.fillStyle = concD; c.fillRect(sx - aw, yD1, aw * 2, yO - yD1);
+      const hg = c.createLinearGradient(sx - aw, 0, sx + aw, 0); hg.addColorStop(sunR ? 0 : 1, concD); hg.addColorStop(sunR ? 1 : 0, concL); c.fillStyle = hg; c.fillRect(sx - aw, yD1, aw * 2, yO - yD1);
+      const op = () => { c.beginPath(); c.moveTo(sx - ow, yO); c.lineTo(sx - ow, yD1 + 0.35 * ppm); c.quadraticCurveTo(sx - ow, yD1, sx - ow + 0.4 * ppm, yD1); c.lineTo(sx + ow - 0.4 * ppm, yD1); c.quadraticCurveTo(sx + ow, yD1, sx + ow, yD1 + 0.35 * ppm); c.lineTo(sx + ow, yO); c.closePath(); };
+      op(); const ig = c.createLinearGradient(0, yD1, 0, yO); ig.addColorStop(0, '#0b0c10'); ig.addColorStop(1, '#1d1f25'); c.fillStyle = ig; c.fill();
+      c.save(); op(); c.clip();
+      const ex0 = sx - 1.9 * ppm, ex1 = sx + 1.9 * ppm, eyT = yD1 + 0.75 * ppm, eyB = yO - 0.9 * ppm; // mulut seberang (terang)
+      const sky = c.createLinearGradient(0, eyT, 0, eyB); sky.addColorStop(0, night ? '#2a3050' : mix('#f2b48a', '#cfe2ec', V.p)); sky.addColorStop(1, night ? '#1a2a1a' : mix('#7a9a5a', '#9ab870', V.p)); c.fillStyle = sky; c.fillRect(ex0, eyT, ex1 - ex0, eyB - eyT);
+      c.fillStyle = '#2a2b30'; c.beginPath(); c.moveTo(sx - ow, yO); c.lineTo(sx + ow, yO); c.lineTo(ex1, eyB); c.lineTo(ex0, eyB); c.closePath(); c.fill(); // lantai jalan dalam lorong
+      c.fillStyle = 'rgba(240,236,224,0.5)'; c.beginPath(); c.moveTo(sx - 0.06 * ppm, yO); c.lineTo(sx + 0.06 * ppm, yO); c.lineTo(sx + 0.02 * ppm, eyB); c.lineTo(sx - 0.02 * ppm, eyB); c.closePath(); c.fill();
+      for (const sd of [-1, 1]) { c.fillStyle = sd < 0 ? '#16171c' : '#1b1c22'; c.beginPath(); c.moveTo(sx + sd * ow, yD1); c.lineTo(sx + sd * ow, yO); c.lineTo(sd < 0 ? ex0 : ex1, eyB); c.lineTo(sd < 0 ? ex0 : ex1, eyT); c.closePath(); c.fill(); }
+      // lampu langit-langit (natrium hangat) & pantulannya di lantai
+      for (let q = 0; q < 4; q++) { const t = q / 4, lx = sx, ly = lerp(yD1 + 0.15 * ppm, eyT, t), lwd = lerp(1.4, 0.45, t) * ppm;
+        c.fillStyle = '#ffd38a'; c.fillRect(lx - lwd / 2, ly, lwd, Math.max(1, lerp(0.14, 0.05, t) * ppm));
+        c.save(); c.globalCompositeOperation = 'lighter'; const lg = c.createRadialGradient(lx, ly, 0, lx, ly, lerp(2.4, 0.9, t) * ppm); lg.addColorStop(0, 'rgba(255,200,120,0.4)'); lg.addColorStop(1, 'rgba(255,200,120,0)'); c.fillStyle = lg; c.fillRect(lx - 3 * ppm, ly - 1 * ppm, 6 * ppm, 3 * ppm); c.restore(); }
+      c.restore();
+      // bayangan lembut di bawah balok jembatan pada mulut lorong
+      const sg = c.createLinearGradient(0, yD1, 0, yD1 + 1.2 * ppm); sg.addColorStop(0, 'rgba(0,0,0,0.5)'); sg.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = sg; c.fillRect(sx - ow, yD1, ow * 2, 1.2 * ppm);
+      // garis sambungan panel abutmen & rembesan air
+      c.strokeStyle = 'rgba(40,40,46,0.22)'; c.lineWidth = 1; c.beginPath(); for (const xx of [sx - aw + 1.6 * ppm, sx - ow - 1.6 * ppm, sx + ow + 1.6 * ppm, sx + aw - 1.6 * ppm]) { c.moveTo(xx, yD1); c.lineTo(xx, yO); } c.stroke();
+      // balok jembatan rel (gelagar beton) di atas mulut underpass, dengan tepi tetes & kilau sisi matahari
+      const bg = c.createLinearGradient(0, yD0, 0, yD1); bg.addColorStop(0, concL); bg.addColorStop(1, conc); c.fillStyle = bg; c.fillRect(sx - aw - 0.4 * ppm, yD0, aw * 2 + 0.8 * ppm, yD1 - yD0);
+      c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(sx - aw - 0.4 * ppm, yD1 - 0.12 * ppm, aw * 2 + 0.8 * ppm, 0.12 * ppm);
+      if (!night && V.rimA > 0.05) { c.fillStyle = V.rim; c.globalAlpha = 0.5 * V.rimA; c.fillRect(sx - aw - 0.4 * ppm, yD0, aw * 2 + 0.8 * ppm, Math.max(1, 0.08 * ppm)); c.globalAlpha = 1; }
+      // rambu batas tinggi & papan nama underpass di muka balok
+      { const bx = sx - 1.9 * ppm, by = yD0 + 0.12 * ppm, bw2 = 3.8 * ppm, bh2 = yD1 - yD0 - 0.24 * ppm;
+        c.fillStyle = '#1d4f9a'; roundRect(c, bx, by, bw2, bh2, 0.1 * ppm); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 1; roundRect(c, bx + 1.5, by + 1.5, bw2 - 3, bh2 - 3, 0.08 * ppm); c.stroke();
+        c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; let fz = Math.max(5, Math.round(0.42 * ppm)); const nm = up.name || 'UNDERPASS'; c.font = `800 ${fz}px "Big Shoulders Display", sans-serif`; while (fz > 4 && c.measureText(nm).width > bw2 - 0.4 * ppm) { fz--; c.font = `800 ${fz}px "Big Shoulders Display", sans-serif`; } c.fillText(nm, sx, by + bh2 / 2 + 0.02 * ppm);
+        for (const sd of [-1, 1]) { const cx = sx + sd * 3.2 * ppm, cy = by + bh2 / 2, r = bh2 * 0.48; c.fillStyle = '#fff'; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.fill(); c.strokeStyle = '#c0392b'; c.lineWidth = Math.max(1, r * 0.22); c.beginPath(); c.arc(cx, cy, r * 0.84, 0, 7); c.stroke();
+          c.fillStyle = '#111'; c.font = `900 ${Math.max(4, Math.round(r * 0.8))}px "Big Shoulders Display", sans-serif`; c.fillText('4,5m', cx, cy + 0.02 * ppm); }
+        c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
+      // lampu jalan di mulut galian
+      for (const sd of [-1, 1]) { const q = near(0.55), px = q.x + sd * (q.hw + 1.4 * ppm), py = q.y - 2.0 * ppm, ph = 4.2 * ppm * (q.hw / (3.5 * ppm)) * 0.7;
+        c.strokeStyle = night ? '#4a4e58' : '#7d868e'; c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath(); c.moveTo(px, py); c.lineTo(px, py - ph); c.lineTo(px - sd * 0.9 * ppm, py - ph); c.stroke();
+        if (night || V.p < 0.5) { c.save(); c.globalCompositeOperation = 'lighter'; const lg = c.createRadialGradient(px - sd * 0.9 * ppm, py - ph, 0, px - sd * 0.9 * ppm, py - ph, 1.8 * ppm); lg.addColorStop(0, 'rgba(255,214,150,0.6)'); lg.addColorStop(1, 'rgba(255,214,150,0)'); c.fillStyle = lg; c.beginPath(); c.arc(px - sd * 0.9 * ppm, py - ph, 1.8 * ppm, 0, 7); c.fill(); c.restore(); } }
+      // kendaraan di jalan dekat (masuk/keluar lorong) dengan lampu
+      A.veh.filter((v) => v.d <= 0.97).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G2, v));
+    });
   }
   function drawCrossings(V, layer, dtReal) {
     const { c, ppm, gy, X, st, wx0, wx1 } = V;
@@ -12257,7 +12361,11 @@ c.restore();
     // tiang pagar/patok paling dekat kamera: paralaks 2,6x, memanjang (kabur gerak) saat cepat
     if (MIS.dusk && S && V.st === S && !inBridge(S.x) && !nearStation(S.x)) { // pagar pembatas: dua palang putih memanjang di tepi bawah layar
       const ph0 = 2.2 * ppm * 1.6, base = H - (H - gy) * 0.08;
-      for (const [f, th] of [[0.78, 0.09], [0.42, 0.09]]) { const y = base - ph0 * f; c.fillStyle = '#eceae0'; c.fillRect(0, y, W, ph0 * th); c.fillStyle = 'rgba(255,190,120,0.45)'; c.fillRect(0, y, W, Math.max(1, ph0 * th * 0.3)); c.fillStyle = 'rgba(30,30,40,0.35)'; c.fillRect(0, y + ph0 * th, W, Math.max(1, ph0 * 0.025)); }
+      // celah palang di atas jalan underpass (jalan & dinding penahan tidak terhalang)
+      const gaps = []; for (const up of ROUTE.underpasses || []) { const sx = X(up.x); if (sx < -W || sx > 2 * W) continue; const nx = V.Xn(sx); gaps.push([Math.min(sx, nx) - 9 * ppm, Math.max(sx, nx) + 9 * ppm]); }
+      const runs = (fn) => { let a = 0; for (const [g0, g1] of gaps.sort((p, q) => p[0] - q[0])) { if (g0 > a) fn(a, Math.min(W, g0)); a = Math.max(a, g1); } if (a < W) fn(a, W); };
+      const fillRect0 = c.fillRect.bind(c);
+      for (const [f, th] of [[0.78, 0.09], [0.42, 0.09]]) { const y = base - ph0 * f; c.fillStyle = '#eceae0'; runs((a, b) => fillRect0(a, y, b - a, ph0 * th)); c.fillStyle = 'rgba(255,190,120,0.45)'; runs((a, b) => fillRect0(a, y, b - a, Math.max(1, ph0 * th * 0.3))); c.fillStyle = 'rgba(30,30,40,0.35)'; runs((a, b) => fillRect0(a, y + ph0 * th, b - a, Math.max(1, ph0 * 0.025))); }
     }
     if (S && V.st === S) {
       const kmh = S.v * 3.6, blur = clamp((kmh - 40) / 70, 0, 1), k2 = 2.6, slot2 = 9;
