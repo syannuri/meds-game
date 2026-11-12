@@ -3460,9 +3460,14 @@
     if ((S.events || []).length) { const ok = S.events.every((e) => e.kind === 'tsr' ? !S.violKeys['over:' + e.z.label] : !Object.keys(S.violKeys).some((k2) => k2.startsWith('goat') && ROUTE.goats[+k2.slice(4)] && ROUTE.goats[+k2.slice(4)].x === e.x)); if (ok) out.push('siaga'); }
     return out;
   }
-  function resultExtras() {
+  let MEDAL_RUN = null;
+  function storeMedals() {
     const id = MIS.daily ? null : MIS.id, got = evalMedals(), prev = id ? medalsOf(id) : [], fresh = got.filter((k) => !prev.includes(k));
     if (id && fresh.length) store.set('rn.medal.' + id, JSON.stringify(prev.concat(fresh)));
+    return { id, got, prev, fresh };
+  }
+  function resultExtras() {
+    const { id, got, prev, fresh } = MEDAL_RUN || storeMedals();
     const avail = MEDALS.filter((m) => m.k !== 'siaga' || (S.events || []).length || prev.includes('siaga'));
     const medalHtml = `<div class="rmedals">${avail.map((m) => { const on = got.includes(m.k), had = prev.includes(m.k); return `<div class="rmedal${on ? ' on' : had ? ' had' : ''}" title="${m.tip}"><i>${m.icon}</i><b>${m.name}</b><small>${on ? (fresh.includes(m.k) ? 'BARU!' : 'diraih') : had ? 'pernah diraih' : 'belum'}</small></div>`; }).join('')}</div>`;
     // lembar rekor: rata-rata jarak henti, kenyamanan, waktu tiba akhir (lebih cepat dari jadwal = lebih baik)
@@ -3521,9 +3526,10 @@
     if (ecoBonus && !S.ecoGiven) { S.ecoGiven = true; S.coins += ecoBonus; }
     const r = computeResult();
     const best = MIS.daily ? 3 : bestOf(MIS.id);
-    const rk0 = rankOf();
+    const pts0 = totalPoints(), rk0 = rankOf(pts0);
     if (r.stars > best) store.set('relnusantara.best.' + MIS.id, String(r.stars));
-    const rk1 = rankOf();
+    MEDAL_RUN = storeMedals();
+    const pts1 = totalPoints(), rk1 = rankOf(pts1);
     let extra = '';
     if (MIS.daily && !r.failed) {
       const sc = dailyScores(), prev = sc[MIS.daily.key] || 0;
@@ -3531,6 +3537,8 @@
       extra += `<div class="reward"><strong>Rute Harian ${MIS.daily.label}:</strong> skor ${r.daily}${r.daily > prev ? (prev ? ' · rekor baru hari ini!' : '') : ` · terbaik hari ini ${prev}`} · 🔥 ${dailyStreak()} hari beruntun</div>`;
     }
     if (rk1 > rk0) extra += `<div class="reward ahli"><strong>NAIK PANGKAT · ${RANKS[rk1].name.toUpperCase()}</strong> · livery ${RANKS[rk1].livName} untuk Cakra terbuka di Garasi.</div>`;
+    { const nx = RANKS[rk1 + 1], lo = RANKS[rk1].min, pr = nx ? (pts1 - lo) / (nx.min - lo) : 1, pr0 = nx && rk0 === rk1 ? clamp((pts0 - lo) / (nx.min - lo), 0, 1) : 0;
+      extra = `<div class="rrank"><div class="rrank-t"><b>${RANKS[rk1].name}</b><span>${pts1 > pts0 ? `+${pts1 - pts0} poin · ` : ''}${pts1} poin masinis</span></div><div class="rrank-bar"><i style="width:${(pr0 * 100).toFixed(1)}%"></i><i class="gain" style="left:${(pr0 * 100).toFixed(1)}%;width:${(Math.max(0, pr - pr0) * 100).toFixed(1)}%"></i></div><small>${nx ? `${nx.min - pts1} poin lagi → ${nx.name} · livery ${nx.livName}` : 'Pangkat tertinggi: Masinis Legenda'} · poin = bintang + medali</small></div>` + extra; }
     if (S.expert && !r.failed && r.stars === 3) {
       const a = ahliSet(); if (!a.includes(MIS.id)) { a.push(MIS.id); store.set('rn.ahli', JSON.stringify(a)); }
       extra += '<div class="reward ahli"><strong>MASINIS AHLI</strong> · tiga bintang tanpa bantuan HUD. Lencana emas ditambahkan ke karcis misi ini.</div>';
@@ -3953,22 +3961,22 @@
       [['Cakra', 'cakra'], ['Agraveda', 'argo'], ['Kilat G1', 'hst'], ['Guntur', 'hst2']].forEach(([nm, ag], i) => { const x = bx + i * (bw2 + 6), on = ag === titleMap.loco; c.fillStyle = on ? '#f2a516' : 'rgba(255,255,255,0.08)'; roundRect(c, x, by, bw2, bh2, bh2 / 2); c.fill(); c.fillStyle = on ? '#1d1405' : '#d8d2c4'; c.font = `800 ${Math.round(bh2 * 0.5)}px "Plus Jakarta Sans", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(nm, x + bw2 / 2, by + bh2 / 2, bw2 - 6); });
       c.textAlign = 'start'; c.textBaseline = 'alphabetic'; titleMap.locoBtn = { x: bx, y: by, w: bw2 * 4 + 18, h: bh2, bw: bw2 };
       // Kartu Masinis (kanan bawah): pangkat, bintang, kemajuan ke pangkat berikutnya
-      const n = totalStars(), ri = rankOf(n), nx = RANKS[ri + 1], kw = Math.min(210, w * 0.36), kh = bh2 * 1.7, kx = w - w * 0.04 - kw, ky = h * 0.05;
+      const n = totalPoints(), ri = rankOf(n), nx = RANKS[ri + 1], kw = Math.min(210, w * 0.36), kh = bh2 * 1.7, kx = w - w * 0.04 - kw, ky = h * 0.05;
       const kg = c.createLinearGradient(kx, ky, kx + kw, ky + kh); kg.addColorStop(0, '#2a3d52'); kg.addColorStop(1, '#1a2533'); c.fillStyle = kg; roundRect(c, kx, ky, kw, kh, 8); c.fill();
       c.strokeStyle = 'rgba(233,185,73,0.7)'; c.lineWidth = 1; roundRect(c, kx, ky, kw, kh, 8); c.stroke();
       c.fillStyle = '#e9b949'; c.font = `800 ${Math.round(kh * 0.2)}px "Plus Jakarta Sans", sans-serif`; c.fillText('KARTU MASINIS', kx + 9, ky + kh * 0.26);
       c.fillStyle = '#f3eee1'; c.font = `900 ${Math.round(kh * 0.32)}px "Big Shoulders Display", sans-serif`; c.fillText(RANKS[ri].name.toUpperCase(), kx + 9, ky + kh * 0.6, kw - 70);
-      c.fillStyle = '#ffd36b'; c.textAlign = 'right'; c.font = `800 ${Math.round(kh * 0.26)}px "Plus Jakarta Sans", sans-serif`; c.fillText(`★ ${n}/${MISSION_ORDER.length * 3}`, kx + kw - 9, ky + kh * 0.6); c.textAlign = 'start';
+      c.fillStyle = '#ffd36b'; c.textAlign = 'right'; c.font = `800 ${Math.round(kh * 0.26)}px "Plus Jakarta Sans", sans-serif`; c.fillText(`${n} poin`, kx + kw - 9, ky + kh * 0.6); c.textAlign = 'start';
       const pr = nx ? (n - RANKS[ri].min) / (nx.min - RANKS[ri].min) : 1;
       c.fillStyle = 'rgba(255,255,255,0.12)'; roundRect(c, kx + 9, ky + kh * 0.74, kw - 18, 4, 2); c.fill(); c.fillStyle = '#f2a516'; roundRect(c, kx + 9, ky + kh * 0.74, (kw - 18) * clamp(pr, 0, 1), 4, 2); c.fill();
-      c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(kh * 0.15)}px "Plus Jakarta Sans", sans-serif`; c.fillText(nx ? `${nx.min - n}★ lagi → ${nx.name} · livery ${nx.livName}` : 'Pangkat tertinggi tercapai', kx + 9, ky + kh * 0.93, kw - 18);
+      c.fillStyle = '#a5b4b5'; c.font = `600 ${Math.round(kh * 0.15)}px "Plus Jakarta Sans", sans-serif`; c.fillText(nx ? `${nx.min - n} poin lagi → ${nx.name} · livery ${nx.livName}` : 'Pangkat tertinggi tercapai', kx + 9, ky + kh * 0.93, kw - 18);
       // pilihan livery Cakra (terkunci sesuai pangkat)
       titleMap.livBtns = [];
-      if (!AG) { const lw2 = Math.min(78, (w * 0.56) / 4), lh = bh2 * 0.85, ly = by - lh - 6;
+      if (!AG) { const lw2 = Math.min(78, (w * 0.62) / RANKS.length), lh = bh2 * 0.85, ly = by - lh - 6;
         RANKS.forEach((q, i) => { const x = bx + i * (lw2 + 4), open = n >= q.min, on = LOCO_ORN === q.liv;
           c.fillStyle = on ? 'rgba(242,165,22,0.9)' : open ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.04)'; roundRect(c, x, ly, lw2, lh, lh / 2); c.fill();
           c.fillStyle = on ? '#1d1405' : open ? '#f3eee1' : 'rgba(243,238,225,0.4)'; c.font = `700 ${Math.round(lh * 0.46)}px "Plus Jakarta Sans", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-          c.fillText(open ? q.livName : `🔒 ${q.min}★`, x + lw2 / 2, ly + lh / 2, lw2 - 6); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+          c.fillText(open ? q.livName : `🔒 ${q.min}`, x + lw2 / 2, ly + lh / 2, lw2 - 6); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
           titleMap.livBtns.push({ x, y: ly, w: lw2, h: lh, liv: q.liv, open }); });
       } }
     // album kartu pos landmark
@@ -4028,8 +4036,8 @@
   const expertAllowed = (m) => MISSION_ORDER.includes(m.id) && bestOf(m.id) > 0;
   function renderMissionList() {
     if (titleMap.tab === 'missions' && $('titleTabLbl')) $('titleTabLbl').textContent = `${MISSION_ORDER.length} misi · 4 babak`;
-    { const n = totalStars(), ri = rankOf(n), nx = RANKS[ri + 1], pr = nx ? (n - RANKS[ri].min) / (nx.min - RANKS[ri].min) : 1, done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
-      const pc = $('profileChip'); if (pc) pc.innerHTML = `<span class="pbadge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" fill="url(#pbg)"/><defs><linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset=".5" stop-color="#e2a93b"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><text x="12" y="15.5" text-anchor="middle" font-size="9" font-weight="900" fill="#2a1a05" font-family="sans-serif">${ri + 1}</text></svg></span><span class="pinfo"><b>Anett · ${RANKS[ri].name}</b><span class="pbar"><i style="width:${Math.round(clamp(pr, 0, 1) * 100)}%"></i></span></span><span class="pstat"><b>★ ${n}</b><small>${done}/${MISSION_ORDER.length} misi</small></span>`; }
+    { const n = totalPoints(), ri = rankOf(n), nx = RANKS[ri + 1], pr = nx ? (n - RANKS[ri].min) / (nx.min - RANKS[ri].min) : 1, done = MISSION_ORDER.filter((id) => bestOf(id) > 0).length;
+      const pc = $('profileChip'); if (pc) pc.innerHTML = `<span class="pbadge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" fill="url(#pbg)"/><defs><linearGradient id="pbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe7a3"/><stop offset=".5" stop-color="#e2a93b"/><stop offset="1" stop-color="#8a5a12"/></linearGradient></defs><text x="12" y="15.5" text-anchor="middle" font-size="9" font-weight="900" fill="#2a1a05" font-family="sans-serif">${ri + 1}</text></svg></span><span class="pinfo"><b>Anett · ${RANKS[ri].name}</b><span class="pbar"><i style="width:${Math.round(clamp(pr, 0, 1) * 100)}%"></i></span></span><span class="pstat"><b>${n} poin</b><small>${done}/${MISSION_ORDER.length} misi</small></span>`; }
     const nextId = nextMissionId();
     const today = new Date();
     MISSIONS.daily = buildDaily(today);
@@ -10451,10 +10459,14 @@
     { min: 8, name: 'Masinis Muda', liv: 'kawung', livName: 'Kawung' },
     { min: 16, name: 'Masinis', liv: 'parang', livName: 'Parang' },
     { min: 26, name: 'Masinis Utama', liv: 'mega', livName: 'Mega Mendung' },
+    { min: 40, name: 'Masinis Kereta Cepat', liv: 'songket', livName: 'Songket' },
+    { min: 60, name: 'Masinis Legenda', liv: 'garuda', livName: 'Garuda Emas' },
   ];
   const totalStars = () => MISSION_ORDER.reduce((a, id) => a + bestOf(id), 0);
-  const rankOf = (n = totalStars()) => { let r = 0; RANKS.forEach((q, i) => { if (n >= q.min) r = i; }); return r; };
-  { const sv = store.get('rn.livery'); const ok = RANKS.find((q) => q.liv === sv); if (ok && totalStars() >= ok.min) LOCO_ORN = sv; }
+  // poin masinis = bintang terbaik + medali tantangan yang pernah diraih di semua misi
+  const totalPoints = () => totalStars() + MISSION_ORDER.reduce((a, id) => a + medalsOf(id).length, 0);
+  const rankOf = (n = totalPoints()) => { let r = 0; RANKS.forEach((q, i) => { if (n >= q.min) r = i; }); return r; };
+  { const sv = store.get('rn.livery'); const ok = RANKS.find((q) => q.liv === sv); if (ok && totalPoints() >= ok.min) LOCO_ORN = sv; }
   let LOCO_SHAPE = 'neo'; // 'boxC' moncong pendek (utama), 'box' kotak ramping, 'boxB' kabin tinggi, 'aero' aerodinamis
   // ornamen livery digambar sekali ke kanvas tersimpan lalu ditempel tiap frame (ukiran ini bagian paling berat dari lokomotif Cakra)
   const ORN = { key: '', cv: null };
@@ -10512,6 +10524,29 @@
         c.beginPath(); c.ellipse(x + h * 0.55 + step * 0.5, ym, u * 0.13, u * 0.2, -0.8, 0, 7); c.fill();
       }
       c.lineCap = 'butt';
+    } else if (kind === 'songket') {
+      // songket: belah ketupat bertingkat berbenang emas dengan pucuk rebung di tepi atas & bawah
+      const step = u * 1.5;
+      c.lineWidth = Math.max(1, u * 0.09);
+      for (let x = x0; x < x1 + step; x += step) {
+        for (const s2 of [0.62, 0.38]) { c.beginPath(); c.moveTo(x, ym - h * s2 * 0.5); c.lineTo(x + step * 0.5 * s2, ym); c.lineTo(x, ym + h * s2 * 0.5); c.lineTo(x - step * 0.5 * s2, ym); c.closePath(); c.stroke(); }
+        c.beginPath(); c.arc(x, ym, u * 0.1, 0, 7); c.fill();
+        c.beginPath(); c.moveTo(x + step * 0.5 - u * 0.22, yTop); c.lineTo(x + step * 0.5, yTop + h * 0.2); c.lineTo(x + step * 0.5 + u * 0.22, yTop); c.fill();
+        c.beginPath(); c.moveTo(x + step * 0.5 - u * 0.22, yBot); c.lineTo(x + step * 0.5, yBot - h * 0.2); c.lineTo(x + step * 0.5 + u * 0.22, yBot); c.fill();
+      }
+      c.fillRect(x0, yTop, x1 - x0, Math.max(1, u * 0.05)); c.fillRect(x0, yBot - Math.max(1, u * 0.05), x1 - x0, Math.max(1, u * 0.05));
+    } else if (kind === 'garuda') {
+      // garuda emas: sayap berbulu bertingkat yang mengembang ke depan, berselang bintang kecil
+      const step = u * 2.6;
+      for (let x = x0; x < x1 + step; x += step) {
+        const bx = x, by = yBot - h * 0.12;
+        for (let f = 0; f < 5; f++) { const ang = -0.25 - f * 0.22, L = h * (0.92 - f * 0.1), wdt = u * 0.26;
+          const tx = bx + Math.cos(ang) * L * 1.5, ty = by + Math.sin(ang) * L, nx = -Math.sin(ang) * wdt, ny = Math.cos(ang) * wdt;
+          c.beginPath(); c.moveTo(bx + nx, by + ny); c.quadraticCurveTo((bx + tx) / 2 + nx * 1.6, (by + ty) / 2 + ny * 1.6, tx, ty); c.quadraticCurveTo((bx + tx) / 2 - nx * 0.6, (by + ty) / 2 - ny * 0.6, bx - nx, by - ny); c.closePath(); c.fill(); }
+        c.beginPath(); c.arc(bx, by, u * 0.16, 0, 7); c.fill();
+        const sx = x + step * 0.78, sy = ym, r = u * 0.2; c.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r; c.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr); } c.closePath(); c.fill();
+      }
+      c.fillRect(x0, yBot - u * 0.08, x1 - x0, u * 0.08); c.fillRect(x0, yTop, x1 - x0, u * 0.06);
     } else {
       // mega mendung: awan bergulung dengan garis berlapis
       const step = u * 2.4;

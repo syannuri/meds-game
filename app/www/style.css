@@ -1183,3 +1183,14 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 .rrec-c.new { background: rgba(43, 179, 163, 0.18); box-shadow: inset 0 0 0 1px rgba(43, 179, 163, 0.6); } .rrec-c.new em { color: #5ee0cc; font-weight: 800; opacity: 1; }
 .revents { font-size: calc(11px * var(--rk, 1)); opacity: 0.85; margin: 0 0 6px; }
 .ticket .tmedals { font-size: 12px; margin-left: 4px; letter-spacing: 1px; }
+
+/* kemajuan pangkat masinis di kartu hasil */
+.rrank { margin: calc(4px * var(--rk, 1)) 0 calc(6px * var(--rk, 1)); padding: calc(6px * var(--rk, 1)) 10px; border-radius: 12px; background: linear-gradient(90deg, rgba(242, 165, 22, 0.16), rgba(255, 255, 255, 0.04)); }
+.rrank-t { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.rrank-t b { font-family: "Big Shoulders Display", sans-serif; font-weight: 900; font-size: calc(15px * var(--rk, 1)); letter-spacing: 0.04em; text-transform: uppercase; color: #ffd36b; }
+.rrank-t span { font-size: calc(11px * var(--rk, 1)); opacity: 0.85; }
+.rrank-bar { position: relative; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.1); margin: 4px 0 3px; overflow: hidden; }
+.rrank-bar i { position: absolute; top: 0; bottom: 0; left: 0; background: #e2a93b; border-radius: 4px; }
+.rrank-bar i.gain { background: linear-gradient(90deg, #ffd36b, #fff4c4); animation: rankGain 1.2s 0.6s ease-out both; transform-origin: left; }
+@keyframes rankGain { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.rrank small { font-size: calc(10px * var(--rk, 1)); opacity: 0.75; }
