@@ -651,7 +651,7 @@
         { from: 11200, to: 11600, name: 'Jembatan Kali Kencana' },
       ],
       scenes: [
-        { from: -400, to: 1300, kind: 'city', name: 'Sukamaju' },
+        { from: -400, to: 1300, kind: 'city', name: 'Sukamaju', brands: [{ name: 'ANETT', at: -40, style: 'chrome', sparkle: true, bold: true, w: 16, h: 23 }] }, // gedung ANETT terlihat saat Argo Senja berangkat
         { from: 3400, to: 6300, kind: 'coast' },
         { from: 6300, to: 7600, kind: 'teak' },
         { from: 8600, to: 10000, kind: 'salt' },
@@ -12075,9 +12075,9 @@
     } else {
       // tulisan logam krom mengilap senada kaca gedung: huruf berjarak lebar, gradasi perak-biru baja, garis tepi tipis,
       // kilau putih yang menyapu huruf secara berkala (tanpa logo; banner tetap kaca fasad yang sama)
-      const name = B.name, gap = 0.55 * u; let fs = Math.round(3.4 * u);
+      const name = B.name, gap = (B.bold ? 0.3 : 0.55) * u, wt = B.bold ? 900 : 800; let fs = Math.round((B.bold ? 4.0 : 3.4) * u);
       c.textBaseline = 'middle'; c.textAlign = 'left';
-      const widthAt = (f) => { c.font = `800 ${f}px "Big Shoulders Display", sans-serif`; return name.split('').reduce((a, ch) => a + c.measureText(ch).width, 0) + gap * (name.length - 1); };
+      const widthAt = (f) => { c.font = `${wt} ${f}px "Big Shoulders Display", sans-serif`; if (B.bold) c.font = `${wt} ${f}px "Big Shoulders Display", sans-serif`; return name.split('').reduce((a, ch) => a + c.measureText(ch).width, 0) + gap * (name.length - 1); };
       while (fs > 6 && widthAt(fs) > w - 2.4 * u) fs--;
       const tw = widthAt(fs), tx0 = x + (w - tw) / 2, ty = by + bh / 2 + 0.1 * u, top2 = ty - fs * 0.45, bot2 = ty + fs * 0.45;
       const cg = c.createLinearGradient(0, top2, 0, bot2);
@@ -12086,10 +12086,19 @@
       const sweepX = x - w * 0.4 + ((tt * 0.18) % 1.6) * w * 1.2, sw = c.createLinearGradient(sweepX - 1.5 * u, 0, sweepX + 1.5 * u, 0); sw.addColorStop(0, 'rgba(255,255,255,0)'); sw.addColorStop(0.5, 'rgba(255,255,255,0.95)'); sw.addColorStop(1, 'rgba(255,255,255,0)');
       let cx2 = tx0;
       for (const ch of name) {
+        if (B.bold) { c.save(); c.lineJoin = 'round'; c.strokeStyle = night ? 'rgba(20,30,60,0.8)' : 'rgba(28,42,62,0.78)'; c.lineWidth = Math.max(1.5, 0.45 * u); c.strokeText(ch, cx2, ty); c.restore(); } // tepi gelap baja agar tegas
         c.save(); c.shadowColor = night ? 'rgba(170,200,255,0.7)' : 'rgba(30,50,75,0.35)'; c.shadowBlur = (night ? 1.0 : 0.35) * u; c.shadowOffsetY = night ? 0 : 0.08 * u;
         c.fillStyle = cg; c.fillText(ch, cx2, ty); c.restore();
-        c.strokeStyle = night ? 'rgba(200,220,255,0.5)' : 'rgba(40,60,85,0.5)'; c.lineWidth = Math.max(0.6, 0.06 * u); c.strokeText(ch, cx2, ty);
+        if (B.bold) { c.save(); c.lineJoin = 'round'; c.strokeStyle = cg; c.lineWidth = Math.max(1, 0.22 * u); c.strokeText(ch, cx2, ty); c.restore(); } // menebalkan badan huruf
+        if (!B.bold) { c.strokeStyle = night ? 'rgba(200,220,255,0.5)' : 'rgba(40,60,85,0.5)'; c.lineWidth = Math.max(0.6, 0.06 * u); c.strokeText(ch, cx2, ty); }
         c.fillStyle = sw; c.fillText(ch, cx2, ty); // kilau berjalan
+        if (B.sparkle) { // kilauan bintang berkelip di huruf
+          const cw2 = c.measureText(ch).width;
+          for (let q = 0; q < 2; q++) { const sd = hash(name.length * 7 + cx2 * 0.01 + q * 3.1), ph = (tt * (0.7 + sd * 0.6) + sd * 6) % 2.2, a = ph < 1 ? Math.sin(ph * Math.PI) : 0; if (a < 0.05) continue;
+            const sx = cx2 + cw2 * (0.2 + 0.6 * hash(sd * 13 + q)), sy = top2 + (bot2 - top2) * (0.15 + 0.6 * hash(sd * 29 + q)), rr = (0.35 + 0.35 * a) * u;
+            c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = a; c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(sx, sy - rr); c.lineTo(sx + rr * 0.18, sy - rr * 0.18); c.lineTo(sx + rr, sy); c.lineTo(sx + rr * 0.18, sy + rr * 0.18); c.lineTo(sx, sy + rr); c.lineTo(sx - rr * 0.18, sy + rr * 0.18); c.lineTo(sx - rr, sy); c.lineTo(sx - rr * 0.18, sy - rr * 0.18); c.closePath(); c.fill();
+            const gg = c.createRadialGradient(sx, sy, 0, sx, sy, rr * 0.9); gg.addColorStop(0, o.warm ? `rgba(${o.warm},0.9)` : 'rgba(255,240,210,0.9)'); gg.addColorStop(1, 'rgba(255,240,210,0)'); c.fillStyle = gg; c.beginPath(); c.arc(sx, sy, rr * 0.9, 0, 7); c.fill(); c.restore(); }
+        }
         cx2 += c.measureText(ch).width + gap;
       }
     }
