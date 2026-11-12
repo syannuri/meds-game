@@ -729,7 +729,7 @@
         { from: 20600, to: 22400, viaduct: true, land: true, name: 'Jalur Layang Halimun' },
       ],
       scenes: [
-        { from: -500, to: 1500, kind: 'city', big: true, glass: true, brand: { name: 'PRISMATIX', sub: 'LAB', at: 30 } }, // gedung PRISMATIX LAB terlihat saat Guntur berangkat
+        { from: -500, to: 1500, kind: 'city', big: true, glass: true, brands: [{ name: 'PRISMATIX', sub: 'LAB', at: 30 }, { name: 'ANNASYA', at: -150, style: 'chrome', w: 15, h: 24, crownL: true }] }, // gedung bermerek terlihat saat Guntur berangkat
         { from: 1500, to: 5200, kind: 'solar' },
         { from: 5200, to: 9000, kind: 'wind' },
         { from: 11500, to: 15000, kind: 'terrace' },
@@ -11818,15 +11818,15 @@
   // menara kaca futuristik dengan banner LED yang tertanam rata di fasad (bukan papan tempel): logo prisma memecah cahaya
   // menjadi spektrum, tulisan bercahaya, garis cahaya menyambung ke lajur cahaya tegak di sudut gedung, kaca memantulkan langit
   function brandTower(c, x, yb, u, o) {
-    const night = !!o.night, w = 18 * u, h = 21 * u, sd = 4.2 * u, top = yb - h, crown = 2.6 * u, tt = performance.now() / 1000;
-    const warm = o.warm || '255,236,200', B = o.brand;
+    const B = o.brand, night = !!o.night, w = (B.w || 18) * u, h = (B.h || 21) * u, sd = 4.2 * u, top = yb - h, crown = 2.6 * u, tt = performance.now() / 1000;
+    const warm = o.warm || '255,236,200', chrome = B.style === 'chrome';
     c.save();
     // sisi samping (3D) di kanan, lebih gelap & sedikit hangat bila matahari di kanan
     const sg = c.createLinearGradient(0, top, 0, yb); sg.addColorStop(0, night ? '#1c2236' : '#6f86a0'); sg.addColorStop(1, night ? '#0e1220' : '#334658');
     c.fillStyle = sg; c.beginPath(); c.moveTo(x + w, yb); c.lineTo(x + w, top + crown); c.lineTo(x + w + sd, top + crown + 1.6 * u); c.lineTo(x + w + sd, yb); c.closePath(); c.fill();
     if (o.sunR && !night) { c.fillStyle = `rgba(${warm},0.22)`; c.fill(); }
     // muka depan: kaca memantulkan langit (terang di atas), mahkota miring
-    const face = () => { c.beginPath(); c.moveTo(x, yb); c.lineTo(x, top + crown * 0.25); c.lineTo(x + w, top + crown); c.lineTo(x + w, yb); c.closePath(); };
+    const face = () => { c.beginPath(); c.moveTo(x, yb); c.lineTo(x, top + (B.crownL ? crown : crown * 0.25)); c.lineTo(x + w, top + (B.crownL ? crown * 0.25 : crown)); c.lineTo(x + w, yb); c.closePath(); };
     const fg = c.createLinearGradient(0, top, 0, yb);
     if (night) { fg.addColorStop(0, '#1a2440'); fg.addColorStop(1, '#0c1222'); } else { fg.addColorStop(0, `rgba(${warm},1)`); fg.addColorStop(0.18, '#a9c6de'); fg.addColorStop(0.6, '#5f7f9c'); fg.addColorStop(1, '#2e4458'); }
     face(); c.fillStyle = fg; c.fill();
@@ -11844,9 +11844,10 @@
     // latar banner = kaca fasad yang sama, hanya sedikit lebih dalam ronanya; kisi kaca tetap menerus sehingga LED tampak di balik kaca
     const bg = c.createLinearGradient(0, by, 0, by + bh); bg.addColorStop(0, night ? 'rgba(6,10,24,0.45)' : 'rgba(40,70,100,0.16)'); bg.addColorStop(1, night ? 'rgba(6,10,24,0.55)' : 'rgba(30,55,85,0.24)'); c.fillStyle = bg; c.fillRect(x, by, w, bh);
     c.strokeStyle = night ? 'rgba(120,150,210,0.16)' : 'rgba(235,244,252,0.28)'; c.lineWidth = 1; c.beginPath(); for (let m = x + 1.4 * u; m < x + w; m += 1.4 * u) { c.moveTo(m, by); c.lineTo(m, by + bh); } c.stroke();
-    const spec = c.createLinearGradient(x, 0, x + w, 0); ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899', '#f59e0b'].forEach((col, i) => spec.addColorStop(i / 4, col));
+    const spec = c.createLinearGradient(x, 0, x + w, 0); (chrome ? ['#f9a8b8', '#c084fc', '#60a5fa', '#2dd4bf', '#fcd34d'] : ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899', '#f59e0b']).forEach((col, i) => spec.addColorStop(i / 4, col));
     const pulse = 0.75 + 0.25 * Math.sin(tt * 1.6);
     c.fillStyle = spec; c.globalAlpha = night ? 0.9 : 0.7; c.fillRect(x, by, w, Math.max(1, 0.12 * u)); c.fillRect(x, by + bh - Math.max(1, 0.12 * u), w, Math.max(1, 0.12 * u)); c.globalAlpha = 1;
+    if (!chrome) {
     // logo prisma: segitiga kaca, sinar putih masuk dari kiri, spektrum keluar ke kanan
     const px = x + 2.6 * u, py = by + bh / 2, ps = 1.7 * u;
     c.strokeStyle = night ? 'rgba(255,255,255,0.9)' : 'rgba(30,58,95,0.85)'; c.lineWidth = Math.max(1, 0.12 * u); c.beginPath(); c.moveTo(px - 2.2 * u, py + 0.3 * u); c.lineTo(px - 0.5 * u, py); c.stroke();
@@ -11864,14 +11865,40 @@
     c.save(); c.shadowColor = night ? 'rgba(120,200,255,0.9)' : 'rgba(255,255,255,0.7)'; c.shadowBlur = (night ? 1.2 : 0.5) * u * pulse; c.fillStyle = tg; c.fillText(B.name, tx, py + 0.1 * u); c.restore();
     c.font = `600 ${Math.round(fs * 0.7)}px "Big Shoulders Display", sans-serif`; c.fillStyle = night ? `rgba(165,243,252,${0.78 + 0.22 * pulse})` : `rgba(14,116,144,${0.8 + 0.2 * pulse})`;
     c.fillText(sub, tx + nameW + 0.7 * u, py + 0.12 * u);
-    c.restore();
+    } else {
+      // tulisan logam krom mengilap senada kaca gedung: huruf berjarak lebar, gradasi perak-biru baja, garis tepi tipis,
+      // kilau putih yang menyapu huruf secara berkala (tanpa logo; banner tetap kaca fasad yang sama)
+      const name = B.name, gap = 0.55 * u; let fs = Math.round(3.4 * u);
+      c.textBaseline = 'middle'; c.textAlign = 'left';
+      const widthAt = (f) => { c.font = `800 ${f}px "Big Shoulders Display", sans-serif`; return name.split('').reduce((a, ch) => a + c.measureText(ch).width, 0) + gap * (name.length - 1); };
+      while (fs > 6 && widthAt(fs) > w - 2.4 * u) fs--;
+      const tw = widthAt(fs), tx0 = x + (w - tw) / 2, ty = by + bh / 2 + 0.1 * u, top2 = ty - fs * 0.45, bot2 = ty + fs * 0.45;
+      const cg = c.createLinearGradient(0, top2, 0, bot2);
+      if (night) { cg.addColorStop(0, '#f4f8ff'); cg.addColorStop(0.45, '#b9c8dc'); cg.addColorStop(0.55, '#7f93ab'); cg.addColorStop(1, '#dfe8f3'); }
+      else { cg.addColorStop(0, '#ffffff'); cg.addColorStop(0.32, '#dde6ee'); cg.addColorStop(0.5, '#7c8fa3'); cg.addColorStop(0.58, '#f2f6f9'); cg.addColorStop(1, '#a9b8c6'); }
+      const sweepX = x - w * 0.4 + ((tt * 0.18) % 1.6) * w * 1.2, sw = c.createLinearGradient(sweepX - 1.5 * u, 0, sweepX + 1.5 * u, 0); sw.addColorStop(0, 'rgba(255,255,255,0)'); sw.addColorStop(0.5, 'rgba(255,255,255,0.95)'); sw.addColorStop(1, 'rgba(255,255,255,0)');
+      let cx2 = tx0;
+      // warna iridesen (mutiara pelangi) mengalir pelan sepanjang tulisan, lalu ditimpa bayangan logam krom agar tetap mengilap
+      const hue = c.createLinearGradient(tx0, 0, tx0 + tw, 0), sh = (tt * 0.05) % 1, cols = ['#ec4899', '#a855f7', '#6366f1', '#0ea5e9', '#14b8a6', '#f59e0b', '#ec4899'];
+      cols.forEach((col, q) => hue.addColorStop(((q / (cols.length - 1)) + sh) % 1, col)); hue.addColorStop(0, cols[0]); hue.addColorStop(1, cols[0]);
+      const metal = c.createLinearGradient(0, top2, 0, bot2); metal.addColorStop(0, 'rgba(255,255,255,0.55)'); metal.addColorStop(0.3, 'rgba(255,255,255,0.05)'); metal.addColorStop(0.5, 'rgba(30,20,60,0.3)'); metal.addColorStop(0.6, 'rgba(255,255,255,0.4)'); metal.addColorStop(1, 'rgba(40,20,70,0.25)');
+      for (const ch of name) {
+        c.save(); c.shadowColor = night ? 'rgba(200,160,255,0.85)' : 'rgba(60,40,90,0.35)'; c.shadowBlur = (night ? 1.2 : 0.35) * u; c.shadowOffsetY = night ? 0 : 0.08 * u;
+        c.fillStyle = hue; c.fillText(ch, cx2, ty); c.restore();
+        c.fillStyle = metal; c.fillText(ch, cx2, ty);
+        c.strokeStyle = night ? 'rgba(240,220,255,0.55)' : 'rgba(70,50,110,0.45)'; c.lineWidth = Math.max(0.6, 0.06 * u); c.strokeText(ch, cx2, ty);
+        c.fillStyle = sw; c.fillText(ch, cx2, ty); // kilau berjalan
+        cx2 += c.measureText(ch).width + gap;
+      }
+    }
+c.restore();
     // banner melingkari sudut ke sisi samping gedung (menyatu dengan badan), garis spektrum ikut berbelok
     { const k = 1.6 * u / sd, q = (dx, y) => [x + w + dx, y + dx * k]; const qs = [q(0, by), q(sd, by), q(sd, by + bh), q(0, by + bh)];
       c.fillStyle = night ? 'rgba(6,10,24,0.5)' : 'rgba(20,40,60,0.14)'; c.beginPath(); qs.forEach(([a1, b1], i) => (i ? c.lineTo(a1, b1) : c.moveTo(a1, b1))); c.closePath(); c.fill();
-      c.strokeStyle = '#f59e0b'; c.globalAlpha = night ? 0.9 : 0.6; c.lineWidth = Math.max(1, 0.18 * u); c.beginPath(); c.moveTo(...q(0, by)); c.lineTo(...q(sd, by)); c.moveTo(...q(0, by + bh)); c.lineTo(...q(sd, by + bh)); c.stroke(); c.globalAlpha = 1;
-      for (let i = 0; i < 4; i++) { const t = (i + 0.5) / 4, [a1, b1] = q(sd * t, by + bh * 0.3), [a2, b2] = q(sd * t, by + bh * 0.7); c.strokeStyle = ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899'][i]; c.globalAlpha = 0.55 * pulse; c.lineWidth = Math.max(1, 0.12 * u); c.beginPath(); c.moveTo(a1, b1); c.lineTo(a2, b2); c.stroke(); } c.globalAlpha = 1; }
+      c.strokeStyle = chrome ? '#f0abfc' : '#f59e0b'; c.globalAlpha = night ? 0.9 : 0.6; c.lineWidth = Math.max(1, 0.18 * u); c.beginPath(); c.moveTo(...q(0, by)); c.lineTo(...q(sd, by)); c.moveTo(...q(0, by + bh)); c.lineTo(...q(sd, by + bh)); c.stroke(); c.globalAlpha = 1;
+      for (let i = 0; i < 4; i++) { const t = (i + 0.5) / 4, [a1, b1] = q(sd * t, by + bh * 0.3), [a2, b2] = q(sd * t, by + bh * 0.7); c.strokeStyle = chrome ? ['#f9a8b8', '#a78bfa', '#60a5fa', '#2dd4bf'][i] : ['#22d3ee', '#3b82f6', '#a855f7', '#ec4899'][i]; c.globalAlpha = 0.55 * pulse; c.lineWidth = Math.max(1, 0.12 * u); c.beginPath(); c.moveTo(a1, b1); c.lineTo(a2, b2); c.stroke(); } c.globalAlpha = 1; }
     // lajur cahaya tegak di sudut gedung, menyambung dari banner ke kaki gedung (menyatu dengan badan)
-    const lg = c.createLinearGradient(0, by + bh, 0, yb); lg.addColorStop(0, `rgba(34,211,238,${0.9 * pulse})`); lg.addColorStop(1, 'rgba(168,85,247,0.15)');
+    const lg = c.createLinearGradient(0, by + bh, 0, yb); lg.addColorStop(0, chrome ? `rgba(240,171,252,${0.85 * pulse})` : `rgba(34,211,238,${0.9 * pulse})`); lg.addColorStop(1, chrome ? 'rgba(45,212,191,0.18)' : 'rgba(168,85,247,0.15)');
     c.fillStyle = lg; c.fillRect(x + w - 0.35 * u, by + bh, 0.35 * u, yb - by - bh); c.fillRect(x + w - 0.35 * u, top + crown, 0.35 * u, by - top - crown);
     c.globalCompositeOperation = 'lighter'; const gl = c.createRadialGradient(x + w / 2, by + bh / 2, 0, x + w / 2, by + bh / 2, w * 0.7); gl.addColorStop(0, `rgba(120,160,255,${(night ? 0.35 : 0.12) * pulse})`); gl.addColorStop(1, 'rgba(120,160,255,0)'); c.fillStyle = gl; c.fillRect(x - w * 0.3, by - w * 0.5, w * 1.6, w * 1.2);
     c.restore();
@@ -11928,7 +11955,7 @@
           }
         }
         // menara bermerek (mis. PRISMATIX LAB) di lapis gedung dekat, berdiri tetap di kota & bergeser bersama gedung
-        if (sc.brand) { const bx = sceneX(V, sc, 0.3, sc.from + 520 + sc.brand.at); if (bx > -260 && bx < W + 120) brandTower(c, bx, yH, ppm * 0.8, { night, sunR, warm, brand: sc.brand, p: V.p }); }
+        for (const br of sc.brands || []) { const bx = sceneX(V, sc, 0.3, sc.from + 520 + br.at); if (bx > -260 && bx < W + 120) brandTower(c, bx, yH, ppm * 0.8, { night, sunR, warm, brand: br, p: V.p }); }
         const cb = (sceneX(V, sc, 0.4, sc.from) > -20 || sceneX(V, sc, 0.4, sc.to) < W + 20) ? scnCtx(C0) : c;
         drawCityBase(cb, -20, W + 20, yH + 0.4 * ppm, 3.2 * ppm, { night, off: pcOf(V) * 0.4, haze: MIS.golden || MIS.dusk ? '255,214,170' : '236,226,214' });
         if (cb !== c) scnFlush(C0, cb, V, sc, 0.4, 200);
