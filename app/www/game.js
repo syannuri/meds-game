@@ -4799,8 +4799,8 @@
             c.strokeStyle = night ? `rgba(255,236,180,${al})` : `rgba(255,246,220,${clamp(al, 0, 1)})`; c.lineWidth = Math.max(1, 0.04 * q0.k); c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); }
           c.restore(); }
       };
+      trk(dblO3, (d) => dbl3(x0 + d) > 0.02); // jalur 3 dulu agar rel jalur 2 menerus di wesel
       trk(dblO, () => true);
-      trk(dblO3, (d) => dbl3(x0 + d) > 0.02);
     }
 
     // ---- objek tepi rel, digambar dari jauh ke dekat ----
@@ -9531,8 +9531,9 @@
         c.fillStyle = sleeper; for (let m = Math.ceil(s0 / 1.2) * 1.2; m < s1; m += 1.2) { if (!ok(m)) continue; c.fillRect(X(m), yo(O(m)) - 0.5 * ppm, 0.3 * ppm, 0.8 * ppm); }
         railsAlong(V, s0, s1, ok, (x) => yo(O(x)), 1.05, isC);
       };
-      track(dblO, () => true);
+      // jalur 3 digambar dulu: di wesel tempat jalur 3 menyatu, balas & ujung relnya tertutup rel jalur 2 yang menerus
       track(dblO3, (x) => dbl3(x) > 0.02, true);
+      track(dblO, () => true);
     }
     // wesel jalur 3 di kedua ujung tiap stasiun
     for (const st of ROUTE.stations) for (const wx of [st.x - 470, st.x + 190]) { const sx = X(wx); if (sx < -40 || sx > W + 40) continue; const y = yo(dblO(wx));
