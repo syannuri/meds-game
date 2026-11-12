@@ -5227,7 +5227,8 @@
         // tutup ujung gerbong menghadap Guntur & bordes karet gelap di sambungan
         if (!lead && dn > 1.5) { const sec = secs[0]; const cap = sec.map((t) => W3(t.d, t.o, t.h)).concat([W3(dn, sec[0].o, 0.35)]); if (!cap.some((t) => !t)) {
           c.fillStyle = night ? '#6a707a' : '#c9ced4'; c.beginPath(); cap.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
-          const ins = sec.filter((_, i) => i % 2 === 0).map((t) => { const o0 = KO(x0 + dn); return W3(dn - 0.02, o0 + (t.o - o0) * 0.82, 0.35 + (t.h - 0.35) * 0.9); }); if (!ins.some((t) => !t)) { c.fillStyle = '#23272c'; c.beginPath(); ins.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); } } }
+          const ins = sec.filter((_, i) => i % 2 === 0).map((t) => { const o0 = KO(x0 + dn); return W3(dn - 0.02, o0 + (t.o - o0) * 0.82, 0.35 + (t.h - 0.35) * 0.9); }); if (!ins.some((t) => !t)) { c.fillStyle = night ? '#7a8088' : '#bfc5cc'; c.beginPath(); ins.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); // penutup sambungan berlipat sewarna badan (seperti Guntur)
+            c.strokeStyle = 'rgba(70,78,88,0.45)'; c.lineWidth = 1; c.beginPath(); ins.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.stroke(); } } }
         if (lead) [-0.62, 0.62].forEach((lo) => { const hp = W3(dn + 1.1, KO(x0 + dn) + lo, 0.78); if (!hp) return; const r = Math.max(2, 0.2 * hp.k);
           c.save(); c.globalCompositeOperation = 'lighter'; const gr = r * (night ? 10 : 5), g = c.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, gr); g.addColorStop(0, `rgba(255,248,220,${night ? 0.95 : 0.7})`); g.addColorStop(0.3, `rgba(255,240,200,${night ? 0.4 : 0.2})`); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.beginPath(); c.arc(hp.x, hp.y, gr, 0, 7); c.fill(); c.restore();
           c.fillStyle = '#fffbe8'; c.beginPath(); c.ellipse(hp.x, hp.y, r * 1.4, r * 0.7, 0, 0, 7); c.fill(); });
@@ -10364,6 +10365,11 @@
         c.lineWidth = Math.max(1.5, 0.09 * ppm); c.lineCap = 'round';
         [['#b8352b', 1.25, 0.38], ['#1d2024', 1.18, 0.5]].forEach(([col, h, sag]) => { c.strokeStyle = col; c.beginPath(); c.moveTo(g0 + 0.05 * ppm, Y(h)); c.quadraticCurveTo(mid, Y(h - sag), g1 - 0.05 * ppm, Y(h)); c.stroke(); });
         c.lineCap = 'butt';
+      } else if (HSTC) { // Kilat: penutup sambungan berlipat sewarna badan seperti Guntur, rapat ke kendaraan di depannya
+        const g1 = L(F), g0 = L(F - GAP - gd - (k === 0 ? 0.15 : 0)), gx = Math.min(g0, g1) - 1, gw = Math.abs(g1 - g0) + 2;
+        c.fillStyle = vgrad(5.92, 0.5, [[0, '#d7dbe0'], [0.5, '#bfc5cc'], [1, '#8d949c']]); roundRect(c, gx, Y(5.92), gw, 5.42 * ppm, 0.25 * ppm); c.fill();
+        c.strokeStyle = 'rgba(70,78,88,0.45)'; c.lineWidth = 1; c.beginPath(); for (let q = gx + 0.18 * ppm; q < gx + gw - 1; q += 0.22 * ppm) { c.moveTo(q, Y(5.8)); c.lineTo(q, Y(0.6)); } c.stroke();
+        c.fillStyle = 'rgba(20,26,34,0.55)'; c.fillRect(gx, Y(4.55), gw, 1.7 * ppm); // pita gelap sambungan menyatu dengan pita jendela Kilat
       } else if (HST2C) { // penutup sambungan menyatu ala kereta cepat Eropa
         { const g0 = L(F), g1 = L(F - GAP - gd), gw = g1 - g0, mid = (g0 + g1) / 2;
           c.fillStyle = vgrad(4.85, 0.35, [[0, '#f4f5f7'], [0.8, '#b9bfc6'], [1, '#8c939b']]); c.fillRect(g0, Y(4.85), gw, 4.5 * ppm); // ujung menyambung hampir rapat
@@ -10443,7 +10449,7 @@
           c.fillStyle = '#eafcff'; c.font = `italic 800 ${Math.max(6, Math.round(0.42 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
           c.fillText('KILAT NUSANTARA · BISNIS', sx0(0, 240) + sw0(0, 240) * 0.34, Y(2.34)); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
         c.fillStyle = '#8a959f'; c.fillRect(sx0(0, 240), Y(3.0), sw0(0, 240), 0.06 * ppm);
-        const gx0 = sx0(0, 240) - GAP * ppm; if (k < N_COACH - 1) { c.fillStyle = vgrad(4.85, 1.0, [[0, '#f4f5f7'], [1, '#a9afb6']]); c.fillRect(gx0, Y(4.85), GAP * ppm + 1, 3.85 * ppm);
+        const gx0 = sx0(0, 240) - GAP * ppm; if (k < N_COACH - 1 && !HSTC) { // Kilat: sambungan digambar sebagai penutup berlipat di depan gerbong berikutnya c.fillStyle = vgrad(4.85, 1.0, [[0, '#f4f5f7'], [1, '#a9afb6']]); c.fillRect(gx0, Y(4.85), GAP * ppm + 1, 3.85 * ppm);
         c.fillStyle = '#0c0f13'; c.fillRect(gx0, Y(4.55), GAP * ppm + 1, 1.7 * ppm); c.fillStyle = ACC; c.fillRect(gx0, Y(2.72), GAP * ppm + 1, 0.2 * ppm);
         c.strokeStyle = 'rgba(80,88,96,0.35)'; c.lineWidth = 1; c.beginPath(); c.moveTo(gx0, Y(4.85)); c.lineTo(gx0, Y(1.0)); c.moveTo(gx0 + GAP * ppm, Y(4.85)); c.lineTo(gx0 + GAP * ppm, Y(1.0)); c.stroke(); }
         // rok bogie penuh: roda hampir tak terlihat, rangkaian tampak mulus
