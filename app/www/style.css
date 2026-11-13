@@ -1260,3 +1260,16 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 
 /* tuas kendali lebih ringkas: tidak lagi membentang dari atas ke bawah layar, berada di tengah sisi kanan agar nyaman dijangkau ibu jari */
 .lever { align-self: center; height: clamp(210px, 62vh, 300px); }
+
+/* ---------- halaman deskripsi misi: ringkas & muat satu layar HP tanpa digulir ---------- */
+#screenBrief .facts .bmed { letter-spacing: 0.15em; }
+#screenBrief .facts .bmed small { letter-spacing: 0; font-weight: 600; color: var(--muted); }
+#screenBrief .screen-inner { --bk: 1; }
+#screenBrief h2 { font-size: calc(clamp(22px, 5.2vh, 34px) * var(--bk)); margin: 2px 0 calc(8px * var(--bk)); line-height: 1.05; }
+#screenBrief .quote { font-size: calc(13.5px * var(--bk)); line-height: 1.45; }
+#screenBrief .speaker { margin-bottom: calc(10px * var(--bk)); }
+#screenBrief .facts { font-size: calc(12.5px * var(--bk)); gap: calc(4px * var(--bk)) 12px; }
+#screenBrief .briefcard .goals li { font-size: calc(12px * var(--bk)); }
+@media (orientation: landscape) { #screenBrief .screen-inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(12px, 3vw, 28px); } } /* HP mendatar kecil: tetap dua kolom */
+#screenBrief h2 { font-size: calc(clamp(22px, 7vh, 38px) * var(--bk)); }
+@media (max-height: 340px) { #screenBrief .bhero { height: clamp(52px, 17vh, 70px); margin-bottom: 6px; } #screenBrief .speaker { grid-template-columns: 44px minmax(0, 1fr); gap: 8px; } #screenBrief .speaker .avatar.pic { width: 44px; height: 44px; } #screenBrief .btn { padding-top: 9px; padding-bottom: 9px; } }
