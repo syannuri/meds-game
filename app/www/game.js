@@ -5791,7 +5791,7 @@
     const dy0 = H * 0.66; // dasbor dinaikkan agar instrumennya tidak tertutup tombol & strip HUD bawah
     const twC = night ? 1 : twiOf(p), sunKC = SUNK * (1 - twC);
     cabGlass(c, { sun: SUN, sunK: sunKC, night, inTun, dy0, tw: twC });
-    const amb = drawCabInterior(c, { night, inTun, sunK: sunKC, dy0, tw: twC, rain, sun: SUN });
+    const amb = drawCabInterior(c, { night, inTun, sunK: sunKC, dy0, tw: twC, rain, sun: SUN, pano: MIS.loco === 'argo' });
     // dasbor: pelindung silau bertekstur di atas, bibir depan menangkap cahaya, kisi defroster di kaki kaca
     const dg = c.createLinearGradient(0, dy0, 0, H);
     dg.addColorStop(0, mix(night ? '#1d232a' : '#141a20', '#3a434c', amb * 0.8)); dg.addColorStop(0.35, mix('#10151a', '#252c33', amb)); dg.addColorStop(1, night ? '#0b0e12' : '#151a1f');
@@ -6350,14 +6350,19 @@
     const top = H * 0.055, cL = W * 0.665, cR = W * 0.674, rr = H * 0.035;
     const xl = (y) => W * 0.045 + (W * 0.02 - W * 0.045) * (y / H), xr = (y) => W * 0.955 + (W * 0.98 - W * 0.955) * (y / H), yb = dy0 + H * 0.02;
     const win = (x0f, x1f) => { c.moveTo(x0f(top) + rr, top); c.lineTo(x1f(top) - rr, top); c.quadraticCurveTo(x1f(top), top, x1f(top + rr), top + rr); c.lineTo(x1f(yb), yb); c.lineTo(x0f(yb), yb); c.lineTo(x0f(top + rr), top + rr); c.quadraticCurveTo(x0f(top), top, x0f(top) + rr, top); c.closePath(); };
-    const holes = () => { win(xl, () => cL); win(() => cR, xr); };
+    // Agraveda: satu kaca panorama melengkung (wraparound) tanpa tiang tengah, sesuai kaca kokpit dari luar yang menyatu ke moncong;
+    // tepi atas melengkung turun ke samping, pilar A ramping & miring
+    const pano = !!o.pano, pxl = (y) => W * 0.032 + (W * 0.012 - W * 0.032) * (y / H), pxr = (y) => W * 0.968 + (W * 0.988 - W * 0.968) * (y / H);
+    const pTop = (x) => { const t = (x - W / 2) / (W / 2); return H * 0.062 + H * 0.07 * t * t * t * t; };
+    const winP = () => { const xa = pxl(pTop(0) + H * 0.07), xb = pxr(pTop(0) + H * 0.07); c.moveTo(xa, pTop(xa) + rr * 0.6); for (let x = xa; x <= xb + 0.1; x += W / 40) c.lineTo(x, pTop(x)); c.lineTo(xb, pTop(xb) + rr * 0.6); c.lineTo(pxr(yb), yb); c.lineTo(pxl(yb), yb); c.closePath(); };
+    const holes = () => { if (pano) winP(); else { win(xl, () => cL); win(() => cR, xr); } };
     // panel interior (plafon, pilar) dengan lubang jendela
     const pg = c.createLinearGradient(0, 0, 0, H); pg.addColorStop(0, col('#0b0d10', '#2c333a')); pg.addColorStop(0.5, col('#0e1115', '#353d45')); pg.addColorStop(1, col('#07090b', '#1f252b'));
     c.fillStyle = pg; c.beginPath(); c.rect(0, 0, W, yb + 1); holes(); c.fill('evenodd');
     // pilar menerima cahaya dari kaca: tepi dalam lebih terang, tepi luar gelap (volume)
     for (const [xa, xb] of [[0, xl(0) + 2], [W, xr(0) - 2]]) { const g = c.createLinearGradient(xa, 0, xb, 0); g.addColorStop(0, 'rgba(0,0,0,0.35)'); g.addColorStop(1, `rgba(255,240,220,${(0.08 * amb).toFixed(3)})`); c.fillStyle = g;
       c.beginPath(); if (xa === 0) { c.moveTo(0, 0); c.lineTo(xl(0), 0); c.lineTo(xl(yb), yb); c.lineTo(0, yb); } else { c.moveTo(W, 0); c.lineTo(xr(0), 0); c.lineTo(xr(yb), yb); c.lineTo(W, yb); } c.closePath(); c.fill(); }
-    { const g = c.createLinearGradient(cL, 0, cR, 0); g.addColorStop(0, `rgba(255,240,220,${(0.1 * amb).toFixed(3)})`); g.addColorStop(0.5, 'rgba(0,0,0,0.25)'); g.addColorStop(1, `rgba(255,240,220,${(0.06 * amb).toFixed(3)})`); c.fillStyle = g; c.fillRect(cL, top, cR - cL, yb - top); }
+    if (!pano) { const g = c.createLinearGradient(cL, 0, cR, 0); g.addColorStop(0, `rgba(255,240,220,${(0.1 * amb).toFixed(3)})`); g.addColorStop(0.5, 'rgba(0,0,0,0.25)'); g.addColorStop(1, `rgba(255,240,220,${(0.06 * amb).toFixed(3)})`); c.fillStyle = g; c.fillRect(cL, top, cR - cL, yb - top); }
     // plafon: panel berlapis dengan sambungan & baut
     c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(0, top - 3, W, 3);
     c.fillStyle = `rgba(255,255,255,${(0.05 * amb).toFixed(3)})`; c.fillRect(0, H * 0.012, W, 1);
@@ -6367,18 +6372,18 @@
       const on = night || inTun || tw > 0.5; c.fillStyle = on ? 'rgba(255,226,170,0.85)' : col('#2a2f35', '#c9ced2'); roundRect(c, lx - lw / 2, ly, lw, lh, 3); c.fill();
       if (on) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(lx, ly + lh, 0, lx, ly + lh, H * 0.16); g.addColorStop(0, 'rgba(255,214,150,0.14)'); g.addColorStop(1, 'rgba(255,214,150,0)'); c.fillStyle = g; c.fillRect(lx - H * 0.16, 0, H * 0.32, H * 0.18); c.restore(); } }
     // tirai penahan silau (roller blind) setengah turun di kaca masinis, tembus pandang berasap
-    { const bx0 = xl(top) + rr * 0.6, bx1 = cL - 2, bh = H * 0.085; c.save(); c.beginPath(); c.rect(bx0, top, bx1 - bx0, bh); c.clip();
-      const bg = c.createLinearGradient(0, top, 0, top + bh); bg.addColorStop(0, 'rgba(18,22,26,0.72)'); bg.addColorStop(1, 'rgba(18,22,26,0.5)'); c.fillStyle = bg; c.fillRect(bx0, top, bx1 - bx0, bh);
-      c.fillStyle = 'rgba(255,255,255,0.03)'; for (let y = top + 2; y < top + bh; y += 3) c.fillRect(bx0, y, bx1 - bx0, 1); c.restore();
-      const bar = c.createLinearGradient(0, top + bh - 3, 0, top + bh + 3); bar.addColorStop(0, col('#3a4046', '#c4cbd1')); bar.addColorStop(1, col('#121518', '#6d757c')); c.fillStyle = bar; c.fillRect(bx0, top + bh - 3, bx1 - bx0, 5);
-      c.fillStyle = col('#0c0e10', '#3a4046'); roundRect(c, (bx0 + bx1) / 2 - 7, top + bh + 1, 14, 6, 3); c.fill(); }
+    { const bx0 = pano ? W * 0.08 : xl(top) + rr * 0.6, bx1 = pano ? W * 0.6 : cL - 2, bh = H * 0.085, tb = pano ? pTop(W * 0.34) : top; c.save(); c.beginPath(); if (pano) { c.moveTo(bx0, 0); for (let x = bx0; x <= bx1; x += W / 60) c.lineTo(x, pTop(x)); c.lineTo(bx1, tb + bh); c.lineTo(bx0, tb + bh); c.closePath(); } else c.rect(bx0, tb, bx1 - bx0, bh); c.clip();
+      const bg = c.createLinearGradient(0, tb, 0, tb + bh); bg.addColorStop(0, 'rgba(18,22,26,0.72)'); bg.addColorStop(1, 'rgba(18,22,26,0.5)'); c.fillStyle = bg; c.fillRect(bx0, tb, bx1 - bx0, bh);
+      c.fillStyle = 'rgba(255,255,255,0.03)'; for (let y = tb + 2; y < tb + bh; y += 3) c.fillRect(bx0, y, bx1 - bx0, 1); c.restore();
+      const bar = c.createLinearGradient(0, tb + bh - 3, 0, tb + bh + 3); bar.addColorStop(0, col('#3a4046', '#c4cbd1')); bar.addColorStop(1, col('#121518', '#6d757c')); c.fillStyle = bar; c.fillRect(bx0, tb + bh - 3, bx1 - bx0, 5);
+      c.fillStyle = col('#0c0e10', '#3a4046'); roundRect(c, (bx0 + bx1) / 2 - 7, tb + bh + 1, 14, 6, 3); c.fill(); }
     // tirai kaca kanan tergulung (hanya batang)
-    { const bx0 = cR + 2, bx1 = xr(top) - rr * 0.6; c.fillStyle = col('#15181c', '#8d959c'); c.fillRect(bx0, top, bx1 - bx0, 5); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(bx0, top + 5, bx1 - bx0, 2); }
+    if (!pano) { const bx0 = cR + 2, bx1 = xr(top) - rr * 0.6; c.fillStyle = col('#15181c', '#8d959c'); c.fillRect(bx0, top, bx1 - bx0, 5); c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(bx0, top + 5, bx1 - bx0, 2); }
     // gasket karet hitam di sekeliling kaca + garis tepi kaca tebal yang menangkap cahaya
     c.lineJoin = 'round';
     c.strokeStyle = '#040506'; c.lineWidth = Math.max(3, H * 0.011); c.beginPath(); holes(); c.stroke();
     c.strokeStyle = `rgba(255,255,255,${(0.1 + 0.12 * amb).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(1.2, 1.4); c.beginPath(); holes(); c.stroke(); c.restore();
-    if (sunK > 0.05) { c.strokeStyle = `rgba(255,226,180,${(0.25 * sunK).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(-1, 1.5); c.beginPath(); win(() => cR, xr); c.stroke(); c.restore(); }
+    if (sunK > 0.05) { c.strokeStyle = `rgba(255,226,180,${(0.25 * sunK).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(-1, 1.5); c.beginPath(); if (pano) winP(); else win(() => cR, xr); c.stroke(); c.restore(); }
     // wiper parkir di dasar kaca saat tidak hujan
     if (!rain) for (const [px, py] of [[W * 0.24, H * 0.685], [W * 0.655, H * 0.685]]) { const R = H * 0.63, a = -Math.PI * 0.985, ux = Math.cos(a), uy = Math.sin(a);
       c.lineCap = 'round'; c.strokeStyle = '#0b0c0e'; c.lineWidth = Math.max(3, W * 0.005); c.beginPath(); c.moveTo(px, py); c.lineTo(px + ux * R * 0.6, py + uy * R * 0.6 - W * 0.006); c.stroke();
