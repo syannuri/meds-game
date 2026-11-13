@@ -7191,7 +7191,7 @@
     const W0 = W;
     if (bendCols) W = W0 + bendCols.E + bendCols.ER;
     drawGround(LV);
-    drawMist(LV);
+    if (!ROUTE.yard) drawMist(LV);
     drawTunnelInterior(LV);
     drawSideTrain(LV);
     drawStations(LV);
@@ -7200,6 +7200,7 @@
     drawMeetTrack(LV);
     drawDoubleSide(LV);
     drawYard(LV, 'front');
+    if (ROUTE.yard) drawMist(LV); // kabut pagi menutupi hamparan balas emplasemen dipo juga, warnanya sama dengan jalur utama
     drawYardLightPools(LV);
     drawFlood(LV, 'back');
     drawTrackside(LV);
@@ -10746,9 +10747,13 @@
     const Y = ROUTE.yard; if (!Y) return;
     const { c, ppm, gy, X, wx0, wx1 } = V, p = V.p, night = V.night || p < 0.16, dawnK = clamp((0.45 - p) / 0.45, 0, 1);
     const yo = (o) => gy + DBL_K * o * ppm, a0 = wx0 - 6, b0 = wx1 + 6;
-    const balTop = mix(mix('#8d8275', '#a59a8c', p), '#2a2830', 0.55 * dawnK), balSide = mix(mix('#5d5349', '#766a5e', p), '#22201f', 0.55 * dawnK), sleeper = mix('#6f6a63', '#8b857b', p);
-    const track = (O, s0, s1, kk) => {
+    const balTop = mix('#8d8275', '#a59a8c', p), balSide = mix('#5d5349', '#766a5e', p), sleeper = mix('#6f6a63', '#8b857b', p);
+    const track = (O, s0, s1, kk, Op) => {
       const ok = (x) => O(x) !== null; if (s1 <= s0) return;
+      // emplasemen = satu hamparan balas datar: tanah di antara jalur ini & jalur induknya diisi warna muka atas balas (bukan lereng gelap)
+      if (Op) for (let x = s0; x < s1; x += 2) { const e = Math.min(s1, x + 2); if (!ok(x) || !ok(e) || Op(x) === null || Op(e) === null) continue;
+        const ya = (q) => Math.min(yo(O(q)), yo(Op(q))), yb = (q) => Math.max(yo(O(q)), yo(Op(q)));
+        c.fillStyle = balTop; c.beginPath(); c.moveTo(X(x) - 0.5, ya(x) + 0.4 * ppm); c.lineTo(X(e) + 0.5, ya(e) + 0.4 * ppm); c.lineTo(X(e) + 0.5, yb(e) - 0.5 * ppm); c.lineTo(X(x) - 0.5, yb(x) - 0.5 * ppm); c.closePath(); c.fill(); }
       const band = (t0, t1, col) => { for (let x = s0; x < s1; x += 2) { const e = Math.min(s1, x + 2), m = (x + e) / 2; if (!ok(m) || !ok(x) || !ok(e)) continue;
         c.fillStyle = col; c.beginPath(); c.moveTo(X(x) - 0.5, yo(O(x)) + t0 * ppm * kk); c.lineTo(X(e) + 0.5, yo(O(e)) + t0 * ppm * kk); c.lineTo(X(e) + 0.5, yo(O(e)) + t1 * ppm * kk); c.lineTo(X(x) - 0.5, yo(O(x)) + t1 * ppm * kk); c.closePath(); c.fill(); } };
       band(-0.62, 0.5, balTop); band(0.5, 1.45, balSide);
@@ -10763,7 +10768,7 @@
       c.fillStyle = '#ff3b2e'; c.beginPath(); c.arc(sx, y - 2.3 * u, 0.16 * u, 0, 7); c.fill(); };
     if (layer === 'back') {
       const sh = Y.shed, O = (x) => yardO(-1, x), kk = 0.95;
-      track(O, Math.max(a0, sh.m0), Math.min(b0, sh.to), kk);
+      track(O, Math.max(a0, sh.m0), Math.min(b0, sh.to), kk, () => 0);
       // gedung dipo: dinding bata, jendela kaca baja berderet, atap gergaji (sawtooth) berkaca, pintu gerbang di ujung
       const k = 0.92, u = ppm * k, base = yo(sh.o) - 0.6 * ppm, xa = X(sh.from), xb = X(sh.to); if (xb < -40 || xa > W + 40) return;
       const brick = mix(mix('#9a4f36', '#b5603f', p), '#2a2230', 0.5 * dawnK), brickD = mix('#6e3424', '#1e1820', 0.5 * dawnK), steel = mix(mix('#5d6870', '#7d8a92', p), '#222832', 0.5 * dawnK);
@@ -10801,7 +10806,7 @@
       return;
     }
     // ---- lapis depan: jalur simpan, buffer stop, tiang lampu sorot, gudang pasir & pengisian BBM ----
-    Y.sid.forEach((sd, i) => { const O = (x) => yardO(i, x); track(O, Math.max(a0, sd.from), Math.min(b0, sd.m1), 1.02 + i * 0.03); bufferStop(sd.from, sd.o, 1.02 + i * 0.03); });
+    Y.sid.forEach((sd, i) => { const O = (x) => yardO(i, x); track(O, Math.max(a0, sd.from), Math.min(b0, sd.m1), 1.02 + i * 0.03, sd.parent < 0 ? () => 0 : (x) => yardO(sd.parent, x)); bufferStop(sd.from, sd.o, 1.02 + i * 0.03); });
     for (const sg of yardSignals()) if (sg.side > 0) { const sx = X(sg.x); if (sx > -20 && sx < W + 20) dwarfSignal(c, sx, yo(sg.o + 1.9), ppm * 1.04, sg.id, 0.4 + 0.6 * dawnK); }
   }
   // kereta terparkir di jalur simpan depan (setelah kereta pemain: lebih dekat ke kamera) + tiang lampu sorot & petugas
