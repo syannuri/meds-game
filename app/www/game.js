@@ -5443,8 +5443,6 @@
                 for (const dm of [wa + 0.5, wb - 1.5]) { const d1 = dm - x0, d2 = d1 + 1.0; if (d2 < 1.4) continue; const e1 = Math.max(1.4, d1);
                   quad(P(e1, 1.454, 1.05), P(d2, 1.454, 1.05), P(d2, 1.454, 3.5), P(e1, 1.454, 3.5), shade('#d9dde1', 0.5)); quad(P(e1 + 0.2, 1.458, 2.55), P(d2 - 0.2, 1.458, 2.55), P(d2 - 0.2, 1.458, 3.25), P(e1 + 0.2, 1.458, 3.25), skyRef(0.6));
                   const q0 = P(e1, 1.458, 1.05), q1 = P(e1, 1.458, 3.5); if (q0 && q1) { c.strokeStyle = 'rgba(60,66,74,0.7)'; c.lineWidth = 1; c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } }
-                // AC di atap
-                for (const am of [wa + 4, wb - 6]) { const d1 = am - x0, d2 = d1 + 2; if (d2 < 1.4) continue; const e1 = Math.max(1.4, d1); quad(P(e1, 0.7, 4.18), P(d2, 0.7, 4.18), P(d2, 0.7, 4.45), P(e1, 0.7, 4.45), shade('#9aa1a8', 0.6)); quad(P(e1, 0.7, 4.45), P(d2, 0.7, 4.45), P(d2, -0.4, 4.45), P(e1, -0.4, 4.45), shade('#b9bfc5', 1)); }
               } else { // lokomotif: kaca kabin di ujung depan, kisi ventilasi, bahu atap
                 const dc = wb - 3.4 - x0; if (dc + 2.6 > 1.4) quad(P(Math.max(1.4, dc), 1.454, 2.5), P(dc + 2.6, 1.454, 2.5), P(dc + 2.6, 1.454, 3.4), P(Math.max(1.4, dc), 1.454, 3.4), skyRef(0.5));
                 for (let m = wa + 3; m < wb - 5; m += 1.2) { const d1 = m - x0, d2 = d1 + 0.8; if (d2 < 1.4) continue; quad(P(Math.max(1.4, d1), 1.454, 2.6), P(d2, 1.454, 2.6), P(d2, 1.454, 3.2), P(Math.max(1.4, d1), 1.454, 3.2), shade('#5c636a', 0.4)); }
@@ -5466,6 +5464,19 @@
             // sambungan bordes berlipat ke kendaraan di depannya
             if (kind !== 'wagon' && wb - x0 > 1.4) { const g1 = wb - x0, g2 = g1 + GAP; quad(P(Math.max(1.4, g1), 1.15, 1.2), P(g2, 1.15, 1.2), P(g2, 1.15, 3.8), P(Math.max(1.4, g1), 1.15, 3.8), '#30343a');
               for (let t = 0.2; t < 1; t += 0.2) { const q0 = P(g1 + GAP * t, 1.16, 1.2), q1 = P(g1 + GAP * t, 1.16, 3.8); if (q0 && q1 && g1 + GAP * t > 1.4) { c.strokeStyle = 'rgba(120,128,138,0.5)'; c.lineWidth = 1; c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } } }
+            // pantulan kereta pemain (Cakra & gerbongnya) di sisi mengilap gerbong terparkir: bayangan cermin yang ikut bergerak
+            // bersama kabin, makin pudar ke depan; jendela gerbong terparkir memantulkannya lebih gelap; sorot lampu depan memantul di cat
+            if (kind !== 'wagon' && (o > 0 ? o - 1.45 : -o - 1.45) < 6) { const r0 = Math.max(dA, 1.4), r1 = Math.min(db, 48); // pada sudut rendah cermin badan memantulkan kereta pemain jauh ke depan
+              if (r1 > r0) { const seg = 1.6; for (let d1 = r0; d1 < r1; d1 += seg) { const d2 = Math.min(r1, d1 + seg), fa = 0.62 * Math.pow(1 - (d1 + d2) / 2 / 48, 0.9); if (fa < 0.02) continue;
+                const RQ = (h1, h2, col) => quad(P(d1, 1.47, h1), P(d2, 1.47, h1), P(d2, 1.47, h2), P(d1, 1.47, h2), col);
+                RQ(1.05, 4.05, `rgba(120,132,142,${(0.18 * fa).toFixed(3)})`); // badan Cakra memantul (cermin sedikit lebih redup)
+                RQ(2.4, 3.3, `rgba(12,18,24,${(0.85 * fa).toFixed(3)})`); RQ(3.3, 3.42, `rgba(255,255,255,${(0.35 * fa).toFixed(3)})`); // pita kaca gelap & tepi atas berkilau
+                RQ(1.55, 1.85, `rgba(31,111,109,${fa.toFixed(3)})`); RQ(1.88, 2.0, `rgba(242,165,22,${fa.toFixed(3)})`); // livery toska & oranye
+                RQ(1.05, 1.3, `rgba(20,24,28,${(0.6 * fa).toFixed(3)})`); }
+                // sambungan gerbong pemain yang lewat: celah gelap berulang mengikuti jarak tempuh
+                for (let gpx = LOCO_LEN; gpx < LOCO_LEN + 3 * (COACH_LEN + GAP); gpx += COACH_LEN + GAP) { const dg = gpx * 0.7; if (dg < r0 || dg > r1) continue; quad(P(dg, 1.475, 1.2), P(dg + 0.9, 1.475, 1.2), P(dg + 0.9, 1.475, 3.8), P(dg, 1.475, 3.8), `rgba(20,24,30,${(0.45 * (1 - dg / 48)).toFixed(3)})`); }
+                // sorot lampu depan memantul (titik terang memanjang)
+                const hd = clamp(9, r0, r1); if (hd < r1) { const q = P(hd, 1.48, 1.45); if (q) { c.save(); c.globalCompositeOperation = 'lighter'; const rr = 1.6 * q.k, g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, rr); g.addColorStop(0, `rgba(255,244,210,${(0.55 * (0.4 + 0.6 * dawnK)).toFixed(3)})`); g.addColorStop(1, 'rgba(255,244,210,0)'); c.fillStyle = g; c.beginPath(); c.ellipse(q.x, q.y, rr * 1.8, rr * 0.6, 0, 0, 7); c.fill(); c.restore(); } } } }
             // pantulan lampu sorot memanjang di cat
             for (const [mx] of YARD_MASTS) { const dm = mx - x0; if (dm < dA || dm > db || dawnK < 0.05) continue; quad(P(Math.max(dA, dm - 1.2), 1.46, 1.3), P(Math.min(db, dm + 1.2), 1.46, 1.3), P(Math.min(db, dm + 1.2), 1.46, 3.7), P(Math.max(dA, dm - 1.2), 1.46, 3.7), `rgba(255,246,222,${(0.3 * dawnK).toFixed(3)})`); }
           }); }
