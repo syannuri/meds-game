@@ -108,7 +108,7 @@
         lineSpeed: 60,
         stations: [
           { name: 'SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0, heri: true },
-          { name: 'CIBENING', elev: '+412 m', x: 1200, sched: 900, waiting: 0, final: true },
+          { name: 'CIBENING', elev: '+412 m', x: 1200, sched: 900, waiting: 0, final: true, bening: true },
         ],
         zones: [
           { from: -120, to: 200, limit: 40, label: 'area Stasiun Sukamaju' },
@@ -145,7 +145,7 @@
         stations: [
           { name: 'SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0, heri: true },
           { name: 'SUMBERREJO', elev: '+398 m', x: 700, sched: 560, waiting: 6 },
-          { name: 'CIBENING', elev: '+412 m', x: 1800, sched: 1260, waiting: 0, final: true },
+          { name: 'CIBENING', elev: '+412 m', x: 1800, sched: 1260, waiting: 0, final: true, bening: true },
         ],
         zones: [
           { from: -120, to: 200, limit: 40, label: 'area Stasiun Sukamaju' },
@@ -181,7 +181,7 @@
         lineSpeed: 80,
         stations: [
           { name: 'SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0, heri: true },
-          { name: 'CIBENING', elev: '+412 m', x: 1200, sched: 780, waiting: 14, traders: true },
+          { name: 'CIBENING', elev: '+412 m', x: 1200, sched: 780, waiting: 14, traders: true, bening: true },
           { name: 'PASAR LAMA', elev: '+371 m', x: 2600, sched: 1560, waiting: 5, final: true },
         ],
         zones: [
@@ -312,7 +312,7 @@
       ],
       passStations: [
         { name: 'KALI JERNIH', elev: '+348 m', x: 1300, waiting: 9 },
-        { name: 'CIBENING', elev: '+412 m', x: 2950, waiting: 10 },
+        { name: 'CIBENING', elev: '+412 m', x: 2950, waiting: 10, bening: true },
       ],
       zones: [
         { from: -120, to: 200, limit: 40, label: 'area Stasiun Watugede' },
@@ -5104,7 +5104,7 @@
         // jalur ganda: pohon di kanan bergeser ke luar jalur 2/3 (tidak tumbuh di antara rel, sama seperti tampilan luar)
         const o = side * (8 + hash(i * 2.1) * 26) + (side > 0 && DBc ? dblO3(wd) : 0);
         if (nearStation(wd) && side < 0 && Math.abs(o) < 22) continue;
-        if (side < 0 && ROUTE.stations.some((g) => (g.grand || g.grandJ || g.heri) && wd > g.x - 140 && wd < g.x + 45)) continue;
+        if (side < 0 && ROUTE.stations.some((g) => (g.grand || g.grandJ || g.heri || g.bening) && wd > g.x - 140 && wd < g.x + 45)) continue;
         if (ROUTE.yard && wd > -230 && wd < 250 && Math.abs(o) < 34) continue; // area depo: jalur simpan & gedung dipo, tanpa pohon // halaman terminal megah terbuka (tidak tertutup pohon)
         if (inBrW(wd, 12)) continue;
         add(wd - x0, () => {
@@ -5371,6 +5371,72 @@
           wing(gb - 38, gb - 14); pavilion(gb - 44);
           F(gb - 44, gb + 44, O + 0.9, 1, 1.6, stone); // plint batu
         });
+      } else if (s.bening) { // stasiun pegunungan Cibening 3D bergaya Sunda: aula beratap julang ngapak menghadap peron, sayap kayu berjendela krepyak, pinus
+        const gb = s.x - 46 - x0, O = -13;
+        if (gb + 38 > 1.4 && gb - 38 < FAR) add(Math.max(1.4, gb + 38), () => {
+          const cd = (d) => Math.max(d, 1.4);
+          const F = (d1, d2, o, h1, h2, col) => { d1 = cd(d1); if (d2 <= d1) return; quad(W3(d1, o, h1), W3(d2, o, h1), W3(d2, o, h2), W3(d1, o, h2), col); };
+          const E = (d, o1, o2, h1, h2, col) => { if (d < 1.4) return; quad(W3(d, o1, h1), W3(d, o2, h1), W3(d, o2, h2), W3(d, o1, h2), col); };
+          const PL = (pts, col) => { if (pts.some((t) => !t)) return; c.fillStyle = col; c.beginPath(); pts.forEach((t, k) => (k ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); };
+          const LN = (pts, col, w) => { if (pts.some((t) => !t)) return; c.strokeStyle = col; c.lineWidth = w; c.beginPath(); pts.forEach((t, k) => (k ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.stroke(); };
+          const plaster = dk(mix('#e8e2d0', '#f2ecdc', p)), plasterS = dk(mix('#d8d0bc', '#e4dccb', p)), teak = dk('#6b4126'), teakL = dk('#8a5634'), roof = dk('#3d3430'), roofL = dk('#56493f'), stoneC = dk('#8d8a80'), green = dk('#2f6b4a'), greenD = dk('#1f4a33'), gold = '#d9a93a';
+          const glass = (k = 0) => kL > 0.05 ? mix('#2a3a46', '#ffcf86', clamp(kL * 1.1 - k * 0.1, 0, 1)) : mix('#3a5468', '#a9cbe0', 0.3);
+          const kAt = (d, o = O) => (W3(cd(d), o, 4) || { k: 5 }).k;
+          const pine = (d, o, ht) => { if (d < 1.4) return; const b0 = W3(d, o, 0); if (!b0) return; const k = b0.k; c.fillStyle = dk('#4a3424'); c.fillRect(b0.x - 0.2 * k, b0.y - ht * 0.3 * k, 0.4 * k, ht * 0.3 * k);
+            for (let q = 0; q < 5; q++) { const y0 = b0.y - ht * (0.22 + q * 0.15) * k, w = (1 - q * 0.17) * ht * 0.2 * k; c.fillStyle = dk(q % 2 ? '#2f5a3a' : '#284f33'); c.beginPath(); c.moveTo(b0.x - w, y0); c.lineTo(b0.x + w, y0); c.lineTo(b0.x, y0 - ht * 0.28 * k); c.closePath(); c.fill(); } };
+          const krepyak = (dc, o, h0, h1, w) => { F(dc - w / 2, dc + w / 2, o + 0.02, h0, h1, green); const kk = kAt(dc, o); if (kk > 3 && dc - w / 2 > 1.4) for (let hh = h0 + 0.2; hh < h1; hh += 0.22) LN([W3(dc - w / 2, o + 0.03, hh), W3(dc + w / 2, o + 0.03, hh)], greenD, 1); F(dc - w / 2 - 0.15, dc + w / 2 + 0.15, o + 0.08, h1, h1 + 0.3, teak); };
+          const wing = (d0, d1) => { if (d1 < 1.4) return; F(d0, d1, O, 1, 6, plaster); F(d0, d1, O + 0.02, 1, 1.9, stoneC); E(d0, O, O - 9, 1, 6, plasterS); E(d0 - 0.01, O, O - 9, 1, 1.9, stoneC);
+            for (let m = d0 + 1.6; m < d1 - 1; m += 3.2) krepyak(m, O, 2.4, 5.0, 1.3); for (let m = d0; m <= d1 + 0.01; m += 3.2) F(m - 0.18, m + 0.18, O + 0.06, 1.9, 6, teak);
+            if (d0 > 1.4) for (const oo of [O - 3, O - 6.5]) { const q = [W3(d0 - 0.02, oo - 0.6, 2.4), W3(d0 - 0.02, oo + 0.6, 2.4), W3(d0 - 0.02, oo + 0.6, 5.0), W3(d0 - 0.02, oo - 0.6, 5.0)]; PL(q, green); }
+            const a1 = cd(d0 - 1.2), r1 = cd(d0 + 1.0), r2 = d1 - 1.0; PL([W3(a1, O + 1.2, 6), W3(d1 + 1.2, O + 1.2, 6), W3(r2, O - 4, 9.2), W3(r1, O - 4, 9.2)], roof); if (d0 - 1.2 > 1.4) PL([W3(d0 - 1.2, O + 1.2, 6), W3(d0 + 1.0, O - 4, 9.2), W3(d0 - 1.2, O - 9.2, 6)], roofL);
+            if (kAt((d0 + d1) / 2) > 2.5) for (let f = 0.15; f < 1; f += 0.17) LN([W3(cd(d0 - 1.2 + 2.2 * f), O + 1.2 - 5.2 * f, 6 + 3.2 * f), W3(d1 + 1.2 - 2.2 * f, O + 1.2 - 5.2 * f, 6 + 3.2 * f)], roofL, 1);
+            F(d0 - 1.2, d1 + 1.2, O + 1.22, 5.6, 6.0, teakL); }; // lisplang
+          pine(gb + 37.5, O - 4, 12); pine(gb + 34, O - 2, 16); wing(gb + 10.5, gb + 30);
+          // aula julang ngapak
+          const oH = O + 1.0, oR = O + 1.6, oB = O - 12;
+          F(gb - 10.5, gb + 10.5, oH, 1, 7.2, plaster); F(gb - 10.5, gb + 10.5, oH + 0.02, 1, 2.6, stoneC); E(gb - 10.5, oH, O, 1, 7.2, plasterS);
+          for (const m of [-10.3, -6.2, -2.1, 2.1, 6.2, 10.3]) F(gb + m - 0.25, gb + m + 0.25, oH + 0.06, 2.6, 7.2, teak);
+          for (const m of [-8.2, 8.2]) krepyak(gb + m, oH, 3.0, 6.4, 1.8);
+          for (const m of [-4.15, 4.15]) { F(gb + m - 1.1, gb + m + 1.1, oH + 0.04, 3.0, 6.6, teakL); F(gb + m - 0.9, gb + m + 0.9, oH + 0.05, 3.2, 6.4, glass()); }
+          F(gb - 1.6, gb + 1.6, oH + 0.05, 1, 5.4, dk('#4a2c18', 0.4)); F(gb - 1.9, gb + 1.9, oH + 0.07, 5.4, 5.9, teak);
+          F(gb - 6, gb + 6, oH + 0.08, 6.3, 7.1, teak); { const n0 = W3(cd(gb - 5), oH + 0.1, 6.7), n1 = W3(cd(gb + 5), oH + 0.1, 6.7); if (n0 && n1 && gb - 5 > 1.4 && Math.abs(n1.x - n0.x) > 20) { c.save(); c.fillStyle = kL > 0.3 ? '#ffe2a0' : gold; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 ${Math.max(6, Math.min(30, Math.round(Math.abs(n1.x - n0.x) / 7.5)))}px "Cinzel", "Big Shoulders Display", serif`; c.fillText(s.name, (n0.x + n1.x) / 2, (n0.y + n1.y) / 2); c.restore(); } }
+          // atap: lereng jauh, lereng dekat (menghadap kabin), sayap ngapak, gevel berkisi & jam, tanduk silang
+          PL([W3(cd(gb), oR, 16.9), W3(gb + 10.2, oR, 7.0), W3(gb + 10.2, oB, 7.0), W3(cd(gb), oB, 16.9)], roof);
+          PL([W3(gb + 10, oR, 7.15), W3(gb + 14.6, oR, 5.4), W3(gb + 14.6, oB, 5.4), W3(gb + 10, oB, 7.15)], roofL);
+          if (gb - 9.4 > 1.4) { PL([W3(gb - 9.4, oH, 7.2), W3(gb + 9.4, oH, 7.2), W3(gb, oH, 16.4)], plaster); const kk = kAt(gb, oH); if (kk > 2.5) for (let m = -8; m <= 8; m += 0.8) LN([W3(gb + m, oH + 0.02, 7.2), W3(gb + m, oH + 0.02, Math.min(16.4, 7.2 + (9.4 - Math.abs(m)) * (9.2 / 9.4)))], teakL, Math.max(1, 0.05 * kk));
+            const jc = W3(gb, oH + 0.05, 10.6); if (jc) { const r = 1.05 * jc.k; c.fillStyle = teak; c.beginPath(); c.arc(jc.x, jc.y, r * 1.2, 0, 7); c.fill(); c.fillStyle = kL > 0.2 ? '#fff4d6' : '#fbf7ec'; c.beginPath(); c.arc(jc.x, jc.y, r, 0, 7); c.fill();
+              const tt = (MIS.startClock || 0) + Math.floor(S ? S.clock || 0 : 0), hh = (tt / 3600) % 12, mm = (tt / 60) % 60; c.strokeStyle = '#1d1a18'; c.lineCap = 'round'; c.lineWidth = Math.max(1, 0.11 * r); c.beginPath(); c.moveTo(jc.x, jc.y); c.lineTo(jc.x + Math.sin(hh / 12 * Math.PI * 2) * r * 0.5, jc.y - Math.cos(hh / 12 * Math.PI * 2) * r * 0.5); c.stroke();
+              c.lineWidth = Math.max(1, 0.06 * r); c.beginPath(); c.moveTo(jc.x, jc.y); c.lineTo(jc.x + Math.sin(mm / 60 * Math.PI * 2) * r * 0.8, jc.y - Math.cos(mm / 60 * Math.PI * 2) * r * 0.8); c.stroke(); c.lineCap = 'butt'; } }
+          if (gb - 10.2 > 1.4) { PL([W3(gb - 10.2, oR, 7.0), W3(gb, oR, 16.9), W3(gb, oB, 16.9), W3(gb - 10.2, oB, 7.0)], roofL); // lereng dekat
+            const kk = kAt(gb - 5, oR); if (kk > 2) for (let f = 0.1; f < 1; f += 0.12) LN([W3(gb - 10.2 * (1 - f), oR, 7.0 + 9.9 * f), W3(gb - 10.2 * (1 - f), oB, 7.0 + 9.9 * f)], roof, 1);
+            PL([W3(gb - 10, oR, 7.15), W3(gb - 14.6, oR, 5.4), W3(gb - 14.6, oB, 5.4), W3(gb - 10, oB, 7.15)], roofL); // sayap ngapak dekat
+            LN([W3(gb - 14.7, oR + 0.05, 5.3), W3(gb - 10.1, oR + 0.05, 6.85), W3(gb, oR + 0.05, 16.75), W3(gb + 10.1, oR + 0.05, 6.85), W3(gb + 14.7, oR + 0.05, 5.3)], dk('#2a221e'), Math.max(1.5, 0.3 * kk)); // papan lis atap tebal
+            LN([W3(gb - 1.4, oR, 18.6), W3(gb + 1.0, oR, 16.2)], dk('#2a221e'), Math.max(1.5, 0.28 * kk)); LN([W3(gb + 1.4, oR, 18.6), W3(gb - 1.0, oR, 16.2)], dk('#2a221e'), Math.max(1.5, 0.28 * kk)); } // cagak gunting
+          wing(gb - 30, gb - 10.5); pine(gb - 33, O - 2, 13); pine(gb - 36, O - 5, 17);
+          F(gb - 31, gb + 31, O + 1.3, 1, 1.4, stoneC);
+        });
+        // kios sarapan Mbok Sum di peron kiri
+        { const kd = s.x - 82 - x0; if (kd > 2 && kd < FAR) add(kd - 2.5, () => { const k0 = kd - 2.5, k1 = kd + 2.5, oF = -4.3, oBk = -6.3;
+          const Fq = (d1, d2, o, h1, h2, col) => quad(W3(d1, o, h1), W3(d2, o, h1), W3(d2, o, h2), W3(d1, o, h2), col);
+          for (const dd of [k0, k1]) for (const oo of [oF + 0.2, oBk]) { const b0 = W3(dd, oo, 1), t0 = W3(dd, oo, 3.6); if (b0 && t0) { c.strokeStyle = dk('#7a4a2a'); c.lineWidth = Math.max(1, 0.12 * b0.k); c.beginPath(); c.moveTo(b0.x, b0.y); c.lineTo(t0.x, t0.y); c.stroke(); } }
+          Fq(k0, k1, oBk, 1, 3.0, dk('#7a4a2a')); { const kk = (W3(kd, oBk, 2) || { k: 1 }).k; if (kk > 3) for (let m = k0 + 0.35; m < k1; m += 0.35) { const a0 = W3(m, oBk + 0.01, 1), a1 = W3(m, oBk + 0.01, 3.0); if (a0 && a1) { c.strokeStyle = dk('#5e3820'); c.lineWidth = 1; c.beginPath(); c.moveTo(a0.x, a0.y); c.lineTo(a1.x, a1.y); c.stroke(); } } } // dinding papan
+          for (const hh of [2.2, 2.75]) { Fq(k0 + 0.3, k1 - 0.3, oBk + 0.05, hh - 0.06, hh, dk('#a8693c')); for (let k = 0; k < 7; k++) { const j = W3(k0 + 0.6 + k * 0.6, oBk + 0.1, hh); if (j) { c.fillStyle = ['#e8b84a', '#c94a2a', '#f2e6c8', '#6a9a4a'][k % 4]; c.fillRect(j.x - 0.12 * j.k, j.y - 0.32 * j.k, 0.24 * j.k, 0.32 * j.k); } } } // rak & toples
+          { const t = tNow, b0 = W3(kd + 1.2, -5.3, 2.05); if (b0) { c.fillStyle = '#b9bcbf'; c.fillRect(b0.x - 0.45 * b0.k, b0.y - 0.65 * b0.k, 0.9 * b0.k, 0.65 * b0.k); for (let q = 0; q < 4; q++) { const ph = (t * 0.4 + q / 4) % 1, r = (0.2 + ph * 0.6) * b0.k; c.fillStyle = `rgba(245,245,245,${(0.35 * (1 - ph)).toFixed(3)})`; c.beginPath(); c.arc(b0.x + Math.sin(t + q) * 0.15 * b0.k, b0.y - (0.9 + ph * 1.6) * b0.k, r, 0, 7); c.fill(); } } }
+          { const q = W3(kd - 0.6, -5.4, 1); if (q) paxDraw(c, q.x, q.y, q.k * 0.95, { kind: 'hijab', seed: 77, shirt: '#c0602f', pants: '#3c4a5c', skin: '#a8704a', hijab: '#2f6b4a', dir: -1, alpha: 1, ph: 0, moving: false }, null); }
+          Fq(k0, k1, oF, 1, 2.05, dk('#8a5634')); quad(W3(k0, oF, 2.05), W3(k1, oF, 2.05), W3(k1, oF - 0.5, 2.05), W3(k0, oF - 0.5, 2.05), dk('#a8693c'));
+          for (let k = 0; k < 5; k++) { const g = W3(k0 + 0.6 + k * 0.5, oF - 0.25, 2.12); if (g) { c.fillStyle = ['#e8b84a', '#c0602f', '#7aa04a', '#f2e6c8', '#a8452a'][k]; c.beginPath(); c.ellipse(g.x, g.y, Math.max(1, 0.16 * g.k), Math.max(1, 0.08 * g.k), 0, 0, 7); c.fill(); } }
+          for (let k = 0; k < 7; k++) { const e1 = k0 - 0.3 + k * 0.8, e2 = e1 + 0.8; quad(W3(e1, oF + 0.6, 3.5), W3(e2, oF + 0.6, 3.5), W3(e2, oBk - 0.2, 4.2), W3(e1, oBk - 0.2, 4.2), k % 2 ? dk('#f4efe2') : dk('#d9502f')); } // atap kain belang
+          Fq(k0 + 0.6, k1 - 0.6, oF + 0.62, 3.5, 4.05, dk('#2f4a33')); { const n0 = W3(k0 + 0.8, oF + 0.64, 3.78), n1 = W3(k1 - 0.8, oF + 0.64, 3.78); if (n0 && n1 && Math.abs(n1.x - n0.x) > 26) { c.save(); c.fillStyle = '#f2e6c8'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.max(5, Math.min(22, Math.round(Math.abs(n1.x - n0.x) / 10)))}px "Big Shoulders Display", sans-serif`; c.fillText('SARAPAN MBOK SUM', (n0.x + n1.x) / 2, (n0.y + n1.y) / 2); c.restore(); } }
+          if (kL > 0.1) { const lm = W3(kd, -5.3, 3.2); if (lm) { c.save(); c.globalCompositeOperation = 'lighter'; const R = Math.min(3 * lm.k, 70), g = c.createRadialGradient(lm.x, lm.y, 0, lm.x, lm.y, R); g.addColorStop(0, `rgba(255,214,140,${(0.4 * kL).toFixed(3)})`); g.addColorStop(1, 'rgba(255,214,140,0)'); c.fillStyle = g; c.fillRect(lm.x - R, lm.y - R, 2 * R, 2 * R); c.restore(); } }
+        }); }
+      } else add(bd + 12, () => {
+        const q = (d1, d2, o1, o2, h1, h2, col) => quad(W3(d1, o1, h1), W3(d2, o2, h1), W3(d2, o2, h2), W3(d1, o1, h2), col);
+        q(bd - 12, bd + 12, -12, -12, 1, 6, dk(mix('#d9cfb9', '#efe6d2', p)));
+        q(bd + 12, bd + 12, -12, -20, 1, 6, dk(mix('#c4bba6', '#ddd3bd', p)));
+        q(bd - 13, bd + 13, -11, -11, 6, 8.4, dk('#8f4330'));
+        for (let k = 0; k < 5; k++) q(bd - 10 + k * 4.6, bd - 8.2 + k * 4.6, -11.95, -11.95, 1.2, 4.2, kL > 0.01 ? mix('#3d4a4f', '#ffd9a0', 0.85 * kL) : '#3d4a4f'); // jendela loket menyala hangat
+      });
+      if (s.heri || s.bening) {
         // kanopi peron besi cor di peron kiri: tiang berkonsol, atap bergelombang, lisplang berlekuk, lampu gantung (di kiri-kanan muka aula)
         for (const [m0, m1] of [[s.x - 92, s.x - 61.5], [s.x - 34.5, s.x - 6]]) for (let m = m0; m < m1 - 0.1; m += 7.5) { const e = Math.min(m1, m + 7.5), d1 = m - x0, d2 = e - x0; if (d2 < 1.4 || d1 > FAR) continue;
           add(Math.max(1.4, d1), () => { const a1 = Math.max(1.4, d1), oI = -2.7, oO = -8.4, hR = 4.9;
@@ -5385,13 +5451,7 @@
         // keramaian penumpang di peron kiri (berdiri & berjalan)
         for (const pp of heriCrowd(s, S)) { const d = pp.cx - x0; if (d < 2.2 || d > Math.min(FAR, 90)) continue; const o = -2.75 - pp.z * 4.9;
           add(d, () => { const q = W3(d, o, 1); if (q && q.k > 1.2) paxDraw(c, q.x, q.y, q.k * 1.0, pp, null); }); }
-      } else add(bd + 12, () => {
-        const q = (d1, d2, o1, o2, h1, h2, col) => quad(W3(d1, o1, h1), W3(d2, o2, h1), W3(d2, o2, h2), W3(d1, o1, h2), col);
-        q(bd - 12, bd + 12, -12, -12, 1, 6, dk(mix('#d9cfb9', '#efe6d2', p)));
-        q(bd + 12, bd + 12, -12, -20, 1, 6, dk(mix('#c4bba6', '#ddd3bd', p)));
-        q(bd - 13, bd + 13, -11, -11, 6, 8.4, dk('#8f4330'));
-        for (let k = 0; k < 5; k++) q(bd - 10 + k * 4.6, bd - 8.2 + k * 4.6, -11.95, -11.95, 1.2, 4.2, kL > 0.01 ? mix('#3d4a4f', '#ffd9a0', 0.85 * kL) : '#3d4a4f'); // jendela loket menyala hangat
-      });
+      }
       // papan nama stasiun
       add(s.x + 13 - x0, () => {
         const d = s.x + 13 - x0, l = W3(d, -6.9, 4.2), r = W3(d, -2.9, 4.2), lb = W3(d, -6.9, 3.2), pl = W3(d, -6.6, 1), pr = W3(d, -3.2, 1); // kaki papan berdiri di lantai peron (tinggi 1 m), tidak di badan rel
@@ -9966,6 +10026,68 @@
     rect(-44, 0, 44, 0.7, stone); c.strokeStyle = 'rgba(70,58,42,0.35)'; c.lineWidth = 1; c.beginPath(); for (let m = -44; m < 44; m += 1.1) { c.moveTo(px(m), py(0.7)); c.lineTo(px(m), py(0)); } c.stroke();
     c.restore();
   }
+  // stasiun pegunungan Cibening bergaya Sunda: aula beratap julang ngapak (sayap atap melebar di ujung, tanduk silang di puncak) menghadap peron,
+  // dinding bawah batu kali, dinding atas plester bertiang jati & jendela krepyak hijau, jam di gevel, sayap kayu berserambi, pinus di kedua ujung
+  function beningStation(V, s) {
+    const { c, ppm, gy, X, st } = V, cx = X(s.x - 46), by = gy - 1.0 * ppm;
+    if (cx + 40 * ppm < -40 || cx - 40 * ppm > W + 40) return;
+    const kL = V.night ? 1 : MIS.dayCycle ? smooth(0.36, 0.12, V.p) : V.lit ? 0.8 : 0, dk = (col, k = 0.5) => mix(col, '#2a2638', k * kL);
+    const px = (m) => cx + m * ppm, py = (m) => by - m * ppm;
+    const rect = (x0, y0, x1, y1, col) => { c.fillStyle = col; c.fillRect(px(x0), py(y1), (x1 - x0) * ppm, (y1 - y0) * ppm); };
+    const poly = (pts, col) => { c.fillStyle = col; c.beginPath(); pts.forEach(([x, y], k) => (k ? c.lineTo(px(x), py(y)) : c.moveTo(px(x), py(y)))); c.closePath(); c.fill(); };
+    const line = (pts, col, w) => { c.strokeStyle = col; c.lineWidth = Math.max(1, w * ppm); c.beginPath(); pts.forEach(([x, y], k) => (k ? c.lineTo(px(x), py(y)) : c.moveTo(px(x), py(y)))); c.stroke(); };
+    const plaster = dk('#f2ecdc'), teak = dk('#6b4126', 0.4), teakL = dk('#8a5634', 0.4), roof = dk('#3d3430', 0.4), roofL = dk('#56493f', 0.4), stoneC = dk('#8d8a80', 0.4), green = dk('#2f6b4a', 0.4), gold = '#d9a93a';
+    const glass = (k = 0) => kL > 0.05 ? mix('#2a3a46', '#ffcf86', clamp(kL * 1.1 - k * 0.1, 0, 1)) : mix('#3a5468', '#a9cbe0', 0.3);
+    c.save();
+    // pinus gunung di kedua ujung
+    for (const [tx, th] of [[-36, 17], [-33, 13], [34, 16], [37.5, 12]]) { rect(tx - 0.2, 0, tx + 0.2, th * 0.3, dk('#4a3424', 0.4)); for (let k = 0; k < 5; k++) { const y0 = th * (0.22 + k * 0.15), w = (1 - k * 0.17) * th * 0.2; poly([[tx - w, y0], [tx + w, y0], [tx, y0 + th * 0.28]], dk(k % 2 ? '#2f5a3a' : '#284f33', 0.4)); } }
+    // sayap kayu berserambi dengan atap limasan sirap
+    for (const sd of [-1, 1]) { const x0 = sd < 0 ? -30 : 10.5, x1 = sd < 0 ? -10.5 : 30;
+      poly([[x0 - 1.2, 6.0], [x1 + 1.2, 6.0], [x1 - 2.2, 9.2], [x0 + 2.2, 9.2]], roof); c.strokeStyle = roofL; c.lineWidth = 1; c.beginPath(); for (let yy = 6.4; yy < 9.2; yy += 0.4) { const f = (yy - 6) / 3.2; c.moveTo(px(x0 - 1.2 + 3.4 * f), py(yy)); c.lineTo(px(x1 + 1.2 - 3.4 * f), py(yy)); } c.stroke();
+      rect(x0, 1.0, x1, 6.0, plaster); rect(x0, 1.0, x1, 1.9, stoneC);
+      for (let m = x0 + 1.6; m < x1 - 1; m += 3.2) { rect(m - 0.65, 2.4, m + 0.65, 5.0, green); c.strokeStyle = dk('#1f4a33', 0.4); c.lineWidth = 1; c.beginPath(); for (let yy = 2.6; yy < 5; yy += 0.22) { c.moveTo(px(m - 0.6), py(yy)); c.lineTo(px(m + 0.6), py(yy)); } c.moveTo(px(m), py(2.4)); c.lineTo(px(m), py(5.0)); c.stroke(); rect(m - 0.8, 5.0, m + 0.8, 5.3, teak); } // jendela krepyak
+      for (let m = x0; m <= x1 + 0.01; m += 3.2) rect(m - 0.18, 1.9, m + 0.18, 6.0, teak); // tiang jati
+      rect(x0 - 1.2, 5.8, x1 + 1.2, 6.15, teakL); c.fillStyle = teakL; for (let m = x0 - 1; m < x1 + 1; m += 0.6) { c.beginPath(); c.moveTo(px(m), py(5.8)); c.lineTo(px(m + 0.3), py(5.45)); c.lineTo(px(m + 0.6), py(5.8)); c.fill(); } } // lisplang berukir
+    // aula: dinding batu kali + plester bertiang jati, pintu besar, jendela krepyak tinggi
+    rect(-10.5, 1.0, 10.5, 7.2, plaster); rect(-10.5, 1.0, 10.5, 2.6, stoneC);
+    c.fillStyle = dk('#a9a69b', 0.4); for (let k = 0; k < 46; k++) { const xx = -10.2 + hash(k * 1.3) * 20.4, yy = 1.2 + hash(k * 2.7) * 1.25; c.beginPath(); c.ellipse(px(xx), py(yy), (0.25 + hash(k) * 0.2) * ppm, (0.16 + hash(k * 3) * 0.1) * ppm, 0, 0, 7); c.fill(); } // batu kali
+    for (const m of [-10.3, -6.2, -2.1, 2.1, 6.2, 10.3]) rect(m - 0.25, 2.6, m + 0.25, 7.2, teak);
+    for (const m of [-8.2, 8.2]) { rect(m - 0.9, 3.0, m + 0.9, 6.4, green); c.strokeStyle = dk('#1f4a33', 0.4); c.lineWidth = 1; c.beginPath(); for (let yy = 3.2; yy < 6.4; yy += 0.22) { c.moveTo(px(m - 0.85), py(yy)); c.lineTo(px(m + 0.85), py(yy)); } c.stroke(); }
+    for (const m of [-4.15, 4.15]) { rect(m - 1.1, 3.0, m + 1.1, 6.6, teakL); rect(m - 0.9, 3.2, m + 0.9, 6.4, glass()); line([[m, 3.2], [m, 6.4]], teakL, 0.08); line([[m - 0.9, 4.8], [m + 0.9, 4.8]], teakL, 0.08); }
+    rect(-1.6, 1.0, 1.6, 5.4, dk('#4a2c18', 0.4)); line([[0, 1.0], [0, 5.4]], dk('#2a180c', 0.4), 0.08); rect(-1.9, 5.4, 1.9, 5.9, teak); // pintu utama
+    rect(-6, 6.3, 6, 7.1, teak); c.fillStyle = kL > 0.3 ? '#ffe2a0' : gold; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 ${Math.max(6, Math.round(0.68 * ppm))}px "Cinzel", "Big Shoulders Display", serif`; c.fillText(s.name, px(0), py(6.7)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    // atap julang ngapak: gevel curam berkisi kayu, sayap atap melebar landai di kedua ujung, tanduk silang (cagak gunting) di puncak
+    poly([[-9.4, 7.2], [9.4, 7.2], [0, 16.4]], plaster);
+    c.strokeStyle = teakL; c.lineWidth = Math.max(1, 0.07 * ppm); c.beginPath(); for (let m = -8; m <= 8; m += 0.8) { const ht = 7.2 + (9.4 - Math.abs(m)) * (9.2 / 9.4); c.moveTo(px(m), py(7.2)); c.lineTo(px(m), py(Math.min(ht, 16.4))); } c.stroke(); // kisi papan gevel
+    { const jy = 10.6, jr = 1.05; c.fillStyle = teak; c.beginPath(); c.arc(px(0), py(jy), (jr + 0.22) * ppm, 0, 7); c.fill(); c.fillStyle = kL > 0.2 ? '#fff4d6' : '#fbf7ec'; c.beginPath(); c.arc(px(0), py(jy), jr * ppm, 0, 7); c.fill();
+      c.fillStyle = '#3a3330'; for (let q = 0; q < 12; q++) { const a = q / 12 * Math.PI * 2; c.fillRect(px(Math.sin(a) * jr * 0.82) - 1, py(jy + Math.cos(a) * jr * 0.82) - 1, 2, 2); }
+      const tt = (MIS.startClock || 0) + Math.floor(st ? st.clock || 0 : 0), hh = (tt / 3600) % 12, mm = (tt / 60) % 60; c.strokeStyle = '#1d1a18'; c.lineCap = 'round';
+      c.lineWidth = Math.max(1.2, 0.12 * ppm); c.beginPath(); c.moveTo(px(0), py(jy)); c.lineTo(px(Math.sin(hh / 12 * Math.PI * 2) * jr * 0.5), py(jy + Math.cos(hh / 12 * Math.PI * 2) * jr * 0.5)); c.stroke();
+      c.lineWidth = Math.max(1, 0.07 * ppm); c.beginPath(); c.moveTo(px(0), py(jy)); c.lineTo(px(Math.sin(mm / 60 * Math.PI * 2) * jr * 0.8), py(jy + Math.cos(mm / 60 * Math.PI * 2) * jr * 0.8)); c.stroke(); c.lineCap = 'butt'; }
+    for (const sd of [-1, 1]) { // bilah atap tebal di kedua lereng + sayap ngapak
+      poly([[0, 16.9], [sd * 10.2, 7.0], [sd * 10.2, 6.3], [0, 15.9]], roof); poly([[sd * 10.0, 7.15], [sd * 14.6, 5.5], [sd * 14.8, 5.0], [sd * 10.0, 6.3]], roof);
+      line([[0, 16.75], [sd * 10.1, 6.85], [sd * 14.7, 5.3]], roofL, 0.12); line([[sd * 0.2, 16.2], [sd * 9.8, 6.5]], teakL, 0.1); }
+    line([[-1.4, 18.6], [1.0, 16.2]], dk('#2a221e', 0.4), 0.28); line([[1.4, 18.6], [-1.0, 16.2]], dk('#2a221e', 0.4), 0.28); // cagak gunting
+    // lentera di kiri-kanan pintu
+    for (const m of [-2.6, 2.6]) { rect(m - 0.16, 4.4, m + 0.16, 5.0, dk('#2f3b3a', 0.3)); c.fillStyle = kL > 0.1 ? '#fff0c0' : '#e8d9a8'; c.fillRect(px(m - 0.1), py(4.95), 0.2 * ppm, 0.45 * ppm);
+      if (kL > 0.1) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(px(m), py(4.7), 0, px(m), py(4.7), 2.4 * ppm); g.addColorStop(0, `rgba(255,220,150,${(0.45 * kL).toFixed(3)})`); g.addColorStop(1, 'rgba(255,220,150,0)'); c.fillStyle = g; c.fillRect(px(m - 2.4), py(7.1), 4.8 * ppm, 4.8 * ppm); c.restore(); } }
+    rect(-31, 0, 31, 1.0, stoneC); c.restore();
+  }
+  // kios sarapan Mbok Sum di peron Cibening: atap kain belang, etalase, dandang mengepul, papan menu
+  function kioskSide(V, s) {
+    const { c, ppm, gy, X } = V, kx = X(s.x - 82), base = gy - 1.5 * ppm; if (kx < -80 || kx > W + 80) return;
+    const kL = V.night ? 1 : MIS.dayCycle ? smooth(0.36, 0.12, V.p) : V.lit ? 0.8 : 0, dk = (col, k = 0.4) => mix(col, '#2a2638', k * kL), u = ppm, t = performance.now() / 1000;
+    c.fillStyle = dk('#7a4a2a'); c.fillRect(kx - 2.6 * u, base - 2.6 * u, 0.18 * u, 2.6 * u); c.fillRect(kx + 2.42 * u, base - 2.6 * u, 0.18 * u, 2.6 * u);
+    for (let k = 0; k < 8; k++) { c.fillStyle = k % 2 ? dk('#f4efe2') : dk('#d9502f'); c.beginPath(); const x0 = kx - 3 * u + k * 0.75 * u; c.moveTo(x0, base - 3.2 * u); c.lineTo(x0 + 0.75 * u, base - 3.2 * u); c.lineTo(x0 + 0.75 * u, base - 2.55 * u); c.quadraticCurveTo(x0 + 0.375 * u, base - 2.3 * u, x0, base - 2.55 * u); c.closePath(); c.fill(); } // atap kain belang
+    c.fillStyle = dk('#8a5634'); c.fillRect(kx - 2.5 * u, base - 1.05 * u, 5 * u, 1.05 * u); c.fillStyle = dk('#a8693c'); c.fillRect(kx - 2.7 * u, base - 1.2 * u, 5.4 * u, 0.18 * u); // meja etalase
+    c.fillStyle = 'rgba(200,225,235,0.55)'; c.fillRect(kx - 2.2 * u, base - 1.75 * u, 2.4 * u, 0.55 * u); for (let k = 0; k < 5; k++) { c.fillStyle = ['#e8b84a', '#c0602f', '#7aa04a', '#f2e6c8', '#a8452a'][k]; c.beginPath(); c.arc(kx - 2 * u + k * 0.48 * u, base - 1.38 * u, 0.15 * u, 0, 7); c.fill(); } // gorengan & lauk
+    c.fillStyle = '#b9bcbf'; c.fillRect(kx + 0.7 * u, base - 1.85 * u, 0.9 * u, 0.65 * u); c.fillStyle = '#8a8f93'; c.fillRect(kx + 0.62 * u, base - 1.95 * u, 1.06 * u, 0.12 * u); // dandang
+    for (let q = 0; q < 4; q++) { const ph = (t * 0.4 + q / 4) % 1, r = (0.2 + ph * 0.6) * u; c.fillStyle = `rgba(245,245,245,${(0.35 * (1 - ph)).toFixed(3)})`; c.beginPath(); c.arc(kx + 1.15 * u + Math.sin(t + q) * 0.15 * u, base - (2.1 + ph * 1.6) * u, r, 0, 7); c.fill(); } // uap
+    c.fillStyle = dk('#2f4a33'); c.fillRect(kx - 1.6 * u, base - 3.9 * u, 3.2 * u, 0.7 * u); c.fillStyle = '#f2e6c8'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.max(5, Math.round(0.42 * u))}px "Big Shoulders Display", sans-serif`; c.fillText('SARAPAN MBOK SUM', kx, base - 3.55 * u); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    paxDraw(c, kx - 0.4 * u, base - 0.95 * u, u * 0.95, { kind: 'hijab', seed: 77, shirt: '#c0602f', pants: '#3c4a5c', skin: '#a8704a', hijab: '#2f6b4a', dir: 1, alpha: 1, ph: 0, moving: false }, null); // Mbok Sum di balik etalase
+    c.fillStyle = dk('#8a5634'); c.fillRect(kx - 2.5 * u, base - 1.05 * u, 5 * u, 1.05 * u);
+    if (kL > 0.1) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(kx, base - 2.2 * u, 0, kx, base - 2.2 * u, 3.5 * u); g.addColorStop(0, `rgba(255,214,140,${(0.4 * kL).toFixed(3)})`); g.addColorStop(1, 'rgba(255,214,140,0)'); c.fillStyle = g; c.fillRect(kx - 3.5 * u, base - 5.7 * u, 7 * u, 7 * u); c.restore(); }
+  }
   function joglostation(V, s) {
     const { c, ppm, gy, X } = V, cx = X(s.x - 46), by = gy - 1.0 * ppm, T = skyTone();
     const kL = V.night ? 1 : MIS.dayCycle ? smooth(0.36, 0.12, V.p) : V.lit ? 0.8 : 0, sunR = sunPos(V).x > cx;
@@ -10241,7 +10363,7 @@
       if (b < -50 || a > W + 50) return;
       if (s.yard) return; // depo: tanpa peron & bangunan stasiun (lihat drawYard)
       // bangunan stasiun warisan: paviliun tengah berjam, sayap berjendela lengkung, atap joglo (Jawa) / gonjong (Sumatra)
-      if (s.modern) modernStation(V, s); else if (s.grand) grandStation(V, s); else if (s.grandJ) { joglostation(V, s); stationCanopy(V, s); } else if (s.heri) { heriStation(V, s); stationCanopy(V, s); } else { stationBuilding(V, X(s.x - 48), gy - 1.0 * ppm, s);
+      if (s.modern) modernStation(V, s); else if (s.grand) grandStation(V, s); else if (s.grandJ) { joglostation(V, s); stationCanopy(V, s); } else if (s.heri) { heriStation(V, s); stationCanopy(V, s); } else if (s.bening) { beningStation(V, s); stationCanopy(V, s); } else { stationBuilding(V, X(s.x - 48), gy - 1.0 * ppm, s);
       stationCanopy(V, s); }
       if (MIS.lebaran) {
         // ketupat bergantung di kanopi dan spanduk Lebaran
@@ -10298,7 +10420,8 @@
         const wave = pass ? Math.sin(performance.now() / 180 + k) * 0.15 * ppm : 0;
         person(c, px, gy - 1.3 * ppm + wave, ppm, k + i * 13, { basket: (s.traders || s.travelers) && hash(k + 3.3) < 0.6, umbrella: s.umbrellas && hash(k + 1.7) < 0.75 });
       }
-      if (s.heri && !pass) for (const pp of heriCrowd(s, V.st)) { const sx = X(pp.cx); if (sx < -30 || sx > W + 30) continue; paxDraw(c, sx, gy - (1.14 + pp.z * 0.56) * ppm, ppm * (1.02 - pp.z * 0.08), pp, null); }
+      if (s.bening) kioskSide(V, s);
+      if (s.heri || s.bening) for (const pp of heriCrowd(s, V.st)) { const sx = X(pp.cx); if (sx < -30 || sx > W + 30) continue; paxDraw(c, sx, gy - (1.14 + pp.z * 0.56) * ppm, ppm * (1.02 - pp.z * 0.08), pp, null); }
     });
     c.textAlign = 'start'; c.textBaseline = 'alphabetic';
   }
@@ -10915,31 +11038,43 @@
     return L;
   }
   let YTL = null, YTL2 = null;
+  const YARD_BASE = new WeakMap();
   function drawYardTrain(V, pk, yb, sc0) {
-    const { c, ppm, X } = V, spr = yardSprite(V, pk, sc0), sc = ppm * sc0 / spr.SP, nx = X(pk.nose);
-    const dx = nx - spr.nose * sc, w = spr.cv.width * sc, h = spr.cv.height * sc, dy = yb - spr.gy * sc; if (dx > W + 20 || dx + w < -20) return;
-    // badan kereta dinyalakan secara dinamis (sprite netral): gelap subuh, genangan cahaya lampu sorot & pantulan memanjang di cat,
-    // kilau tepi atap dari matahari, pendar hangat jendela dipo pada lokomotif di dekatnya
-    const bx0 = Math.max(-2, Math.floor(dx)), bx1 = Math.min(W + 2, Math.ceil(dx + w)), bw = bx1 - bx0; if (bw <= 2) return;
-    const sa = Math.max(1, Math.abs(c.getTransform().a)), cw = Math.ceil(bw * sa), ch = Math.ceil(h * sa);
-    if (!YTL) YTL = document.createElement('canvas'); if (YTL.width < cw || YTL.height < ch) { YTL.width = Math.max(YTL.width, cw); YTL.height = Math.max(YTL.height, ch); }
-    const g = YTL.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, cw + 2, ch + 2);
-    g.setTransform(sa, 0, 0, sa, -bx0 * sa, -dy * sa); g.drawImage(spr.cv, dx, dy, w, h);
-    const dawnK = clamp((0.45 - V.p) / 0.45, 0, 1), roof = yb - trainH(4.25) * ppm * sc0;
-    if (dawnK > 0.02) { g.globalCompositeOperation = 'multiply'; g.fillStyle = mix('#ffffff', '#5a5878', 0.55 * dawnK); g.fillRect(bx0, dy, bw, h); g.globalCompositeOperation = 'destination-in'; g.drawImage(spr.cv, dx, dy, w, h); } // subuh: badan meredup (kontras tetap)
-    // cahaya ditambahkan (aditif) hanya pada bentuk kereta: dilukis di kanvas kedua, dipotong siluet sprite, lalu dijumlahkan
-    const Ls = yardLights(V).filter((L) => L.x > bx0 - L.R * 2 && L.x < bx1 + L.R * 2), rim = (V.rimA || 0) > 0.03 && V.rim;
-    if (Ls.length || rim) {
-      if (!YTL2) YTL2 = document.createElement('canvas'); if (YTL2.width < cw || YTL2.height < ch) { YTL2.width = Math.max(YTL2.width, cw); YTL2.height = Math.max(YTL2.height, ch); }
-      const h2 = YTL2.getContext('2d'); h2.setTransform(1, 0, 0, 1, 0, 0); h2.globalCompositeOperation = 'source-over'; h2.globalAlpha = 1; h2.clearRect(0, 0, cw + 2, ch + 2); h2.setTransform(sa, 0, 0, sa, -bx0 * sa, -dy * sa);
-      for (const L of Ls) { const rr = Math.hypot(L.R, yb - L.y), rg = h2.createRadialGradient(L.x, L.y, (yb - L.y) * 0.55, L.x, L.y, rr); rg.addColorStop(0, `rgba(${L.col},${(0.42 * L.a).toFixed(3)})`); rg.addColorStop(0.5, `rgba(${L.col},${(0.14 * L.a).toFixed(3)})`); rg.addColorStop(1, `rgba(${L.col},0)`);
-        h2.fillStyle = rg; h2.fillRect(bx0, dy, bw, h);
-        if (!L.win) { const sg = h2.createLinearGradient(L.x - 2.2 * ppm, 0, L.x + 2.2 * ppm, 0); sg.addColorStop(0, 'rgba(255,248,226,0)'); sg.addColorStop(0.5, `rgba(255,248,226,${(0.55 * L.a).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,248,226,0)');
-          h2.fillStyle = sg; h2.fillRect(L.x - 2.2 * ppm, roof, 4.4 * ppm, (yb - roof) * 0.62); } } // pantulan lampu memanjang pada cat mengilap
-      if (rim) { const tg = h2.createLinearGradient(0, roof - 2, 0, roof + 0.8 * ppm); tg.addColorStop(0, V.rim); tg.addColorStop(1, 'rgba(0,0,0,0)'); h2.globalAlpha = 0.6 * V.rimA; h2.fillStyle = tg; h2.fillRect(bx0, roof - 2, bw, 0.8 * ppm + 2); h2.globalAlpha = 1; } // kilau tepi atap (matahari)
-      h2.globalCompositeOperation = 'destination-in'; h2.drawImage(spr.cv, dx, dy, w, h);
-      g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter'; g.drawImage(YTL2, 0, 0, cw, ch, 0, 0, cw, ch); }
-    c.drawImage(YTL, 0, 0, cw, ch, bx0, dy, bw, h);
+    // kereta terparkir dilukis pada resolusi layar sebenarnya (tajam di semua zoom) dengan pencahayaan adegan yang sama seperti kereta pemain.
+    // Gambar dasar di-cache per skala & cahaya (dilukis ulang hanya saat zoom/cahaya berubah) lalu ditempel 1:1 di piksel perangkat bulat: tidak bergoyang
+    const { c, ppm, X } = V, P = ppm * sc0, nx = X(pk.nose), carL = pk.freight ? WAGON_LEN : COACH_LEN, TL = LOCO_LEN + pk.n * (carL + GAP), pad = 3;
+    const minX = pk.flip ? nx - pad * P : nx - (TL + pad) * P, maxX = pk.flip ? nx + (TL + pad) * P : nx + pad * P, minY = yb - 9.5 * P, maxY = yb + 1.6 * P;
+    if (minX > W + 20 || maxX < -20) return;
+    const sa = Math.max(1, Math.abs(c.getTransform().a)), bw = Math.ceil((maxX - minX) * sa) + 2, bh = Math.ceil((maxY - minY) * sa) + 2;
+    const key = [(P * sa).toFixed(2), Math.round(V.p * 40), Math.round((V.rimA || 0) * 20), V.rim, !!V.night, Math.round((V.sunShadow || 0) * 10)].join('|');
+    let B = YARD_BASE.get(pk);
+    if (!B || B.key !== key) {
+      if (!B) { B = { cv: document.createElement('canvas') }; YARD_BASE.set(pk, B); }
+      const cv = B.cv; if (cv.width < bw || cv.height < bh) { cv.width = Math.max(cv.width, bw); cv.height = Math.max(cv.height, bh); }
+      const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.setTransform(sa, 0, 0, sa, 0, 0);
+      const L0 = (TL + pad) * P, w = maxX - minX, keep = { W, H, N_COACH, CAR_LEN, MIS, LOCO_FORCE };
+      if (pk.flip) { g.translate(w, 0); g.scale(-1, 1); // lokomotif menghadap kiri: dicerminkan; tulisan tetap terbaca
+        g.fillText = function (t, x, y, mw) { this.save(); this.translate(x, y); this.scale(-1, 1); CanvasRenderingContext2D.prototype.fillText.call(this, t, 0, 0, mw); this.restore(); }; }
+      const VV = Object.assign({}, V, { c: g, ppm: P, gy: yb - minY, X: (wx) => (pk.flip ? w - pad * P : L0) + wx * P, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null, steam: 0, v: 0, notch: 0 },
+        tf: 0, lit: false, upper: undefined, bdy: () => 0, refl: 0, camX: 0 });
+      W = Math.max(W, w + 400); H = Math.max(H, (maxY - minY) + 400); N_COACH = pk.n; CAR_LEN = carL; LOCO_FORCE = pk.loco === 'cakra' ? null : pk.loco; if (pk.freight) MIS = MISSIONS['2-1'];
+      try { drawTrain(VV); } catch (e) { /* kereta parkir opsional */ } finally { if (Object.prototype.hasOwnProperty.call(g, 'fillText')) delete g.fillText; W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; }
+      B.key = key; B.w = bw; B.h = bh;
+    }
+    const dx0 = Math.round(minX * sa), dy0 = Math.round(minY * sa), cw = B.w, ch = B.h;
+    const need = (cv) => { if (!cv) cv = document.createElement('canvas'); if (cv.width < cw || cv.height < ch) { cv.width = Math.max(cv.width, cw); cv.height = Math.max(cv.height, ch); } return cv; };
+    const roof = yb - trainH(4.25) * P, Ls = yardLights(V).filter((L) => L.x > minX - L.R * 2 && L.x < maxX + L.R * 2);
+    if (!Ls.length) { c.drawImage(B.cv, 0, 0, cw, ch, dx0 / sa, dy0 / sa, cw / sa, ch / sa); return; }
+    YTL = need(YTL); const g = YTL.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, cw + 2, ch + 2); g.drawImage(B.cv, 0, 0, cw, ch, 0, 0, cw, ch);
+    // cahaya lampu sorot & jendela dipo ditambahkan (aditif) hanya pada siluet kereta
+    YTL2 = need(YTL2); const h2 = YTL2.getContext('2d'); h2.setTransform(1, 0, 0, 1, 0, 0); h2.globalCompositeOperation = 'source-over'; h2.globalAlpha = 1; h2.clearRect(0, 0, cw + 2, ch + 2); h2.setTransform(sa, 0, 0, sa, -dx0, -dy0);
+    for (const L of Ls) { const rr = Math.hypot(L.R, yb - L.y), rg = h2.createRadialGradient(L.x, L.y, (yb - L.y) * 0.55, L.x, L.y, rr); rg.addColorStop(0, `rgba(${L.col},${(0.42 * L.a).toFixed(3)})`); rg.addColorStop(0.5, `rgba(${L.col},${(0.14 * L.a).toFixed(3)})`); rg.addColorStop(1, `rgba(${L.col},0)`);
+      h2.fillStyle = rg; h2.fillRect(minX, minY, maxX - minX, maxY - minY);
+      if (!L.win) { const sg = h2.createLinearGradient(L.x - 2.2 * ppm, 0, L.x + 2.2 * ppm, 0); sg.addColorStop(0, 'rgba(255,248,226,0)'); sg.addColorStop(0.5, `rgba(255,248,226,${(0.55 * L.a).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,248,226,0)');
+        h2.fillStyle = sg; h2.fillRect(L.x - 2.2 * ppm, roof, 4.4 * ppm, (yb - roof) * 0.62); } } // pantulan lampu memanjang pada cat mengilap
+    h2.setTransform(1, 0, 0, 1, 0, 0); h2.globalCompositeOperation = 'destination-in'; h2.drawImage(B.cv, 0, 0, cw, ch, 0, 0, cw, ch);
+    g.globalCompositeOperation = 'lighter'; g.drawImage(YTL2, 0, 0, cw, ch, 0, 0, cw, ch);
+    c.drawImage(YTL, 0, 0, cw, ch, dx0 / sa, dy0 / sa, cw / sa, ch / sa); // 1:1 piksel perangkat
   }
   // genangan cahaya di tanah, balas & kepala rel di bawah tiap tiang lampu sorot dan di depan jendela dipo (aditif, di bawah kereta)
   function drawYardLightPools(V) {
