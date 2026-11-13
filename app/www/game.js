@@ -10585,9 +10585,9 @@
   function garudaSprite(V, u) {
     const pk = Math.round(clamp(V.p, 0, 1) * 5) / 5, night = !!(V.night || V.p < 0.14), litW = night || !!V.lit, dev = u * Math.max(1, Math.abs(V.c.getTransform().a)), SP = clamp(Math.ceil(dev / 4) * 4, 16, 40), key = night + '|' + litW + '|' + pk + '|' + SP;
     if (GARUDA_SPRS[key]) return GARUDA_SPRS[key]; for (const kk in GARUDA_SPRS) delete GARUDA_SPRS[kk];
-    const n = 5, TL = LOCO_LEN + n * (COACH_LEN + GAP), pad = 3, cw = Math.ceil((TL + GAP + LOCO_LEN + pad * 2) * SP), ch = Math.ceil(10.5 * SP), gyS = Math.round(9 * SP);
+    const n = 5, TL = LOCO_LEN + n * (COACH_LEN + GAP), pad = 3, cw = Math.ceil((TL + GAP + LOCO_LEN + pad * 2 + 1) * SP), ch = Math.ceil(10.5 * SP), gyS = Math.round(9 * SP);
     const mk = (noText) => { const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch; const c = cv.getContext('2d'); if (noText) c.fillText = () => {};
-      const noseX = cw - pad * SP - (LOCO_LEN + GAP) * SP; // sisakan ruang di belakang untuk kabin ekor
+      const noseX = cw - pad * SP; // moncong di kanan; ruang di kiri untuk kabin ekor
       // sprite netral (tanpa cahaya tepi/kilau terpanggang); cahaya matahari ditambahkan dinamis tiap frame di garudaGloss
       const VV = { c, ppm: SP, gy: gyS, X: (wx) => noseX + wx * SP, st: { x: 0, doors: 'closed', aboard: litW ? 30 : 12, spin: 0, carDyn: null }, p: pk, storm: false, tf: 2, camX: 0,
         rimA: 0, rim: '#ffffff', refl: 0, lit: litW, sunShadow: 0, night, bdy: () => 0 };
@@ -10598,9 +10598,8 @@
     const A = mk(false), B = mk(true), o = A.cv.getContext('2d');
     // kabin ekor: salinan lokomotif dicerminkan (tanpa tulisan) dipasang di belakang gerbong terakhir
     const sx0 = B.noseX - (LOCO_LEN + 0.4) * SP, sw = (LOCO_LEN + 0.4 + pad) * SP, tailX = A.noseX - (TL + GAP) * SP;
-    o.save(); o.translate(tailX, 0); o.scale(-1, 1); o.drawImage(B.cv, sx0, 0, sw, ch, -(LOCO_LEN + 0.4) * SP, 0, sw, ch); o.restore();
-    tailGangway(o, A.noseX - (TL + GAP + 0.1) * SP, (GAP + 0.25) * SP, gyS, SP, night);
-    return (GARUDA_SPRS[key] = { cv: A.cv, SP, gy: gyS, nose: A.noseX, tail: tailX - (LOCO_LEN + 0.4) * SP });
+    o.save(); o.translate(tailX + (0.4 + GAP) * SP, 0); o.scale(-1, 1); o.drawImage(B.cv, sx0, 0, sw, ch, 0, 0, sw, ch); o.restore(); // kabin ekor menyambung di BELAKANG gerbong terakhir (tidak menimpanya), moncong ke kiri
+    return (GARUDA_SPRS[key] = { cv: A.cv, SP, gy: gyS, nose: A.noseX, tail: tailX + (GAP - LOCO_LEN) * SP });
   }
   // cahaya dinamis Garuda (sumber sama dengan Agraveda: V.rim/rimA, skyTone, posisi matahari): langit & tanah terpantul,
   // sisi hangat dekat matahari & teduh menjauh, pita kilau yang menyapu badan saat melaju, cahaya tepi atap, kilatan sambungan
