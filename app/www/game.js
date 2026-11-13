@@ -844,6 +844,14 @@
       brakeBoards: true,
       hst: true,
       neutral: [{ from: 6400, to: 6540 }, { from: 15400, to: 15540 }],
+      // jalur ganda Bukit Barisan: jalur 2 (arah berlawanan) di kanan; tiap stasiun 3 jalur berwesel (jalur 3 lewat langsung). Berpapasan dengan Agraveda
+      double: { o: 4.6, st: 8.3, t3: 12.9, kilat: { cars: 6, loco: 'argo', stripe: ['#f08a24', '#7a3a96'], stripeR: [0.3, 0.42, 0.47], reflRGB: '196,104,58',
+        who: ['Sari', 'SR'], passMsg: 'Agraveda sudah lewat. Jalur 2 kembali kosong.', greetMsg: 'Salam klakson terbalas! Masinis Agraveda melambai dari kabinnya.', events: [
+        { at: 3, arrive: true, from: 640, v: 60, stop: -92, msg: 'Agraveda AV 3802 dari Kota Barisan masuk Muara Kelam Baru di jalur 2, pelan menuju peron seberang. Kilat G1 berangkat di jalur 1: balas salam klaksonnya.' },
+        { at: 7600, ahead: 2600, v: 200, slow: 140, t3: true, msg: 'Agraveda AV 3804 melintas langsung di jalur 3 Lembah Sikai tanpa berhenti. Kita berhenti di jalur 1: perhatikan papasannya di stasiun!' },
+        { at: 11400, ahead: 3000, v: 200, msg: 'Agraveda AV 3806 turun dari Bukit Barisan di jalur 2, 200 km/h. Tetap di jalur 1 dan balas klakson saat berpapasan.' },
+        { at: 16300, ahead: 3200, v: 180, msg: 'Satu lagi: Agraveda AV 3808 menyeberangi Viaduk Lembah Barisan di jalur 2. Papasan di atas ngarai!' },
+      ] } },
       hints: [
         { at: 1200, msg: 'Kilat G1 lebih tua dari Guntur: mulai mengerem lebih awal dan ikuti papan REM.' },
         { at: 3900, msg: 'Viaduk Ngarai Anai di depan: angin lembah kencang, maks 160 km/h.', kind: 'warn' },
@@ -5981,6 +5989,7 @@
     }
     // Kilat Nusantara datang dari depan di jalur 2: rangkaian 3D mulus (moncong peluru lonjong & gerbong berpenampang membulat)
     const sunRimRGB = sunRim.split(','), KSTR = (DBc && DBc.kilat.stripe) || ['#1567c4', '#22b6d6'], KSR = (DBc && DBc.kilat.stripeR) || [0.38, 0.49, 0.52];
+    const AGV = !!(DBc && DBc.kilat.loco === 'argo'); // Agraveda: moncong putih dengan sapuan jingga di bagian bawah, pita ungu-jingga, nama di sisi
     for (const KC of (DBc && st.kilats) || []) {
       const KO = kO(KC);
       const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]), LN = 10.5;
@@ -6017,6 +6026,7 @@
             // cat putih: langit hangat di bagian atas, pantulan sawah hijau di sisi bawah, kilau matahari yang menyapu badan
             const v = (x, sky, gnd) => Math.round(clamp(x * lt + (sky - x) * 0.16 * up * SUNK + (gnd - x) * 0.14 * (1 - up) + 255 * sp, 0, 255));
             col = night ? `rgb(${Math.round(150 * lt)},${Math.round(156 * lt)},${Math.round(168 * lt)})` : `rgb(${v(252, +sunRimRGB[0], 150)},${v(253, +sunRimRGB[1], 190)},${v(255, +sunRimRGB[2], 120)})`; }
+          if (AGV && lead && ms < 0.999 && mr < 0.6 && !(nose && ms > 0.3 && ms < 0.66 && ma < 0.82 * Math.PI)) { const f = clamp((0.6 - mr) / 0.25, 0, 1) * (0.55 + 0.45 * clamp((0.9 - ms) / 0.4, 0, 1)); if (f > 0.01) col = mix(col, mix('#f7c24a', '#ef7422', clamp((0.5 - mr) / 0.35, 0, 1)), 0.85 * f); } // sapuan jingga moncong
           // stasiun: benda tetap di peron (tiang lampu tiap 10 m) terpantul di sisi badan & menyapu ke belakang saat Garuda melaju,
           // lampu peron hangat memantul saat petang/malam, lantai peron yang terang memantulkan cahaya ke badan bawah
           let ov = null; const xw = x0 + md, stF = left && mr > 0.14 && mr < 0.95 ? dblSt(xw, 520, 120) : 0;
@@ -6039,6 +6049,15 @@
           c.fillStyle = night ? '#6a707a' : '#c9ced4'; c.beginPath(); cap.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
           const ins = sec.filter((_, i) => i % 2 === 0).map((t) => { const o0 = KO(x0 + dn); return W3(dn - 0.02, o0 + (t.o - o0) * 0.82, 0.35 + (t.h - 0.35) * 0.9); }); if (!ins.some((t) => !t)) { c.fillStyle = night ? '#7a8088' : '#bfc5cc'; c.beginPath(); ins.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); // penutup sambungan berlipat sewarna badan (seperti Guntur)
             c.strokeStyle = 'rgba(70,78,88,0.45)'; c.lineWidth = 1; c.beginPath(); ins.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.stroke(); } } }
+        if (AGV && lead && dn > 1.5) { const dt = dn + LN + 1.2, sec = secs.find((ss) => ss[0].d >= dt && ss[0].s >= 0.999); if (sec) { const kk = sec.findIndex((t) => t.a > Math.PI / 2 && t.r < 0.62);
+            if (kk > 0) { const t0 = sec[kk], p0 = W3(t0.d, t0.o, t0.h), p1 = W3(t0.d + 7, t0.o + (KO(x0 + t0.d + 7) - KO(x0 + t0.d)), t0.h); if (p0 && p1 && Math.hypot(p1.x - p0.x, p1.y - p0.y) > 14) { const fs = Math.max(6, Math.min(40, 0.5 * p0.k));
+              c.save(); const L2R = p1.x < p0.x, pa = L2R ? p1 : p0, pb = L2R ? p0 : p1; c.translate(pa.x, pa.y); c.rotate(Math.atan2(pb.y - pa.y, pb.x - pa.x)); /* dibaca kiri ke kanan */ const sx = Math.hypot(p1.x - p0.x, p1.y - p0.y) / 7; c.scale(1, Math.min(1, (0.42 * p1.k) / fs) * 0.5 + 0.5);
+              c.fillStyle = night ? '#d27ab0' : '#b8378a'; c.font = `italic 900 ${fs}px "Big Shoulders Display", sans-serif`; c.textBaseline = 'middle'; c.fillText('AGRAVEDA', 0, 0, sx * 6.5); c.restore(); } } } }
+        if (lead && dn > 3) { // lampu depan memantul di kepala rel jalur 2 di depan moncong (kilau memanjang, makin terang saat gelap/terowongan)
+          const lk = night || inTun ? 1 : 0.18 + 0.5 * kL; c.save(); c.globalCompositeOperation = 'lighter';
+          for (const ro of [-0.53, 0.53]) for (let q = 0; q < 14; q++) { const d1 = dn - 1 - q * 2.6, d2 = d1 - 2.4; if (d2 < 1.6) break; const a0 = W3(d1, KO(x0 + d1) + ro, 0.17), a1 = W3(d2, KO(x0 + d2) + ro, 0.17); if (!a0 || !a1) continue;
+            const al = lk * 0.75 * Math.exp(-q / 5); c.strokeStyle = `rgba(255,244,214,${al.toFixed(3)})`; c.lineWidth = Math.max(1, 0.035 * a1.k); c.beginPath(); c.moveTo(a0.x, a0.y); c.lineTo(a1.x, a1.y); c.stroke(); }
+          c.restore(); }
         if (lead && dn > 3) { const lk = night ? 1 : 0.35 + 0.65 * kL; // sorot lampu depan Garuda menerangi rel & balas di depannya (ke arah kabin)
           c.save(); c.globalCompositeOperation = 'lighter'; const o0 = KO(x0 + dn), q0 = W3(dn, o0 - 1.1, 0.02), q1 = W3(dn, o0 + 1.1, 0.02), dd = Math.max(1.6, dn - 28), q2 = W3(dd, o0 + 2.2, 0.02), q3 = W3(dd, o0 - 2.2, 0.02);
           if (q0 && q1 && q2 && q3) { const g = c.createLinearGradient(0, q0.y, 0, q3.y); g.addColorStop(0, `rgba(255,236,196,${(0.32 * lk).toFixed(3)})`); g.addColorStop(1, 'rgba(255,236,196,0)'); c.fillStyle = g; c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.closePath(); c.fill(); }
