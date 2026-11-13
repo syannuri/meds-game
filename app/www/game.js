@@ -3794,11 +3794,12 @@
   }
   // ilustrasi utama halaman pembuka: Guntur asli dari game (lokomotif + gerbong), moncong ke kanan, kanvas transparan lebar
   function heroTrainImg() {
-    const cw = 2200, ch = 380, cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
-    const c = cv.getContext('2d'), ppm = ch / 7.4, gy = ch * 0.9, kw = W, kh = H, keep = N_COACH;
-    const V = { c, ppm, gy, X: (wx) => cw * 0.86 + wx * ppm, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.4, storm: false, tf: 0, camX: 0,
+    // Guntur + 2 gerbong utuh (kanvas selebar seluruh rangkaian, ekor tidak terpotong)
+    const ch = 380, ppm = ch / 7.4, nC = 2, front = 300, cw = Math.ceil(front + (LOCO_LEN + nC * (COACH_LEN + GAP) + 0.6) * ppm), cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+    const c = cv.getContext('2d'), gy = ch * 0.9, kw = W, kh = H, keep = N_COACH;
+    const V = { c, ppm, gy, X: (wx) => cw - front + wx * ppm, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.4, storm: false, tf: 0, camX: 0,
       rimA: 0.9, rim: '#ffb067', refl: 0.2, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
-    W = cw; H = ch; N_COACH = 2; LOCO_FORCE = 'hst2';
+    W = cw; H = ch; N_COACH = nC; LOCO_FORCE = 'hst2';
     try { drawTrain(V); } catch (e) { /* ilustrasi opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; }
     return cv.toDataURL('image/png');
   }
@@ -4144,20 +4145,22 @@
     idleState = makeIdle();
     textCache.clear();
   }
+  // ringkasan tugas misi (1–2 kalimat) untuk halaman deskripsi yang muat satu layar HP tanpa digulir
+  const BRIEF_SHORT = {"1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Baca papan batas, sinyal kuning, dan sinyal merah.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
   function showBrief() {
     const m = MIS, R = ROUTE, f = finalStation();
     $('briefEyebrow').textContent = m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
     $('briefTitle').textContent = m.title;
     setAvatar($('briefAvatar'), m.speaker.initials);
     $('briefWho').textContent = m.speaker.who;
-    $('briefText').textContent = m.brief;
+    $('briefText').textContent = BRIEF_SHORT[m.daily ? m.base : m.id] || m.brief;
     const stops = R.stations.slice(1);
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
       ${(() => { const d = m.driver || DRIVER; return `<dt>Masinis</dt><dd class="drv"><span class="drvpic">${PORTRAIT(d.initials) || ''}</span>${d.name}</dd>`; })()}<dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat G1 KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : m.loco === 'steam' ? 'Lokomotif uap Surya 1912' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : m.loco === 'steam' ? 'wisata' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
-      <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.tutorial || m.id === '1-1' ? '' : `<dt>Tantangan</dt><dd>Medali ${MEDALS.map((q) => q.icon + ' ' + q.name).join(' · ')} · waspadai kejadian acak (perbaikan rel, kambing di rel)</dd>`}${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
+      <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.tutorial || m.id === '1-1' ? '' : `<dt>Medali</dt><dd class="bmed">${MEDALS.map((q) => `<span title="${q.name}: ${q.tip}">${q.icon}</span>`).join(' ')} <small>+ kejadian acak</small></dd>`}${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
       const art = m.daily ? dailyArt(m.base).replace('class="tart"', 'class="bart"') : misArt(m.id).replace('class="tart"', 'class="bart"');
       const x0 = R.stations[0].x, x1 = f.x;
@@ -4171,7 +4174,15 @@
     $('btnExpert').hidden = !expertAllowed(m);
     syncExpert();
     showScreen('brief');
+    fitBrief();
   }
+  // halaman deskripsi selalu muat satu layar: perkecil skala huruf sampai tidak perlu digulir
+  function fitBrief() {
+    const scr = ui.screens.brief, inner = scr && scr.querySelector('.screen-inner'); if (!inner) return;
+    const go = () => { for (let k = 1; k >= 0.62; k -= 0.04) { inner.style.setProperty('--bk', k.toFixed(2)); if (scr.scrollHeight <= scr.clientHeight + 1) break; } };
+    requestAnimationFrame(() => { go(); requestAnimationFrame(go); });
+  }
+  window.addEventListener('resize', () => { if (mode === 'brief') fitBrief(); });
   // ---------- kejadian acak (1–2 per perjalanan, selalu diumumkan lebih dulu): perbaikan rel & kambing di rel ----------
   function rollEvents() {
     const R = ROUTE; if (!R._base) R._base = { zones: R.zones.slice(), goats: R.goats.slice() };
