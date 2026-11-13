@@ -5456,10 +5456,10 @@
             const lm = W3((a1 + d2) / 2, -4.2, hR - 0.9); if (lm) { c.fillStyle = dk('#2f3b3a'); c.fillRect(lm.x - 0.2 * lm.k, lm.y - 0.25 * lm.k, 0.4 * lm.k, 0.25 * lm.k); c.fillStyle = kL > 0.1 ? '#fff0c0' : '#e8d9a8'; c.beginPath(); c.arc(lm.x, lm.y + 0.08 * lm.k, Math.max(1, 0.15 * lm.k), 0, 7); c.fill();
               if (kL > 0.1) { c.save(); c.globalCompositeOperation = 'lighter'; const R = Math.min(2.4 * lm.k, 60), g = c.createRadialGradient(lm.x, lm.y, 0, lm.x, lm.y, R); g.addColorStop(0, `rgba(255,220,150,${(0.4 * kL).toFixed(3)})`); g.addColorStop(1, 'rgba(255,220,150,0)'); c.fillStyle = g; c.fillRect(lm.x - R, lm.y - R, 2 * R, 2 * R); c.restore(); } }
           }); }
-        // keramaian penumpang di peron kiri (berdiri & berjalan)
-        for (const pp of heriCrowd(s, S)) { const d = pp.cx - x0; if (d < 2.2 || d > Math.min(FAR, 90)) continue; const o = -2.75 - pp.z * 4.9;
-          add(d, () => { const q = W3(d, o, 1); if (q && q.k > 1.2) paxDraw(c, q.x, q.y, q.k * 1.0, pp, null); }); }
       }
+      // keramaian penumpang di peron kiri setiap stasiun (berdiri berkelompok, berkoper, berjalan)
+      if (!MIS.freight) for (const pp of stationCrowd(s, pass)) { const d = pp.cx - x0; if (d < 2.2 || d > Math.min(FAR, 90)) continue; const o = -2.95 - pp.z * 4.7;
+        add(d, () => { const q = W3(d, o, 1); if (q && q.k > 1.2) crowdPax(c, q.x, q.y, q.k * 1.0, pp); }); }
       // papan nama stasiun
       add(s.x + 13 - x0, () => {
         const d = s.x + 13 - x0, l = W3(d, -6.9, 4.2), r = W3(d, -2.9, 4.2), lb = W3(d, -6.9, 3.2), pl = W3(d, -6.6, 1), pr = W3(d, -3.2, 1); // kaki papan berdiri di lantai peron (tinggi 1 m), tidak di badan rel
@@ -9964,19 +9964,34 @@
   // berbeda dari Kota Kencana (klasik Eropa): atap tumpang tiga tingkat bergaya tajug di atas aula kaca berkisi kayu,
   // sayap beratap pelana landai dengan teritis lebar menjulur, gapura bentar bata merah, panel motif kawung keemasan,
   // lampion di bawah teritis; nama berhuruf kayu-emas; terang-teduh mengikuti matahari, menyala hangat saat petang
-  // keramaian penumpang di peron stasiun warisan (dekoratif, tampak samping & kabin): berdiri, mengobrol, berjalan pelan menyusuri peron
+  // keramaian penumpang di peron setiap stasiun (dekoratif, tampak samping & kabin) agar terasa nyata: kelompok 2-3 orang yang saling berhadapan
+  // (mengobrol), penumpang sendirian menunggu, sebagian membawa koper beroda, dan beberapa berjalan pelan menyusuri peron. Jumlah menurut besar stasiun.
   const HERI_CROWD = {};
-  function heriCrowd(s, st) {
+  function stationCrowd(s, pass) {
     const key = s.name + s.x; let L = HERI_CROWD[key];
-    if (!L) { L = HERI_CROWD[key] = []; for (let k = 0; k < 38; k++) { const seed = 500 + k * 7.3 + s.x * 0.01, r = hash(seed * 1.9);
-        const kind = r < 0.1 ? 'elder' : r < 0.3 ? 'hijab' : r < 0.44 ? 'backpack' : r < 0.55 ? 'child' : r < 0.66 ? 'trader' : 'adult', walk = hash(seed + 3.3) < 0.34;
-        L.push({ role: 'deco', state: 'wait', kind, seed, x0: s.x - 91 + hash(seed + 1.7) * 104, z: hash(seed + 2.9), walk, v: (0.45 + hash(seed + 4.1) * 0.5) * (hash(seed + 5.3) < 0.5 ? -1 : 1),
+    if (!L) { L = HERI_CROWD[key] = []; const big = s.grand || s.grandJ || s.modern || s.heri || s.bening, N = (pass ? 22 : big ? 44 : 32) + (s.travelers || s.traders ? 8 : 0); let k = 0, cl = 0;
+      const mk = (seed, x0, z, walk, dir) => { const r = hash(seed * 1.9), kind = r < 0.1 ? 'elder' : r < 0.3 ? 'hijab' : r < 0.44 ? 'backpack' : r < 0.53 ? 'child' : (s.traders || s.travelers) && r < 0.68 ? 'trader' : 'adult';
+        const bag = kind !== 'child' && kind !== 'trader' && hash(seed + 7.7) < (s.travelers ? 0.38 : 0.2);
+        return { role: 'deco', state: 'wait', kind, seed, x0, z, walk, v: (0.45 + hash(seed + 4.1) * 0.5) * (hash(seed + 5.3) < 0.5 ? -1 : 1), bag, bagC: ['#2f3a4a', '#7a2f3a', '#3e5a4a', '#5a4632', '#2a2a30'][Math.floor(hash(seed + 8.8) * 5)],
           shirt: PAX_SHIRT[Math.floor(hash(seed) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1.1) * PAX_PANTS.length)], skin: PAX_SKIN[Math.floor(hash(seed + 2.2) * PAX_SKIN.length)],
-          hijab: PAX_HIJAB[Math.floor(hash(seed + 4.4) * PAX_HIJAB.length)], ph: 0, dir: hash(seed + 6.1) < 0.5 ? -1 : 1, alpha: 1, moving: false, cx: 0 }); } }
+          hijab: PAX_HIJAB[Math.floor(hash(seed + 4.4) * PAX_HIJAB.length)], ph: 0, dir, alpha: 1, moving: false, cx: 0 }; };
+      while (k < N && cl < 200) { const seed0 = 500 + cl * 13.7 + s.x * 0.013, r = hash(seed0), size = r < 0.42 ? 1 : r < 0.8 ? 2 : 3, cx = s.x - 89 + hash(seed0 + 1.7) * 100, z0 = 0.12 + hash(seed0 + 2.9) * 0.78; cl++;
+        if (size === 1) { const walk = hash(seed0 + 3.3) < 0.4; L.push(mk(seed0, cx, z0, walk, hash(seed0 + 6.1) < 0.5 ? -1 : 1)); k++; continue; }
+        for (let m = 0; m < size && k < N; m++) { const seed = seed0 + m * 3.1 + 0.5, x0 = cx + (m - (size - 1) / 2) * (0.6 + hash(seed + 9.1) * 0.15), z = clamp(z0 + (m % 2 ? 0.08 : -0.05) + (m === 2 ? 0.14 : 0), 0.05, 0.98);
+          L.push(mk(seed, x0, z, false, x0 < cx ? 1 : x0 > cx ? -1 : (hash(seed) < 0.5 ? -1 : 1))); k++; } } } // anggota kelompok saling berhadapan
     const t = performance.now() / 1000, a = s.x - 92, span = 110;
     for (const pp of L) { if (pp.walk) { const u = (((pp.x0 - a + pp.v * t) % span) + span) % span; pp.cx = a + u; pp.moving = true; pp.dir = Math.sign(pp.v); pp.ph = t * Math.abs(pp.v) * 5.2 + pp.seed; }
       else { pp.cx = pp.x0; pp.moving = false; pp.ph = 0; } }
     return L.slice().sort((p1, p2) => p2.z - p1.z);
+  }
+  const heriCrowd = (s) => stationCrowd(s, false);
+  // satu penumpang keramaian + koper beroda di sisinya (skala sc = piksel per meter)
+  function crowdPax(c, x, y, sc, pp) {
+    if (pp.bag && !pp.moving) { const bx = x + pp.dir * 0.34 * sc, w = 0.34 * sc, h = 0.55 * sc; c.fillStyle = pp.bagC; roundRect(c, bx - w / 2, y - h, w, h, 0.05 * sc); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(bx - w / 2 + 0.04 * sc, y - h + 0.06 * sc, w * 0.18, h - 0.12 * sc); c.strokeStyle = '#8a8f96'; c.lineWidth = Math.max(1, 0.03 * sc); c.beginPath(); c.moveTo(bx - 0.08 * sc, y - h); c.lineTo(bx - 0.08 * sc, y - h - 0.32 * sc); c.lineTo(bx + 0.08 * sc, y - h - 0.32 * sc); c.lineTo(bx + 0.08 * sc, y - h); c.stroke();
+      c.fillStyle = '#1a1a1e'; c.beginPath(); c.arc(bx - w * 0.32, y - 0.02 * sc, Math.max(0.8, 0.04 * sc), 0, 7); c.arc(bx + w * 0.32, y - 0.02 * sc, Math.max(0.8, 0.04 * sc), 0, 7); c.fill(); }
+    paxDraw(c, x, y, sc, pp, null);
+    if (pp.bag && pp.moving) { const bx = x - pp.dir * 0.45 * sc, w = 0.32 * sc, h = 0.52 * sc; c.fillStyle = pp.bagC; roundRect(c, bx - w / 2, y - h, w, h, 0.05 * sc); c.fill(); c.strokeStyle = '#8a8f96'; c.lineWidth = Math.max(1, 0.03 * sc); c.beginPath(); c.moveTo(bx, y - h); c.lineTo(x - pp.dir * 0.12 * sc, y - 0.78 * sc); c.stroke(); } // koper ditarik
   }
   // stasiun warisan Sukamaju (gaya Indische): aula tengah tinggi berjendela lengkung raksasa, gevel lengkung berjam, kubah berlentera & menara kembar,
   // sayap dua lantai berpilaster & beratap genteng, paviliun ujung berpedimen; cahaya mengikuti suasana (kaca menyala hangat saat gelap)
@@ -10440,7 +10455,7 @@
         person(c, px, gy - 1.3 * ppm + wave, ppm, k + i * 13, { basket: (s.traders || s.travelers) && hash(k + 3.3) < 0.6, umbrella: s.umbrellas && hash(k + 1.7) < 0.75 });
       }
       if (s.bening) kioskSide(V, s);
-      if (s.heri || s.bening) for (const pp of heriCrowd(s, V.st)) { const sx = X(pp.cx); if (sx < -30 || sx > W + 30) continue; paxDraw(c, sx, gy - (1.14 + pp.z * 0.56) * ppm, ppm * (1.02 - pp.z * 0.08), pp, null); }
+      if (!MIS.freight) for (const pp of stationCrowd(s, pass)) { const sx = X(pp.cx); if (sx < -30 || sx > W + 30) continue; crowdPax(c, sx, gy - (1.14 + pp.z * 0.56) * ppm, ppm * (1.02 - pp.z * 0.08), pp); }
     });
     c.textAlign = 'start'; c.textBaseline = 'alphabetic';
   }
