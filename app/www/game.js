@@ -8380,12 +8380,12 @@
       if (!ridgeK) { c.strokeStyle = `rgba(30,20,52,${(0.28 * A).toFixed(3)})`; c.lineWidth = lw; c.beginPath(); for (let r = 0.07; r <= rEnd * 0.95; r += 0.03) { const [px, py] = mer(sm, r); r === 0.07 ? c.moveTo(px, py) : c.lineTo(px, py); } c.stroke(); }
     }
     // sabuk hutan di kaki gunung: tajuk bergerigi, tepi berkilau di sisi matahari
-    const fy = (px) => yb - h * (0.2 + 0.05 * Math.sin(px * 0.05 + seed) + 0.03 * Math.sin(px * 0.13 + seed * 2));
+    const fy = (px) => yb - h * (0.2 + 0.05 * Math.sin((px - x) * 0.05 + seed) + 0.03 * Math.sin((px - x) * 0.13 + seed * 2)); // relatif terhadap gunung: tidak merayap saat bergeser
     const fc = night ? '#141a2c' : mix('#3e4a5e', '#7a7c98', far);
     c.fillStyle = fc; c.globalAlpha = 0.85 - far * 0.35; c.beginPath(); c.moveTo(x - w * 1.2, yb + 2);
-    for (let px = x - w * 1.2; px <= x + w * 1.2; px += 3) c.lineTo(px, fy(px) - Math.abs(Math.sin(px * 0.6 + seed)) * h * 0.018);
+    for (let px = x - w * 1.2; px <= x + w * 1.2; px += 3) c.lineTo(px, fy(px) - Math.abs(Math.sin((px - x) * 0.6 + seed)) * h * 0.018);
     c.lineTo(x + w * 1.2, yb + 2); c.closePath(); c.fill();
-    if (!night) { c.fillStyle = 'rgba(255,186,140,0.35)'; for (let px = x - w * 1.1; px <= x + w * 1.1; px += 5) { if ((px - x) * sr < 0 || hash(px * 0.7 + seed) < 0.4) continue; const yy = fy(px) - Math.abs(Math.sin(px * 0.6 + seed)) * h * 0.018; c.fillRect(px, yy, 2.2, 1); } }
+    if (!night) { c.fillStyle = 'rgba(255,186,140,0.35)'; for (let px = x - w * 1.1; px <= x + w * 1.1; px += 5) { if ((px - x) * sr < 0 || hash((px - x) * 0.7 + seed) < 0.4) continue; const yy = fy(px) - Math.abs(Math.sin((px - x) * 0.6 + seed)) * h * 0.018; c.fillRect(px, yy, 2.2, 1); } }
     c.globalAlpha = 1;
     c.restore();
     // kawah: bibir terang & rongga gelap
@@ -8977,8 +8977,8 @@
     for (let k = 0; k < n; k++) { const f = (k / (n - 1)) * 2 - 1, lean = f * (0.9 + hash(i + k) * 0.5), h = H0 * (0.75 + 0.3 * hash(i * 2 + k)), x0 = sx + f * 0.7 * ppm, xt = x0 + lean * h * 0.45, yt = base - h * (1 - 0.18 * Math.abs(lean));
       c.strokeStyle = culm; c.lineWidth = Math.max(1, 0.14 * ppm); c.beginPath(); c.moveTo(x0, base); c.quadraticCurveTo(x0 + lean * h * 0.08, base - h * 0.6, xt, yt); c.stroke();
       c.strokeStyle = node; c.lineWidth = Math.max(1, 0.18 * ppm); for (let q = 1; q < 6; q++) { const t = q / 6, nx = x0 + (xt - x0) * t * t, ny = base + (yt - base) * t; c.beginPath(); c.moveTo(nx - 0.08 * ppm, ny); c.lineTo(nx + 0.08 * ppm, ny); c.stroke(); }
-      tips.push([xt, yt, lean]); }
-    for (const [xt, yt, lean] of tips) for (let q = 0; q < 7; q++) { const lx = xt + (hash(xt + q) - 0.5) * 2.2 * ppm + lean * q * 0.2 * ppm, ly = yt + q * 0.55 * ppm; c.fillStyle = q % 2 ? leaf : leafD; c.beginPath(); c.ellipse(lx, ly, 0.9 * ppm, 0.22 * ppm, lean * 0.6 + (hash(q + xt) - 0.5), 0, 7); c.fill(); }
+      tips.push([xt, yt, lean, k]); }
+    for (const [xt, yt, lean, k] of tips) for (let q = 0; q < 7; q++) { const hs = hash(i * 7.13 + k * 3.31 + q * 1.7), lx = xt + (hs - 0.5) * 2.2 * ppm + lean * q * 0.2 * ppm, ly = yt + q * 0.55 * ppm; c.fillStyle = q % 2 ? leaf : leafD; c.beginPath(); c.ellipse(lx, ly, 0.9 * ppm, 0.22 * ppm, lean * 0.6 + (hash(hs * 9.7) - 0.5), 0, 7); c.fill(); } // acak per pohon/batang (bukan koordinat layar): daun tidak bergetar saat kamera bergerak
     c.lineCap = 'butt';
     if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.35; c.fillStyle = V.rim; for (const [xt, yt] of tips) { c.beginPath(); c.ellipse(xt + 0.4 * ppm, yt + 0.3 * ppm, 0.7 * ppm, 0.15 * ppm, 0.3, 0, 7); c.fill(); } c.restore(); }
   }
