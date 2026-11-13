@@ -5517,13 +5517,69 @@
       const SH = YD.shed, sa = SH.from - x0, sb = SH.to - x0;
       if (sb > 1.4 && sa < FAR) add(Math.max(1.4, sa), () => {
         const Q = (d1, d2, oo, h1, h2, col) => quad(W3(d1, oo, h1), W3(d2, oo, h1), W3(d2, oo, h2), W3(d1, oo, h2), col), oR = SH.o + 3.2, oL = SH.o - 24, dA = Math.max(1.4, sa);
-        const brick = mix(mix('#9a4f36', '#b5603f', p), '#2a2230', 0.5 * dawnK), brickS = mix(mix('#86422d', '#a2553a', p), '#241c28', 0.5 * dawnK);
-        Q(dA, sb, oR, 0, 9.5, brick);
-        for (let m = SH.from + 2; m < SH.to - 4; m += 8) { const d1 = m - x0, d2 = d1 + 5.4; if (d2 < 1.4) continue; Q(Math.max(1.4, d1), d2, oR + 0.02, 2.0, 6.6, dawnK > 0.15 ? mix('#3a4652', '#ffcf86', clamp(dawnK * 1.2, 0, 1)) : mix('#54707f', '#9fbfcf', p)); }
-        for (let m = SH.from; m < SH.to; m += 6.5) { const d1 = m - x0, d2 = d1 + 6.5; if (d2 < 1.4) continue; quad(W3(Math.max(1.4, d1), oR, 9.5), W3(d2, oR, 9.5), W3(d2, oR - 3, 12.5), W3(Math.max(1.4, d1), oR - 3, 12.5), mix('#5d6870', '#222832', 0.5 * dawnK)); }
-        if (sa > 1.4) { quad(W3(sa, oR, 0), W3(sa, oL, 0), W3(sa, oL, 9.5), W3(sa, oR, 9.5), brickS); // muka ujung (gable) menghadap kabin
+        const mfS = clamp(mastF((SH.from + SH.to) / 2), 0, 1) * 0.6, tone = (col, k = 0.5) => mix(mix(col, '#2a2230', k * dawnK), '#ffd9a8', 0.25 * mfS);
+        const brick = tone(mix('#9a4f36', '#b5603f', p)), brickS = tone(mix('#86422d', '#a2553a', p)), brickL = tone(mix('#ad5c40', '#c66e4c', p)), stone = tone(mix('#8a7d6c', '#a89a86', p)), steel = tone(mix('#55606a', '#76838c', p), 0.6);
+        const glassC = (k) => dawnK > 0.15 ? mix('#3a4652', '#ffcf86', clamp(dawnK * 1.2 - k * 0.2, 0, 1)) : mix(mix('#4f6a78', '#a9c8d8', p), '#2a3540', k * 0.4);
+        const line = (pts, col, w) => { if (pts.some((t) => !t)) return; c.strokeStyle = col; c.lineWidth = w; c.beginPath(); pts.forEach((t, k) => (k ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.stroke(); };
+        const poly = (pts, col) => { if (pts.some((t) => !t)) return; c.fillStyle = col; c.beginPath(); pts.forEach((t, k) => (k ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); };
+        // atap gergaji (dari jauh ke dekat): bidang miring, kaca utara berangka menghadap kabin, segitiga profil di dinding samping
+        const teeth = []; for (let m = SH.from; m < SH.to - 0.1; m += 6.5) teeth.push(m);
+        for (const m of teeth.slice().reverse()) { const d1 = m - x0, d2 = Math.min(SH.to, m + 6.5) - x0; if (d2 < 1.4) continue; const e1 = Math.max(1.4, d1);
+          quad(W3(e1, oR, 12.6), W3(e1, oL, 12.6), W3(d2, oL, 9.6), W3(d2, oR, 9.6), steel);
+          poly([W3(e1, oR + 0.01, 9.6), W3(e1, oR + 0.01, 12.6), W3(d2, oR + 0.01, 9.6)], tone('#46515a', 0.6));
+          if (d1 > 1.4) { quad(W3(d1, oR, 9.6), W3(d1, oL, 9.6), W3(d1, oL, 12.6), W3(d1, oR, 12.6), glassC(0.4)); // kaca atap gergaji
+            for (let l = oR - 1.6; l > oL; l -= 1.6) line([W3(d1 - 0.01, l, 9.6), W3(d1 - 0.01, l, 12.6)], steel, Math.max(1, 0.05 * (W3(d1, l, 11) || { k: 10 }).k));
+            line([W3(d1 - 0.01, oR, 11.1), W3(d1 - 0.01, oL, 11.1)], steel, 1); line([W3(d1 - 0.02, oR, 12.6), W3(d1 - 0.02, oL, 12.6)], tone('#2e353c'), Math.max(1, 0.12 * (W3(d1, oR, 12.6) || { k: 10 }).k)); } }
+        // dinding samping bata dengan plint batu, nat bata, pilaster menonjol, jendela lengkung berangka baja & ambang bata, lis atap & talang
+        Q(dA, sb, oR, 0.8, 9.6, brick); Q(dA, sb, oR + 0.06, 0, 0.8, stone); quad(W3(dA, oR + 0.06, 0.8), W3(sb, oR + 0.06, 0.8), W3(sb, oR, 0.86), W3(dA, oR, 0.86), tone('#c2b6a2'));
+        { const kk = (W3(Math.max(dA, 6), oR, 4) || { k: 10 }).k; if (kk > 6) for (let h = 1.15; h < 9.5; h += 0.32) line([W3(dA, oR + 0.005, h), W3(sb, oR + 0.005, h)], 'rgba(60,24,14,0.22)', 1); } // nat bata
+        for (let m = SH.from + 2; m < SH.to - 4; m += 8) { const d1 = m - x0, d2 = d1 + 5.4, dc = (d1 + d2) / 2; if (d2 < 1.4) continue; const e1 = Math.max(1.4, d1), ol = oR + 0.012;
+          const arch = []; for (let k = 0; k <= 10; k++) { const an = Math.PI * k / 10, dd = dc - Math.cos(an) * 2.7; arch.push(W3(Math.max(1.4, dd), ol, 6.0 + Math.sin(an) * 1.1)); }
+          poly([W3(e1, ol, 1.9)].concat(arch, [W3(d2, ol, 1.9)]), tone('#2b3036', 0.4)); // bingkai
+          const ag = []; for (let k = 0; k <= 10; k++) { const an = Math.PI * k / 10, dd = dc - Math.cos(an) * 2.5; ag.push(W3(Math.max(1.4, dd), ol + 0.004, 6.0 + Math.sin(an) * 0.95)); }
+          poly([W3(Math.max(1.4, d1 + 0.2), ol + 0.004, 2.05)].concat(ag, [W3(d2 - 0.2, ol + 0.004, 2.05)]), glassC(0.2)); // kaca
+          const kw = (W3(Math.max(1.4, dc), ol, 4) || { k: 1 }).k; const mw = Math.max(1, 0.05 * kw);
+          for (let q = 1; q < 5; q++) { const dd = d1 + 5.4 * q / 5; if (dd > 1.4) line([W3(dd, ol + 0.006, 2.05), W3(dd, ol + 0.006, 6.0 + 0.95 * Math.sin(Math.acos(clamp((dd - dc) / 2.5, -1, 1))))], tone('#2b3036', 0.4), mw); }
+          for (const h of [3.4, 4.8]) line([W3(Math.max(1.4, d1 + 0.2), ol + 0.006, h), W3(d2 - 0.2, ol + 0.006, h)], tone('#2b3036', 0.4), mw);
+          const vs = []; for (let k = 0; k <= 10; k++) { const an = Math.PI * k / 10, dd = dc - Math.cos(an) * 3.0; vs.push(W3(Math.max(1.4, dd), ol + 0.008, 6.0 + Math.sin(an) * 1.4)); } line(vs, brickL, Math.max(1.5, 0.3 * kw)); // ambang bata melengkung
+          quad(W3(Math.max(1.4, d1 - 0.2), oR + 0.1, 1.75), W3(d2 + 0.2, oR + 0.1, 1.75), W3(d2 + 0.2, oR + 0.1, 1.95), W3(Math.max(1.4, d1 - 0.2), oR + 0.1, 1.95), tone('#cfc4b2')); // ambang bawah batu
+          // pilaster menonjol di antara jendela, dengan sisi yang menghadap kabin
+          const pa = d2 + 0.8, pb = pa + 1.0; if (pb > 1.4) { Q(Math.max(1.4, pa), pb, oR + 0.35, 0.8, 9.6, brickS); if (pa > 1.4) quad(W3(pa, oR, 0.8), W3(pa, oR + 0.35, 0.8), W3(pa, oR + 0.35, 9.6), W3(pa, oR, 9.6), brickL);
+            line([W3(Math.max(1.4, pa + 0.5), oR + 0.36, 9.4), W3(Math.max(1.4, pa + 0.5), oR + 0.36, 0.4)], tone('#3a3f45'), Math.max(1, 0.1 * kw)); } } // pipa talang
+        Q(dA, sb, oR + 0.3, 9.6, 10.0, tone('#cfc4b2')); quad(W3(dA, oR + 0.3, 9.6), W3(sb, oR + 0.3, 9.6), W3(sb, oR, 9.6), W3(dA, oR, 9.6), tone('#9d917f')); // lis atap batu
+        if (sa > 1.4) { // muka ujung (gable) menghadap kabin: plint, pilaster sudut, parapet bertingkat, gerbang berbingkai bata, jendela bulat, papan nama, lampu
+          poly([W3(sa, oR, 0), W3(sa, oL, 0), W3(sa, oL, 9.6), W3(sa, oL + 3, 9.6), W3(sa, oL + 3, 11.4), W3(sa, oR - 3, 11.4), W3(sa, oR - 3, 9.6), W3(sa, oR, 9.6)], brickS);
+          quad(W3(sa - 0.01, oR, 0), W3(sa - 0.01, oL, 0), W3(sa - 0.01, oL, 0.8), W3(sa - 0.01, oR, 0.8), stone);
+          for (const l of [oR, oL + 0.9]) quad(W3(sa - 0.02, l, 0.8), W3(sa - 0.02, l - 0.9, 0.8), W3(sa - 0.02, l - 0.9, 9.6), W3(sa - 0.02, l, 9.6), brickL); // pilaster sudut
+          quad(W3(sa - 0.03, oL + 3, 11.2), W3(sa - 0.03, oR - 3, 11.2), W3(sa - 0.03, oR - 3, 11.5), W3(sa - 0.03, oL + 3, 11.5), tone('#cfc4b2')); quad(W3(sa - 0.03, oL, 9.45), W3(sa - 0.03, oR, 9.45), W3(sa - 0.03, oR, 9.7), W3(sa - 0.03, oL, 9.7), tone('#cfc4b2'));
+          { const kg = (W3(sa, SH.o, 5) || { k: 10 }).k; if (kg > 6) for (let h = 1.15; h < 9.4; h += 0.32) line([W3(sa - 0.005, oR, h), W3(sa - 0.005, oL, h)], 'rgba(60,24,14,0.2)', 1); }
           const door = []; for (let k = 0; k <= 12; k++) { const an = Math.PI * k / 12; door.push(W3(sa - 0.02, SH.o - Math.cos(an) * 2.7, 4.6 + Math.sin(an) * 1.8)); }
-          const dp = [W3(sa - 0.02, SH.o - 2.7, 0)].concat(door, [W3(sa - 0.02, SH.o + 2.7, 0)]); if (!dp.some((t) => !t)) { c.fillStyle = '#0d0f12'; c.beginPath(); dp.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); }
+          const ring = []; for (let k = 0; k <= 12; k++) { const an = Math.PI * k / 12; ring.push(W3(sa - 0.025, SH.o - Math.cos(an) * 3.2, 4.6 + Math.sin(an) * 2.25)); }
+          poly([W3(sa - 0.025, SH.o - 3.2, 0.8)].concat(ring, [W3(sa - 0.025, SH.o + 3.2, 0.8)]), brickL); // bingkai bata gerbang
+          const dp = [W3(sa - 0.03, SH.o - 2.7, 0)].concat(door, [W3(sa - 0.03, SH.o + 2.7, 0)]); poly(dp, '#0d0f12');
+          if (!dp.some((t) => !t)) { const ig = c.createLinearGradient(0, dp[0].y, 0, dp[7].y); ig.addColorStop(0, `rgba(255,190,110,${(0.18 + 0.25 * dawnK).toFixed(3)})`); ig.addColorStop(1, 'rgba(255,190,110,0)'); c.save(); c.globalCompositeOperation = 'lighter'; poly(dp, ig); c.restore(); } // lampu inspeksi di dalam dipo
+          const kd = (W3(sa, SH.o, 8) || { k: 10 }).k;
+          for (let k = 0; k <= 12; k += 2) { const an = Math.PI * k / 12, q0 = W3(sa - 0.03, SH.o - Math.cos(an) * 2.7, 4.6 + Math.sin(an) * 1.8), q1 = W3(sa - 0.03, SH.o - Math.cos(an) * 3.2, 4.6 + Math.sin(an) * 2.25); if (q0 && q1) line([q0, q1], tone('#7a3a26'), Math.max(1, 0.06 * kd)); } // nat batu kunci
+          // jendela bulat (oculus) di atas papan nama
+          const oc = []; for (let k = 0; k < 16; k++) { const an = k / 16 * Math.PI * 2; oc.push(W3(sa - 0.03, SH.o - Math.cos(an) * 1.0, 10.15 + Math.sin(an) * 0.75)); } poly(oc, glassC(0.3)); if (!oc.some((t) => !t)) { c.strokeStyle = tone('#cfc4b2'); c.lineWidth = Math.max(1.5, 0.15 * kd); c.beginPath(); oc.forEach((t, k) => (k ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.stroke(); line([oc[0], oc[8]], steel, 1); line([oc[4], oc[12]], steel, 1); }
+          // papan nama berbingkai & tahun
+          quad(W3(sa - 0.04, SH.o - 6.5, 7.35), W3(sa - 0.04, SH.o + 6.5, 7.35), W3(sa - 0.04, SH.o + 6.5, 8.75), W3(sa - 0.04, SH.o - 6.5, 8.75), '#1d3f4a');
+          const n0 = W3(sa - 0.05, SH.o + 6, 8.05), n1 = W3(sa - 0.05, SH.o - 6, 8.05); if (n0 && n1 && Math.abs(n1.x - n0.x) > 24) { c.save(); c.fillStyle = '#f2c45a'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.max(6, Math.min(26, Math.round(Math.abs(n1.x - n0.x) / 12)))}px "Big Shoulders Display", sans-serif`; c.fillText('DIPO LOKOMOTIF SUKAMAJU', (n0.x + n1.x) / 2, (n0.y + n1.y) / 2); c.restore(); }
+          const yr = W3(sa - 0.05, SH.o, 9.0); if (yr && kd > 5) { c.fillStyle = tone('#e8dcc4'); c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `700 ${Math.max(5, Math.round(0.4 * kd))}px "Cinzel", serif`; c.fillText('1921', yr.x, yr.y); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
+          // lampu bracket di atas gerbang
+          const lm = W3(sa - 0.3, SH.o, 7.0); if (lm) { c.fillStyle = '#2a2d31'; c.fillRect(lm.x - 0.3 * lm.k, lm.y - 0.12 * lm.k, 0.6 * lm.k, 0.24 * lm.k); if (dawnK > 0.1) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(lm.x, lm.y + 0.2 * lm.k, 0, lm.x, lm.y + 0.2 * lm.k, 3 * lm.k); g.addColorStop(0, `rgba(255,226,170,${(0.6 * dawnK).toFixed(3)})`); g.addColorStop(1, 'rgba(255,226,170,0)'); c.fillStyle = g; c.fillRect(lm.x - 3 * lm.k, lm.y - 3 * lm.k, 6 * lm.k, 6 * lm.k); c.restore(); } }
+          // pintu petugas kecil di samping gerbang
+          for (const dO of [SH.o - 9.6, SH.o - 17.2]) { // gerbang jalur lain yang tertutup: daun pintu baja berpanel & berpalang
+            const rg = [], dg = []; for (let k = 0; k <= 12; k++) { const an = Math.PI * k / 12; rg.push(W3(sa - 0.025, dO - Math.cos(an) * 3.1, 4.6 + Math.sin(an) * 2.2)); dg.push(W3(sa - 0.03, dO - Math.cos(an) * 2.6, 4.6 + Math.sin(an) * 1.75)); }
+            poly([W3(sa - 0.025, dO - 3.1, 0.8)].concat(rg, [W3(sa - 0.025, dO + 3.1, 0.8)]), brickL);
+            poly([W3(sa - 0.03, dO - 2.6, 0)].concat(dg, [W3(sa - 0.03, dO + 2.6, 0)]), tone('#2f4a48', 0.45));
+            const lw = Math.max(1, 0.05 * kd), dk = tone('#1c2c2b', 0.45);
+            for (let q = -2; q <= 2; q++) line([W3(sa - 0.035, dO + q * 1.0, 0.1), W3(sa - 0.035, dO + q * 1.0, 4.6 + 1.75 * Math.sqrt(Math.max(0, 1 - (q / 2.6) ** 2)))], dk, q ? lw : 2 * lw);
+            for (const [a0, a1] of [[-2.5, -0.1], [0.1, 2.5]]) line([W3(sa - 0.04, dO + a0, 0.4), W3(sa - 0.04, dO + a1, 4.2)], dk, 1.6 * lw);
+            line([W3(sa - 0.04, dO - 2.6, 2.3), W3(sa - 0.04, dO + 2.6, 2.3)], dk, 1.6 * lw);
+            const gl = []; for (let k = 0; k <= 8; k++) { const an = Math.PI * k / 8; gl.push(W3(sa - 0.04, dO - Math.cos(an) * 2.3, 4.7 + Math.sin(an) * 1.45)); } poly([W3(sa - 0.04, dO - 2.3, 4.7)].concat(gl), glassC(0.35)); // kaca kipas di atas pintu
+          }
+          { const pl = SH.o - 5.4; quad(W3(sa - 0.03, pl - 0.5, 0.8), W3(sa - 0.03, pl + 0.5, 0.8), W3(sa - 0.03, pl + 0.5, 3.0), W3(sa - 0.03, pl - 0.5, 3.0), tone('#3d4a50', 0.4)); quad(W3(sa - 0.04, pl - 0.3, 2.1), W3(sa - 0.04, pl + 0.3, 2.1), W3(sa - 0.04, pl + 0.3, 2.8), W3(sa - 0.04, pl - 0.3, 2.8), glassC(0.5)); }
           // moncong lokomotif uap di ambang pintu: kotak asap hitam + lampu
           const pkS = YD.parked.find((q) => q.sid < 0), lo = SH.o, fd = (pkS ? pkS.nose : SH.from - 0.6) - x0;
           if (fd > 1.4) quad(W3(fd, lo + 1.25, 0.9), W3(sa, lo + 1.25, 0.9), W3(sa, lo + 1.25, 3.3), W3(fd, lo + 1.25, 3.3), '#141618'); // sisi ketel yang mencuat dari pintu
@@ -5532,7 +5588,8 @@
           const ch0 = W3(fd + 0.6, lo, 3.3), ch1 = W3(fd + 0.6, lo, 4.3); if (ch0 && ch1) { c.strokeStyle = '#1d1f22'; c.lineWidth = Math.max(2, 0.6 * ch0.k); c.beginPath(); c.moveTo(ch0.x, ch0.y); c.lineTo(ch1.x, ch1.y); c.stroke(); } // cerobong
           const bf = W3(fd - 0.02, lo, 0.75); if (bf) { c.fillStyle = '#7a1f1f'; c.fillRect(bf.x - 1.4 * bf.k, bf.y - 0.18 * bf.k, 2.8 * bf.k, 0.36 * bf.k); } // balok penyangga merah
           const ld = W3(fd - 0.02, lo, 3.6); if (ld) { c.fillStyle = dawnK > 0.2 ? '#fff0c0' : '#c9c2a0'; c.beginPath(); c.arc(ld.x, ld.y, Math.max(2, 0.25 * ld.k), 0, 7); c.fill(); }
-          const n0 = W3(sa - 0.03, oR - 2, 8.2), n1 = W3(sa - 0.03, oL + 2, 8.2); if (n0 && n1 && Math.abs(n1.x - n0.x) > 30) { c.save(); c.fillStyle = '#f2c45a'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.max(6, Math.min(22, Math.round(Math.abs(n1.x - n0.x) / 14)))}px "Big Shoulders Display", sans-serif`; c.fillText('DIPO LOKOMOTIF', (n0.x + n1.x) / 2, (n0.y + n1.y) / 2); c.restore(); } }
+          /* nama dipo ada di papan nama */
+        }
       });
       // sinyal langsir di ujung jalur simpan & jalur dipo (di sisi kiri tiap jalur, menghadap kereta yang akan keluar)
       for (const sg of yardSignals()) { const d = sg.x - x0; if (d < 2 || d > FAR) continue; add(d, () => { const b = W3(d, sg.o - 1.9, 0); if (!b || b.k < 0.8) return; dwarfSignal(c, b.x, b.y, b.k, sg.id, 0.4 + 0.6 * dawnK); }); }
@@ -10716,7 +10773,10 @@
         c.fillStyle = lit ? mix('#3a4652', '#ffcf86', clamp(dawnK * 1.2, 0, 1)) : mix('#54707f', '#9fbfcf', p); c.fillRect(wx, wy, ww, wh);
         c.strokeStyle = steel; c.lineWidth = Math.max(1, 0.12 * u); c.strokeRect(wx, wy, ww, wh); c.beginPath(); for (let q = 1; q < 4; q++) { c.moveTo(wx + ww * q / 4, wy); c.lineTo(wx + ww * q / 4, wy + wh); } c.moveTo(wx, wy + wh / 2); c.lineTo(wx + ww, wy + wh / 2); c.stroke();
         c.fillStyle = brickD; c.beginPath(); c.moveTo(wx - 0.3 * u, wy); c.quadraticCurveTo(wx + ww / 2, wy - 1.4 * u, wx + ww + 0.3 * u, wy); c.lineTo(wx + ww + 0.3 * u, wy + 0.25 * u); c.quadraticCurveTo(wx + ww / 2, wy - 1.1 * u, wx - 0.3 * u, wy + 0.25 * u); c.closePath(); c.fill(); }
-      c.fillStyle = brickD; c.fillRect(xa, base - 0.7 * u, xb - xa, 0.7 * u);
+      { const stn = mix(mix('#8a7d6c', '#a89a86', p), '#2a2230', 0.5 * dawnK); c.fillStyle = stn; c.fillRect(xa, base - 0.8 * u, xb - xa, 0.8 * u); c.fillStyle = mix('#cfc4b2', '#3a3440', 0.5 * dawnK); c.fillRect(xa, base - 0.86 * u, xb - xa, 0.1 * u); c.fillRect(xa - 0.3 * u, top - 0.4 * u, xb - xa + 0.6 * u, 0.4 * u); } // plint batu & lis atap
+      for (let m = sh.from + 8; m < sh.to - 3; m += 8) { const sx = X(m) + 0.25 * u, wy = top + 2.0 * u + 4.6 * u; c.fillStyle = mix('#cfc4b2', '#3a3440', 0.5 * dawnK); c.fillRect(X(m - 6.4) - 0.2 * u, wy, 5.8 * u, 0.22 * u); // ambang jendela
+        c.strokeStyle = mix('#3a3f45', '#15181c', dawnK); c.lineWidth = Math.max(1, 0.14 * u); c.beginPath(); c.moveTo(sx, top - 0.2 * u); c.lineTo(sx, base - 0.3 * u); c.lineTo(sx + 0.35 * u, base - 0.1 * u); c.stroke(); } // pipa talang
+      { const lx = X(sh.from) + 2.5 * u, ly = top + 0.6 * u; c.fillStyle = '#2a2d31'; c.fillRect(lx - 0.35 * u, ly, 0.7 * u, 0.25 * u); if (dawnK > 0.1) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(lx, ly + 0.3 * u, 0, lx, ly + 0.3 * u, 3 * u); g.addColorStop(0, `rgba(255,226,170,${(0.5 * dawnK).toFixed(3)})`); g.addColorStop(1, 'rgba(255,226,170,0)'); c.fillStyle = g; c.fillRect(lx - 3 * u, ly - 3 * u, 6 * u, 6 * u); c.restore(); } } // lampu di atas gerbang
       // atap gergaji: deret segitiga dengan sisi kaca
       for (let m = sh.from; m < sh.to - 0.1; m += 6.5) { const x1 = X(m), x2 = X(Math.min(sh.to, m + 6.5)); c.fillStyle = steel; c.beginPath(); c.moveTo(x1, top); c.lineTo(x1, top - 3.0 * u); c.lineTo(x2, top); c.closePath(); c.fill();
         c.fillStyle = dawnK > 0.15 ? `rgba(255,214,140,${(0.55 * dawnK).toFixed(3)})` : 'rgba(170,205,225,0.75)'; c.fillRect(x1, top - 3.0 * u, Math.max(1, 0.5 * u), 3.0 * u); }
@@ -10726,6 +10786,7 @@
         c.font = `800 ${Math.max(6, Math.round(0.95 * u))}px "Big Shoulders Display", sans-serif`; c.fillText('DIPO LOKOMOTIF SUKAMAJU', bx, top + 1.0 * u); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; }
       // pintu gerbang di ujung kiri (jalur masuk): bukaan gelap berbusur
       const dx0 = X(sh.from) - 0.2 * u, dw = 5.4 * u; c.fillStyle = '#0d0f12'; c.beginPath(); c.moveTo(dx0, base); c.lineTo(dx0, top + 2.6 * u); c.quadraticCurveTo(dx0 + dw / 2, top + 0.9 * u, dx0 + dw, top + 2.6 * u); c.lineTo(dx0 + dw, base); c.closePath(); c.fill();
+      c.strokeStyle = mix('#ad5c40', '#2a2230', 0.5 * dawnK); c.lineWidth = Math.max(1.5, 0.4 * u); c.beginPath(); c.moveTo(dx0 - 0.2 * u, base - 0.8 * u); c.lineTo(dx0 - 0.2 * u, top + 2.6 * u); c.quadraticCurveTo(dx0 + dw / 2, top + 0.5 * u, dx0 + dw + 0.2 * u, top + 2.6 * u); c.lineTo(dx0 + dw + 0.2 * u, base - 0.8 * u); c.stroke(); // bingkai bata gerbang
       // lokomotif uap terparkir, moncong mencuat keluar dari pintu dipo
       for (const pk of Y.parked) if (pk.sid === -1) { c.save(); c.beginPath(); c.rect(-W, -H, X(sh.from) + 2.8 * u + W, H * 3); c.clip(); drawYardTrain(V, pk, yo(sh.o), kk); c.restore(); }
       for (const sg of yardSignals()) if (sg.side < 0) { const sx = X(sg.x); if (sx > -20 && sx < W + 20) dwarfSignal(c, sx, yo(sg.o + 1.9), ppm * 0.95, sg.id, 0.4 + 0.6 * dawnK); }
