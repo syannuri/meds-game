@@ -11038,31 +11038,43 @@
     return L;
   }
   let YTL = null, YTL2 = null;
+  const YARD_BASE = new WeakMap();
   function drawYardTrain(V, pk, yb, sc0) {
-    const { c, ppm, X } = V, spr = yardSprite(V, pk, sc0), sc = ppm * sc0 / spr.SP, nx = X(pk.nose);
-    const dx = nx - spr.nose * sc, w = spr.cv.width * sc, h = spr.cv.height * sc, dy = yb - spr.gy * sc; if (dx > W + 20 || dx + w < -20) return;
-    // badan kereta dinyalakan secara dinamis (sprite netral): gelap subuh, genangan cahaya lampu sorot & pantulan memanjang di cat,
-    // kilau tepi atap dari matahari, pendar hangat jendela dipo pada lokomotif di dekatnya
-    const bx0 = Math.max(-2, Math.floor(dx)), bx1 = Math.min(W + 2, Math.ceil(dx + w)), bw = bx1 - bx0; if (bw <= 2) return;
-    const sa = Math.max(1, Math.abs(c.getTransform().a)), cw = Math.ceil(bw * sa), ch = Math.ceil(h * sa);
-    if (!YTL) YTL = document.createElement('canvas'); if (YTL.width < cw || YTL.height < ch) { YTL.width = Math.max(YTL.width, cw); YTL.height = Math.max(YTL.height, ch); }
-    const g = YTL.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, cw + 2, ch + 2);
-    g.setTransform(sa, 0, 0, sa, -bx0 * sa, -dy * sa); g.drawImage(spr.cv, dx, dy, w, h);
-    const dawnK = clamp((0.45 - V.p) / 0.45, 0, 1), roof = yb - trainH(4.25) * ppm * sc0;
-    if (dawnK > 0.02) { g.globalCompositeOperation = 'multiply'; g.fillStyle = mix('#ffffff', '#5a5878', 0.55 * dawnK); g.fillRect(bx0, dy, bw, h); g.globalCompositeOperation = 'destination-in'; g.drawImage(spr.cv, dx, dy, w, h); } // subuh: badan meredup (kontras tetap)
-    // cahaya ditambahkan (aditif) hanya pada bentuk kereta: dilukis di kanvas kedua, dipotong siluet sprite, lalu dijumlahkan
-    const Ls = yardLights(V).filter((L) => L.x > bx0 - L.R * 2 && L.x < bx1 + L.R * 2), rim = (V.rimA || 0) > 0.03 && V.rim;
-    if (Ls.length || rim) {
-      if (!YTL2) YTL2 = document.createElement('canvas'); if (YTL2.width < cw || YTL2.height < ch) { YTL2.width = Math.max(YTL2.width, cw); YTL2.height = Math.max(YTL2.height, ch); }
-      const h2 = YTL2.getContext('2d'); h2.setTransform(1, 0, 0, 1, 0, 0); h2.globalCompositeOperation = 'source-over'; h2.globalAlpha = 1; h2.clearRect(0, 0, cw + 2, ch + 2); h2.setTransform(sa, 0, 0, sa, -bx0 * sa, -dy * sa);
-      for (const L of Ls) { const rr = Math.hypot(L.R, yb - L.y), rg = h2.createRadialGradient(L.x, L.y, (yb - L.y) * 0.55, L.x, L.y, rr); rg.addColorStop(0, `rgba(${L.col},${(0.42 * L.a).toFixed(3)})`); rg.addColorStop(0.5, `rgba(${L.col},${(0.14 * L.a).toFixed(3)})`); rg.addColorStop(1, `rgba(${L.col},0)`);
-        h2.fillStyle = rg; h2.fillRect(bx0, dy, bw, h);
-        if (!L.win) { const sg = h2.createLinearGradient(L.x - 2.2 * ppm, 0, L.x + 2.2 * ppm, 0); sg.addColorStop(0, 'rgba(255,248,226,0)'); sg.addColorStop(0.5, `rgba(255,248,226,${(0.55 * L.a).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,248,226,0)');
-          h2.fillStyle = sg; h2.fillRect(L.x - 2.2 * ppm, roof, 4.4 * ppm, (yb - roof) * 0.62); } } // pantulan lampu memanjang pada cat mengilap
-      if (rim) { const tg = h2.createLinearGradient(0, roof - 2, 0, roof + 0.8 * ppm); tg.addColorStop(0, V.rim); tg.addColorStop(1, 'rgba(0,0,0,0)'); h2.globalAlpha = 0.6 * V.rimA; h2.fillStyle = tg; h2.fillRect(bx0, roof - 2, bw, 0.8 * ppm + 2); h2.globalAlpha = 1; } // kilau tepi atap (matahari)
-      h2.globalCompositeOperation = 'destination-in'; h2.drawImage(spr.cv, dx, dy, w, h);
-      g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'lighter'; g.drawImage(YTL2, 0, 0, cw, ch, 0, 0, cw, ch); }
-    c.drawImage(YTL, 0, 0, cw, ch, bx0, dy, bw, h);
+    // kereta terparkir dilukis pada resolusi layar sebenarnya (tajam di semua zoom) dengan pencahayaan adegan yang sama seperti kereta pemain.
+    // Gambar dasar di-cache per skala & cahaya (dilukis ulang hanya saat zoom/cahaya berubah) lalu ditempel 1:1 di piksel perangkat bulat: tidak bergoyang
+    const { c, ppm, X } = V, P = ppm * sc0, nx = X(pk.nose), carL = pk.freight ? WAGON_LEN : COACH_LEN, TL = LOCO_LEN + pk.n * (carL + GAP), pad = 3;
+    const minX = pk.flip ? nx - pad * P : nx - (TL + pad) * P, maxX = pk.flip ? nx + (TL + pad) * P : nx + pad * P, minY = yb - 9.5 * P, maxY = yb + 1.6 * P;
+    if (minX > W + 20 || maxX < -20) return;
+    const sa = Math.max(1, Math.abs(c.getTransform().a)), bw = Math.ceil((maxX - minX) * sa) + 2, bh = Math.ceil((maxY - minY) * sa) + 2;
+    const key = [(P * sa).toFixed(2), Math.round(V.p * 40), Math.round((V.rimA || 0) * 20), V.rim, !!V.night, Math.round((V.sunShadow || 0) * 10)].join('|');
+    let B = YARD_BASE.get(pk);
+    if (!B || B.key !== key) {
+      if (!B) { B = { cv: document.createElement('canvas') }; YARD_BASE.set(pk, B); }
+      const cv = B.cv; if (cv.width < bw || cv.height < bh) { cv.width = Math.max(cv.width, bw); cv.height = Math.max(cv.height, bh); }
+      const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.setTransform(sa, 0, 0, sa, 0, 0);
+      const L0 = (TL + pad) * P, w = maxX - minX, keep = { W, H, N_COACH, CAR_LEN, MIS, LOCO_FORCE };
+      if (pk.flip) { g.translate(w, 0); g.scale(-1, 1); // lokomotif menghadap kiri: dicerminkan; tulisan tetap terbaca
+        g.fillText = function (t, x, y, mw) { this.save(); this.translate(x, y); this.scale(-1, 1); CanvasRenderingContext2D.prototype.fillText.call(this, t, 0, 0, mw); this.restore(); }; }
+      const VV = Object.assign({}, V, { c: g, ppm: P, gy: yb - minY, X: (wx) => (pk.flip ? w - pad * P : L0) + wx * P, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null, steam: 0, v: 0, notch: 0 },
+        tf: 0, lit: false, upper: undefined, bdy: () => 0, refl: 0, camX: 0 });
+      W = Math.max(W, w + 400); H = Math.max(H, (maxY - minY) + 400); N_COACH = pk.n; CAR_LEN = carL; LOCO_FORCE = pk.loco === 'cakra' ? null : pk.loco; if (pk.freight) MIS = MISSIONS['2-1'];
+      try { drawTrain(VV); } catch (e) { /* kereta parkir opsional */ } finally { if (Object.prototype.hasOwnProperty.call(g, 'fillText')) delete g.fillText; W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; }
+      B.key = key; B.w = bw; B.h = bh;
+    }
+    const dx0 = Math.round(minX * sa), dy0 = Math.round(minY * sa), cw = B.w, ch = B.h;
+    const need = (cv) => { if (!cv) cv = document.createElement('canvas'); if (cv.width < cw || cv.height < ch) { cv.width = Math.max(cv.width, cw); cv.height = Math.max(cv.height, ch); } return cv; };
+    const roof = yb - trainH(4.25) * P, Ls = yardLights(V).filter((L) => L.x > minX - L.R * 2 && L.x < maxX + L.R * 2);
+    if (!Ls.length) { c.drawImage(B.cv, 0, 0, cw, ch, dx0 / sa, dy0 / sa, cw / sa, ch / sa); return; }
+    YTL = need(YTL); const g = YTL.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, cw + 2, ch + 2); g.drawImage(B.cv, 0, 0, cw, ch, 0, 0, cw, ch);
+    // cahaya lampu sorot & jendela dipo ditambahkan (aditif) hanya pada siluet kereta
+    YTL2 = need(YTL2); const h2 = YTL2.getContext('2d'); h2.setTransform(1, 0, 0, 1, 0, 0); h2.globalCompositeOperation = 'source-over'; h2.globalAlpha = 1; h2.clearRect(0, 0, cw + 2, ch + 2); h2.setTransform(sa, 0, 0, sa, -dx0, -dy0);
+    for (const L of Ls) { const rr = Math.hypot(L.R, yb - L.y), rg = h2.createRadialGradient(L.x, L.y, (yb - L.y) * 0.55, L.x, L.y, rr); rg.addColorStop(0, `rgba(${L.col},${(0.42 * L.a).toFixed(3)})`); rg.addColorStop(0.5, `rgba(${L.col},${(0.14 * L.a).toFixed(3)})`); rg.addColorStop(1, `rgba(${L.col},0)`);
+      h2.fillStyle = rg; h2.fillRect(minX, minY, maxX - minX, maxY - minY);
+      if (!L.win) { const sg = h2.createLinearGradient(L.x - 2.2 * ppm, 0, L.x + 2.2 * ppm, 0); sg.addColorStop(0, 'rgba(255,248,226,0)'); sg.addColorStop(0.5, `rgba(255,248,226,${(0.55 * L.a).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,248,226,0)');
+        h2.fillStyle = sg; h2.fillRect(L.x - 2.2 * ppm, roof, 4.4 * ppm, (yb - roof) * 0.62); } } // pantulan lampu memanjang pada cat mengilap
+    h2.setTransform(1, 0, 0, 1, 0, 0); h2.globalCompositeOperation = 'destination-in'; h2.drawImage(B.cv, 0, 0, cw, ch, 0, 0, cw, ch);
+    g.globalCompositeOperation = 'lighter'; g.drawImage(YTL2, 0, 0, cw, ch, 0, 0, cw, ch);
+    c.drawImage(YTL, 0, 0, cw, ch, dx0 / sa, dy0 / sa, cw / sa, ch / sa); // 1:1 piksel perangkat
   }
   // genangan cahaya di tanah, balas & kepala rel di bawah tiap tiang lampu sorot dan di depan jendela dipo (aditif, di bawah kereta)
   function drawYardLightPools(V) {
