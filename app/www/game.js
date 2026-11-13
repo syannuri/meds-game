@@ -5420,6 +5420,8 @@
           const ld = W3(fd - 0.02, lo, 3.6); if (ld) { c.fillStyle = dawnK > 0.2 ? '#fff0c0' : '#c9c2a0'; c.beginPath(); c.arc(ld.x, ld.y, Math.max(2, 0.25 * ld.k), 0, 7); c.fill(); }
           const n0 = W3(sa - 0.03, oR - 2, 8.2), n1 = W3(sa - 0.03, oL + 2, 8.2); if (n0 && n1 && Math.abs(n1.x - n0.x) > 30) { c.save(); c.fillStyle = '#f2c45a'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.max(6, Math.min(22, Math.round(Math.abs(n1.x - n0.x) / 14)))}px "Big Shoulders Display", sans-serif`; c.fillText('DIPO LOKOMOTIF', (n0.x + n1.x) / 2, (n0.y + n1.y) / 2); c.restore(); } }
       });
+      // sinyal langsir di ujung jalur simpan & jalur dipo (di sisi kiri tiap jalur, menghadap kereta yang akan keluar)
+      for (const sg of yardSignals()) { const d = sg.x - x0; if (d < 2 || d > FAR) continue; add(d, () => { const b = W3(d, sg.o - 1.9, 0); if (!b || b.k < 0.8) return; dwarfSignal(c, b.x, b.y, b.k, sg.id, 0.4 + 0.6 * dawnK); }); }
       // tiang lampu sorot tinggi di antara jalur simpan
       for (const lx of [-110, 205]) { const d = lx - x0; if (d < 2 || d > FAR) continue; add(d, () => { const b = W3(d, 6.9, 0), t = W3(d, 6.9, 16); if (!b || !t) return;
         c.strokeStyle = mix('#5b636b', '#2a2e36', dawnK); c.lineWidth = Math.max(1, 0.25 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
@@ -10492,6 +10494,17 @@
     const tw = V.night ? 0.55 : clamp(0.42 - V.p, 0, 0.42); if (tw > 0.02) { c.save(); c.globalCompositeOperation = 'source-atop'; c.restore(); }
   }
   // tampak samping: lapis belakang = gedung dipo + jalur dipo + lokomotif uap di dalamnya; lapis depan = jalur simpan (balas & rel)
+  // sinyal langsir (sinyal kerdil) di ujung tiap jalur simpan & jalur dipo, sebelum wesel: dua lampu merah menyala (jalur tertutup,
+  // kereta terparkir tidak boleh keluar), papan nomor jalur; sinyal keluar S1 di jalur utama tetap seperti biasa
+  function yardSignals() { const Y = ROUTE.yard; if (!Y) return []; return Y.sid.map((sd, i) => ({ x: sd.m0 - 6, o: sd.o, side: 1, id: 'L' + (i + 2) })).concat([{ x: Y.shed.m1 + 4, o: Y.shed.o, side: -1, id: 'LD' }]); }
+  function dwarfSignal(c, x, y, u, id, glow) {
+    c.fillStyle = '#4a4f55'; c.fillRect(x - 0.12 * u, y - 0.9 * u, 0.24 * u, 0.9 * u); // tiang pendek
+    c.fillStyle = '#16181b'; roundRect(c, x - 0.55 * u, y - 1.9 * u, 1.1 * u, 1.05 * u, 0.25 * u); c.fill(); // kepala sinyal
+    for (const ox of [-0.24, 0.24]) { c.fillStyle = '#ff3b2e'; c.beginPath(); c.arc(x + ox * u, y - 1.37 * u, 0.17 * u, 0, 7); c.fill(); }
+    if (glow > 0.01) { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(x, y - 1.37 * u, 0, x, y - 1.37 * u, 1.2 * u); g.addColorStop(0, `rgba(255,70,50,${(0.55 * glow).toFixed(3)})`); g.addColorStop(1, 'rgba(255,70,50,0)'); c.fillStyle = g; c.fillRect(x - 1.2 * u, y - 2.6 * u, 2.4 * u, 2.4 * u); c.restore(); }
+    c.fillStyle = '#f4f1e8'; c.fillRect(x - 0.42 * u, y - 0.8 * u, 0.84 * u, 0.42 * u); c.fillStyle = '#1d2a2b'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = `800 ${Math.max(5, Math.round(0.36 * u))}px "Big Shoulders Display", sans-serif`; c.fillText(id, x, y - 0.59 * u); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+  }
   function drawYard(V, layer) {
     const Y = ROUTE.yard; if (!Y) return;
     const { c, ppm, gy, X, wx0, wx1 } = V, p = V.p, night = V.night || p < 0.16, dawnK = clamp((0.45 - p) / 0.45, 0, 1);
@@ -10539,6 +10552,7 @@
       const dx0 = X(sh.from) - 0.2 * u, dw = 5.4 * u; c.fillStyle = '#0d0f12'; c.beginPath(); c.moveTo(dx0, base); c.lineTo(dx0, top + 2.6 * u); c.quadraticCurveTo(dx0 + dw / 2, top + 0.9 * u, dx0 + dw, top + 2.6 * u); c.lineTo(dx0 + dw, base); c.closePath(); c.fill();
       // lokomotif uap terparkir, moncong mencuat keluar dari pintu dipo
       for (const pk of Y.parked) if (pk.sid === -1) { c.save(); c.beginPath(); c.rect(-W, -H, X(sh.from) + 2.8 * u + W, H * 3); c.clip(); drawYardTrain(V, pk, yo(sh.o), kk); c.restore(); }
+      for (const sg of yardSignals()) if (sg.side < 0) { const sx = X(sg.x); if (sx > -20 && sx < W + 20) dwarfSignal(c, sx, yo(sg.o + 1.9), ppm * 0.95, sg.id, 0.4 + 0.6 * dawnK); }
       // menara air untuk lokomotif uap di sisi dipo
       { const tx = X(sh.to + 6), tb = base, tu = u; c.strokeStyle = steel; c.lineWidth = Math.max(1, 0.25 * tu); c.beginPath(); for (const ox of [-1.6, 1.6]) { c.moveTo(tx + ox * tu, tb); c.lineTo(tx + ox * 0.7 * tu, tb - 7 * tu); } c.moveTo(tx - 1.4 * tu, tb - 2.5 * tu); c.lineTo(tx + 1.3 * tu, tb - 5 * tu); c.stroke();
         c.fillStyle = mix('#4a5560', '#202630', dawnK); c.fillRect(tx - 2.2 * tu, tb - 10 * tu, 4.4 * tu, 3 * tu); c.fillStyle = mix('#3a434c', '#181c24', dawnK); c.beginPath(); c.moveTo(tx - 2.5 * tu, tb - 10 * tu); c.lineTo(tx, tb - 11.4 * tu); c.lineTo(tx + 2.5 * tu, tb - 10 * tu); c.closePath(); c.fill(); }
@@ -10546,6 +10560,7 @@
     }
     // ---- lapis depan: jalur simpan, buffer stop, tiang lampu sorot, gudang pasir & pengisian BBM ----
     Y.sid.forEach((sd, i) => { const O = (x) => yardO(i, x); track(O, Math.max(a0, sd.from), Math.min(b0, sd.m1), 1.02 + i * 0.03); bufferStop(sd.from, sd.o, 1.02 + i * 0.03); });
+    for (const sg of yardSignals()) if (sg.side > 0) { const sx = X(sg.x); if (sx > -20 && sx < W + 20) dwarfSignal(c, sx, yo(sg.o + 1.9), ppm * 1.04, sg.id, 0.4 + 0.6 * dawnK); }
   }
   // kereta terparkir di jalur simpan depan (setelah kereta pemain: lebih dekat ke kamera) + tiang lampu sorot & petugas
   function drawYardFront(V) {
