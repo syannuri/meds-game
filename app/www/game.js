@@ -31,6 +31,7 @@
   const VS = 0.54, VPIV = 1.05; // skala tinggi badan kereta (atap sekitar 4,1 m)
   const trainH = (h) => (h <= VPIV ? h : VPIV + (h - VPIV) * VS);
   const ELEC = () => MIS.loco === 'hst2' || MIS.loco === 'hst' || MIS.loco === 'argo'; // bertenaga listrik 25 kV (pantograf): Guntur, Kilat, Agraveda
+  const PLANT = () => MIS.land === 'sawit' && !MIS.paddy; // kebun sawit (Sumatra); misi berlahan sawah (paddy) tetap berlatar Bukit Barisan tetapi bertanah sawah berair & pohon campuran
   const DAWN = () => MIS.sky === 'dawn' && !MIS.dusk && !MIS.golden && !MIS.day && MIS.land !== 'sawit'; // misi fajar-pagi di Jawa (1-1 s.d. 1-4)
   const RICH = () => !!(MIS.dusk || MIS.golden || DAWN()); // misi dengan langit, pantulan air & cahaya yang diperkaya (senja & sore keemasan)
   // getaran HP (haptik): pola singkat untuk peristiwa penting. Android (Chrome/WebView) lewat navigator.vibrate,
@@ -788,7 +789,7 @@
     startClock: 8 * 3600 + 20 * 60,
     sky: 'dawn', day: true,
     rain: false,
-    land: 'sawit',
+    land: 'sawit', paddy: true, // Bukit Barisan dengan sawah berair & pepohonan campuran (bukan kebun sawit)
     tags: ['Kilat G1 · 200 km/h', 'Ngarai & terowongan', 'Kabut pegunungan'],
     speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
     driver: { name: 'Anett', initials: 'AN' },
@@ -4878,7 +4879,7 @@
       ridge(H * 0.13, 0.004, night ? '#1b2040' : storm ? '#56626b' : mix('#6a6e9a', '#8fb0c4', p), 0.6, 1);
       ridge(H * 0.07, 0.009, night ? '#141a2c' : storm ? '#46525a' : mix('#4f6a62', '#6f9a7c', p), 0.9, 3);
       // tanah: sawah atau kebun sawit, garis pematang yang bergerak mendekat
-      const sawit = MIS.land === 'sawit';
+      const sawit = PLANT();
       const gg = c.createLinearGradient(0, hy, 0, H);
       gg.addColorStop(0, night ? '#18241a' : sawit ? mix('#4a5a32', '#62773f', p) : mix('#5f8a48', '#7cab52', p));
       gg.addColorStop(1, night ? '#0d140e' : sawit ? mix('#3a3022', '#4e3f2c', p) : mix('#2f5427', '#3f6d33', p));
@@ -5047,6 +5048,15 @@
     if (DBc) {
       const sunXc = SUN ? SUN.x : W * 0.8, wetC = MIS.rain && !inTun;
       const balC = (d) => balCol(brAt(d));
+      // rumput alami di koridor rel: celah antara balas jalur 1-2-3 (terbuka di area wesel) & tepi luar balas; rumpun rumput tertancap di posisi dunia
+      if (!inTun) { const gB = night ? '#1c2a1c' : mix('#5a8a3a', '#6da046', p), gD = night ? '#142014' : mix('#40702c', '#4e8434', p), gL = night ? '#2a3a26' : mix('#86b452', '#9cc85e', p);
+        const gaps = (x) => { const o2 = dblO(x), w3 = dbl3(x), o3 = dblO3(x), g = [[-3.6, -2.3], [2.3, o2 - 2.3]]; if (w3 > 0.02) g.push([o2 + 2.3, o3 - 2.3]); g.push([(w3 > 0.02 ? o3 : o2) + 2.3, (w3 > 0.02 ? o3 : o2) + 3.6]); return g; };
+        for (let i = steps.length - 2; i >= 0; i--) { const a = steps[i], b = steps[i + 1]; if (onB((a + b) / 2)) continue; const ga = gaps(x0 + a), gb = gaps(x0 + b);
+          ga.forEach(([l0, l1], k) => { const [m0, m1] = gb[k] || [l0, l1]; if (l1 - l0 < 0.05 && m1 - m0 < 0.05) return; quad(W3(a, l0, 0.01), W3(a, Math.max(l0, l1), 0.01), W3(b, Math.max(m0, m1), 0.01), W3(b, m0, 0.01), gB); }); }
+        for (let wd = Math.floor((x0 + 45) / 0.7) * 0.7; wd > x0 + 1.6; wd -= 0.7) { const d = wd - x0; if (onB(d)) continue; const gp = gaps(wd);
+          for (const [l0, l1] of gp) { const wdt = l1 - l0; if (wdt < 0.3) continue; const n = Math.min(4, Math.ceil(wdt / 1.2)); for (let q = 0; q < n; q++) { const hs = hash(wd * 3.7 + q * 1.31 + l0), lat = l0 + 0.15 + hs * (wdt - 0.3);
+            const b0 = W3(d, lat, 0.01); if (!b0 || b0.k < 2.2) continue; const ht = (0.16 + hash(hs * 9) * 0.22) * b0.k; c.strokeStyle = hs < 0.5 ? gD : gL; c.lineWidth = Math.max(0.8, 0.025 * b0.k); c.beginPath();
+              for (const dx of [-0.06, 0, 0.07]) { c.moveTo(b0.x + dx * b0.k, b0.y); c.quadraticCurveTo(b0.x + dx * b0.k * 1.4, b0.y - ht * 0.6, b0.x + dx * b0.k * 2.4 + (hs - 0.5) * 0.05 * b0.k, b0.y - ht); } c.stroke(); } } } }
       const trk = (O, ok) => {
         for (let i = steps.length - 2; i >= 0; i--) { const a = steps[i], b = steps[i + 1]; if (!ok((a + b) / 2)) continue;
           const oa = O(x0 + a), ob = O(x0 + b); quad(W3(a, oa - 2.3, 0), W3(a, oa + 2.3, 0), W3(b, ob + 2.3, 0), W3(b, ob - 2.3, 0), balC((a + b) / 2)); }
@@ -5106,7 +5116,7 @@
           c.fillStyle = `rgba(20,25,15,${(0.2 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sd * 2.2 * b.k, b.y + 0.1 * b.k, 2.4 * b.k, 0.18 * b.k, 0, 0, 7); c.fill(); }
         c.lineWidth = Math.max(1, 0.12 * b.k); c.beginPath(); c.moveTo(arm.x - 0.9 * b.k, arm.y); c.lineTo(arm.x + 0.9 * b.k, arm.y); c.stroke();
       });
-      const sawit = MIS.land === 'sawit';
+      const sawit = PLANT();
       for (let i = Math.ceil(x0 / 9); i * 9 < x0 + dMax; i++) {
         const side = hash(i * 1.3) < 0.5 ? -1 : 1, wd = i * 9 + hash(i) * 5, ht = sawit ? 8 + hash(i * 3.7) * 3 : 5 + hash(i * 3.7) * 6;
         // jalur ganda: pohon di kanan bergeser ke luar jalur 2/3 (tidak tumbuh di antara rel, sama seperti tampilan luar)
@@ -5121,13 +5131,14 @@
           const palm = sawit || hash(i * 5.3) < 0.35;
           // pohon detail (sama dengan tampilan luar) saat cukup dekat; berganti dari bentuk sederhana secara perlahan (lintas-pudar),
           // ukurannya disamakan dengan bentuk sederhana sehingga pohon tidak tampak 'timbul' atau melompat saat kereta mendekat
-          const tD = !sawit && b.k < 90 ? smooth(3.2, 7, b.k) : 0;
+          const tD = MIS.paddy ? (b.k > 1.1 ? 1 : 0) : !sawit && b.k < 90 ? smooth(3.2, 7, b.k) : 0; // misi bersawah: pohon campuran selalu detail (ukuran asli)
           if (tD > 0) {
             const hDet = palm ? 8 + hash(i + 2) * 5 : (3.4 + hash(i + 7) * 1.6) * 1.35 + 1.2 + hash(i + 6) * 1.2, sS = SUN.x > b.x ? 1 : -1, kk = b.k * ht / hDet;
             c.globalAlpha = fadeA * tD;
             if (SUNK > 0) { c.fillStyle = `rgba(20,30,10,${(0.22 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sS * ht * 0.35 * b.k, b.y + 0.15 * b.k, ht * 0.45 * b.k, 0.45 * b.k, 0, 0, 7); c.fill(); }
             c.save(); c.translate(b.x, 0); c.scale(sS, 1);
-            (palm ? treeCoconut : treeBroadleaf)(c, { night, rimA: SUNK > 0 ? 0.6 : 0, rim: `rgb(${sunRim})` }, 0, b.y, i, kk, p);
+            if (MIS.paddy) treeMix(c, { night, rimA: SUNK > 0 ? 0.6 : 0, rim: `rgb(${sunRim})` }, 0, b.y, i, b.k, p, hash(i * 5.3));
+            else (palm ? treeCoconut : treeBroadleaf)(c, { night, rimA: SUNK > 0 ? 0.6 : 0, rim: `rgb(${sunRim})` }, 0, b.y, i, kk, p);
             c.restore();
             if (tD >= 1) { c.globalAlpha = 1; return; }
             c.globalAlpha = fadeA * (1 - tD);
@@ -6179,10 +6190,12 @@
     // ---- cuaca & cahaya ----
     const fog = fogAt(x0 + 60);
     if (fog > 0.02 && !inTun) {
-      const fg = c.createLinearGradient(0, hy - H * 0.2, 0, H);
-      const fc = night ? '52,60,84' : '222,228,230';
-      fg.addColorStop(0, `rgba(${fc},${0.8 * fog})`); fg.addColorStop(0.35, `rgba(${fc},${0.7 * fog})`); fg.addColorStop(1, `rgba(${fc},${0.2 * fog})`);
-      c.fillStyle = fg; c.fillRect(0, 0, W, H);
+      // kabut berkedalaman: paling tebal di sekitar titik hilang (jauh), menipis ke tepi & bawah kaca (benda dekat tetap jelas)
+      const fc = night ? '52,60,84' : '222,228,230', R = Math.hypot(W, H) * 0.62;
+      c.save(); c.translate(cx, hy); c.scale(1, 0.62); const fg = c.createRadialGradient(0, 0, 0, 0, 0, R);
+      fg.addColorStop(0, `rgba(${fc},${0.88 * fog})`); fg.addColorStop(0.22, `rgba(${fc},${0.74 * fog})`); fg.addColorStop(0.55, `rgba(${fc},${0.42 * fog})`); fg.addColorStop(1, `rgba(${fc},${0.16 * fog})`);
+      c.fillStyle = fg; c.fillRect(-W * 2, -H * 3, W * 4, H * 6); c.restore();
+      const sk = c.createLinearGradient(0, 0, 0, hy); sk.addColorStop(0, `rgba(${fc},${0.35 * fog})`); sk.addColorStop(1, `rgba(${fc},0)`); c.fillStyle = sk; c.fillRect(0, 0, W, hy); // langit tertutup kabut tipis
     }
     if (!inTun && !REDUCE_MOTION) { // garis angin dari titik hilang ke tepi kaca
       const kk = clamp((st.v * 3.6 - 60) / 120, 0, 1);
@@ -6227,6 +6240,23 @@
       c.restore();
     } }
 
+    // lampu sorot saat berkabut/berembun: dua berkas bervolume yang melebar & memudar di dalam kabut, pendar hamburan di kejauhan,
+    // butir embun berkilau melayang di dalam berkas (mendekat seiring laju), genangan cahaya lembut di tanah & kilau kepala rel
+    if (fog > 0.05 && !inTun) { const dark = night || storm || twiOf(dayP(st.clock)) > 0.25, K = fog * (dark ? 1 : 0.6), wc = dark ? '255,236,196' : '255,246,226';
+      c.save(); c.globalCompositeOperation = 'lighter';
+      for (const sd of [-1, 1]) for (const [hh, a0] of [[0.55, 0.08], [1.05, 0.13], [1.6, 0.09], [2.3, 0.05]]) {
+        const A = W3(2.6, sd * 0.78 - 0.25, 0.95), B = W3(2.6, sd * 0.78 + 0.25, 0.95), C2 = W3(62, sd * 1.4 + 3.4, hh), D = W3(62, sd * 1.4 - 3.4, hh); if (!A || !B || !C2 || !D) continue;
+        const g = c.createLinearGradient((A.x + B.x) / 2, (A.y + B.y) / 2, (C2.x + D.x) / 2, (C2.y + D.y) / 2); g.addColorStop(0, `rgba(${wc},${(a0 * K * 2.2).toFixed(3)})`); g.addColorStop(0.35, `rgba(${wc},${(a0 * K).toFixed(3)})`); g.addColorStop(1, `rgba(${wc},0)`);
+        c.fillStyle = g; c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.lineTo(C2.x, C2.y); c.lineTo(D.x, D.y); c.closePath(); c.fill(); }
+      for (const sd of [-1, 1]) { const L0 = W3(2.6, sd * 0.78, 0.95); if (L0) { const R0 = W * 0.09, lg = c.createRadialGradient(L0.x, Math.min(L0.y, H * 0.98), 0, L0.x, Math.min(L0.y, H * 0.98), R0); lg.addColorStop(0, `rgba(${wc},${(0.3 * K).toFixed(3)})`); lg.addColorStop(1, `rgba(${wc},0)`); c.fillStyle = lg; c.fillRect(L0.x - R0, Math.min(L0.y, H * 0.98) - R0, 2 * R0, 2 * R0); } } // pendar sumber lampu di kabut dekat
+      const hz = W3(38, 0, 1.3); if (hz) { const R = W * 0.2, hg = c.createRadialGradient(hz.x, hz.y, 0, hz.x, hz.y, R); hg.addColorStop(0, `rgba(${wc},${(0.16 * K).toFixed(3)})`); hg.addColorStop(0.5, `rgba(${wc},${(0.05 * K).toFixed(3)})`); hg.addColorStop(1, `rgba(${wc},0)`); c.fillStyle = hg; c.fillRect(hz.x - R, hz.y - R, 2 * R, 2 * R); }
+      for (let d = 3; d < 70; d += 1.5 + d * 0.06) { const e = d + 1.5 + d * 0.06, a = 0.11 * K * Math.exp(-d / 30), w0 = 1.6 + d * 0.07, w1 = 1.6 + e * 0.07, q1 = W3(d, -w0, 0.01), q2 = W3(d, w0, 0.01), q3 = W3(e, w1, 0.01), q4 = W3(e, -w1, 0.01); if (!q1 || !q2 || !q3 || !q4) continue;
+        const g = c.createLinearGradient(q1.x, 0, q2.x, 0); g.addColorStop(0, `rgba(${wc},0)`); g.addColorStop(0.5, `rgba(${wc},${a.toFixed(3)})`); g.addColorStop(1, `rgba(${wc},0)`); c.fillStyle = g; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill(); } // genangan cahaya di tanah
+      for (const rl of [-0.53, 0.53]) { let prev = null; for (let d = 2.5; d < 60; d += 2 + d * 0.05) { const q = W3(d, rl, 0.17); if (q && prev) { c.strokeStyle = `rgba(255,248,230,${(0.5 * K * Math.exp(-d / 28)).toFixed(3)})`; c.lineWidth = Math.max(1, 0.035 * q.k); c.beginPath(); c.moveTo(prev.x, prev.y); c.lineTo(q.x, q.y); c.stroke(); } prev = q; } } // kilau rel
+      for (let i = 0; i < 70; i++) { const sd = i % 2 ? 1 : -1, d = 2.5 + ((((hash(i * 1.7) * 48 - x0 * 1.0) % 48) + 48) % 48), lat = sd * (0.78 + d * 0.035) + (hash(i * 3.3) - 0.5) * (0.4 + d * 0.09), h = 0.7 + hash(i * 5.1) * (0.8 + d * 0.03);
+        const q = W3(d, lat, h); if (!q) continue; const a = K * 0.55 * Math.exp(-d / 18) * (0.5 + 0.5 * Math.sin(tNow * 3 + i)), r = Math.max(0.6, 0.025 * q.k); if (a < 0.01) continue;
+        const g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, r * 3); g.addColorStop(0, `rgba(255,255,250,${a.toFixed(3)})`); g.addColorStop(1, 'rgba(255,255,250,0)'); c.fillStyle = g; c.fillRect(q.x - r * 3, q.y - r * 3, r * 6, r * 6); } // butir embun di dalam berkas
+      c.restore(); }
     if (HSTCAB && !inTun && !night && !storm) drawHstLight(c, { hy, p, pan, st, sun: sunPos(Vs) });
     if (!inTun && !night && !storm) drawFlare(c, sunPos(Vs), HSTCAB ? 0.8 : 0.85, st.v, x0, hy);
     applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0, cab: true, night, storm, sun: SUN });
@@ -6488,7 +6518,7 @@
       const g0 = c.createLinearGradient(0, hy, 0, H); g0.addColorStop(0, night ? '#1d2c22' : mix('#a3c48a', '#b5d39a', p)); g0.addColorStop(1, night ? '#0f1a12' : mix('#4f8a3e', '#62a04a', p));
       c.fillStyle = g0; c.fillRect(0, hy, W, H - hy);
       const CL = 16, CW = 14, KMAX = 9, ZF = 330, j0 = Math.floor((x0 + 3) / CL), j1 = Math.floor((x0 + ZF) / CL);
-      const SAWIT = MIS.land === 'sawit';
+      const SAWIT = PLANT();
       const greens = night ? ['#1f3324', '#233a28', '#1a2c1f'] : SAWIT ? [mix('#3f6a30', '#4f7e3a', p), mix('#4a7436', '#5a8a42', p), mix('#36602c', '#446f34', p), mix('#56703a', '#66843f', p)] : [mix('#4f9a3a', '#5fae44', p), mix('#62a845', '#72bb4e', p), mix('#45883a', '#53993f', p), mix('#74ad47', '#86c152', p)];
       const gold = SAWIT ? mix('#7a5e3e', '#8e6e48', p) : mix('#b9ae55', '#cdbf62', p), waterTop = night ? '#2b3554' : storm ? '#a9b8c0' : MIS.dusk ? '#ffc08a' : MIS.golden ? '#ffe2ac' : mix('#ffd0a0', '#e4f0f4', p), waterBot = night ? '#1e2640' : storm ? '#6f828e' : MIS.dusk ? '#9a86c4' : MIS.golden ? '#88a8d4' : mix('#9a8cc4', '#8ab8e0', p); // jauh: cakrawala hangat terpantul, dekat: langit atas
       for (let j = j1; j >= j0; j--) {
@@ -7474,6 +7504,7 @@
     drawTunnelPortals(V);
     drawFrontProps(V);
     drawFog(V);
+    drawFogBeam(V);
     drawWeather(V);
     drawNight(V);
     drawSmoke(V);
@@ -7579,6 +7610,20 @@
   }
 
   // ---------- malam takbiran ----------
+  // sorot lampu depan saat berkabut/berembun (tampak samping, siang): berkas lembut menembus kabut, pendar lampu, butir embun berkilau di dalam berkas
+  function drawFogBeam(V) {
+    const f = fogAt(V.st.x + 30); if (f < 0.05 || V.night || V.tf > 0.2) return;
+    const { c, ppm, gy, st } = V, lx = V.bx(st.x - 0.9), ly = gy - trainH(3.25) * ppm + V.bdy(st.x), K = f * 0.75, len = 46 * ppm, t = performance.now() / 1000;
+    if (lx < -len || lx > W + 20) return;
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const g = c.createRadialGradient(lx, ly, 0, lx, ly, len); g.addColorStop(0, `rgba(255,246,226,${(0.26 * K).toFixed(3)})`); g.addColorStop(0.4, `rgba(255,246,226,${(0.08 * K).toFixed(3)})`); g.addColorStop(1, 'rgba(255,246,226,0)');
+    c.fillStyle = g; c.beginPath(); c.moveTo(lx, ly - 0.3 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly - 3.2 * ppm, lx + len, ly - 5 * ppm); c.lineTo(lx + len, ly + 5.5 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly + 2.4 * ppm, lx, ly + 0.3 * ppm); c.closePath(); c.fill();
+    const gc = c.createRadialGradient(lx, ly, 0, lx, ly, len * 0.65); gc.addColorStop(0, `rgba(255,252,238,${(0.24 * K).toFixed(3)})`); gc.addColorStop(1, 'rgba(255,252,238,0)'); c.fillStyle = gc; c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + len * 0.65, ly - 2.4 * ppm); c.lineTo(lx + len * 0.65, ly + 2.2 * ppm); c.closePath(); c.fill();
+    for (const [r, a] of [[1.4, 0.55], [4.5, 0.16], [9, 0.07]]) { const lg = c.createRadialGradient(lx, ly, 0, lx, ly, r * ppm); lg.addColorStop(0, `rgba(255,248,230,${(a * K * 1.3).toFixed(3)})`); lg.addColorStop(1, 'rgba(255,248,230,0)'); c.fillStyle = lg; c.fillRect(lx - r * ppm, ly - r * ppm, 2 * r * ppm, 2 * r * ppm); } // pendar lampu di kabut
+    for (let i = 0; i < 40; i++) { const u = (hash(i * 2.7) + t * (0.12 + hash(i) * 0.15)) % 1, x = lx + u * len * 0.85, y = ly + (hash(i * 4.9) - 0.5) * (0.6 + u * 9) * ppm, a = K * 0.6 * (1 - u) * (0.5 + 0.5 * Math.sin(t * 3 + i)), r = Math.max(0.7, 0.1 * ppm);
+      if (a < 0.01) continue; const dg = c.createRadialGradient(x, y, 0, x, y, r * 3); dg.addColorStop(0, `rgba(255,255,250,${a.toFixed(3)})`); dg.addColorStop(1, 'rgba(255,255,250,0)'); c.fillStyle = dg; c.fillRect(x - r * 3, y - r * 3, r * 6, r * 6); } // butir embun
+    c.restore();
+  }
   function drawNight(V) {
     if (!V.night) { const tw = twiOf(V.p); if (tw < 0.02) return; const c0 = V.c; c0.save(); c0.globalAlpha = tw; try { drawNightCore(Object.assign({}, V, { night: true })); } finally { c0.restore(); } return; }
     drawNightCore(V);
@@ -8749,7 +8794,7 @@
   }
   function drawFarLand(V) {
     const { c, ppm, gy, p } = V;
-    const sawit = MIS.land === 'sawit', night = V.night, storm = V.storm;
+    const sawit = PLANT(), suma = MIS.land === 'sawit', night = V.night, storm = V.storm;
     const yV = gy - 5 * ppm, yB = gy - 0.5 * ppm;
     const hazeC = night ? '#1a2142' : storm ? '#8a96a0' : mix('#e8b98f', '#cfe0e6', p);
     const hz = (col, k) => mix(col, hazeC, k);
@@ -8762,7 +8807,7 @@
       for (let i = 0; i < 28; i++) {
         const r = hash(i * 3.1 + (sawit ? 9 : 0)), x = base + i * 68 + hash(i) * 30;
         if (x < -60 || x > W + 60) continue;
-        const kind = sawit ? (r < 0.3 ? 'stilt' : r < 0.85 ? 'oilpalm' : 'tree') : i % 14 === 9 ? 'mosque' : r < 0.36 ? 'house' : r < 0.6 ? 'palm' : r < 0.8 ? 'banana' : 'bamboo';
+        const kind = sawit ? (r < 0.3 ? 'stilt' : r < 0.85 ? 'oilpalm' : 'tree') : suma ? (r < 0.3 ? 'stilt' : r < 0.5 ? 'tree' : r < 0.68 ? 'bamboo' : r < 0.86 ? 'palm' : 'banana') : i % 14 === 9 ? 'mosque' : r < 0.36 ? 'house' : r < 0.6 ? 'palm' : r < 0.8 ? 'banana' : 'bamboo';
         const y = yV;
         const H2 = (col) => shade(hz(col, 0.32));
         if (kind === 'palm' || kind === 'oilpalm') {
@@ -8839,6 +8884,45 @@
   function nearStation(x) { return allStations().some((s) => x > s.x - 95 && x < s.x + 25); }
 
   // ---------- pohon detail: kelapa, pisang, pohon rindang (cahaya dari kanan-atas) ----------
+  // pepohonan campuran dataran tinggi (misi bersawah di Sumatra): pohon rindang, cemara gunung, flamboyan berbunga, rumpun bambu, kelapa, pisang
+  function treeMix(c, V, sx, base, i, ppm, p, kind) {
+    if (kind < 0.27) treeBroadleaf(c, V, sx, base, i, ppm, p); else if (kind < 0.45) treePine(c, V, sx, base, i, ppm, p); else if (kind < 0.57) treeFlame(c, V, sx, base, i, ppm, p);
+    else if (kind < 0.72) treeBamboo(c, V, sx, base, i, ppm, p); else if (kind < 0.87) treeCoconut(c, V, sx, base, i, ppm, p); else treeBanana(c, V, sx, base, i, ppm, p);
+  }
+  // cemara gunung (tusam): batang lurus ramping, tajuk kerucut bertingkat yang menjuntai, sisi matahari lebih terang
+  function treePine(c, V, sx, base, i, ppm, p) {
+    const night = V.night, ht = (10 + hash(i + 2.3) * 5) * ppm, w0 = (2.3 + hash(i + 4.1) * 0.8) * ppm, top = base - ht;
+    const dk = night ? '#0e1a14' : mix('#16301f', '#1f3f29', p), md = night ? '#15241b' : mix('#24472f', '#2f5c3a', p), lt = night ? '#1c2e22' : mix('#3a6a44', '#4c8454', p);
+    c.fillStyle = night ? '#16100c' : mix('#3e2c1e', '#56402c', p); c.beginPath(); c.moveTo(sx - 0.22 * ppm, base); c.lineTo(sx - 0.08 * ppm, top + 0.4 * ppm); c.lineTo(sx + 0.08 * ppm, top + 0.4 * ppm); c.lineTo(sx + 0.22 * ppm, base); c.closePath(); c.fill();
+    const tiers = 7; for (let k = 0; k < tiers; k++) { const f = k / (tiers - 1), y = base - ht * (0.22 + 0.78 * f), w = w0 * (1 - 0.82 * f) * (0.9 + 0.2 * hash(i * 3 + k)), th = ht * 0.2;
+      for (const [col, sh, sc] of [[dk, 0, 1], [md, -0.06, 0.88], [lt, -0.16, 0.5]]) { c.fillStyle = col; c.beginPath(); c.moveTo(sx + sh * w, y - th);
+        c.quadraticCurveTo(sx + (sh + 0.35) * w, y - th * 0.45, sx + (sh + sc) * w, y + 0.12 * ppm); c.quadraticCurveTo(sx + sh * w, y - th * 0.12, sx + (sh - sc) * w, y + 0.12 * ppm); c.quadraticCurveTo(sx + (sh - 0.35) * w, y - th * 0.45, sx + sh * w, y - th); c.fill(); } }
+    if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.45; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.08 * ppm); c.beginPath(); c.moveTo(sx, top); c.lineTo(sx + w0 * 0.9, base - ht * 0.22); c.stroke(); c.restore(); }
+  }
+  // flamboyan: batang bercabang lebar, tajuk payung datar yang dipenuhi bunga merah-jingga
+  function treeFlame(c, V, sx, base, i, ppm, p) {
+    const night = V.night, cr = (3.8 + hash(i + 7.7) * 1.4) * ppm, ht = (6.5 + hash(i + 3.9) * 2) * ppm, cy = base - ht;
+    const bark = night ? '#1a140e' : mix('#4a3828', '#64503a', p); c.strokeStyle = bark; c.lineCap = 'round';
+    c.lineWidth = 0.42 * ppm; c.beginPath(); c.moveTo(sx, base); c.quadraticCurveTo(sx - 0.2 * ppm, base - ht * 0.5, sx, cy + 0.8 * ppm); c.stroke();
+    c.lineWidth = 0.2 * ppm; for (const [dx, dy] of [[-0.8, 0.1], [0.85, 0.05], [-0.4, -0.05], [0.45, -0.1]]) { c.beginPath(); c.moveTo(sx, cy + 1.2 * ppm); c.quadraticCurveTo(sx + dx * cr * 0.4, cy + 0.6 * ppm, sx + dx * cr, cy + dy * cr); c.stroke(); } c.lineCap = 'butt';
+    const gD = night ? '#122016' : mix('#1f4626', '#2a5a30', p), gL = night ? '#1a2c1e' : mix('#3f7a3a', '#56984a', p);
+    for (let k = 0; k < 16; k++) { const a = hash(i * 2.3 + k) * Math.PI * 2, rr = Math.sqrt(hash(i * 4.1 + k)), x = sx + Math.cos(a) * rr * cr, y = cy + Math.sin(a) * rr * cr * 0.32 - 0.2 * ppm; c.fillStyle = k % 3 ? gL : gD; c.beginPath(); c.ellipse(x, y, cr * 0.32, cr * 0.16, 0, 0, 7); c.fill(); }
+    for (let k = 0; k < 46; k++) { const a = hash(i * 5.7 + k) * Math.PI * 2, rr = Math.sqrt(hash(i * 6.9 + k)), x = sx + Math.cos(a) * rr * cr * 1.02, y = cy + Math.sin(a) * rr * cr * 0.34 - 0.35 * ppm - (1 - rr) * 0.3 * ppm;
+      c.fillStyle = night ? '#4a1e18' : ['#e2442a', '#f06a2a', '#c9302a', '#f58a3a'][k % 4]; c.beginPath(); c.arc(x, y, Math.max(0.8, (0.16 + hash(k + i) * 0.12) * ppm), 0, 7); c.fill(); }
+    if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.4; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.1 * ppm); c.beginPath(); c.ellipse(sx, cy - 0.3 * ppm, cr, cr * 0.36, 0, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); c.restore(); }
+  }
+  // rumpun bambu: belasan batang beruas yang melengkung keluar, ujung menjuntai, daun-daun tipis berkelompok
+  function treeBamboo(c, V, sx, base, i, ppm, p) {
+    const night = V.night, n = 13, H0 = (8 + hash(i + 1.9) * 3) * ppm, culm = night ? '#2a3a22' : mix('#6a8a3a', '#86a84a', p), node = night ? '#1a2416' : mix('#4a6428', '#5e7a32', p), leaf = night ? '#1a2c1c' : mix('#4c7a34', '#68a044', p), leafD = night ? '#122016' : mix('#2f5a26', '#3c6e2e', p);
+    const tips = []; c.lineCap = 'round';
+    for (let k = 0; k < n; k++) { const f = (k / (n - 1)) * 2 - 1, lean = f * (0.9 + hash(i + k) * 0.5), h = H0 * (0.75 + 0.3 * hash(i * 2 + k)), x0 = sx + f * 0.7 * ppm, xt = x0 + lean * h * 0.45, yt = base - h * (1 - 0.18 * Math.abs(lean));
+      c.strokeStyle = culm; c.lineWidth = Math.max(1, 0.14 * ppm); c.beginPath(); c.moveTo(x0, base); c.quadraticCurveTo(x0 + lean * h * 0.08, base - h * 0.6, xt, yt); c.stroke();
+      c.strokeStyle = node; c.lineWidth = Math.max(1, 0.18 * ppm); for (let q = 1; q < 6; q++) { const t = q / 6, nx = x0 + (xt - x0) * t * t, ny = base + (yt - base) * t; c.beginPath(); c.moveTo(nx - 0.08 * ppm, ny); c.lineTo(nx + 0.08 * ppm, ny); c.stroke(); }
+      tips.push([xt, yt, lean]); }
+    for (const [xt, yt, lean] of tips) for (let q = 0; q < 7; q++) { const lx = xt + (hash(xt + q) - 0.5) * 2.2 * ppm + lean * q * 0.2 * ppm, ly = yt + q * 0.55 * ppm; c.fillStyle = q % 2 ? leaf : leafD; c.beginPath(); c.ellipse(lx, ly, 0.9 * ppm, 0.22 * ppm, lean * 0.6 + (hash(q + xt) - 0.5), 0, 7); c.fill(); }
+    c.lineCap = 'butt';
+    if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.35; c.fillStyle = V.rim; for (const [xt, yt] of tips) { c.beginPath(); c.ellipse(xt + 0.4 * ppm, yt + 0.3 * ppm, 0.7 * ppm, 0.15 * ppm, 0.3, 0, 7); c.fill(); } c.restore(); }
+  }
   function treeCoconut(c, V, sx, base, i, ppm, p) {
     const ht = (8 + hash(i + 2) * 5) * ppm, lean = (hash(i + 3) - 0.5) * 2.4 * ppm, tx = sx + lean, ty = base - ht, night = V.night, warm = MIS.dusk && !night;
     const tp = (t) => [(1 - t) * (1 - t) * sx + 2 * (1 - t) * t * (sx + lean * 0.25) + t * t * tx, (1 - t) * (1 - t) * base + 2 * (1 - t) * t * (base - ht * 0.6) + t * t * ty];
@@ -8964,12 +9048,12 @@
     for (let i = Math.floor(wx0 / slot) - 1; i < wx1 / slot + 1; i++) {
       const h = hash(i);
       const tx = i * slot + hash(i + 0.37) * 9;
-      if (h > (MIS.land === 'sawit' ? 0.78 : 0.5) || (ROUTE.scenes && h > 0.5 * (1 - 0.8 * seaAt(tx)))) continue; // pesisir: pepohonan jarang agar laut terlihat; kebun sawit rapat
+      if (h > (PLANT() ? 0.78 : MIS.paddy ? 0.6 : 0.5) || (ROUTE.scenes && h > 0.5 * (1 - 0.8 * seaAt(tx)))) continue; // pesisir: pepohonan jarang agar laut terlihat; kebun sawit rapat
       if (nearStation(tx) || inBridge(tx) || nearCrossing(tx, 12) || nearTunnel(tx)) continue;
       const sx = X(tx), base = gy - 1.2 * ppm - hash(i + 0.9) * 1.2 * ppm;
       const kind = hash(i + 0.11);
       const col = mix('#24402c', '#335c35', p), col2 = mix('#2f5235', '#3f7040', p);
-      if (MIS.land === 'sawit') {
+      if (PLANT()) {
         if (V.sunShadow > 0.01) { c.fillStyle = `rgba(0,0,0,${0.2 * V.sunShadow})`; c.beginPath(); c.ellipse(sx - 1.2 * ppm, base + 0.2 * ppm, 2.4 * ppm, 0.35 * ppm, 0, 0, 7); c.fill(); }
         if (kind < 0.7) { // pohon sawit: batang pendek kasar, tajuk lebat
           const ht = trainH(8 + hash(i + 2) * 3) * ppm; // sawit dewasa 8–11 m (skala sama dengan kereta & kokpit)
@@ -8999,7 +9083,8 @@
         continue;
       }
       if (V.sunShadow > 0.01) { c.fillStyle = `rgba(0,0,0,${0.2 * V.sunShadow})`; c.beginPath(); c.ellipse(sx - 1.2 * ppm, base + 0.2 * ppm, 2.2 * ppm, 0.35 * ppm, 0, 0, 7); c.fill(); }
-      if (kind < 0.45) treeCoconut(c, V, sx, base, i, ppm, p);
+      if (MIS.paddy) treeMix(c, V, sx, base, i, ppm, p, kind);
+      else if (kind < 0.45) treeCoconut(c, V, sx, base, i, ppm, p);
       else if (kind < 0.7) treeBanana(c, V, sx, base, i, ppm, p);
       else treeBroadleaf(c, V, sx, base, i, ppm, p);
     }
@@ -9025,7 +9110,7 @@
     const i0 = Math.floor((V.wx0 - 120) / cell), i1 = Math.ceil((V.wx1 + 120) / cell);
     c.save();
     c.fillStyle = V.water;
-    const sawit = MIS.land === 'sawit';
+    const sawit = PLANT();
     if (sawit) {
       // tanah kebun kemerahan di antara barisan sawit
       c.globalAlpha = 0.35; c.fillStyle = mix('#7a4a2c', '#9a6440', p); c.fillRect(0, yTop, W, H - yTop); c.globalAlpha = 1;
@@ -9357,7 +9442,7 @@
   // kabut pagi tipis menggantung di atas sawah (hanya fajar cerah)
   // pantulan kereta di petak sawah berair: warna badan & lampu jendela bergoyang di riak air
   function drawTrainOnPaddy(V) {
-    if (MIS.land === 'sawit' || V.tf > 0.2) return;
+    if (PLANT() || V.tf > 0.2) return;
     const { c, ppm, gy, X, st } = V;
     const rows = 6, cell = 14, yTop = gy + 1.4 * ppm;
     const rowY = (t) => yTop + (H - yTop) * Math.pow(t, 1.55);
