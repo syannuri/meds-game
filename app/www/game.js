@@ -11,8 +11,10 @@
   const lerp = (a, b, t) => a + (b - a) * t;
   const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
   const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+  // warna hex '#rrggbb' atau 'rgb(r,g,b)' (hasil mix sebelumnya) → bilangan 0xRRGGBB
+  const colNum = (cc) => { if (cc[0] === '#') return parseInt(cc.slice(1), 16); const m = cc.match(/\d+(\.\d+)?/g); return m ? ((+m[0] & 255) << 16) | ((+m[1] & 255) << 8) | (+m[2] & 255) : 0; };
   function mix(c1, c2, t) {
-    const a = parseInt(c1.slice(1), 16), b = parseInt(c2.slice(1), 16);
+    const a = colNum(c1), b = colNum(c2);
     const r = Math.round(lerp(a >> 16, b >> 16, t));
     const g = Math.round(lerp((a >> 8) & 255, (b >> 8) & 255, t));
     const bl = Math.round(lerp(a & 255, b & 255, t));
@@ -4937,11 +4939,14 @@
     const brAt = (d) => CAB_BRS.find((b) => x0 + d > b.from && x0 + d < b.to);
     // lebar lantai jembatan sampai ke dinding/rangka: tidak ada celah ke sungai/sawah di sisi rel
     const deckW = (b) => !b ? 2.3 : b.viaduct ? 2.95 : b.truss ? 3.4 : b.wood ? 2.5 : 4.0;
+    // warna badan rel yang sama untuk SEMUA jalur (1, 2, 3): balas batu, slab beton di viaduk, lantai baja di jembatan rangka/busur;
+    // malam/petang menggelap bersama (hanya terang di bawah sorot lampu)
+    const balN = night ? 0.72 : MIS.dayCycle ? 0.62 * twiOf(p) : 0;
+    const balCol = (Bk) => inTun ? '#24221f' : mix(Bk ? (Bk.viaduct ? mix('#a39e94', '#bdb8ae', p) : '#4a535a') : mix('#8d8275', '#a59a8c', p), '#2a2830', Bk && !Bk.viaduct ? balN * 0.4 : balN);
     for (let i = steps.length - 2; i >= 0; i--) {
       const a = steps[i], b = steps[i + 1];
       const Bk = brAt((a + b) / 2), deck = !!Bk, dw = deckW(Bk);
-      const balN = night ? 0.72 : MIS.dayCycle ? 0.62 * twiOf(p) : 0; // malam/petang: balas menggelap, hanya terang di bawah sorot lampu
-      const col = inTun ? '#24221f' : deck ? (night ? '#2a3038' : '#4a535a') : mix(mix('#8d8275', '#a59a8c', p), '#2a2830', balN);
+      const col = balCol(Bk);
       if (deck) { // lantai beton/baja jembatan selebar struktur, dengan lis tepi terang
         const dR = dw + (DBc ? dblO(x0 + (a + b) / 2) : 0);
         quad(W3(a, -dw, -0.05), W3(a, dR, -0.05), W3(b, dR, -0.05), W3(b, -dw, -0.05), Bk.viaduct ? (night ? '#4a4e58' : mix('#a39e94', '#bdb8ae', p)) : Bk.truss ? (night ? '#3a414a' : '#5a646c') : (night ? '#4a4c54' : mix('#a8a196', '#c2bcb0', p))); // busur: lantai beton terang (tidak menyatu dengan air)
@@ -4956,9 +4961,10 @@
       for (const [lat, zz, sz, tn] of CAB_BAL) {
         const d = 1.5 + (((zz * 60 - x0) % 60) + 60) % 60;
         if (d > FAR || onB(d)) continue;
-        const q = W3(d, lat * 2.2, 0.02); if (!q) continue;
-        const r = Math.max(0.6, sz * 0.06 * q.k);
-        c.fillStyle = tones[tn < 0.33 ? 0 : tn < 0.66 ? 1 : 2]; c.fillRect(q.x - r / 2, q.y - r / 2, r, r * 0.7);
+        const tc = tones[tn < 0.33 ? 0 : tn < 0.66 ? 1 : 2];
+        { const q = W3(d, lat * 2.2, 0.02); if (!q) continue;
+          const r = Math.max(0.6, sz * 0.06 * q.k);
+          c.fillStyle = tc; c.fillRect(q.x - r / 2, q.y - r / 2, r, r * 0.7); }
       }
     }
     const slp = 0.65;
@@ -5014,10 +5020,13 @@
     // jalur ganda: jalur 2 (arah berlawanan) di kanan, jalur 3 lewat langsung di stasiun
     if (DBc) {
       const sunXc = SUN ? SUN.x : W * 0.8, wetC = MIS.rain && !inTun;
-      const balC = (d) => { const Bk = brAt(d); return inTun ? '#24221f' : Bk ? (Bk.viaduct ? (night ? '#4a4e58' : mix('#a39e94', '#bdb8ae', p)) : '#4a535a') : mix('#8d8275', '#a59a8c', p); };
+      const balC = (d) => balCol(brAt(d));
       const trk = (O, ok) => {
         for (let i = steps.length - 2; i >= 0; i--) { const a = steps[i], b = steps[i + 1]; if (!ok((a + b) / 2)) continue;
           const oa = O(x0 + a), ob = O(x0 + b); quad(W3(a, oa - 2.3, 0), W3(a, oa + 2.3, 0), W3(b, ob + 2.3, 0), W3(b, ob - 2.3, 0), balC((a + b) / 2)); }
+        if (!inTun) { const bn = night ? 0.72 : MIS.dayCycle ? 0.62 * twiOf(p) : 0, tn3 = [mix('#6f665d', '#7c736a', p), mix('#a39889', '#b2a798', p), mix('#827869', '#8e8478', p)].map((t) => mix(t, '#2a2830', bn));
+          for (const [lat, zz, sz, tn] of CAB_BAL) { const d = 1.5 + (((zz * 60 - x0) % 60) + 60) % 60; if (d > FAR || onB(d) || !ok(d)) continue; // tekstur batu balas sama dengan jalur 1
+            const q = W3(d, O(x0 + d) + lat * 2.2, 0.02); if (!q) continue; const r = Math.max(0.6, sz * 0.06 * q.k); c.fillStyle = tn3[tn < 0.33 ? 0 : tn < 0.66 ? 1 : 2]; c.fillRect(q.x - r / 2, q.y - r / 2, r, r * 0.7); } }
         for (let wd = Math.floor((x0 + 60) / slp) * slp; wd > x0 + 1.4; wd -= slp) { const d = wd - x0; if (!ok(d)) continue; const o = O(wd);
           quad(W3(d - 0.12, o - 1.2, 0.05), W3(d - 0.12, o + 1.2, 0.05), W3(d + 0.12, o + 1.2, 0.05), W3(d + 0.12, o - 1.2, 0.05), inTun ? '#3a3631' : mix('#6f6a63', '#8b857b', p)); }
         [-0.53, 0.53].forEach((ro) => { for (let i = 0; i < steps.length - 1; i++) { const a = steps[i], b = steps[i + 1]; if (!ok((a + b) / 2)) continue; const oa = O(x0 + a) + ro, ob = O(x0 + b) + ro;
