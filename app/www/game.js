@@ -10599,7 +10599,6 @@
     // kabin ekor: salinan lokomotif dicerminkan (tanpa tulisan) dipasang di belakang gerbong terakhir
     const sx0 = B.noseX - (LOCO_LEN + 0.4) * SP, sw = (LOCO_LEN + 0.4 + pad) * SP, tailX = A.noseX - (TL + GAP) * SP;
     o.save(); o.translate(tailX, 0); o.scale(-1, 1); o.drawImage(B.cv, sx0, 0, sw, ch, -(LOCO_LEN + 0.4) * SP, 0, sw, ch); o.restore();
-    tailGangway(o, A.noseX - (TL + GAP + 0.1) * SP, (GAP + 0.25) * SP, gyS, SP, night);
     return (GARUDA_SPRS[key] = { cv: A.cv, SP, gy: gyS, nose: A.noseX, tail: tailX - (LOCO_LEN + 0.4) * SP });
   }
   // cahaya dinamis Garuda (sumber sama dengan Agraveda: V.rim/rimA, skyTone, posisi matahari): langit & tanah terpantul,
