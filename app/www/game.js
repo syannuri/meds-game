@@ -5499,18 +5499,22 @@
             // pantulan kereta pemain (Cakra & gerbongnya) di sisi mengilap gerbong terparkir: bayangan cermin yang ikut bergerak
             // bersama kabin, makin pudar ke depan; jendela gerbong terparkir memantulkannya lebih gelap; sorot lampu depan memantul di cat
             if (kind !== 'wagon' && (o > 0 ? o - 1.45 : -o - 1.45) < 6) { const r0 = Math.max(dA, 1.4), r1 = Math.min(db, 48); // pada sudut rendah cermin badan memantulkan kereta pemain jauh ke depan
-              if (r1 > r0) { const seg = 1.6; for (let d1 = r0; d1 < r1; d1 += seg) { const d2 = Math.min(r1, d1 + seg), fa = 0.62 * Math.pow(1 - (d1 + d2) / 2 / 48, 0.9); if (fa < 0.02) continue;
-                const RQ = (h1, h2, col) => quad(P(d1, 1.47, h1), P(d2, 1.47, h1), P(d2, 1.47, h2), P(d1, 1.47, h2), col);
-                RQ(1.05, 4.05, `rgba(120,132,142,${(0.18 * fa).toFixed(3)})`); // badan Cakra memantul (cermin sedikit lebih redup)
-                RQ(2.4, 3.3, `rgba(12,18,24,${(0.85 * fa).toFixed(3)})`); RQ(3.3, 3.42, `rgba(255,255,255,${(0.35 * fa).toFixed(3)})`); // pita kaca gelap & tepi atas berkilau
-                RQ(1.55, 1.85, `rgba(31,111,109,${fa.toFixed(3)})`); RQ(1.88, 2.0, `rgba(242,165,22,${fa.toFixed(3)})`); // livery toska & oranye
-                RQ(1.05, 1.3, `rgba(20,24,28,${(0.6 * fa).toFixed(3)})`); }
-                // sambungan gerbong pemain yang lewat: celah gelap berulang mengikuti jarak tempuh
-                for (let gpx = LOCO_LEN; gpx < LOCO_LEN + 3 * (COACH_LEN + GAP); gpx += COACH_LEN + GAP) { const dg = gpx * 0.7; if (dg < r0 || dg > r1) continue; quad(P(dg, 1.475, 1.2), P(dg + 0.9, 1.475, 1.2), P(dg + 0.9, 1.475, 3.8), P(dg, 1.475, 3.8), `rgba(20,24,30,${(0.45 * (1 - dg / 48)).toFixed(3)})`); }
+              if (r1 > r0) { const pa = P(r0, 1.47, 2.5), pb = P(r1, 1.47, 2.5);
+                if (pa && pb && Math.abs(pb.x - pa.x) > 2) { const fa = (d) => 0.62 * Math.pow(Math.max(0, 1 - d / 48), 0.9) * clamp((d - 1.4) / 2.5, 0, 1);
+                  // tiap lapis pantulan = satu bidang utuh bergradasi halus sepanjang badan (tanpa potongan kotak)
+                  const RQ = (h1, h2, rgb, A) => { const g = c.createLinearGradient(pa.x, pa.y, pb.x, pb.y);
+                    for (let k = 0; k <= 8; k++) { const d = r0 + (r1 - r0) * k / 8, q = P(d, 1.47, 2.5); if (!q) continue; g.addColorStop(clamp((q.x - pa.x) / (pb.x - pa.x), 0, 1), `rgba(${rgb},${(A * fa(d)).toFixed(3)})`); }
+                    quad(P(r0, 1.47, h1), P(r1, 1.47, h1), P(r1, 1.47, h2), P(r0, 1.47, h2), g); };
+                  RQ(1.05, 4.05, '120,132,142', 0.16); // badan Cakra memantul samar
+                  RQ(2.45, 3.3, '28,36,44', 0.38); RQ(3.3, 3.4, '255,255,255', 0.28); // pita kaca (redup, tidak hitam pekat) & tepi atas berkilau
+                  RQ(1.55, 1.85, '31,111,109', 0.8); RQ(1.88, 2.0, '242,165,22', 0.8); // livery toska & oranye
+                  RQ(1.05, 1.3, '30,34,38', 0.3); }
                 // sorot lampu depan memantul (titik terang memanjang)
                 const hd = clamp(9, r0, r1); if (hd < r1) { const q = P(hd, 1.48, 1.45); if (q) { c.save(); c.globalCompositeOperation = 'lighter'; const rr = 1.6 * q.k, g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, rr); g.addColorStop(0, `rgba(255,244,210,${(0.55 * (0.4 + 0.6 * dawnK)).toFixed(3)})`); g.addColorStop(1, 'rgba(255,244,210,0)'); c.fillStyle = g; c.beginPath(); c.ellipse(q.x, q.y, rr * 1.8, rr * 0.6, 0, 0, 7); c.fill(); c.restore(); } } } }
             // pantulan lampu sorot memanjang di cat
-            for (const [mx] of YARD_MASTS) { const dm = mx - x0; if (dm < dA || dm > db || dawnK < 0.05) continue; quad(P(Math.max(dA, dm - 1.2), 1.46, 1.3), P(Math.min(db, dm + 1.2), 1.46, 1.3), P(Math.min(db, dm + 1.2), 1.46, 3.7), P(Math.max(dA, dm - 1.2), 1.46, 3.7), `rgba(255,246,222,${(0.3 * dawnK).toFixed(3)})`); }
+            for (const [mx] of YARD_MASTS) { const dm = mx - x0; if (dm < dA || dm > db || dawnK < 0.05) continue; const e0 = Math.max(dA, dm - 1.6), e1 = Math.min(db, dm + 1.6), q0 = P(e0, 1.46, 2.5), q1 = P(e1, 1.46, 2.5), qm = P(dm, 1.46, 2.5); if (!q0 || !q1 || !qm || Math.abs(q1.x - q0.x) < 1) continue;
+              const g = c.createLinearGradient(q0.x, q0.y, q1.x, q1.y), A = (0.3 * dawnK).toFixed(3), tm = clamp((qm.x - q0.x) / (q1.x - q0.x), 0.05, 0.95); g.addColorStop(0, 'rgba(255,246,222,0)'); g.addColorStop(tm, `rgba(255,246,222,${A})`); g.addColorStop(1, 'rgba(255,246,222,0)');
+              quad(P(e0, 1.46, 1.3), P(e1, 1.46, 1.3), P(e1, 1.46, 3.7), P(e0, 1.46, 3.7), g); }
           }); }
       }
       // gedung dipo di kiri: dinding bata panjang berjendela, atap gergaji, gerbang berbusur di ujung dengan lokomotif uap
