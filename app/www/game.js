@@ -12001,10 +12001,21 @@
         c.fill();
         drawBogies(); // bogie di depan rok badan: rangka samping, pegas & kotak gandar terlihat jelas
         // atap & unit AC
+        if (MT.liv) { // atap tebal bervolume seperti gerbong Cakra: bahu atap melengkung bergradasi, muka atap terlihat dari atas, unit AC berkisi, rok bawah & ambang gelap
+          const r0 = loco ? 2.25 * u : 0.05 * u, r1 = loco ? L - 0.05 * u : L - 0.05 * u;
+          c.fillStyle = vg(5.0, 4.05, [[0, '#d8dde1'], [0.55, '#a7b0b7'], [1, '#7d878e']]); c.beginPath(); c.moveTo(r0, Y(4.05)); c.quadraticCurveTo(r0 + 0.1 * u, Y(4.85), r0 + 0.9 * u, Y(4.9)); c.lineTo(r1 - 0.9 * u, Y(4.9)); c.quadraticCurveTo(r1 - 0.1 * u, Y(4.85), r1, Y(4.05)); c.closePath(); c.fill(); // bahu atap
+          c.fillStyle = vg(5.25, 4.9, [[0, '#eef1f3'], [1, '#c7cfd3']]); c.beginPath(); c.moveTo(r0 + 0.9 * u, Y(4.9)); c.lineTo(r1 - 0.9 * u, Y(4.9)); c.lineTo(r1 - 1.1 * u, Y(5.2)); c.lineTo(r0 + 1.1 * u, Y(5.2)); c.closePath(); c.fill(); // muka atap
+          c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = Math.max(1, 0.04 * u); c.beginPath(); c.moveTo(r0 + 0.9 * u, Y(4.9)); c.lineTo(r1 - 0.9 * u, Y(4.9)); c.stroke(); // garis kilau bahu
+          c.strokeStyle = 'rgba(60,68,76,0.35)'; c.lineWidth = 1; c.beginPath(); c.moveTo(r0 + 0.2 * u, Y(4.12)); c.lineTo(r1 - 0.2 * u, Y(4.12)); c.stroke(); // talang
+          (loco ? [0.6] : [0.24, 0.76]).forEach((q) => { const ax = L * q - 1.5 * u; c.fillStyle = vg(5.62, 5.15, [[0, '#eef1f3'], [1, '#aeb7bd']]); roundRect(c, ax, Y(5.6), 3.0 * u, 0.45 * u, 0.15 * u); c.fill();
+            c.strokeStyle = 'rgba(70,80,88,0.5)'; c.lineWidth = 1; c.beginPath(); for (let q2 = 0.3; q2 < 2.8; q2 += 0.32) { c.moveTo(ax + q2 * u, Y(5.55)); c.lineTo(ax + q2 * u, Y(5.22)); } c.stroke(); }); // unit AC berkisi
+          c.fillStyle = vg(1.45, 1.05, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.3)']]); c.fillRect(loco ? 0 : 0.05 * u, Y(1.45), L - 0.1 * u, 0.4 * u); // rok bawah gelap
+        } else {
         c.fillStyle = vg(4.45, 4.05, [[0, '#c9d0d5'], [1, '#7d878e']]);
         if (loco) roundRect(c, 2.4 * u, Y(4.42), L - 2.7 * u, 0.36 * u, 0.12 * u); else roundRect(c, 0.4 * u, Y(4.42), L - 0.8 * u, 0.36 * u, 0.15 * u);
         c.fill();
         (loco ? [0.55, 0.78] : [0.25, 0.75]).forEach((q) => { c.fillStyle = vg(4.8, 4.4, [[0, '#e9edf0'], [1, '#9aa4ab']]); roundRect(c, L * q - 1.4 * u, Y(4.75), 2.8 * u, 0.36 * u, 0.12 * u); c.fill(); });
+        }
         // sabuk livery: navy lebar + garis toska + motif tumpal (segitiga) emas
         const bandTop = loco ? 2.45 : 2.2;
         c.fillStyle = navy; c.fillRect(loco ? 0.05 * u : 0, Y(bandTop), loco ? L - 0.05 * u : L, (bandTop - 1.5) * u);
