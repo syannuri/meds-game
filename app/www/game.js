@@ -12657,6 +12657,14 @@
     for (const [bx, bw] of bogies) for (let q = 0.25; q < bw / ppm - 0.2; q += 0.28) { c.moveTo(bx + q * ppm, top + 0.3 * ppm); c.lineTo(bx + q * ppm, top + 0.62 * ppm); }
     c.stroke();
   }
+  // palet livery Cakra NEO (sapuan, garis menyala, pinstripe)
+  const NEO_PAL = {
+    safir: { g: ['#4a7cb4', '#2b5a94', '#1a4170'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.3)', pin: '#f4efe2' },
+    marun: { g: ['#a83c50', '#842539', '#5c1727'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.3)', pin: '#f4efe2' },
+    zamrud: { g: ['#2f9488', '#1d7068', '#13514b'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.3)', pin: '#f2a516' },
+    titan: { g: ['#a3afba', '#84919d', '#65727e'], led: ['#1f8f9a', '#38d6f0', '#bff6ff'], glow: 'rgba(80,220,255,0.35)', pin: '#f2a516' },
+  };
+  const NEO_PAL_DEF = 'safir';
   function drawTrainRaw(V) {
     const { c, ppm, gy, X, st } = V;
     const fx = X(st.x);
@@ -13495,17 +13503,17 @@
     if (NEOL) { // livery futuristik Cakra: badan putih mutiara, sapuan grafit gelap naik menyapu ke moncong, garis LED sian menyala di tepinya,
       // garis oranye tipis (menyambung pita gerbong), logo CAKRA miring & nomor kecil, kilau tepi
       const sw = [[15.85, 1.85], [15.85, 3.0], [10.5, 3.0], [6.2, 3.3], [2.6, 3.85], [0.6, 3.95], [-0.45, 3.55], [-0.9, 2.85], [-1.05, 2.2], [-1.05, 1.85]];
-      const sg = c.createLinearGradient(0, Y(3.95), 0, Y(1.85)); sg.addColorStop(0, '#3a424b'); sg.addColorStop(0.35, '#232930'); sg.addColorStop(1, '#101317'); poly(sw, sg);
+      const sg = c.createLinearGradient(0, Y(3.95), 0, Y(1.85)); const NP = NEO_PAL[(typeof window !== 'undefined' && window.__neoPal) || NEO_PAL_DEF]; sg.addColorStop(0, NP.g[0]); sg.addColorStop(0.35, NP.g[1]); sg.addColorStop(1, NP.g[2]); poly(sw, sg);
       c.save(); c.beginPath(); sw.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); c.clip(); // kilau langit di permukaan grafit
       const kg = c.createLinearGradient(0, Y(3.9), 0, Y(3.0)); kg.addColorStop(0, 'rgba(200,225,240,0.18)'); kg.addColorStop(1, 'rgba(200,225,240,0)'); c.fillStyle = kg; c.fillRect(L(15.85), Y(4.0), 17 * ppm, 1.1 * ppm);
       c.fillStyle = 'rgba(255,255,255,0.05)'; for (let m = 15.2; m > 3; m -= 2.4) { c.beginPath(); c.moveTo(L(m), Y(3.9)); c.lineTo(L(m - 0.5), Y(3.9)); c.lineTo(L(m - 1.4), Y(1.85)); c.lineTo(L(m - 0.9), Y(1.85)); c.closePath(); c.fill(); } c.restore();
       const top = [[15.85, 3.0], [10.5, 3.0], [6.2, 3.3], [2.6, 3.85], [0.6, 3.95], [-0.45, 3.55]];
-      const lg = c.createLinearGradient(L(15.85), 0, L(-0.45), 0); lg.addColorStop(0, '#1f8f9a'); lg.addColorStop(0.6, '#38d6f0'); lg.addColorStop(1, '#bff6ff');
-      c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(80,220,255,0.35)'; c.lineWidth = lw(0.32); c.lineCap = 'round'; c.beginPath(); top.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h + 0.02)) : c.moveTo(L(m), Y(h + 0.02)))); c.stroke(); c.restore(); // pendar LED
+      const lg = c.createLinearGradient(L(15.85), 0, L(-0.45), 0); lg.addColorStop(0, NP.led[0]); lg.addColorStop(0.6, NP.led[1]); lg.addColorStop(1, NP.led[2]);
+      c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = NP.glow; c.lineWidth = lw(0.32); c.lineCap = 'round'; c.beginPath(); top.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h + 0.02)) : c.moveTo(L(m), Y(h + 0.02)))); c.stroke(); c.restore(); // pendar LED
       c.strokeStyle = lg; c.lineWidth = lw(0.09); c.lineCap = 'round'; c.beginPath(); top.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h + 0.02)) : c.moveTo(L(m), Y(h + 0.02)))); c.stroke(); // garis LED sian
-      line([[15.85, 2.82], [10.5, 2.82], [6.2, 3.12], [2.6, 3.66], [0.7, 3.76]], '#f2a516', lw(0.035)); c.lineCap = 'butt'; // garis oranye tipis
+      line([[15.85, 2.82], [10.5, 2.82], [6.2, 3.12], [2.6, 3.66], [0.7, 3.76]], NP.pin, lw(0.035)); c.lineCap = 'butt'; // garis oranye tipis
       c.save(); c.fillStyle = '#f4f8fb'; c.font = `italic 900 ${Math.max(6, Math.round(0.62 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('CAKRA', L(11.6), Y(2.35));
-      c.fillStyle = '#38d6f0'; c.fillRect(L(12.95), Y(2.0), 2.7 * ppm, Math.max(1, 0.05 * ppm)); c.restore(); }
+      c.fillStyle = NP.led[1]; c.fillRect(L(12.95), Y(2.0), 2.7 * ppm, Math.max(1, 0.05 * ppm)); c.restore(); }
     else if (!ARGO) line([[15.85, 2.38], [-0.75, 2.38]], cream, lw(0.07));
     if (HST2) { /* atap rata menyatu */ } else if (ARGO) {
       // atap bersih: fairing aerodinamis menutup AC, knalpot, dan kipas
