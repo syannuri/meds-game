@@ -12604,6 +12604,23 @@
   // sisi kereta menghadap kamera, atap dan muka depan sedikit terlihat dari atas-kanan.
   // skala nyata: badan kereta dirancang setinggi 6,75 m; digambar ulang dengan tinggi diskalakan dari lantai
   // rangka (1,05 m) sehingga atap sekitar 4,1 m. Roda, bogie, dan rangka bawah tetap dalam ukuran aslinya.
+  // rok penutup roda modern (gaya kereta cepat) untuk rangkaian Cakra: panel stainless melengkung menutupi rangka & bogie, tepi bawah naik
+  // melengkung di atas tiap bogie sehingga separuh bawah roda tetap terlihat; kisi pendingin, garis kilau & bayangan di tepi bawah
+  function modernSkirt(c, ppm, xa, xb, yTop, yBot, yArch, arches, vents) {
+    const r = Math.min(0.9 * ppm, (yBot - yArch) * 1.4);
+    const path = () => { c.beginPath(); c.moveTo(xa, yTop); c.lineTo(xb, yTop); c.lineTo(xb, yBot - 0.15 * ppm); c.quadraticCurveTo(xb, yBot, xb - 0.15 * ppm, yBot);
+      for (const [a, b] of arches.slice().sort((p, q) => q[0] - p[0])) { c.lineTo(b + r, yBot); c.quadraticCurveTo(b, yBot, b, yBot - r * 0.8); c.lineTo(b, yArch + r * 0.5); c.quadraticCurveTo(b, yArch, b - r * 0.6, yArch); c.lineTo(a + r * 0.6, yArch); c.quadraticCurveTo(a, yArch, a, yArch + r * 0.5); c.lineTo(a, yBot - r * 0.8); c.quadraticCurveTo(a, yBot, a - r, yBot); }
+      c.lineTo(xa + 0.15 * ppm, yBot); c.quadraticCurveTo(xa, yBot, xa, yBot - 0.15 * ppm); c.closePath(); };
+    const g = c.createLinearGradient(0, yTop, 0, yBot); g.addColorStop(0, '#d8dee3'); g.addColorStop(0.45, '#aeb7be'); g.addColorStop(1, '#7c868e');
+    path(); c.fillStyle = g; c.fill();
+    c.save(); path(); c.clip();
+    c.fillStyle = 'rgba(255,255,255,0.45)'; c.fillRect(xa, yTop + 0.06 * ppm, xb - xa, Math.max(1, 0.04 * ppm)); // garis kilau atas
+    const sg = c.createLinearGradient(0, yBot - 0.3 * ppm, 0, yBot); sg.addColorStop(0, 'rgba(20,24,28,0)'); sg.addColorStop(1, 'rgba(20,24,28,0.35)'); c.fillStyle = sg; c.fillRect(xa, yBot - 0.3 * ppm, xb - xa, 0.3 * ppm); // bayangan tepi bawah
+    c.fillStyle = 'rgba(30,36,42,0.5)'; for (const [a, b] of vents) for (let x = a; x < b; x += 0.22 * ppm) c.fillRect(x, yTop + 0.22 * ppm, Math.max(1, 0.1 * ppm), (yBot - yTop) * 0.4); // kisi pendingin
+    c.restore();
+    path(); c.strokeStyle = 'rgba(40,46,54,0.55)'; c.lineWidth = 1; c.stroke();
+    c.fillStyle = 'rgba(10,12,16,0.5)'; c.fillRect(xa, yTop - Math.max(1, 0.04 * ppm), xb - xa, Math.max(1, 0.05 * ppm)); // celah sambungan ke badan
+  }
   function drawTrain(V) {
     const { c, ppm, gy } = V;
     const yP = gy - VPIV * ppm;
@@ -12836,6 +12853,7 @@
       }
       // badan sisi
       c.fillStyle = steel; roundRect(c, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, 0.35 * ppm); c.fill();
+      if (!ARGOC && !STEAMC && !MIS.freight) modernSkirt(c, ppm, L(u(0)) + 0.1 * ppm, L(u(240)) - 0.1 * ppm, Y(1.05), Y(0.32), Y(0.82), [[L(u(24)), L(u(78))], [L(u(162)), L(u(216))]], [[L(u(94)), L(u(146))]]); // rok penutup roda modern
       bodySheen(c, V, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, () => roundRect(c, L(u(0)), Y(4.85), COACH_LEN * ppm, 3.85 * ppm, 0.35 * ppm), 1);
       // garis panel bergelombang stainless
       if (!STEAMC) { c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = 1; c.beginPath(); for (let q = 4.6; q > 4.4; q -= 0.08) { c.moveTo(L(u(4)), Y(q)); c.lineTo(L(u(236)), Y(q)); } c.stroke(); }
@@ -13326,6 +13344,7 @@
         c.lineTo(...P(3.4, 6.05)); c.bezierCurveTo(...P(1.9, 6.04), ...P(0.6, 5.3), ...P(-0.35, 4.1)); c.bezierCurveTo(...P(-0.85, 3.45), ...P(-1.05, 2.8), ...P(-1.05, 2.25)); c.lineTo(...P(-1.05, 1.85)); c.closePath(); };
       body(); c.fillStyle = vgrad(6.05, 1.85, [[0, '#f6f8fa'], [0.4, '#d9dfe3'], [0.8, '#b3bcc2'], [1, '#98a2a9']]); c.fill(); // stainless sama dengan gerbong
       bodySheen(c, V, L(15.85), Y(6.05), 16.9 * ppm, 4.2 * ppm, body, 0.85);
+      modernSkirt(c, ppm, L(15.75), L(0.35), Y(1.86), Y(0.32), Y(1.0), [[L(15.1), L(9.2)], [L(6.5), L(0.6)]], [[L(8.8), L(7.0)]]); // rok penutup roda modern lokomotif
       // panel stainless bergaris halus seperti gerbong, garis toska tipis menyapu dari atap ke bawah visor
       c.save(); body(); c.clip(); c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = 1; c.beginPath(); for (let q = 4.6; q > 4.4; q -= 0.08) { c.moveTo(L(15.6), Y(q)); c.lineTo(L(4.2), Y(q)); } c.stroke(); c.restore();
       c.strokeStyle = '#1f6f6d'; c.lineWidth = lw(0.07); c.beginPath(); c.moveTo(...P(15.85, 4.85)); c.lineTo(...P(9.5, 4.85)); c.bezierCurveTo(...P(6.5, 4.85), ...P(4.6, 4.3), ...P(3.4, 3.62)); c.stroke();
