@@ -5643,12 +5643,18 @@
     };
     // ---- depo (misi 1-1): jalur simpan di kanan, kereta terparkir (kotak 3D berlivery), gedung dipo & jalur dipo di kiri ----
     const YD = ROUTE.yard;
+    // emplasemen stasiun: garis tepi peron pulau (dari dekat ke titik hilang). Benda di balik tepi peron (jalur 2/3, roda & bogie kereta) dipotong
+    // garis ini sehingga tertutup peron seperti dilihat dari kabin; di luar ujung peron garis digeser jauh ke kiri (tidak memotong apa pun)
+    const ISL = YD && YD.station ? (() => { const eo = YD.sid[0].o - 1.9, pa = YD.at + PLAT_FROM, pb = YD.at + PLAT_TO, pts = []; if (pb - x0 < 1.4) return null;
+      for (let d = 1.4; d < Math.min(FAR, 600); d += d < 40 ? 0.5 : d < 140 ? 2 : 8) { const wx = x0 + d, on = wx > pa && wx < pb, q = W3(d, on ? eo : -80, on ? 1 : 0); if (q) pts.push(q); } return pts.length > 1 ? pts : null; })() : null;
+    const islClip = () => { if (!ISL) return false; const L = ISL[ISL.length - 1]; c.save(); c.beginPath(); ISL.forEach((q, i) => (i ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y))); c.lineTo(L.x, -H); c.lineTo(W * 3, -H); c.lineTo(W * 3, H * 3); c.lineTo(ISL[0].x, H * 3); c.closePath(); c.clip(); return true; };
     if (YD) {
       const dawnK = clamp((0.45 - p) / 0.45, 0, 1), balY = balCol(null), slpY = mix('#6f6a63', '#8b857b', p), slpO = mix('#7d776e', '#9a948a', p);
       const balT = [mix('#6f665d', '#7c736a', p), mix('#a39889', '#b2a798', p), mix('#827869', '#8e8478', p)];
       // jalur depo memakai warna balas, bantalan & tekstur batu yang sama dengan jalur utama; tepi dalam balas berhenti di tepi balas induknya
       // (tidak menutup rel jalur utama di wesel), rel sambungan menyilang rel induk di jarum wesel
-      const yTrack = (i) => { const O = (x) => yardO(i, x), par = (x) => { if (i < 0) return 0; const pp = YD.sid[i].parent; return pp < 0 ? 0 : yardO(pp, x); };
+      const addZ = add;
+      const yTrack = (i) => { const add = YD.station ? (d, fn) => addZ(d, () => { const k = islClip(); fn(); if (k) c.restore(); }) : addZ; const O = (x) => yardO(i, x), par = (x) => { if (i < 0) return 0; const pp = YD.sid[i].parent; return pp < 0 ? 0 : yardO(pp, x); };
         for (let k = steps.length - 2; k >= 0; k--) { const a = steps[k], b = steps[k + 1], oa = O(x0 + a), ob = O(x0 + b); if (oa === null || ob === null) continue;
           const pa = par(x0 + a), pb = par(x0 + b), sg = oa >= (pa || 0) ? 1 : -1;
           const ia = sg > 0 ? Math.max(oa - 2.3, (pa || 0) + 2.3) : Math.min(oa + 2.3, (pa || 0) - 2.3), ib = sg > 0 ? Math.max(ob - 2.3, (pb || 0) + 2.3) : Math.min(ob + 2.3, (pb || 0) - 2.3);
@@ -5703,6 +5709,8 @@
           const shade = (col, nrm) => { let cc = mix(col, '#2a2830', 0.5 * dawnK); cc = mix(cc, '#ffffff', nrm * 0.18 * (1 - dawnK)); if (sunTint) cc = mix(cc, sunTint, nrm * 0.25 * SUNK); return mix(cc, '#ffe4b8', 0.4 * mfC * (0.4 + nrm)); };
           const P = (d, lat, h) => W3(d, o + sgn * lat, h + (h > 0.9 ? bz : 0));
           add(dA, () => {
+            // emplasemen stasiun: bagian kereta di balik tepi peron pulau (roda, bogie, rel) tertutup peron, seperti dilihat dari kabin
+            const clipped = YD.station && o - 1.45 > YD.sid[0].o - 1.9 ? islClip() : false; // bagian bawah kereta tertutup tepi peron pulau
             if (pk.dyn) { const a1 = Math.max(1.4, da), sh = W3(a1, o - 1.7, 0.02); if (sh) quad(W3(a1, o - 1.7, 0.02), W3(db, o - 1.7, 0.02), W3(db, o + 1.7, 0.02), W3(a1, o + 1.7, 0.02), `rgba(10,12,16,${(0.22 + 0.12 * (1 - dawnK)).toFixed(3)})`); } // bayangan badan kereta di balas
             const band = (h1, h2, col, la, lb) => quad(P(dA, la, h1), P(db, la, h1), P(db, lb, h2), P(dA, lb, h2), col);
             if (kind === 'wagon') { // gerbong batu bara terbuka: ambang bawah (side sill), dinding baja berpanel, tiang penguat, bibir atas, karat & tulisan
@@ -5805,6 +5813,7 @@
             for (const [mx] of yardMasts()) { const dm = mx - x0; if (dm < dA || dm > db || dawnK < 0.05) continue; const e0 = Math.max(dA, dm - 1.6), e1 = Math.min(db, dm + 1.6), q0 = P(e0, 1.46, 2.5), q1 = P(e1, 1.46, 2.5), qm = P(dm, 1.46, 2.5); if (!q0 || !q1 || !qm || Math.abs(q1.x - q0.x) < 1) continue;
               const g = c.createLinearGradient(q0.x, q0.y, q1.x, q1.y), A = (0.3 * dawnK).toFixed(3), tm = clamp((qm.x - q0.x) / (q1.x - q0.x), 0.05, 0.95); g.addColorStop(0, 'rgba(255,246,222,0)'); g.addColorStop(tm, `rgba(255,246,222,${A})`); g.addColorStop(1, 'rgba(255,246,222,0)');
               quad(P(e0, 1.46, 1.3), P(e1, 1.46, 1.3), P(e1, 1.46, 3.7), P(e0, 1.46, 3.7), g); }
+            if (clipped) c.restore();
           }); }
       }
       // gedung dipo di kiri: dinding bata panjang berjendela, atap gergaji, gerbang berbusur di ujung dengan lokomotif uap
