@@ -9664,11 +9664,12 @@
     const nearStn = allStations().some((q) => st.x > q.x - 140 && st.x - TRAIN_LEN < q.x + 40);
     if (nearStn) return;
     // tiap kendaraan: [belakang, depan, warna badan, warna pita jendela/aksen]
-    // warna pantulan mengikuti cat kereta: Guntur/Kilat putih berpita kaca hitam & garis merah/biru, Cakra merah, gerbong stainless berpita oranye
+    // warna pantulan mengikuti cat kereta: Guntur/Kilat/Cakra/Agraveda putih berpita kaca hitam & garis berwarna, uap merah tua, gerbong stainless berpita oranye
     const LK = MIS.loco, HSTR = LK === 'hst2' || LK === 'hst';
     const white = V.night ? 'rgba(160,168,180,' : 'rgba(238,240,244,', dark = V.night ? 'rgba(255,205,120,' : 'rgba(14,18,24,';
     const stripe = LK === 'hst' ? '21,103,196' : HSTR ? '212,32,43' : '242,165,22';
-    const segs = [[st.x - LOCO_LEN, st.x, HSTR ? white : V.night ? 'rgba(150,50,40,' : 'rgba(205,60,46,', HSTR ? dark : V.night ? 'rgba(255,190,120,' : 'rgba(40,20,20,', stripe]];
+    const STM = LK === 'steam'; // lokomotif uap merah tua; Cakra NEO & Agraveda bercat stainless putih (pita toska / jingga)
+    const segs = [[st.x - LOCO_LEN, st.x, !STM ? white : V.night ? 'rgba(150,50,40,' : 'rgba(205,60,46,', !STM ? dark : V.night ? 'rgba(255,190,120,' : 'rgba(40,20,20,', HSTR ? stripe : LK === 'argo' ? '224,112,42' : STM ? stripe : '31,111,109']];
     for (let k = 0; k < N_COACH; k++) {
       const f = st.x - carFront(k);
       if (MIS.freight) segs.push([f - CAR_LEN, f, V.night ? 'rgba(90,60,50,' : 'rgba(130,70,55,', 'rgba(30,25,22,', null]);
