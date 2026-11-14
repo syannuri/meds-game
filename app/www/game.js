@@ -101,7 +101,7 @@
       tutorial: true, startClosed: true, noDoors: true,
       tags: ['Sinyal', 'Batas kecepatan'],
       speaker: { who: 'Dimas, pengatur perjalanan', initials: 'DM' },
-      brief: 'Pagi, Anett. Bawa Cakra kosong ke Cibening. Di jalan ada papan batas kecepatan, sinyal kuning, dan sinyal merah. Baca warnanya; aku pandu lewat radio.',
+      brief: 'Pagi, Anett. Bawa Cakra kosong ke Cibening. Di Halte Kali Kecil kita bersilang dengan KA 117 Pangrango dari arah berlawanan: masuk sepur belok, berhenti, dan tunggu sinyal S2 hijau. Baca warna sinyalnya; aku pandu lewat radio.',
       weather: 'cerah',
       intro: 'KA Lokal 205 dari Cibening masuk jalur 2. Tunggu ia berhenti dan S1 hijau, lalu berangkat.',
       reward: '<strong>Dimas:</strong> Sinyal sudah kamu kuasai. Berikutnya, penumpang pertamamu.',
@@ -110,19 +110,26 @@
         lineSpeed: 60,
         stations: [
           { name: 'SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0, heri: true },
+          { name: 'KALI KECIL', elev: '+398 m', x: 600, sched: 450, waiting: 0 },
           { name: 'CIBENING', elev: '+412 m', x: 1200, sched: 900, waiting: 0, final: true, bening: true },
         ],
         zones: [
           { from: -120, to: 200, limit: 40, label: 'area Stasiun Sukamaju' },
-          { from: 480, to: 780, limit: 40, label: 'petak Kali Kecil' },
+          { from: 410, to: 435, limit: 30, label: 'wesel masuk Kali Kecil', turnout: true },
+          { from: 350, to: 740, limit: 40, label: 'area Halte Kali Kecil' },
+          { from: 710, to: 735, limit: 30, label: 'wesel keluar Kali Kecil', turnout: true },
           { from: 1000, to: 1350, limit: 40, label: 'area Stasiun Cibening' },
         ],
         signals: [
           { id: 'S1', x: 60, start: 0, init: 'R' },
-          { id: 'J1', x: 860, init: 'Y' },
-          { id: 'S2', x: 1080, init: 'R' },
+          { id: 'J1', x: 350, init: 'Y' },
+          { id: 'S2', x: 640, start: 1, init: 'R' },
+          { id: 'J2', x: 860, init: 'Y' },
+          { id: 'S3', x: 1080, init: 'R' },
         ],
-        scripts: [{ type: 'hold', sig: 'S2', at: 600, near: 90, wait: 6, radio: 'Jalur aman, S2 hijau. Silakan jalan, Anett.' }],
+        scripts: [{ type: 'hold', sig: 'S3', at: 900, near: 90, wait: 6, radio: 'Jalur aman, S3 hijau. Silakan jalan, Anett.' }],
+        // persilangan di Halte Kali Kecil: sepur belok di antara dua wesel; KA 117 Pangrango (merah marun-krem) lewat di jalur utama
+        meet: { st: 1, entry: 410, exit: 710, foul: 648, name: 'KA 117 Pangrango', cars: 4, liv: { band: '#7e1d2a', stripe: '#f2c94c', trim: '#f4ead2', cab: '#8e2230' } },
         crossings: [], goats: [], fog: null, bridge: null, tunnel: null, grades: [], switchX: null, hints: [],
         bufferStop: 1300,
         // emplasemen Sukamaju: jalur 2 (di balik peron pulau) & jalur 3 bergabung ke jalur utama lewat wesel di depan stasiun;
@@ -970,7 +977,7 @@
   // Tiap misi: k = faktor panjang antarstasiun, line = batas jalur baru, sched = jadwal tiba baru (detik jam game).
   // Peta posisi: ±A m di sekitar stasiun tetap (area stasiun, sinyal masuk, peron tidak berubah), bagian tengah direntangkan.
   const STRETCH = {
-    '1-2': { k: 3, line: 100, sched: [0, 1440] }, '1-3': { k: 3, line: 100, sched: [0, 860, 1960] }, '1-4': { k: 4, line: 140, sched: [0, 1500, 3030] },
+    '1-2': { k: 3, line: 100, sched: [0, 760, 1560] }, '1-3': { k: 3, line: 100, sched: [0, 860, 1960] }, '1-4': { k: 4, line: 140, sched: [0, 1500, 3030] },
     '1-6': { k: 3, line: 130, sched: [0, 2090, 3380] }, '2-1': { k: 2.5, line: 100, sched: [0, 3100] }, '1-7': { k: 3, line: 120, sched: [0, 1900, 4400] },
     '2-2': { k: 3, line: 100, sched: [0, 1800, 3600] }, '2-3': { k: 3, line: 110, sched: [0, 1310, 3600] }, '4-1': { k: 2, line: 80, sched: [0, 2210, 4770] },
     // jadwal dihitung dari simulasi laju: selisih waktu tempuh lama→baru ditambahkan dengan cadangan 15% (kelonggaran sama seperti semula)
@@ -2748,7 +2755,7 @@
     S.moment = { kind: rating.c, label: rating.r, t: 0, x: st.x, coins: rating.coins, sub: `${fmtM(Math.abs(d))} m ${d > 0 ? 'lewat' : 'kurang'} dari marka${rating.coins ? ` · +${rating.coins} koin` : ''}` };
     S.st = stIdx;
     S.phase = 'dwell';
-    S.dwell = { step: MIS.freight ? 'unload' : MIS.noDoors && st.final ? 'end' : 'open', timer: 0 };
+    S.dwell = { step: MIS.freight ? 'unload' : MIS.noDoors && st.final ? 'end' : MIS.noDoors ? 'signal' : 'open', timer: 0 }; // kereta kosong di halte silang: langsung menunggu sinyal
     S.yellowLimit = false;
     if (S.wetMotor) { S.wetMotor = false; toast('Motor traksi sudah kering. Tenaga kembali penuh.', 'good', 2.4, null, 1); }
     const where = d > 0 ? 'lewat' : 'kurang';
@@ -3202,7 +3209,7 @@
     // KA 112 baru masuk setelah Cakra berhenti di sepur belok
     if (m.phase === 'idle' && S.st >= MT.st) {
       m.phase = 'run'; m.x = S.x + 230; m.v = 15;
-      radio(`${MT.name} masuk Krajan dari arah berlawanan. Tetap di sepur belok sampai sinyal S2 hijau.`, 5.5);
+      radio(`${MT.name} masuk ${titleCase(ROUTE.stations[MT.st].name)} dari arah berlawanan. Tetap di sepur belok sampai sinyal S2 hijau.`, 5.5);
     }
     if (m.phase !== 'run') return;
     m.v += clamp(13 - m.v, -0.6 * dt, 0.6 * dt);
@@ -3395,10 +3402,12 @@
       { target: '#precise', who: 'KK', text: 'Panduan titik henti: hentikan saat penunjuk di garis hijau.', when: () => stopAhead() < 30, done: () => S.v < 0.05 },
     ],
     '1-2': [
-      { target: '.strip-wrap', who: 'DM', text: 'Papan 40 di depan: batas kecepatan berlaku mulai papan itu.', when: () => S.phase === 'run' && S.x > 230, done: (t) => t > 5 },
-      { target: '.strip-wrap', who: 'DM', text: 'Sinyal J1 kuning. Siap berhenti di sinyal berikutnya; maksimum 40 km/h.', when: () => sigAhead('J1') < 300, done: () => sigAhead('J1') < 0 },
-      { target: '.strip-wrap', who: 'DM', text: 'Sinyal S2 merah. Berhenti sebelum tiangnya; aku hijaukan setelah jalur aman.', when: () => sigAhead('S2') < 220 && S.sig.S2 === 'R', done: () => S.v === 0 || S.sig.S2 === 'G' },
-      { target: '#lever', who: 'DM', text: 'S2 hijau. Silakan jalan lagi ke Cibening.', when: () => S.sig.S2 === 'G' && sigAhead('S2') > 0, done: () => S.notch > 0 },
+      { target: '.strip-wrap', who: 'DM', text: 'Papan 40 di depan: batas kecepatan berlaku mulai papan itu.', when: () => S.phase === 'run' && S.x > 230 && S.st === 0, done: (t) => t > 5 },
+      { target: '.strip-wrap', who: 'DM', text: 'Sinyal masuk J1 kuning: Cakra dibelokkan ke sepur belok Kali Kecil. Paling cepat 30 km/h di wesel, lalu berhenti di marka.', when: () => sigAhead('J1') < 300 && sigAhead('J1') > 0, done: () => sigAhead('J1') < 0 },
+      { target: '.strip-wrap', who: 'DM', text: 'Kita bersilang dengan KA 117. Sinyal keluar S2 tetap merah sampai ekornya melewati patok bebas merah-putih.', when: () => S.phase === 'dwell' && S.st === 1, done: () => S.meet && S.meet.cleared },
+      { target: '#lever', who: 'DM', text: 'S2 hijau. Berangkat pelan, 30 km/h di wesel keluar.', when: () => S.st === 1 && S.sig.S2 === 'G' && sigAhead('S2') > 0, done: () => S.notch > 0 },
+      { target: '.strip-wrap', who: 'DM', text: 'J2 kuning, S3 merah di depan Cibening. Berhenti sebelum tiangnya; aku hijaukan setelah jalur aman.', when: () => sigAhead('S3') < 220 && S.sig.S3 === 'R', done: () => S.v === 0 || S.sig.S3 === 'G' },
+      { target: '#lever', who: 'DM', text: 'S3 hijau. Silakan jalan lagi ke Cibening.', when: () => S.sig.S3 === 'G' && sigAhead('S3') > 0, done: () => S.notch > 0 },
     ],
     '1-3': [
       { target: '#btnDoor', who: 'BW', text: 'Tutup pintu dulu sebelum berangkat.', when: () => S.phase === 'dwell' && S.st === 0 && S.dwell.step === 'close', done: () => S.dwell.step !== 'close' },
@@ -4190,7 +4199,7 @@
     textCache.clear();
   }
   // ringkasan tugas misi (1–2 kalimat) untuk halaman deskripsi yang muat satu layar HP tanpa digulir
-  const BRIEF_SHORT = {"1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Baca papan batas, sinyal kuning, dan sinyal merah.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
+  const BRIEF_SHORT = {"1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Bersilang dengan KA 117 di Kali Kecil: tunggu sinyal S2 hijau.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
   function showBrief() {
     const m = MIS, R = ROUTE, f = finalStation();
     $('briefEyebrow').textContent = m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
@@ -5693,12 +5702,13 @@
       // kereta terparkir 3D: penampang gerbong nyata (dinding, bahu atap & atap melengkung) disapu sepanjang badan,
       // jendela berbingkai yang memantulkan langit, pintu, sambungan bordes berlipat, bogie & roda, peralatan bawah & AC atap,
       // muka ujung dengan pintu bordes, lampu ekor & alat perangkai; diterangi lampu sorot depo & matahari
-      const LIV = { argo: { body: '#f1efeb', s1: '#e0702a', s2: '#a63a8a', roof: '#c3c7cc', win: '#1d242c', nose: '#e8873a' }, cakra: { body: '#eef1f3', s1: '#1f6f6d', s2: '#f2a516', roof: '#bfc6cc', win: '#1a2228', nose: '#1f6f6d' } };
+      const LVm = (ROUTE.meet && ROUTE.meet.liv) || {};
+      const LIV = { meet: { body: '#ece4d2', s1: LVm.band || '#7e1d2a', s2: LVm.stripe || '#f2c94c', roof: '#b9b3a8', win: '#1d2228', nose: LVm.cab || '#8e2230' }, argo: { body: '#f1efeb', s1: '#e0702a', s2: '#a63a8a', roof: '#c3c7cc', win: '#1d242c', nose: '#e8873a' }, cakra: { body: '#eef1f3', s1: '#1f6f6d', s2: '#f2a516', roof: '#bfc6cc', win: '#1a2228', nose: '#1f6f6d' } };
       const PROF = [[1.38, 0.95], [1.45, 1.25], [1.45, 3.05], [1.41, 3.55], [1.3, 3.86], [1.08, 4.06], [0.7, 4.18], [0.25, 4.22]]; // [lateral dari sumbu, tinggi]
       const skyRef = (t) => mix(mix('#55708a', '#9fc0d8', p * (1 - dawnK)), '#1a2028', 0.25 + 0.5 * t), sunTint = SUNK > 0.05 ? `rgb(${sunRim})` : null;
       for (const pk of yardTrains()) {
         if (pk.sid < 0) continue; // lokomotif uap di dalam dipo: hanya muka yang mencuat di pintu (digambar bersama gedung)
-        const O = (x) => (pk.dyn ? yardPath(pk.sid, x) : yardO(pk.sid, x)), carL = pk.freight ? WAGON_LEN : COACH_LEN, L0 = LIV[pk.loco] || LIV.cakra;
+        const O = (x) => (pk.lat ? pk.lat(x) : pk.dyn ? yardPath(pk.sid, x) : yardO(pk.sid, x)), carL = pk.freight ? WAGON_LEN : COACH_LEN, L0 = LIV[pk.loco] || LIV.cakra;
         const segs = [];
         if (pk.flip) { segs.push([pk.nose, pk.nose + LOCO_LEN, 'loco']); for (let k = 0; k < pk.n; k++) { const f = pk.nose + LOCO_LEN + GAP + k * (carL + GAP); segs.push([f, f + carL, pk.freight ? 'wagon' : 'coach']); } } // menghadap kabin: lokomotif di depan
         else { segs.push([pk.nose - LOCO_LEN, pk.nose, 'loco']); for (let k = 0; k < pk.n; k++) { const f = pk.nose - LOCO_LEN - GAP - k * (carL + GAP); segs.push([f - carL, f, pk.freight ? 'wagon' : 'coach']); } }
@@ -5727,6 +5737,7 @@
                 band(h1, h2, shade(roofy ? L0.roof : L0.body, roofy ? 1 - nrm * 0.5 : 0.55), l1, l2); }
               band(0.95, 1.25, shade('#3a3f45', 0.2), 1.38, 1.38); // rok bawah gelap
               band(1.62, 1.82, shade(L0.s1, 0.4), 1.452, 1.452); band(1.85, 1.95, shade(L0.s2, 0.4), 1.452, 1.452); // pita livery
+              if (pk.loco === 'meet') { band(1.25, 2.18, shade(L0.s1, 0.45), 1.453, 1.453); band(2.18, 2.27, shade(L0.s2, 0.6), 1.454, 1.454); band(3.55, 3.66, shade(L0.s1, 0.5), 1.43, 1.43); } // livery merah marun berpita kuning
               if (kind === 'coach') {
                 // jendela berbingkai memantulkan langit (gradasi atas terang, bawah gelap) & pilar
                 for (let m = wa + 2.6; m < wb - 2.4; m += 1.75) { const d1 = m - x0, d2 = d1 + 1.35; if (d2 < 1.4) continue; const e1 = Math.max(1.4, d1);
@@ -6115,7 +6126,7 @@
       const df = MTc.foul - x0;
       if (df > 1.5 && df < FAR) add(df, () => { for (let i = 0; i < 4; i++) { const q0 = W3(df, 4.8, i * 0.25), q1 = W3(df, 5.0, (i + 1) * 0.25); if (q0 && q1) { c.fillStyle = i % 2 ? '#f4f1e8' : '#d62b20'; c.fillRect(q0.x, q1.y, Math.max(1, q1.x - q0.x), q0.y - q1.y); } } });
       const mt = st.meet;
-      if (mt && mt.phase === 'run') {
+      if (mt && mt.phase === 'run' && !MTc.liv) {
         let f = mt.x;
         [16].concat(Array(MTc.cars).fill(19.5)).forEach((len, k) => {
           const dn = f - x0, dr = f + len - x0;
@@ -6125,7 +6136,7 @@
           add(da, () => {
             // sisi kiri rangkaian (menghadap Cakra)
             quad(W3(da, oa - 1.45, 1.1), W3(dr, ob - 1.45, 1.1), W3(dr, ob - 1.45, 4.0), W3(da, oa - 1.45, 4.0), '#d9dfe3');
-            quad(W3(da, oa - 1.45, 1.55), W3(dr, ob - 1.45, 1.55), W3(dr, ob - 1.45, 1.95), W3(da, oa - 1.45, 1.95), '#1f4e8c');
+            quad(W3(da, oa - 1.45, 1.55), W3(dr, ob - 1.45, 1.55), W3(dr, ob - 1.45, 1.95), W3(da, oa - 1.45, 1.95), (MTc.liv && MTc.liv.band) || '#1f4e8c');
             quad(W3(da, oa - 1.45, 0.95), W3(dr, ob - 1.45, 0.95), W3(dr, ob - 1.45, 1.1), W3(da, oa - 1.45, 1.1), '#24292d');
             for (const bc of k === 0 ? [dn + 3.2, dr - 3.2] : [dn + 2.7, dr - 2.7]) cabBogie(bc, MO * meetK(x0 + bc), -1, k === 0 ? [-1.6, 0, 1.6] : [-1.1, 1.1]); // bogie & roda 3D
             if (k > 0) for (let w = 0; w < 8; w++) { const d1 = dn + 2 + w * 2.2; if (d1 < da || d1 + 1.4 > dr) continue; quad(W3(d1, oa - 1.46, 2.4), W3(d1 + 1.4, oa - 1.46, 2.4), W3(d1 + 1.4, oa - 1.46, 3.3), W3(d1, oa - 1.46, 3.3), night || storm ? '#f2d58c' : '#22313b'); }
@@ -6133,7 +6144,7 @@
               // muka lokomotif: kaca, lampu sorot menyilaukan
               quad(W3(dn, oa - 1.45, 0.5), W3(dn, oa + 1.45, 0.5), W3(dn, oa + 1.45, 4.0), W3(dn, oa - 1.45, 4.0), '#e4e9ec');
               quad(W3(dn, oa - 1.3, 2.8), W3(dn, oa + 1.3, 2.8), W3(dn, oa + 1.3, 3.7), W3(dn, oa - 1.3, 3.7), '#1b2833');
-              quad(W3(dn, oa - 1.45, 1.55), W3(dn, oa + 1.45, 1.55), W3(dn, oa + 1.45, 1.95), W3(dn, oa - 1.45, 1.95), '#1f4e8c');
+              quad(W3(dn, oa - 1.45, 1.55), W3(dn, oa + 1.45, 1.55), W3(dn, oa + 1.45, 1.95), W3(dn, oa - 1.45, 1.95), (MTc.liv && MTc.liv.band) || '#1f4e8c');
               [-0.8, 0.8].forEach((lo) => { const hp = W3(dn, oa + lo, 2.3); if (!hp) return; const r = Math.max(2, 0.25 * hp.k); const g = c.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, r * 9); g.addColorStop(0, 'rgba(255,245,210,0.95)'); g.addColorStop(1, 'rgba(255,245,210,0)'); c.fillStyle = g; c.beginPath(); c.arc(hp.x, hp.y, r * 9, 0, 7); c.fill(); });
             }
           });
@@ -11420,7 +11431,9 @@
   // kereta terparkir tidak boleh keluar), papan nomor jalur; sinyal keluar S1 di jalur utama tetap seperti biasa
   function yardMasts() { return (ROUTE.yard && ROUTE.yard.masts) || []; } // tiang lampu sorot emplasemen [x, offset lateral]
   // kereta di emplasemen: terparkir + kereta yang sedang masuk
-  function yardTrains() { const Y = ROUTE.yard; return Y ? Y.parked.concat(S && S.arr ? [S.arr.pk] : []) : []; }
+  function yardTrains() { const Y = ROUTE.yard; if (!Y) return []; const L = Y.parked.concat(S && S.arr ? [S.arr.pk] : []); const MT = ROUTE.meet, m = S && S.meet;
+    if (MT && MT.liv && m && m.phase === 'run') { if (!m.pk) m.pk = { sid: 0, loco: 'meet', n: MT.cars, flip: true, dyn: true, lit: true, meet: true, lat: (x) => 10 * meetK(x) }; m.pk.nose = m.x; m.pk.moving = true; L.push(m.pk); } // kereta yang bersilang (detail 3D di kabin)
+    return L; }
   // lintasan kereta yang masuk: jalur emplasemen lalu jalur induknya (sampai jalur utama) di luar wesel
   function yardPath(i, x) { const Y = ROUTE.yard; if (!Y || i < 0) return 0; const sd = Y.sid[i]; if (x > sd.m1) return yardPath(sd.parent, x); const o = yardO(i, x); return o === null ? 0 : o; }
   function yardSignals() { const Y = ROUTE.yard; if (!Y || Y.station) return []; return Y.sid.map((sd, i) => ({ x: sd.m0 - 6, o: sd.o, side: 1, id: 'L' + (i + 2) })).concat([{ x: Y.shed.m1 + 4, o: Y.shed.o, side: -1, id: 'LD' }]); }
@@ -11503,7 +11516,7 @@
   function drawYardFront(V) {
     const Y = ROUTE.yard; if (!Y) return;
     const { c, ppm, gy, X } = V, p = V.p, dawnK = clamp((0.45 - p) / 0.45, 0, 1), yo = (o) => gy + DBL_K * o * ppm;
-    yardTrains().forEach((pk) => { if (pk.sid < 0) return; const sd = Y.sid[pk.sid]; drawYardTrain(V, pk, yo(sd.o), 1.04 + pk.sid * 0.04); });
+    yardTrains().forEach((pk) => { if (pk.sid < 0 || pk.meet) return; const sd = Y.sid[pk.sid]; drawYardTrain(V, pk, yo(sd.o), 1.04 + pk.sid * 0.04); });
     for (const sg of Y.sigs || []) { const sx = X(sg.x); if (sx < -30 || sx > W + 30) continue; signalHead(c, sx, yo(sg.o), ppm * 1.02, V.st && V.st.sig ? V.st.sig[sg.id] || 'R' : 'R', sg.label || sg.id, false); } // sinyal berangkat jalur 2/3 & sinyal masuk (di depan kereta pemain)
     // tiang lampu sorot tinggi di antara jalur simpan
     for (const [x, o] of yardMasts()) if (o > 0) yardMast(V, x, o);
@@ -11832,7 +11845,7 @@
     const MT = ROUTE.meet, st = V.st; if (!MT || !st.meet || st.meet.phase !== 'run') return;
     const { c, ppm, gy, X } = V;
     const lens = [16].concat(Array(MT.cars).fill(19.5));
-    const navy = '#1d3d73', teal = '#1f8f86', gold = '#e9b949';
+    const LV = MT.liv || {}, navy = LV.band || '#1d3d73', teal = LV.stripe || '#1f8f86', gold = LV.trim || '#e9b949';
     const ang = -st.meet.x / 0.5;
     let f = st.meet.x;
     lens.forEach((len, k) => {
