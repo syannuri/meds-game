@@ -11411,12 +11411,16 @@
     const minX = pk.flip ? nx - pad * P : nx - (TL + pad) * P, maxX = pk.flip ? nx + (TL + pad) * P : nx + pad * P, minY = yb - 9.5 * P, maxY = yb + 1.6 * P;
     if (minX > W + 20 || maxX < -20) return;
     const sa = Math.max(1, Math.abs(c.getTransform().a)), bw = Math.ceil((maxX - minX) * sa) + 2, bh = Math.ceil((maxY - minY) * sa) + 2;
-    const key = [sa, Math.round(V.p * 40), Math.round((V.rimA || 0) * 20), V.rim, !!V.night, Math.round((V.sunShadow || 0) * 10), pk.moving ? Math.round(pk.nose * 12) : 's'].join('|'); // kereta bergerak: dilukis ulang tiap langkah (roda berputar)
+    const key = [Math.round(V.p * 40), Math.round((V.rimA || 0) * 20), V.rim, !!V.night, Math.round((V.sunShadow || 0) * 10), pk.moving ? Math.round(pk.nose * 12) : 's'].join('|'); // kereta bergerak: dilukis ulang tiap langkah (roda berputar)
     let B = YARD_BASE.get(pk);
-    const steady = !!B && Math.abs(P - B.lastP) < 1e-6, still = steady && Math.abs(minX - B.lastX) < 1e-3 && Math.abs(minY - B.lastY) < 1e-3; // zoom & kamera diam
-    if (B) { B.lastP = P; B.lastX = minX; B.lastY = minY; }
-    const fr = B ? P / B.P : 1;
-    if (!B || B.key !== key || Math.abs(fr - 1) > 0.25 || (steady && Math.abs(fr - 1) > 1e-4)) {
+    // skala layar total = ppm × skala kanvas (DPR & zoom sinematik). Selama skala berubah (zoom kamera saat berangkat/berhenti) cache hanya diskalakan,
+    // dilukis ulang setelah skala diam beberapa bingkai -> tidak ada lompatan pembulatan tiap bingkai (penyebab kereta parkir tampak bergoyang)
+    const PS = P * sa, chg = !!B && Math.abs(PS - B.lastPS) > 1e-6 * PS;
+    if (B) { B.calm = chg ? 0 : (B.calm || 0) + 1; B.lastPS = PS; }
+    const still = !!B && B.calm > 2 && Math.abs(minX - B.lastX) < 1e-3 && Math.abs(minY - B.lastY) < 1e-3; // zoom & kamera diam
+    if (B) { B.lastX = minX; B.lastY = minY; }
+    const fr = B ? PS / B.PS : 1;
+    if (!B || B.key !== key || fr < 0.6 || fr > 1.6 || (B.calm > 6 && Math.abs(fr - 1) > 1e-4)) {
       if (!B) { B = { cv: document.createElement('canvas') }; YARD_BASE.set(pk, B); }
       const cv = B.cv; if (cv.width < bw || cv.height < bh) { cv.width = Math.max(cv.width, bw); cv.height = Math.max(cv.height, bh); }
       const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.setTransform(sa, 0, 0, sa, 0, 0);
@@ -11427,9 +11431,9 @@
         tf: 0, lit: false, upper: undefined, bdy: () => 0, refl: 0, camX: 0 });
       W = Math.max(W, w + 400); H = Math.max(H, (maxY - minY) + 400); N_COACH = pk.n; CAR_LEN = carL; LOCO_FORCE = pk.loco === 'cakra' ? null : pk.loco; if (pk.freight) MIS = MISSIONS['2-1'];
       try { drawTrain(VV); } catch (e) { /* kereta parkir opsional */ } finally { if (Object.prototype.hasOwnProperty.call(g, 'fillText')) delete g.fillText; W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; }
-      B.key = key; B.w = bw; B.h = bh; B.P = P; B.lastP = P; B.lastX = minX; B.lastY = minY;
+      B.key = key; B.w = bw; B.h = bh; B.PS = PS; B.lastPS = PS; B.lastX = minX; B.lastY = minY;
     }
-    const f = P / B.P, kk = sa / f, cw = B.w, ch = B.h, DW = cw / kk, DH = ch / kk; // kk = piksel cache per px layar
+    const f = PS / B.PS, kk = B.PS / P, cw = B.w, ch = B.h, DW = cw / kk, DH = ch / kk; // kk = piksel cache per px layar (css)
     const DX = still && Math.abs(f - 1) < 1e-4 ? Math.round(minX * sa) / sa : minX, DY = still && Math.abs(f - 1) < 1e-4 ? Math.round(minY * sa) / sa : minY;
     const need = (cv) => { if (!cv) cv = document.createElement('canvas'); if (cv.width < cw || cv.height < ch) { cv.width = Math.max(cv.width, cw); cv.height = Math.max(cv.height, ch); } return cv; };
     const roof = yb - trainH(4.25) * P, Ls = yardLights(V).filter((L) => L.x > minX - L.R * 2 && L.x < maxX + L.R * 2);
