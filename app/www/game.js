@@ -2823,6 +2823,7 @@
   function stepArrival(dt) {
     const R = S && S.arr; if (!R) return; const A = ROUTE.yard.arrival;
     if (R.said === 0 && S.t > 1.2) { R.said = 1; radio(`${A.name} dari Cibening masuk jalur 2, Anett. Sinyal masuk M kuning: belok ke jalur 2 lalu berhenti di peron pulau. S1 kita tetap merah dulu.`, 6, 'Dimas', 'DM'); }
+    if (R.state === 'run' && !R.honk && R.x < 330) { R.honk = true; Sound.farHorn(); } // klakson saat mendekati stasiun
     if (R.state === 'run') { const gap = Math.max(0, R.x - A.stop), vmax = Math.sqrt(2 * (A.dec || 0.5) * gap); R.v = Math.min(A.v, vmax, R.v + 0.5 * dt); R.x -= R.v * dt;
       const sg = (ROUTE.yard.sigs || []).find((q) => q.id === A.sig); if (sg && R.x < sg.x - 2 && S.sig[sg.id] !== 'R') S.sig[sg.id] = 'R';
       if (gap < 0.05 || (R.v < 0.03 && gap < 0.6)) { R.x = A.stop; R.v = 0; R.state = 'stopped'; R.t = 0; } }
@@ -5618,7 +5619,7 @@
     });
     // ---- bogie & roda 3D untuk kereta yang terlihat dari kabin: roda berupa lingkaran perspektif di bidang roda (di atas kepala rel,
     // gauge 1067 mm), bidang jalan roda & flens mengilap, cakram & hub, kotak gandar, pegas, sepatu rem, rangka samping bogie ----
-    const cabBogie = (dc, o, sg, axl, shade) => { // dc = jarak pusat bogie, o = sumbu jalur, sg = sisi yang menghadap kabin (−1 = kiri rangkaian), axl = posisi gandar relatif
+    const cabBogie = (dc, o, sg, axl, shade, wAng) => { // dc = jarak pusat bogie, o = sumbu jalur, sg = sisi yang menghadap kabin (−1 = kiri rangkaian), axl = posisi gandar relatif
       const R = 0.46, hc = 0.17 + R, lw = 0.6, Q3 = (d, l, h) => W3(d, o + sg * l, h); if (dc + 2.6 < 1.4) return;
       for (const ax of axl) { const dw = dc + ax; if (dw - R < 1.4) continue;
         const ring = (rr, lat) => { const pts = []; for (let t = 0; t < 18; t++) { const a = t / 18 * Math.PI * 2, q = Q3(dw + rr * Math.cos(a), lat, hc + rr * Math.sin(a)); if (!q) return null; pts.push(q); } return pts; };
@@ -5628,6 +5629,7 @@
         c.strokeStyle = shade ? shade('#9aa2a8', 0.8) : '#9aa2a8'; c.lineWidth = Math.max(1, 0.06 * (Q3(dw, lw, hc) || { k: 20 }).k); c.stroke(); // bidang jalan roda mengilap
         const dk = ring(R * 0.72, lw - 0.01); if (dk) { path(dk); c.fillStyle = '#3a3f45'; c.fill(); }
         const hb = ring(R * 0.22, lw - 0.03); if (hb) { path(hb); c.fillStyle = '#5b6168'; c.fill(); }
+        if (wAng !== undefined) for (let q = 0; q < 4; q++) { const a = wAng + q * Math.PI / 2, hp = Q3(dw + R * 0.48 * Math.cos(a), lw - 0.02, hc + R * 0.48 * Math.sin(a)); if (hp) { c.fillStyle = '#23272c'; c.beginPath(); c.arc(hp.x, hp.y, Math.max(1, 0.05 * hp.k), 0, 7); c.fill(); } } // lubang cakram berputar saat melaju
         const sp = Q3(dw - R * 0.55, lw - 0.012, hc + R * 0.55); if (sp) { c.fillStyle = 'rgba(255,255,255,0.18)'; c.beginPath(); c.arc(sp.x, sp.y, Math.max(1, 0.06 * sp.k), 0, 7); c.fill(); } // kilau
         // sepatu rem di depan & belakang roda
         for (const s2 of [-1, 1]) { const b0 = Q3(dw + s2 * (R + 0.04), lw + 0.12, hc - 0.18), b1 = Q3(dw + s2 * (R + 0.16), lw + 0.12, hc + 0.2); if (b0 && b1) { c.fillStyle = '#1b1d20'; c.fillRect(Math.min(b0.x, b1.x), Math.min(b0.y, b1.y), Math.max(1, Math.abs(b1.x - b0.x)), Math.abs(b1.y - b0.y)); } } }
@@ -5695,11 +5697,13 @@
         if (pk.flip) { segs.push([pk.nose, pk.nose + LOCO_LEN, 'loco']); for (let k = 0; k < pk.n; k++) { const f = pk.nose + LOCO_LEN + GAP + k * (carL + GAP); segs.push([f, f + carL, pk.freight ? 'wagon' : 'coach']); } } // menghadap kabin: lokomotif di depan
         else { segs.push([pk.nose - LOCO_LEN, pk.nose, 'loco']); for (let k = 0; k < pk.n; k++) { const f = pk.nose - LOCO_LEN - GAP - k * (carL + GAP); segs.push([f - carL, f, pk.freight ? 'wagon' : 'coach']); } }
         const lastWb = Math.max(...segs.map((q) => q[1]));
-        for (const [wa, wb, kind] of segs) { const da = wa - x0, db = wb - x0; if (db < 1.4 || da > FAR) continue; const o = O((wa + wb) / 2); if (o === null) continue;
+        for (const [wa, wb, kind] of segs) { const da = wa - x0, db = wb - x0; if (db < 1.4 || da > FAR) continue; const o0 = O((wa + wb) / 2); if (o0 === null) continue;
+          const o = o0 + (pk.moving ? Math.sin(tNow * 2.1 + wa * 0.3) * 0.025 : 0), bz = pk.moving ? Math.sin(tNow * 9 + wa) * 0.012 : 0; // goyang lateral & ayunan pegas saat melaju
           const sgn = o > 0 ? -1 : 1, dA = Math.max(1.35, da), mfC = clamp(mastF((wa + wb) / 2), 0, 1);
           const shade = (col, nrm) => { let cc = mix(col, '#2a2830', 0.5 * dawnK); cc = mix(cc, '#ffffff', nrm * 0.18 * (1 - dawnK)); if (sunTint) cc = mix(cc, sunTint, nrm * 0.25 * SUNK); return mix(cc, '#ffe4b8', 0.4 * mfC * (0.4 + nrm)); };
-          const P = (d, lat, h) => W3(d, o + sgn * lat, h);
+          const P = (d, lat, h) => W3(d, o + sgn * lat, h + (h > 0.9 ? bz : 0));
           add(dA, () => {
+            if (pk.dyn) { const a1 = Math.max(1.4, da), sh = W3(a1, o - 1.7, 0.02); if (sh) quad(W3(a1, o - 1.7, 0.02), W3(db, o - 1.7, 0.02), W3(db, o + 1.7, 0.02), W3(a1, o + 1.7, 0.02), `rgba(10,12,16,${(0.22 + 0.12 * (1 - dawnK)).toFixed(3)})`); } // bayangan badan kereta di balas
             const band = (h1, h2, col, la, lb) => quad(P(dA, la, h1), P(db, la, h1), P(db, lb, h2), P(dA, lb, h2), col);
             if (kind === 'wagon') { // gerbong batu bara terbuka: ambang bawah (side sill), dinding baja berpanel, tiang penguat, bibir atas, karat & tulisan
               const rust = shade('#6b2e20', 0.5), rustD = shade('#4e2016', 0.35), sill = shade('#2e2a28', 0.3);
@@ -5726,29 +5730,39 @@
                   quad(P(e1, 1.454, 1.05), P(d2, 1.454, 1.05), P(d2, 1.454, 3.5), P(e1, 1.454, 3.5), shade('#d9dde1', 0.5)); quad(P(e1 + 0.2, 1.458, 2.55), P(d2 - 0.2, 1.458, 2.55), P(d2 - 0.2, 1.458, 3.25), P(e1 + 0.2, 1.458, 3.25), skyRef(0.6));
                   const q0 = P(e1, 1.458, 1.05), q1 = P(e1, 1.458, 3.5); if (q0 && q1) { c.strokeStyle = 'rgba(60,66,74,0.7)'; c.lineWidth = 1; c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } }
               } else { // lokomotif: kaca kabin di ujung depan, kisi ventilasi, bahu atap
-                const dc = wb - 3.4 - x0; if (dc + 2.6 > 1.4) quad(P(Math.max(1.4, dc), 1.454, 2.5), P(dc + 2.6, 1.454, 2.5), P(dc + 2.6, 1.454, 3.4), P(Math.max(1.4, dc), 1.454, 3.4), skyRef(0.5));
+                const dc = (pk.flip ? wa + 1.0 : wb - 3.4) - x0; if (dc + 2.6 > 1.4) quad(P(Math.max(1.4, dc), 1.454, 2.5), P(dc + 2.6, 1.454, 2.5), P(dc + 2.6, 1.454, 3.4), P(Math.max(1.4, dc), 1.454, 3.4), skyRef(0.5));
                 for (let m = wa + 3; m < wb - 5; m += 1.2) { const d1 = m - x0, d2 = d1 + 0.8; if (d2 < 1.4) continue; quad(P(Math.max(1.4, d1), 1.454, 2.6), P(d2, 1.454, 2.6), P(d2, 1.454, 3.2), P(Math.max(1.4, d1), 1.454, 3.2), shade('#5c636a', 0.4)); }
                 band(1.3, 1.6, shade(L0.nose, 0.4), 1.452, 1.452);
+                if (pk.loco === 'cakra') { band(1.3, 2.22, shade('#1d6a63', 0.45), 1.455, 1.455); band(2.22, 2.3, shade('#d9a93a', 0.6), 1.456, 1.456); // pita toska berornamen batik emas khas Cakra
+                  { const col = shade('#e3b84a', 0.7); for (const [hc, amp, ph, lwk] of [[1.76, 0.17, 0, 0.05], [1.76, 0.17, Math.PI, 0.05], [2.08, 0.05, 0.6, 0.03]]) { const pts = []; for (let m = Math.max(wa + 0.3, x0 + 1.45); m <= wb - 0.3; m += 0.15) pts.push(P(m - x0, 1.458, hc + amp * Math.sin(m * 7 + ph))); if (pts.length > 2 && !pts.some((t) => !t) && pts[0].k > 1.5) { c.strokeStyle = col; c.lineWidth = Math.max(1, lwk * pts[0].k); c.beginPath(); pts.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.stroke(); } }
+                    for (let m = Math.ceil(wa / (Math.PI / 7)) * (Math.PI / 7); m < wb - 0.3; m += Math.PI / 7) { if (m - x0 < 1.45) continue; const q = P(m - x0, 1.459, 1.76); if (q && q.k > 3) { c.fillStyle = col; c.beginPath(); c.arc(q.x, q.y, Math.max(0.8, 0.045 * q.k), 0, 7); c.fill(); } } } } // motif batik: gelombang emas bersilang & titik
               }
             }
             // peralatan bawah lantai di antara bogie, lalu bogie & roda 3D yang menapak kepala rel
             { const d1 = wa + 4.8 - x0, d2 = wb - 4.8 - x0; if (d2 > 1.4) { quad(P(Math.max(1.4, d1), 1.05, 0.55), P(d2, 1.05, 0.55), P(d2, 1.05, 1.0), P(Math.max(1.4, d1), 1.05, 1.0), '#262a2f');
               for (let m = wa + 6; m < wb - 6; m += 3.2) { const e1 = m - x0, e2 = e1 + 1.8; if (e2 < 1.4) continue; quad(P(Math.max(1.4, e1), 1.07, 0.6), P(e2, 1.07, 0.6), P(e2, 1.07, 0.92), P(Math.max(1.4, e1), 1.07, 0.92), '#33383e'); } } }
             const axl = kind === 'loco' ? [-1.6, 0, 1.6] : kind === 'wagon' ? [-0.9, 0.9] : [-1.1, 1.1], bIn = kind === 'wagon' ? 1.9 : kind === 'loco' ? 3.2 : 2.7;
-            for (const bc of [wa + bIn, wb - bIn]) cabBogie(bc - x0, o, sgn, axl, shade);
+            for (const bc of [wa + bIn, wb - bIn]) cabBogie(bc - x0, o0, sgn, axl, shade, pk.dyn ? -pk.nose / 0.46 : undefined);
+            if (pk.dyn && kind === 'loco' && pk.loco === 'cakra') { const ed = (pk.flip ? wa + 8.2 : wb - 8.2) - x0; if (ed > 2) for (let q = 0; q < 7; q++) { // asap knalpot diesel: kepulan abu-abu tipis naik & tertinggal di belakang
+                const ph = ((tNow * (pk.moving ? 0.9 : 0.35) + q / 7) % 1), qq = W3(ed + ph * (pk.moving ? 6 : 1.5), o + Math.sin(q * 2.3 + tNow) * 0.2, 4.35 + ph * 2.6); if (!qq) continue; const r = (0.35 + ph * 1.1) * qq.k, A = (pk.moving ? 0.22 : 0.12) * (1 - ph);
+                const g = c.createRadialGradient(qq.x, qq.y, 0, qq.x, qq.y, r); g.addColorStop(0, `rgba(96,98,102,${A.toFixed(3)})`); g.addColorStop(1, 'rgba(96,98,102,0)'); c.fillStyle = g; c.fillRect(qq.x - r, qq.y - r, 2 * r, 2 * r); } }
             // muka depan lokomotif yang menghadap kabin: kaca kabin dua bilah memantulkan langit, wiper, pita livery melintang, lampu sorot menyala,
             // lampu kecil, pelat nomor, bantalan penyangga & bajak; sorot lampunya menerangi rel & balas di depannya (ke arah kabin) dan berkilau di kepala rel
-            if (pk.flip && kind === 'loco' && da > 1.35) { const pts = []; for (let k = 0; k < PROF.length; k++) pts.push(W3(da, o - sgn * PROF[k][0], PROF[k][1])); for (let k = PROF.length - 1; k >= 0; k--) pts.push(W3(da, o + sgn * PROF[k][0], PROF[k][1]));
-              if (!pts.some((t) => !t)) { c.fillStyle = shade(L0.body, 0.35); c.beginPath(); pts.forEach((t, k2) => (k2 ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
-                const Fq = (l1, l2, h1, h2, col) => quad(W3(da - 0.02, o + l1, h1), W3(da - 0.02, o + l2, h1), W3(da - 0.02, o + l2, h2), W3(da - 0.02, o + l1, h2), col);
-                Fq(-1.45, 1.45, 1.62, 1.82, shade(L0.s1, 0.4)); Fq(-1.45, 1.45, 1.85, 1.95, shade(L0.s2, 0.4)); Fq(-1.4, 1.4, 0.95, 1.3, shade('#2e3338', 0.2)); // pita livery & rok
-                for (const [l1, l2] of [[-1.22, -0.06], [0.06, 1.22]]) { const g0 = W3(da - 0.03, o + l1, 3.5), g1 = W3(da - 0.03, o + l1, 2.5); if (!g0 || !g1) continue; const gg = c.createLinearGradient(0, g0.y, 0, g1.y); gg.addColorStop(0, skyRef(0.2)); gg.addColorStop(0.55, skyRef(0.75)); gg.addColorStop(1, '#141a20'); Fq(l1, l2, 2.5, 3.5, gg); } // kaca kabin
-                Fq(-1.3, 1.3, 2.42, 2.5, shade('#2a2f35', 0.2)); Fq(-1.3, 1.3, 3.5, 3.6, shade('#2a2f35', 0.2)); Fq(-0.06, 0.06, 2.5, 3.5, shade('#2a2f35', 0.2)); // bingkai
-                for (const lw of [-0.7, 0.6]) { const w0 = W3(da - 0.04, o + lw, 2.56), w1 = W3(da - 0.04, o + lw + 0.45, 3.2); if (w0 && w1) { c.strokeStyle = '#15181c'; c.lineWidth = Math.max(1, 0.05 * w0.k); c.beginPath(); c.moveTo(w0.x, w0.y); c.lineTo(w1.x, w1.y); c.stroke(); } } // wiper
+            if (pk.flip && kind === 'loco' && da > 1.35) { const pts = [W3(da, o - 1.38, 0.95 + bz), W3(da, o - 1.45, 1.25 + bz), W3(da, o - 1.45, 2.45 + bz), W3(da, o + 1.45, 2.45 + bz), W3(da, o + 1.45, 1.25 + bz), W3(da, o + 1.38, 0.95 + bz)];
+              if (!pts.some((t) => !t)) { c.fillStyle = shade(L0.body, 0.35); c.beginPath(); pts.forEach((t, k2) => (k2 ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); // panel muka bawah tegak
+                const Fq = (l1, l2, h1, h2, col) => quad(W3(da - 0.02, o + l1, h1 + bz), W3(da - 0.02, o + l2, h1 + bz), W3(da - 0.02, o + l2, h2 + bz), W3(da - 0.02, o + l1, h2 + bz), col);
+                const Sk = (l1, l2, t1, t2, col) => { const z = (t) => [da + 0.6 * t, 2.45 + 1.17 * t, 1.45 - 0.09 * t]; const [d1, h1, w1] = z(t1), [d2, h2, w2] = z(t2); quad(W3(d1, o + l1 * w1 / 1.45, h1 + bz), W3(d1, o + l2 * w1 / 1.45, h1 + bz), W3(d2, o + l2 * w2 / 1.45, h2 + bz), W3(d2, o + l1 * w2 / 1.45, h2 + bz), col); }; // bidang kaca miring ke belakang
+                if (pk.loco === 'cakra') { Fq(-1.45, 1.45, 1.3, 2.22, shade('#1d6a63', 0.45)); Fq(-1.45, 1.45, 2.22, 2.3, shade('#d9a93a', 0.6)); } else { Fq(-1.45, 1.45, 1.62, 1.82, shade(L0.s1, 0.4)); Fq(-1.45, 1.45, 1.85, 1.95, shade(L0.s2, 0.4)); }
+                Fq(-1.4, 1.4, 0.95, 1.3, shade('#2e3338', 0.2)); // rok
+                Sk(-1.45, 1.45, 0, 1, shade(L0.body, 0.6)); // bingkai muka miring
+                for (const [l1, l2] of [[-1.3, -0.07], [0.07, 1.3]]) { const g0 = W3(da + 0.55, o + l1, 3.55), g1 = W3(da + 0.08, o + l1, 2.55); if (!g0 || !g1) continue; const gg = c.createLinearGradient(0, g0.y, 0, g1.y); gg.addColorStop(0, skyRef(0.15)); gg.addColorStop(0.5, skyRef(0.7)); gg.addColorStop(1, '#10151b'); Sk(l1, l2, 0.08, 0.93, gg); } // kaca memantulkan langit
+                { const r0 = W3(da + 0.6, o - 1.36, 3.62 + bz), r1 = W3(da + 0.6, o + 1.36, 3.62 + bz), r2 = W3(da + 1.2, o + 1.0, 4.18 + bz), r3 = W3(da + 1.2, o - 1.0, 4.18 + bz); if (r0 && r1 && r2 && r3) quad(r0, r1, r2, r3, shade(L0.roof, 0.85)); } // atap melengkung ke belakang
+                for (const lw of [-0.75, 0.55]) { const w0 = W3(da + 0.12, o + lw, 2.62), w1 = W3(da + 0.4, o + lw + 0.42, 3.2); if (w0 && w1) { c.strokeStyle = '#15181c'; c.lineWidth = Math.max(1, 0.05 * w0.k); c.beginPath(); c.moveTo(w0.x, w0.y); c.lineTo(w1.x, w1.y); c.stroke(); } } // wiper
+                if (pk.loco === 'cakra') { const col = shade('#e3b84a', 0.7); for (const ph of [0, Math.PI]) { const pts = []; for (let l = -1.4; l <= 1.4; l += 0.1) pts.push(W3(da - 0.03, o + l, 1.76 + 0.17 * Math.sin(l * 7 + ph))); if (!pts.some((t) => !t)) { c.strokeStyle = col; c.lineWidth = Math.max(1, 0.05 * pts[0].k); c.beginPath(); pts.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.stroke(); } } } // ornamen batik emas di muka
                 const np = W3(da - 0.04, o, 2.2); if (np && np.k > 6) { c.fillStyle = '#f2f2ea'; c.fillRect(np.x - 0.5 * np.k, np.y - 0.13 * np.k, np.k, 0.26 * np.k); c.fillStyle = '#1d2a2b'; c.font = `800 ${Math.round(0.2 * np.k)}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('CC 205', np.x, np.y); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; } // pelat nomor
                 quad(W3(da - 0.05, o - 1.45, 0.75), W3(da - 0.05, o + 1.45, 0.75), W3(da - 0.05, o + 1.45, 1.0), W3(da - 0.05, o - 1.45, 1.0), '#2a2d31'); // balok penyangga
                 const PLW = [W3(da - 0.05, o - 1.3, 0.75), W3(da - 0.05, o + 1.3, 0.75), W3(da - 0.7, o + 0.6, 0.15), W3(da - 0.7, o - 0.6, 0.15)]; if (!PLW.some((t) => !t)) { c.fillStyle = '#3a3f45'; c.beginPath(); PLW.forEach((t, k2) => (k2 ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); } // bajak
-                const lk = pk.lit ? 0.55 + 0.45 * dawnK : 0;
+                const lk = pk.lit ? (pk.moving ? 1 : 0.38) * (0.55 + 0.45 * dawnK) : 0; // lampu diredupkan setelah berhenti di peron
                 for (const lo of [-0.95, 0.95]) { const q = W3(da - 0.05, o + lo, 1.48); if (!q) continue; const r = Math.max(1.6, 0.16 * q.k); c.fillStyle = lk ? '#fffbe8' : '#c9ccce'; c.beginPath(); c.ellipse(q.x, q.y, r * 1.3, r, 0, 0, 7); c.fill();
                   if (lk) { c.save(); c.globalCompositeOperation = 'lighter'; const R = Math.min(r * 9, W * 0.12), g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, R); g.addColorStop(0, `rgba(255,248,220,${(0.9 * lk).toFixed(3)})`); g.addColorStop(0.25, `rgba(255,236,190,${(0.3 * lk).toFixed(3)})`); g.addColorStop(1, 'rgba(255,236,190,0)'); c.fillStyle = g; c.fillRect(q.x - R, q.y - R, 2 * R, 2 * R); c.restore(); } }
                 for (const lo of [-1.1, 1.1]) { const q = W3(da - 0.05, o + lo, 3.75); if (q) { c.fillStyle = lk ? '#ffe9b0' : '#bfb69a'; c.beginPath(); c.arc(q.x, q.y, Math.max(1, 0.07 * q.k), 0, 7); c.fill(); } } // lampu kecil atas
@@ -11318,7 +11332,7 @@
     const minX = pk.flip ? nx - pad * P : nx - (TL + pad) * P, maxX = pk.flip ? nx + (TL + pad) * P : nx + pad * P, minY = yb - 9.5 * P, maxY = yb + 1.6 * P;
     if (minX > W + 20 || maxX < -20) return;
     const sa = Math.max(1, Math.abs(c.getTransform().a)), bw = Math.ceil((maxX - minX) * sa) + 2, bh = Math.ceil((maxY - minY) * sa) + 2;
-    const key = [(P * sa).toFixed(2), Math.round(V.p * 40), Math.round((V.rimA || 0) * 20), V.rim, !!V.night, Math.round((V.sunShadow || 0) * 10)].join('|');
+    const key = [(P * sa).toFixed(2), Math.round(V.p * 40), Math.round((V.rimA || 0) * 20), V.rim, !!V.night, Math.round((V.sunShadow || 0) * 10), pk.moving ? Math.round(pk.nose * 12) : 's'].join('|'); // kereta bergerak: dilukis ulang tiap langkah (roda berputar)
     let B = YARD_BASE.get(pk);
     if (!B || B.key !== key) {
       if (!B) { B = { cv: document.createElement('canvas') }; YARD_BASE.set(pk, B); }
@@ -11327,7 +11341,7 @@
       const L0 = (TL + pad) * P, w = maxX - minX, keep = { W, H, N_COACH, CAR_LEN, MIS, LOCO_FORCE };
       if (pk.flip) { g.translate(w, 0); g.scale(-1, 1); // lokomotif menghadap kiri: dicerminkan; tulisan tetap terbaca
         g.fillText = function (t, x, y, mw) { this.save(); this.translate(x, y); this.scale(-1, 1); CanvasRenderingContext2D.prototype.fillText.call(this, t, 0, 0, mw); this.restore(); }; }
-      const VV = Object.assign({}, V, { c: g, ppm: P, gy: yb - minY, X: (wx) => (pk.flip ? w - pad * P : L0) + wx * P, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null, steam: 0, v: 0, notch: 0 },
+      const VV = Object.assign({}, V, { c: g, ppm: P, gy: yb - minY, X: (wx) => (pk.flip ? w - pad * P : L0) + wx * P, st: { x: pk.dyn ? -pk.nose : 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null, steam: 0, v: 0, notch: 0 },
         tf: 0, lit: false, upper: undefined, bdy: () => 0, refl: 0, camX: 0 });
       W = Math.max(W, w + 400); H = Math.max(H, (maxY - minY) + 400); N_COACH = pk.n; CAR_LEN = carL; LOCO_FORCE = pk.loco === 'cakra' ? null : pk.loco; if (pk.freight) MIS = MISSIONS['2-1'];
       try { drawTrain(VV); } catch (e) { /* kereta parkir opsional */ } finally { if (Object.prototype.hasOwnProperty.call(g, 'fillText')) delete g.fillText; W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; }
@@ -11339,9 +11353,10 @@
     const blit = (SRC) => { if (!pk.dyn) { c.drawImage(SRC, 0, 0, cw, ch, dx0 / sa, dy0 / sa, cw / sa, ch / sa); return; }
       // kereta yang masuk lewat wesel: tiap kendaraan digeser vertikal sesuai lintasannya sendiri (menyambung di lengkung)
       const sd = ROUTE.yard.sid[pk.sid], bnd = [0, LOCO_LEN + GAP / 2]; for (let q = 1; q <= pk.n; q++) bnd.push(LOCO_LEN + GAP + q * (carL + GAP) - GAP / 2);
-      for (let k = 0; k < bnd.length - 1; k++) { const w0 = pk.nose + (k ? bnd[k] : -pad), w1 = pk.nose + (k === bnd.length - 2 ? bnd[k + 1] + pad : bnd[k + 1]), oy = DBL_K * (yardPath(pk.sid, pk.nose + (bnd[k] + bnd[k + 1]) / 2) - sd.o) * ppm;
+      for (let k = 0; k < bnd.length - 1; k++) { const w0 = pk.nose + (k ? bnd[k] : -pad), w1 = pk.nose + (k === bnd.length - 2 ? bnd[k + 1] + pad : bnd[k + 1]), oy = DBL_K * (yardPath(pk.sid, pk.nose + (bnd[k] + bnd[k + 1]) / 2) - sd.o) * ppm + (pk.moving ? Math.sin(performance.now() / 1000 * 9 + k * 1.7) * 0.035 * ppm : 0); // + ayunan pegas
         const s0 = Math.max(0, Math.floor(X(w0) * sa - dx0)), s1 = Math.min(cw, Math.ceil(X(w1) * sa - dx0) + 1); if (s1 <= s0) continue; c.drawImage(SRC, s0, 0, s1 - s0, ch, (dx0 + s0) / sa, dy0 / sa + oy, (s1 - s0) / sa, ch / sa); }
-      if (pk.lit) { const oy = DBL_K * (yardPath(pk.sid, pk.nose + 2) - sd.o) * ppm, lx = X(pk.nose) - 0.1 * P, ly = yb + oy - trainH(1.6) * P, dawnK = clamp((0.45 - V.p) / 0.45, 0, 1), k = 0.45 + 0.55 * dawnK; // lampu depan menyala & berkas ke depan
+      if (pk.lit) { const oy = DBL_K * (yardPath(pk.sid, pk.nose + 2) - sd.o) * ppm, lx = X(pk.nose) - 0.1 * P, ly = yb + oy - trainH(1.6) * P, dawnK = clamp((0.45 - V.p) / 0.45, 0, 1), k = (0.45 + 0.55 * dawnK) * (pk.moving ? 1 : 0.38); // lampu depan menyala & berkas ke depan (diredupkan setelah berhenti)
+        if (pk.loco === 'cakra') { const t = performance.now() / 1000, ex = X(pk.nose + 8.2), ey = yb + oy - trainH(4.4) * P; for (let q = 0; q < 7; q++) { const ph = ((t * (pk.moving ? 0.9 : 0.35) + q / 7) % 1), r = (0.35 + ph * 1.2) * P, A = (pk.moving ? 0.26 : 0.14) * (1 - ph), px = ex + ph * (pk.moving ? 6 : 1.2) * P, py = ey - ph * 2.8 * P; const g = c.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, `rgba(96,98,102,${A.toFixed(3)})`); g.addColorStop(1, 'rgba(96,98,102,0)'); c.fillStyle = g; c.fillRect(px - r, py - r, 2 * r, 2 * r); } } // asap knalpot diesel
         c.save(); c.globalCompositeOperation = 'lighter';
         const bg = c.createRadialGradient(lx, ly, 0, lx, ly, 34 * P); bg.addColorStop(0, `rgba(255,236,190,${(0.3 * k).toFixed(3)})`); bg.addColorStop(0.5, `rgba(255,236,190,${(0.06 * k).toFixed(3)})`); bg.addColorStop(1, 'rgba(255,236,190,0)');
         c.fillStyle = bg; c.beginPath(); c.moveTo(lx, ly - 0.3 * P); c.lineTo(lx - 34 * P, ly - 3.8 * P); c.lineTo(lx - 34 * P, ly + 4.5 * P); c.lineTo(lx, ly + 0.3 * P); c.closePath(); c.fill();
