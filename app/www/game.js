@@ -13347,7 +13347,6 @@
       modernSkirt(c, ppm, L(15.75), L(0.35), Y(1.86), Y(0.32), Y(1.0), [[L(15.1), L(9.2)], [L(6.5), L(0.6)]], [[L(8.8), L(7.0)]]); // rok penutup roda modern lokomotif
       // panel stainless bergaris halus seperti gerbong, garis toska tipis menyapu dari atap ke bawah visor
       c.save(); body(); c.clip(); c.strokeStyle = 'rgba(255,255,255,0.22)'; c.lineWidth = 1; c.beginPath(); for (let q = 4.6; q > 4.4; q -= 0.08) { c.moveTo(L(15.6), Y(q)); c.lineTo(L(4.2), Y(q)); } c.stroke(); c.restore();
-      c.strokeStyle = '#1f6f6d'; c.lineWidth = lw(0.07); c.beginPath(); c.moveTo(...P(15.85, 4.85)); c.lineTo(...P(9.5, 4.85)); c.bezierCurveTo(...P(6.5, 4.85), ...P(4.6, 4.3), ...P(3.4, 3.62)); c.stroke();
       // kaca visor membungkus moncong & samping kabin
       const visor = () => { c.beginPath(); c.moveTo(...P(3.6, 5.78)); c.lineTo(...P(2.4, 5.8)); c.bezierCurveTo(...P(1.3, 5.72), ...P(0.4, 5.1), ...P(-0.2, 4.2)); c.lineTo(...P(0.35, 4.1)); c.bezierCurveTo(...P(1.0, 4.35), ...P(2.2, 4.5), ...P(3.6, 4.5)); c.closePath(); };
       visor(); c.fillStyle = '#0c1016'; c.fill();
@@ -13447,7 +13446,7 @@
     c.strokeStyle = ARGO ? 'rgba(200,206,214,0.9)' : 'rgba(233,185,73,0.7)'; c.lineWidth = 1; roundRect(c, L(15.35), Y(5.75), 3.5 * ppm, 1.8 * ppm, 0.12 * ppm); c.stroke();
     }
     // pintu servis ruang mesin
-    if (LOCO_ORN === 'dayak' && !ARGO) {
+    if (LOCO_ORN === 'dayak' && !ARGO && !NEOL) {
       // panel ukiran Dayak besar: sulur bercermin di atas dasar hitam, bingkai emas
       const pa = 9.15, pb = 11.45, pt = 5.65, pbt = 3.95;
       c.fillStyle = NEOL ? '#1f6f6d' : '#160e0d'; roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.fill();
@@ -13462,9 +13461,9 @@
       c.fillStyle = ivo; c.beginPath(); c.moveTo(cx, cy - u * 0.32); c.lineTo(cx + u * 0.16, cy); c.lineTo(cx, cy + u * 0.32); c.lineTo(cx - u * 0.16, cy); c.closePath(); c.fill();
       c.restore();
       c.strokeStyle = gold; c.lineWidth = Math.max(1, 0.06 * ppm); roundRect(c, L(pb), Y(pt), (pb - pa) * ppm, (pt - pbt) * ppm, 0.12 * ppm); c.stroke();
-    } else if (!ARGO) for (const [a, b] of [[9.2, 10.3], [10.4, 11.45]]) { c.strokeStyle = ARGO ? 'rgba(70,80,95,0.4)' : 'rgba(60,8,6,0.55)'; c.strokeRect(L(b), Y(5.6), (b - a) * ppm, 1.65 * ppm); c.fillStyle = '#c9b07a'; c.fillRect(L(a + 0.15), Y(4.9), 0.07 * ppm, 0.3 * ppm); }
+    } else if (!ARGO && !NEOL) for (const [a, b] of [[9.2, 10.3], [10.4, 11.45]]) { c.strokeStyle = ARGO ? 'rgba(70,80,95,0.4)' : 'rgba(60,8,6,0.55)'; c.strokeRect(L(b), Y(5.6), (b - a) * ppm, 1.65 * ppm); c.fillStyle = '#c9b07a'; c.fillRect(L(a + 0.15), Y(4.9), 0.07 * ppm, 0.3 * ppm); }
     // sabuk bawah gelap
-    if (!HST2) box(-1.02, 15.85, 1.85, 2.32, NEOL ? '#1f6f6d' : '#2b2023'); // Cakra NEO: sabuk toska menyambung pita toska gerbong
+    if (!HST2 && !NEOL) box(-1.02, 15.85, 1.85, 2.32, '#2b2023'); // Cakra NEO: sabuk toska menyambung pita toska gerbong
     // pita ornamen emas di sepanjang badan, membungkus moncong
     if (ARGO && !HST2) {
       // pita senja: sapuan jingga → magenta → ungu yang naik ke arah moncong, bergaris emas
@@ -13478,7 +13477,7 @@
       c.fillStyle = '#fff6e6'; c.font = `italic 900 ${Math.max(6, Math.round(0.5 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
       c.fillText(HSTL ? 'KILAT NUSANTARA' : 'AGRAVEDA', L(HSTL ? 10.6 : 11.2), Y(2.26)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     }
-    const band = ARGO ? null : SH === 'neo' ? [[15.85, 2.45], [15.85, 3.42], [3.0, 3.42], [-0.7, 3.25], [-0.98, 2.45]] : SH === 'boxB' || SH === 'boxC' ? [[15.85, 2.45], [15.85, 3.72], [-0.85, 3.72], [-0.85, 2.45]] : BOXY ? [[15.85, 2.45], [15.85, 3.72], [-0.73, 3.72], [-0.83, 2.45]] : [[15.85, 2.45], [15.85, 3.72], [0.25, 3.72], [-0.48, 3.38], [-0.75, 3.0], [-0.75, 2.45]];
+    const band = ARGO || NEOL ? null : SH === 'neo' ? [[15.85, 2.45], [15.85, 3.42], [3.0, 3.42], [-0.7, 3.25], [-0.98, 2.45]] : SH === 'boxB' || SH === 'boxC' ? [[15.85, 2.45], [15.85, 3.72], [-0.85, 3.72], [-0.85, 2.45]] : BOXY ? [[15.85, 2.45], [15.85, 3.72], [-0.73, 3.72], [-0.83, 2.45]] : [[15.85, 2.45], [15.85, 3.72], [0.25, 3.72], [-0.48, 3.38], [-0.75, 3.0], [-0.75, 2.45]];
     if (band) {
     poly(band, bandBg);
     c.save(); c.beginPath(); band.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); c.clip();
@@ -13491,9 +13490,22 @@
     }
     if (ARGO) { /* pita senja sudah digambar */ } else if (SH === 'boxB' || SH === 'boxC') { line([[15.85, 3.79], [-0.85, 3.79]], cream, lw(0.07)); poly([[-0.85, 3.72], [-0.85, 2.45], [-1.12, 2.35], [-1.12, 3.63]], '#160e0d'); }
     else if (BOXY) { line([[15.85, 3.79], [-0.72, 3.79]], cream, lw(0.07)); poly([[-0.73, 3.72], [-0.83, 2.45], [-1.11, 2.35], [-1.01, 3.64]], '#160e0d'); line([[-0.72, 3.79], [-1.0, 3.71]], cream, lw(0.07)); }
-    else if (SH === 'neo') { line([[15.85, 3.46], [3.0, 3.46], [-0.7, 3.29]], '#f2a516', lw(0.08)); }
+    else if (SH === 'neo') { /* livery futuristik digambar di bawah */ }
     else line([[15.85, 3.79], [0.22, 3.79], [-0.52, 3.44]], cream, lw(0.07));
-    if (NEOL) box(-0.98, 15.85, 2.32, 2.45, '#f2a516'); // pita oranye gerbong menerus ke lokomotif
+    if (NEOL) { // livery futuristik Cakra: badan putih mutiara, sapuan grafit gelap naik menyapu ke moncong, garis LED sian menyala di tepinya,
+      // garis oranye tipis (menyambung pita gerbong), logo CAKRA miring & nomor kecil, kilau tepi
+      const sw = [[15.85, 1.85], [15.85, 3.0], [10.5, 3.0], [6.2, 3.3], [2.6, 3.85], [0.6, 3.95], [-0.45, 3.55], [-0.9, 2.85], [-1.05, 2.2], [-1.05, 1.85]];
+      const sg = c.createLinearGradient(0, Y(3.95), 0, Y(1.85)); sg.addColorStop(0, '#3a424b'); sg.addColorStop(0.35, '#232930'); sg.addColorStop(1, '#101317'); poly(sw, sg);
+      c.save(); c.beginPath(); sw.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); c.clip(); // kilau langit di permukaan grafit
+      const kg = c.createLinearGradient(0, Y(3.9), 0, Y(3.0)); kg.addColorStop(0, 'rgba(200,225,240,0.18)'); kg.addColorStop(1, 'rgba(200,225,240,0)'); c.fillStyle = kg; c.fillRect(L(15.85), Y(4.0), 17 * ppm, 1.1 * ppm);
+      c.fillStyle = 'rgba(255,255,255,0.05)'; for (let m = 15.2; m > 3; m -= 2.4) { c.beginPath(); c.moveTo(L(m), Y(3.9)); c.lineTo(L(m - 0.5), Y(3.9)); c.lineTo(L(m - 1.4), Y(1.85)); c.lineTo(L(m - 0.9), Y(1.85)); c.closePath(); c.fill(); } c.restore();
+      const top = [[15.85, 3.0], [10.5, 3.0], [6.2, 3.3], [2.6, 3.85], [0.6, 3.95], [-0.45, 3.55]];
+      const lg = c.createLinearGradient(L(15.85), 0, L(-0.45), 0); lg.addColorStop(0, '#1f8f9a'); lg.addColorStop(0.6, '#38d6f0'); lg.addColorStop(1, '#bff6ff');
+      c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(80,220,255,0.35)'; c.lineWidth = lw(0.32); c.lineCap = 'round'; c.beginPath(); top.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h + 0.02)) : c.moveTo(L(m), Y(h + 0.02)))); c.stroke(); c.restore(); // pendar LED
+      c.strokeStyle = lg; c.lineWidth = lw(0.09); c.lineCap = 'round'; c.beginPath(); top.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h + 0.02)) : c.moveTo(L(m), Y(h + 0.02)))); c.stroke(); // garis LED sian
+      line([[15.85, 2.82], [10.5, 2.82], [6.2, 3.12], [2.6, 3.66], [0.7, 3.76]], '#f2a516', lw(0.035)); c.lineCap = 'butt'; // garis oranye tipis
+      c.save(); c.fillStyle = '#f4f8fb'; c.font = `italic 900 ${Math.max(6, Math.round(0.62 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('CAKRA', L(11.6), Y(2.35));
+      c.fillStyle = '#38d6f0'; c.fillRect(L(12.95), Y(2.0), 2.7 * ppm, Math.max(1, 0.05 * ppm)); c.restore(); }
     else if (!ARGO) line([[15.85, 2.38], [-0.75, 2.38]], cream, lw(0.07));
     if (HST2) { /* atap rata menyatu */ } else if (ARGO) {
       // atap bersih: fairing aerodinamis menutup AC, knalpot, dan kipas
