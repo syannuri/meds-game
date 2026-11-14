@@ -11967,11 +11967,31 @@
         // bogie & roda (dua bogie, masing-masing dua/tiga gandar)
         const loco = k === 0;
         const bogies = loco ? [[0.18, [-1.7, 0, 1.7]], [0.8, [-1.7, 0, 1.7]]] : [[0.16, [-1.1, 1.1]], [0.84, [-1.1, 1.1]]];
+        // bogie modern detail: lokomotif = bogie CC (rangka samping berperut ikan, motor traksi, pegas primer ganda, peredam, kotak pasir & pipa, pegas flexicoil);
+        // gerbong = bogie penumpang (rangka-H, kotak gandar berbaut, pegas ulir, cakram rem, pegas udara di bantalan); roda monoblok berputar, kilau tepi
+        const drawBogies = () => {
         bogies.forEach(([bc, ax]) => {
-          const cx = L * bc, wB = (Math.abs(ax[0]) + 0.9) * u;
-          c.fillStyle = vg(1.3, 0.6, [[0, '#7e8890'], [1, '#353c42']]); roundRect(c, cx - wB, Y(1.3), wB * 2, 0.55 * u, 0.15 * u); c.fill();
-          ax.forEach((o) => { locoWheel(c, cx + o * u, Y(0.5), 0.48 * u, ang); c.fillStyle = '#d9a52a'; c.beginPath(); c.arc(cx + o * u, Y(0.5), 0.13 * u, 0, 7); c.fill(); });
+          const cx = L * bc, A = (o) => cx + o * u, a0 = ax[0] - 0.85, a1 = ax[ax.length - 1] + 0.85;
+          const frameG = vg(1.36, 0.62, [[0, '#8a949b'], [0.3, '#646d74'], [1, '#353c42']]);
+          if (loco) for (const o of ax) { c.fillStyle = '#1a1d20'; roundRect(c, A(o) - 1.1 * u, Y(1.02), 0.8 * u, 0.5 * u, 0.15 * u); c.fill(); } // motor traksi
+          else for (const o of ax) { c.fillStyle = '#3a4046'; c.beginPath(); c.ellipse(A(o), Y(0.5), 0.07 * u, 0.36 * u, 0, 0, 7); c.fill(); } // cakram rem di gandar
+          for (const o of ax) { locoWheel(c, A(o), Y(0.5), (loco ? 0.5 : 0.46) * u, ang);
+            c.fillStyle = '#2a2e31'; c.beginPath(); c.moveTo(A(o) + 0.46 * u, Y(0.78)); c.lineTo(A(o) + 0.56 * u, Y(0.26)); c.lineTo(A(o) + 0.66 * u, Y(0.3)); c.lineTo(A(o) + 0.58 * u, Y(0.8)); c.closePath(); c.fill(); } // blok rem
+          for (const o of ax) { c.fillStyle = vg(0.84, 0.24, [[0, '#4f575d'], [1, '#2a2f33']]); roundRect(c, A(o) - 0.3 * u, Y(0.8), 0.6 * u, 0.56 * u, 0.12 * u); c.fill(); // kotak gandar berbaut
+            c.fillStyle = '#d9a52a'; c.beginPath(); c.arc(A(o), Y(0.52), 0.16 * u, 0, 7); c.fill(); c.fillStyle = '#8a6a1a'; for (let q = 0; q < 4; q++) { const t = q * Math.PI / 2 + Math.PI / 4; c.beginPath(); c.arc(A(o) + Math.cos(t) * 0.1 * u, Y(0.52) + Math.sin(t) * 0.1 * u, Math.max(0.6, 0.025 * u), 0, 7); c.fill(); }
+            for (const so of loco ? [-0.22, 0.22] : [0]) for (let q = 0; q < 4; q++) { c.strokeStyle = q % 2 ? '#c3cacf' : '#8f989e'; c.lineWidth = Math.max(1, 0.035 * u); c.beginPath(); c.ellipse(A(o + so), Y(0.87 + q * 0.045), 0.1 * u, 0.022 * u, -0.15, 0, 7); c.stroke(); } } // pegas primer
+          // rangka samping: lokomotif berperut ikan, gerbong rangka-H ramping
+          c.fillStyle = frameG; c.beginPath(); c.moveTo(A(a0), Y(0.86)); c.lineTo(A(a0 + 0.15), Y(1.14)); c.lineTo(A(a1 - 0.15), Y(1.14)); c.lineTo(A(a1), Y(0.86));
+          const sg = ax.slice().sort((p, q) => q - p); sg.forEach((o, i) => { c.lineTo(A(o + 0.4), Y(0.88)); c.lineTo(A(o - 0.4), Y(0.88)); const nx = sg[i + 1]; if (nx !== undefined) c.quadraticCurveTo(A((o + nx) / 2), Y(loco ? 0.5 : 0.66), A(nx + 0.4), Y(0.88)); });
+          c.lineTo(A(a0), Y(0.9)); c.closePath(); c.fill(); c.strokeStyle = 'rgba(20,24,28,0.6)'; c.lineWidth = Math.max(1, 0.03 * u); c.stroke();
+          c.fillStyle = 'rgba(255,255,255,0.5)'; c.fillRect(A(a0 + 0.15), Y(1.14), (a1 - a0 - 0.3) * u, Math.max(1, 0.03 * u)); // kilau tepi atas
+          c.fillStyle = 'rgba(255,255,255,0.18)'; for (let m = a0 + 0.3; m < a1 - 0.2; m += 0.55) { c.beginPath(); c.arc(A(m), Y(1.04), Math.max(0.7, 0.03 * u), 0, 7); c.fill(); } // baut
+          for (const m of [a0 + 0.25, a1 - 0.25]) { c.fillStyle = '#2b3034'; roundRect(c, A(m) - 0.09 * u, Y(1.75), 0.18 * u, 0.42 * u, 0.06 * u); c.fill(); } // peredam
+          if (loco) { for (const m of [a0 - 0.1, a1 + 0.1]) { c.fillStyle = '#3a4146'; roundRect(c, A(m) - 0.18 * u, Y(1.32), 0.36 * u, 0.3 * u, 0.05 * u); c.fill(); c.strokeStyle = '#c9a43a'; c.lineWidth = Math.max(1, 0.035 * u); c.beginPath(); c.moveTo(A(m), Y(1.02)); c.lineTo(A(m), Y(0.12)); c.stroke(); } // kotak & pipa pasir
+            for (const m of [sg[sg.length - 1] + 0.85, sg[0] - 0.85]) for (let q = 0; q < 3; q++) { c.strokeStyle = q % 2 ? '#aab2b8' : '#7d868c'; c.lineWidth = Math.max(1, 0.04 * u); c.beginPath(); c.ellipse(A(m), Y(1.4 + q * 0.05), 0.14 * u, 0.03 * u, 0, 0, 7); c.stroke(); } } // pegas flexicoil
+          else { c.fillStyle = vg(1.62, 1.34, [[0, '#3a3f45'], [1, '#1d2125']]); roundRect(c, A(-0.42), Y(1.62), 0.84 * u, 0.28 * u, 0.12 * u); c.fill(); c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(A(-0.36), Y(1.6), 0.72 * u, Math.max(1, 0.03 * u)); } // pegas udara di bantalan
         });
+        };
         c.fillStyle = '#23282c'; c.fillRect(0.3 * u, Y(1.45), L - 0.6 * u, 0.3 * u);
         // badan perak
         const silver = vg(4.3, 1.15, [[0, '#f7f9fb'], [0.45, '#d7dde2'], [0.85, '#aeb7be'], [1, '#8d979e']]);
@@ -11979,6 +11999,7 @@
         if (loco) { c.moveTo(L, Y(1.15)); c.lineTo(L, Y(4.1)); c.lineTo(2.3 * u, Y(4.1)); c.lineTo(1.75 * u, Y(3.95)); c.lineTo(1.35 * u, Y(2.6)); c.lineTo(0.15 * u, Y(2.55)); c.lineTo(0, Y(2.3)); c.lineTo(0, Y(1.15)); }
         else roundRect(c, 0, Y(4.1), L, 2.95 * u, 0.4 * u);
         c.fill();
+        drawBogies(); // bogie di depan rok badan: rangka samping, pegas & kotak gandar terlihat jelas
         // atap & unit AC
         c.fillStyle = vg(4.45, 4.05, [[0, '#c9d0d5'], [1, '#7d878e']]);
         if (loco) roundRect(c, 2.4 * u, Y(4.42), L - 2.7 * u, 0.36 * u, 0.12 * u); else roundRect(c, 0.4 * u, Y(4.42), L - 0.8 * u, 0.36 * u, 0.15 * u);
