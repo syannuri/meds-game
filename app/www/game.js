@@ -7260,10 +7260,14 @@
       c.lineJoin = 'round'; c.strokeStyle = '#030405'; c.lineWidth = Math.max(3, H * 0.01); edge(); c.stroke();
       c.strokeStyle = `rgba(255,255,255,${lit + 0.06})`; c.lineWidth = 1; c.save(); c.translate(0, 2); edge(); c.stroke(); c.restore();
     }
-    // pantulan kaca & tint atas
-    const tg = c.createLinearGradient(0, 0, 0, H * 0.25); tg.addColorStop(0, 'rgba(20,40,60,0.45)'); tg.addColorStop(1, 'rgba(20,40,60,0)');
-    c.fillStyle = tg; c.fillRect(0, 0, W, H * 0.25);
-    if (!inTun) { c.fillStyle = 'rgba(180,230,255,0.04)'; c.beginPath(); c.moveTo(W * 0.62, H * 0.06); c.lineTo(W * 0.7, H * 0.06); c.lineTo(W * 0.58, H * 0.66); c.lineTo(W * 0.53, H * 0.66); c.closePath(); c.fill(); } // kilau kaca: tak terlihat di terowongan gelap
+    // pantulan kaca & tint atas: dibatasi bentuk kaca panorama (tepi atas melengkung & pilar samping melengkung), kilau mengikuti lengkung kaca
+    c.save(); c.beginPath(); c.moveTo(W * 0.03, H * 0.66); c.quadraticCurveTo(W * 0.06, H * 0.35, W * 0.035, H * 0.03); c.quadraticCurveTo(W * 0.5, H * 0.075, W * 0.965, H * 0.03); c.quadraticCurveTo(W * 0.94, H * 0.35, W * 0.97, H * 0.66); c.closePath(); c.clip();
+    const tg = c.createLinearGradient(0, H * 0.03, 0, H * 0.27); tg.addColorStop(0, 'rgba(20,40,60,0.45)'); tg.addColorStop(1, 'rgba(20,40,60,0)');
+    c.fillStyle = tg; c.beginPath(); c.moveTo(0, H * 0.03); c.quadraticCurveTo(W * 0.5, H * 0.075, W, H * 0.03); c.lineTo(W, H * 0.3); c.quadraticCurveTo(W * 0.5, H * 0.345, 0, H * 0.3); c.closePath(); c.fill(); // tint mengikuti lengkung atas
+    if (!inTun) { const kg = (x0, x1, a) => { c.fillStyle = `rgba(180,230,255,${a})`; c.beginPath(); c.moveTo(W * x0, H * 0.04); c.quadraticCurveTo(W * (x0 - 0.04), H * 0.35, W * (x0 - 0.09), H * 0.66); c.lineTo(W * (x1 - 0.09), H * 0.66); c.quadraticCurveTo(W * (x1 - 0.04), H * 0.35, W * x1, H * 0.04); c.closePath(); c.fill(); };
+      kg(0.62, 0.7, 0.04); kg(0.2, 0.235, 0.03); // kilau kaca melengkung
+      const eg = (sd) => { const g = c.createLinearGradient(sd ? W * 0.97 : W * 0.03, 0, sd ? W * 0.9 : W * 0.1, 0); g.addColorStop(0, 'rgba(200,230,255,0.08)'); g.addColorStop(1, 'rgba(200,230,255,0)'); c.fillStyle = g; c.fillRect(sd ? W * 0.9 : 0, 0, W * 0.1, H * 0.66); }; eg(0); eg(1); } // pantulan di lengkung tepi kaca
+    c.restore(); // kilau kaca: tak terlihat di terowongan gelap
     // dasbor karbon melengkung dengan lampu ambien
     const dy0 = H * 0.66;
     const dg = c.createLinearGradient(0, dy0, 0, H); dg.addColorStop(0, night ? '#151a21' : '#222a33'); dg.addColorStop(0.25, '#10141a'); dg.addColorStop(1, '#06080b');
@@ -7814,6 +7818,7 @@
     drawFrontProps(V);
     drawFog(V);
     drawFogBeam(V);
+    drawSoftHeadlight(V);
     drawWeather(V);
     drawNight(V);
     drawSmoke(V);
@@ -7919,6 +7924,23 @@
   }
 
   // ---------- malam takbiran ----------
+  // lampu sorot kereta cepat (tampak samping) yang lembut & natural: selalu menyala, makin terasa saat mendung/badai/hujan; berkas lebar tipis,
+  // inti sempit, pendar lampu di moncong, genangan cahaya di rel & kilau di kepala rel; saat hujan butir hujan di dalam berkas ikut tersinari
+  function drawSoftHeadlight(V) {
+    const st = V.st; if (!st || !ELEC() || V.night || V.tf > 0.2) return;
+    const { c, ppm, gy } = V, dark = V.storm ? 1 : MIS.rain ? 0.75 : clamp((0.45 - V.p) / 0.45, 0, 1) * 0.8 + 0.2, K = 0.55 * dark;
+    const lx = V.bx(st.x) - 0.5 * ppm, ly = gy - trainH(1.75) * ppm + V.bdy(st.x), len = 40 * ppm; if (lx < -len || lx > W + 40) return;
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const g = c.createRadialGradient(lx, ly, 0, lx, ly, len); g.addColorStop(0, `rgba(255,244,222,${(0.24 * K).toFixed(3)})`); g.addColorStop(0.35, `rgba(255,240,214,${(0.07 * K).toFixed(3)})`); g.addColorStop(1, 'rgba(255,240,214,0)');
+    c.fillStyle = g; c.beginPath(); c.moveTo(lx, ly - 0.25 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly - 2.6 * ppm, lx + len, ly - 4.2 * ppm); c.lineTo(lx + len, ly + 4.6 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly + 2.2 * ppm, lx, ly + 0.25 * ppm); c.closePath(); c.fill(); // berkas lebar
+    const gc = c.createRadialGradient(lx, ly, 0, lx, ly, len * 0.6); gc.addColorStop(0, `rgba(255,252,238,${(0.22 * K).toFixed(3)})`); gc.addColorStop(1, 'rgba(255,252,238,0)'); c.fillStyle = gc; c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + len * 0.6, ly - 1.8 * ppm); c.lineTo(lx + len * 0.6, ly + 1.8 * ppm); c.closePath(); c.fill(); // inti
+    const pg = c.createRadialGradient(lx + 12 * ppm, gy, 0, lx + 12 * ppm, gy, 14 * ppm); pg.addColorStop(0, `rgba(255,236,196,${(0.24 * K).toFixed(3)})`); pg.addColorStop(1, 'rgba(255,236,196,0)'); c.save(); c.translate(0, gy); c.scale(1, 0.18); c.translate(0, -gy); c.fillStyle = pg; c.beginPath(); c.arc(lx + 12 * ppm, gy, 14 * ppm, 0, 7); c.fill(); c.restore(); // genangan di rel
+    const rl = c.createLinearGradient(lx, 0, lx + 30 * ppm, 0); rl.addColorStop(0, `rgba(255,248,230,${(0.5 * K).toFixed(3)})`); rl.addColorStop(1, 'rgba(255,248,230,0)'); c.fillStyle = rl; c.fillRect(lx, gy - 0.12 * ppm, 30 * ppm, Math.max(1, 0.06 * ppm)); // kilau kepala rel
+    for (const [r, a] of [[0.45, 0.9], [1.4, 0.35], [3.5, 0.1]]) { const lg = c.createRadialGradient(lx, ly, 0, lx, ly, r * ppm); lg.addColorStop(0, `rgba(255,250,236,${(a * (0.5 + 0.5 * dark)).toFixed(3)})`); lg.addColorStop(1, 'rgba(255,250,236,0)'); c.fillStyle = lg; c.fillRect(lx - r * ppm, ly - r * ppm, 2 * r * ppm, 2 * r * ppm); } // pendar lampu
+    if (MIS.rain) { const t = performance.now() / 1000; c.strokeStyle = `rgba(255,248,230,${(0.35 * K).toFixed(3)})`; c.lineWidth = 1; c.beginPath();
+      for (let i = 0; i < 40; i++) { const u = hash(i * 2.3), x = lx + u * len * 0.8, y0 = ly + (hash(i * 4.1) - 0.5) * (1 + u * 7) * ppm + ((t * 9 * ppm + hash(i) * 50) % (4 * ppm)) - 2 * ppm; c.moveTo(x, y0); c.lineTo(x - 0.25 * ppm, y0 + 0.9 * ppm); } c.stroke(); } // hujan tersinari
+    c.restore();
+  }
   // sorot lampu depan saat berkabut/berembun (tampak samping, siang): berkas lembut menembus kabut, pendar lampu, butir embun berkilau di dalam berkas
   function drawFogBeam(V) {
     const f = fogAt(V.st.x + 30); if (f < 0.05 || V.night || V.tf > 0.2) return;
