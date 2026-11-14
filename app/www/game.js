@@ -5811,10 +5811,8 @@
                   Q(4.6, 10.8, 1.25, 0.5, 1.02, shade('#1f2328', 0.3)); Q(4.6, 10.8, 1.252, 0.92, 0.98, 'rgba(255,255,255,0.12)'); Q(7.3, 7.6, 1.256, 0.62, 0.86, shade('#e3b84a', 0.6));
                   Q(11.2, 12.6, 1.15, 0.62, 0.9, shade('#3a4048', 0.3)); Q(3.4, 4.3, 1.15, 0.62, 0.9, shade('#3a4048', 0.3));
                   // atap: kotak rem dinamis, cerobong knalpot & antena (yang menjulang di atas garis atap)
-                  Q(4.0, 10.2, 1.05, 4.15, 4.4, shade(L0.roof, 0.9)); Q(4.0, 10.2, 1.06, 4.15, 4.4, 'rgba(0,0,0,0)'); for (let t = 4.3; t < 10; t += 0.4) LN2([[t, 1.07, 4.18], [t, 1.07, 4.37]], seam, 0.012);
                   /* kipas radiator di atap tidak terlihat dari kabin (mata masinis di bawah tinggi atap) */
-                  { const ce = T(8.2); if (ce > 1.5) { const b0 = W3(ce, oAt(ce), 4.2 + bz), t0 = W3(ce, oAt(ce), 4.65 + bz); if (b0 && t0) { c.fillStyle = shade('#2a2e33', 0.3); c.fillRect(b0.x - 0.18 * b0.k, t0.y, 0.36 * b0.k, b0.y - t0.y); c.fillStyle = '#121416'; c.beginPath(); c.ellipse(b0.x, t0.y, 0.18 * b0.k, 0.06 * b0.k, 0, 0, 7); c.fill(); } } } // cerobong knalpot
-                  { const ce = T(1.3); if (ce > 1.5) { const b0 = W3(ce, oAt(ce) - 0.4, 4.2 + bz), t0 = W3(ce, oAt(ce) - 0.4, 4.8 + bz); if (b0 && t0) { c.strokeStyle = shade('#3a4048', 0.4); c.lineWidth = Math.max(1, 0.03 * b0.k); c.beginPath(); c.moveTo(b0.x, b0.y); c.lineTo(t0.x, t0.y); c.stroke(); } } } // antena
+                  { const ce = T(8.2); if (ce > 1.5) { const b0 = W3(ce, oAt(ce), 4.16 + bz), t0 = W3(ce, oAt(ce), 4.3 + bz); if (b0 && t0) { c.fillStyle = shade('#2a2e33', 0.3); c.fillRect(b0.x - 0.14 * b0.k, t0.y, 0.28 * b0.k, b0.y - t0.y); } } } // cerobong knalpot
                   LN2([[0.4, 1.4, 3.6], [15.6, 1.4, 3.6]], hiL, 0.015); LN2([[0.4, 1.462, 1.27], [15.6, 1.462, 1.27]], seam, 0.015); } // kilau tepi atap & garis sambungan rok
               }
             }
@@ -5846,7 +5844,6 @@
                 for (const lo of [-0.95, 0.95]) { const q = W3(da - 0.05, o + lo, 1.48); if (!q) continue; const r = Math.max(1.6, 0.16 * q.k); c.fillStyle = lk ? '#fffbe8' : '#c9ccce'; c.beginPath(); c.ellipse(q.x, q.y, r * 1.3, r, 0, 0, 7); c.fill();
                   if (lk) { c.save(); c.globalCompositeOperation = 'lighter'; const R = Math.min(r * 9, W * 0.12), g = c.createRadialGradient(q.x, q.y, 0, q.x, q.y, R); g.addColorStop(0, `rgba(255,248,220,${(0.9 * lk).toFixed(3)})`); g.addColorStop(0.25, `rgba(255,236,190,${(0.3 * lk).toFixed(3)})`); g.addColorStop(1, 'rgba(255,236,190,0)'); c.fillStyle = g; c.fillRect(q.x - R, q.y - R, 2 * R, 2 * R); c.restore(); } }
                 for (const lo of [-1.1, 1.1]) { const q = W3(da - 0.05, o + lo, 3.75); if (q) { c.fillStyle = lk ? '#ffe9b0' : '#bfb69a'; c.beginPath(); c.arc(q.x, q.y, Math.max(1, 0.07 * q.k), 0, 7); c.fill(); } } // lampu kecil atas
-                const hq = W3(da + 0.6, o, 4.3); if (hq) { c.fillStyle = '#9aa2aa'; c.fillRect(hq.x - 0.25 * hq.k, hq.y - 0.08 * hq.k, 0.5 * hq.k, 0.16 * hq.k); } // klakson di atap
                 if (lk && da > 3) { c.save(); c.globalCompositeOperation = 'lighter'; // genangan sorot di balas & kilau kepala rel di depan lokomotif
                   for (let dd = da - 1.2; dd > Math.max(1.6, da - 34); dd -= 1.5) { const e = dd - 1.5, t = (da - dd) / 34, a = lk * 0.16 * Math.exp(-t * 2.2) * (1 - t), w = 1.3 + (da - dd) * 0.07, q1 = W3(dd, O(x0 + dd) - w, 0.02), q2 = W3(dd, O(x0 + dd) + w, 0.02), q3 = W3(e, O(x0 + e) + w + 0.1, 0.02), q4 = W3(e, O(x0 + e) - w - 0.1, 0.02); if (!q1 || !q2 || !q3 || !q4 || a < 0.004) continue;
                     const g = c.createLinearGradient(q1.x, 0, q2.x, 0); g.addColorStop(0, 'rgba(255,236,196,0)'); g.addColorStop(0.5, `rgba(255,236,196,${a.toFixed(3)})`); g.addColorStop(1, 'rgba(255,236,196,0)'); c.fillStyle = g; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill();
