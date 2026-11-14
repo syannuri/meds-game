@@ -12664,7 +12664,7 @@
     zamrud: { g: ['#2f9488', '#1d7068', '#13514b'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.3)', pin: '#f2a516' },
     titan: { g: ['#a3afba', '#84919d', '#65727e'], led: ['#1f8f9a', '#38d6f0', '#bff6ff'], glow: 'rgba(80,220,255,0.35)', pin: '#f2a516' },
   };
-  const NEO_PAL_DEF = 'safir';
+  const NEO_PAL_DEF = 'titan';
   function drawTrainRaw(V) {
     const { c, ppm, gy, X, st } = V;
     const fx = X(st.x);
