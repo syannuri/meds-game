@@ -1631,7 +1631,8 @@
         set(L.xfmr.g.gain, scene && ele ? 0.004 + power * 0.004 : 0, 0.5);
         set(L.fan.g.gain, scene && ele ? 0.006 + power * 0.01 : 0, 0.8);
         L.fan.f.frequency.setTargetAtTime(600 + power * 300, t, 0.8);
-        set(L.wind.g.gain, run && ele ? Math.pow(clamp(v / 70, 0, 1), 2) * 0.05 * (info.tunnel ? 1.6 : 1) : 0, 0.6);
+        { const hs = v > 42, ph = ((((info.px || 0) % 50) + 50) % 50) / 50, pulse = hs ? Math.exp(-Math.pow((ph - 0.5) / 0.06, 2)) * clamp((v - 42) / 28, 0, 1) : 0; // kereta cepat: desis angin naik terus & 'wuss' tiap tiang aliran atas
+          L.wind.g.gain.setTargetAtTime(run && ele ? Math.pow(clamp(v / 70, 0, 1.25), 2) * (hs ? 0.07 : 0.05) * (info.tunnel ? 1.6 : 1) * (1 + 0.9 * pulse) : 0, t, pulse > 0.05 ? 0.03 : 0.6); }
         L.wind.f.frequency.setTargetAtTime(500 + v * 14, t, 0.6);
       }
       // desis rel & decit flens di tikungan
@@ -6471,7 +6472,7 @@
     if (HSTCAB && !inTun && !night && !storm) drawHstLight(c, { hy, p, pan, st, sun: sunPos(Vs) });
     if (!inTun && !night && !storm) drawFlare(c, sunPos(Vs), HSTCAB ? 0.8 : 0.85, st.v, x0, hy);
     applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0, cab: true, night, storm, sun: SUN });
-    cabZoomBlur(c, cx, hy, inTun ? 0 : fov2); // kabur gerak radial benda dekat di tepi pandangan
+    cabZoomBlur(c, cx, hy, inTun ? 0 : Math.min(1.25, fov2 + 0.55 * smooth(140, 220, st.v * 3.6))); // kabur gerak radial benda dekat di tepi pandangan
     // ---- kabin: kaca depan, pilar, dasbor ----
     const rain = MIS.rain && !inTun;
     if (rain) {
@@ -7518,7 +7519,7 @@
     const c = ctx;
     const st = S || idleState;
     activeBridge(st.x - TRAIN_LEN * 0.3);
-    c.setTransform(DPR, 0, 0, DPR, 0, (railBump(st) * (viewMode === 'cab' ? 0.3 : 1) + trackJolt(st) * (viewMode === 'cab' ? 0.8 : 1)) * DPR); // kabin: hentakan sambungan jauh lebih halus; wesel & jembatan tetap terasa
+    c.setTransform(DPR, 0, 0, DPR, 0, (railBump(st) * (viewMode === 'cab' ? 0.3 : 1) + trackJolt(st) * (viewMode === 'cab' ? 0.8 : 1) + (S && st === S && !REDUCE_MOTION ? Math.sin(performance.now() / 23) * 0.5 * clamp((S.v * 3.6 - 180) / 80, 0, 1) : 0)) * DPR); // getaran halus di kecepatan tinggi // kabin: hentakan sambungan jauh lebih halus; wesel & jembatan tetap terasa
     cineUpdate(dtReal);
     const CZ = viewMode === 'cab' ? 1 : CINE.s;
     if (CZ > 1.001) { c.translate(CINE.px, CINE.py); c.scale(CZ, CZ); c.translate(-CINE.px, -CINE.py); }
@@ -7566,6 +7567,7 @@
       const base = st.x - (W * anchor) / ppm;
       lead = clamp(TR0.x + 14 - (base + (W * 0.84) / ppm), 0, (W * (anchor - 0.06)) / ppm);
     }
+    if (S && st === S && !REDUCE_MOTION && !pivotStn) lead -= clamp(S.aAct || 0, 0, 1.2) * clamp((S.v * 3.6 - 60) / 120, 0, 1) * 3.5; // kamera sedikit tertinggal saat kereta cepat menambah laju
     if (pivotStn) camLead = lead; else camLead += (lead - camLead) * Math.min(1, (dtReal || 0.016) * 1.4);
     const camX = st.x - (W * anchor) / ppm + camLead + (PHOTO.on ? PHOTO.dx : 0);
     const X = (wx) => (wx - camX) * ppm + shake;
@@ -7695,6 +7697,7 @@
     drawBridge(LV, 'back');
     drawTrainOnPaddy(LV);
     drawTrain(LV);
+    drawSpeedFx(LV);
     drawDoubleShadows(LV); // jalur ganda: bayangan Guntur & Kilat satu lapis
     drawCoffeeWagon(LV);
     drawPlatformFront(LV, dtReal);
@@ -14447,6 +14450,30 @@ c.restore();
       c.strokeStyle = 'rgba(220,240,150,0.7)'; c.lineWidth = Math.max(1, 0.035 * u); c.beginPath(); c.moveTo(bx, by); c.quadraticCurveTo(mx, my, tx, ty); c.stroke();
     }
   }
+  // rasa melesat kereta cepat (tampak samping, > 150 km/h): roda & rok bawah kabur berputar, garis angin menyapu badan ke belakang,
+  // garis kecepatan di tanah dekat kamera (paralaks tinggi), kelebat tiang aliran atas yang kabur di latar depan
+  function drawSpeedFx(V) {
+    if (!S || V.st !== S || REDUCE_MOTION || V.tf > 0.3) return;
+    const kmh = S.v * 3.6, k = clamp((kmh - 150) / 100, 0, 1); if (k < 0.02) return;
+    const { c, ppm, gy, X } = V, t = performance.now() / 1000, x0 = X(S.x - TRAIN_LEN), x1 = X(S.x), top = gy - trainH(4.4) * ppm;
+    c.save();
+    // kabur roda & rok: pita gelap-terang horizontal yang bergetar halus
+    const rg = c.createLinearGradient(0, gy - 1.4 * ppm, 0, gy); rg.addColorStop(0, 'rgba(60,66,74,0)'); rg.addColorStop(0.5, `rgba(60,66,74,${(0.22 * k).toFixed(3)})`); rg.addColorStop(1, 'rgba(30,34,40,0)');
+    c.fillStyle = rg; c.fillRect(x0, gy - 1.4 * ppm, x1 - x0, 1.4 * ppm);
+    c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
+    // garis angin menyapu badan ke belakang
+    for (let i = 0; i < 26; i++) { const hy = top + hash(i * 3.7) * (gy - top - 0.6 * ppm), sp = (0.9 + hash(i) * 0.6) * kmh * 0.35 * ppm, len = (5 + hash(i * 1.9) * 12) * ppm * k, span = x1 - x0 + len + 40;
+      const x = x1 + 20 - (((t * sp + hash(i * 5.1) * span) % span)); const a = 0.38 * k * (0.5 + 0.5 * hash(i * 2.3));
+      const g = c.createLinearGradient(x, 0, x + len, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.7, `rgba(255,255,255,${a.toFixed(3)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+      c.strokeStyle = g; c.lineWidth = Math.max(1, 0.07 * ppm); c.beginPath(); c.moveTo(x, hy); c.lineTo(x + len, hy); c.stroke(); }
+    // garis kecepatan di tanah dekat kamera (paralaks 2,4x): goresan panjang mengalir ke kiri
+    c.globalCompositeOperation = 'source-over';
+    for (let i = 0; i < 18; i++) { const y = gy + (3 + hash(i * 4.3) * 9) * ppm, par = 1.6 + (y - gy) / ppm * 0.12, len = (10 + hash(i) * 22) * ppm * k * par * 0.5;
+      const span = W + len * 2, x = W + len - ((((S.x * ppm * par) + hash(i * 7.7) * span) % span + span) % span), a = 0.16 * k;
+      const g = c.createLinearGradient(x, 0, x + len, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, `rgba(255,255,255,${a.toFixed(3)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+      c.strokeStyle = g; c.lineWidth = Math.max(1, 0.06 * ppm * par); c.beginPath(); c.moveTo(x, y); c.lineTo(x + len, y); c.stroke(); }
+    c.restore();
+  }
   function drawFrontProps(V) {
     const { c, ppm, gy, X, wx0, wx1, p } = V;
     // tiang pagar/patok paling dekat kamera: paralaks 2,6x, memanjang (kabur gerak) saat cepat
@@ -14717,7 +14744,7 @@ c.restore();
       power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0, electric: !!S && (ELEC() || MIS.loco === 'argo'), steam: !!S && MIS.loco === 'steam', // Agraveda bertenaga listrik: suara traksi listrik, tanpa mesin diesel
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
-      rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, sawit: MIS.land === 'sawit', city: (ROUTE.scenes || []).some((q) => q.kind === 'city' && st.x > q.from - 150 && st.x < q.to + 150), night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
+      px: st.x, rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, sawit: MIS.land === 'sawit', city: (ROUTE.scenes || []).some((q) => q.kind === 'city' && st.x > q.from - 150 && st.x < q.to + 150), night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
       curve: !!(zoneAt(st.x) && zoneAt(st.x).curve),
       climb: (() => { const gr = gradeAt(st.x - TRAIN_LEN / 2); return gr && gr.permil > 0 ? gr.permil / 20 : 0; })(),
       lat: latAccel(st),
