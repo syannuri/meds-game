@@ -879,6 +879,92 @@
       bufferStop: 22100,
     },
   };
+  // Babak 3: kereta super cepat Guntur 320 km/h menembus badai di lintas baru Lengkung Watu (versi kereta cepat dari misi Wesel Basah)
+  MISSIONS['3-4'] = {
+    id: '3-4',
+    chapter: 'Babak 3 · Ekspres Jawa',
+    title: 'Badai di Lengkung Watu', nick: 'Guntur Badai',
+    startClock: 16 * 3600 + 10 * 60,
+    sky: 'storm',
+    rain: true,
+    tags: ['Kereta super cepat 320 km/h', 'Badai & rel basah', 'Sabotase wesel'],
+    speaker: { who: 'Dimas, mekanik depo', initials: 'DM' },
+    driver: { name: 'Anett', initials: 'AN' },
+    brief: 'Anett, lintas Lengkung Watu sekarang jalur kereta cepat: jalur ganda, jalur layang, dan Guntur boleh 320 km/h. Tapi badai belum reda. Rel basah: roda mudah selip saat menarik dan rem jauh lebih lemah. Dari 320 km/h kamu butuh lebih dari 5 km untuk berhenti, jadi ikuti papan REM. Dan hati-hati: orang yang dulu mengutak-atik wesel Watu belum tertangkap.',
+    weather: 'badai, hujan deras, petir, angin samping',
+    intro: 'Masinis Anett, Guntur siap di tengah badai. Tutup pintu dan berangkat dengan P1–P2.',
+    reward: '<strong>Cerita:</strong> Di wesel Watu, kamera pengawas merekam truk berlogo TransKilat. Polsuska kini menjaga lintas Lengkung Watu siang dan malam.',
+    aboard: 24,
+    ticket: 'hst',
+    loco: 'hst2',
+    route: {
+      lineSpeed: 320,
+      stations: [
+        { name: 'PASAR LAMA', elev: '+371 m', x: 0, sched: 0, waiting: 0, modern: true },
+        { name: 'KALI JERNIH', elev: '+348 m', x: 12000, sched: 1740, waiting: 16, modern: true, umbrellas: true },
+        { name: 'WATUGEDE', elev: '+455 m', x: 27000, sched: 3720, waiting: 12, final: true, modern: true, umbrellas: true },
+      ],
+      zones: [
+        { from: -120, to: 400, limit: 60, label: 'area Pasar Lama' },
+        { from: 400, to: 1600, limit: 160, label: 'keluar kota' },
+        { from: 6200, to: 7800, limit: 220, label: 'Angin badai di jalur layang' },
+        { from: 10700, to: 12300, limit: 60, label: 'area Stasiun Kali Jernih' },
+        { from: 12300, to: 13300, limit: 160, label: 'keluar Kali Jernih' },
+        { from: 17800, to: 19800, limit: 200, label: 'Terowongan Lengkung Watu' },
+        { from: 25700, to: 27150, limit: 60, label: 'area Watugede' },
+      ],
+      signals: [
+        { id: 'S1', x: 60, start: 0, init: 'R' },
+        { id: 'J1', x: 10600, init: 'G' },
+        { id: 'S2', x: 12060, start: 1, init: 'R' },
+        { id: 'B2', x: 22000, init: 'G' },
+        { id: 'J2', x: 25600, init: 'G' },
+      ],
+      scripts: [
+        {
+          type: 'inspect', sig: 'B2', at: 15600, near: 400, dur: 9,
+          radioRed: 'Anett, sinyal kabin B2 MERAH! Wesel Watu di depan tidak terkunci lagi. Mulai mengerem sekarang, 6 km lagi sampai B2. Rel basah, ikuti papan REM!',
+          radioWork: 'Bagus, kereta berhenti. Aku kunci weselnya dari jarak jauh... tunggu sebentar.',
+          radioDone: 'Wesel terkunci. Ada bekas linggis lagi, kali ini terekam kamera. Lanjut, sinyal kuning.',
+        },
+      ],
+      crossings: [],
+      underpasses: [{ x: 2400, name: 'UNDERPASS LEDOK' }, { x: 24000, name: 'UNDERPASS WATU' }],
+      goats: [],
+      fog: { from: 19800, to: 22400 },
+      bridge: { from: 3000, to: 9000, viaduct: true, land: true, name: 'Jalur Layang Ledok' },
+      bridges: [
+        { from: 3000, to: 9000, viaduct: true, land: true, name: 'Jalur Layang Ledok' },
+        { from: 14200, to: 15200, viaduct: true, name: 'Viaduk Kali Jernih' },
+      ],
+      scenes: [
+        { from: -500, to: 1600, kind: 'city', glass: true },
+        { from: 1600, to: 6000, kind: 'terrace' },
+        { from: 9000, to: 11000, kind: 'wind' },
+        { from: 13300, to: 17500, kind: 'terrace' },
+        { from: 25500, to: 27600, kind: 'city', glass: true },
+      ],
+      tunnel: { from: 17800, to: 19800, name: 'LENGKUNG WATU', year: '2033', modern: true },
+      grades: [{ from: 1000, to: 3000, permil: -8, label: 'Turunan Ledok' }, { from: 16000, to: 22000, permil: 10, label: 'Tanjakan Watu' }],
+      switchX: 22045,
+      brakeBoards: true,
+      hst: true,
+      // jalur ganda di tengah badai: Kilat berpapasan di jalur 2, cipratan & kilau lampu di rel basah
+      double: { o: 4.6, st: 8.3, t3: 12.9, kilat: { cars: 6, events: [
+        { at: 3, arrive: true, from: 640, v: 60, stop: -92, msg: 'Kilat KN 5012 masuk Pasar Lama di jalur 2, pelan menuju peron seberang. Guntur berangkat di jalur 1: balas salam klaksonnya.' },
+        { at: 10700, ahead: 3000, v: 200, slow: 120, t3: true, msg: 'Kilat KN 5014 melintas langsung di jalur 3 Kali Jernih. Kita berhenti di jalur 1, hati-hati peron licin.' },
+        { at: 13500, ahead: 3600, v: 280, msg: 'Kilat KN 5016 menembus badai di jalur 2, 280 km/h. Tetap di jalur 1 dan balas klakson saat berpapasan.' },
+      ] } },
+      neutral: [{ from: 7600, to: 7740 }, { from: 18600, to: 18740 }],
+      hints: [
+        { at: 40, msg: 'Rel basah: roda mudah selip di bawah 60 km/h. Berangkat dengan P1–P2, tabur pasir kalau selip.', kind: 'warn' },
+        { at: 1700, msg: 'Lintas cepat di depan: batas 320 km/h. Di rel basah jarak pengereman dari 320 lebih dari 5 km.', kind: 'warn' },
+        { at: 6000, msg: 'Angin badai di jalur layang: maks 220 km/h.', kind: 'warn' },
+        { at: 17500, msg: 'Terowongan Lengkung Watu 2 km dengan seksi netral di dalamnya: tuas ke N.' },
+      ],
+      bufferStop: 27100,
+    },
+  };
   // Babak 4: warisan uap, lintas pegunungan tua dengan lokomotif uap "Surya" (1912)
   MISSIONS['4-1'] = {
     id: '4-1',
@@ -942,12 +1028,13 @@
       bufferStop: 5350,
     },
   };
-  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3', '4-1'];
+  const MISSION_ORDER = ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3', '3-4', '4-1'];
   // palet khas tiap misi: warna langit (fajar → siang, atau gelap/mendung), dan gradasi warna akhir
   // (soft-light) yang diterapkan ke seluruh dunia game, ditambah kabut lembap untuk Sumatra
   const PALETTES = {
     '1-4': { sky: [['#3a3f6e', '#5d9fd3'], ['#e39a6a', '#a8d2ea'], ['#ffd48a', '#f2ecd8']], grade: ['rgba(255,170,80,0.22)', 'rgba(255,205,120,0.14)'] },
     '1-5': { storm: ['#24323d', '#4f6673', '#86a0aa'], grade: ['rgba(60,115,150,0.26)', 'rgba(40,95,105,0.2)'] },
+    '3-4': { storm: ['#1e2a34', '#45606e', '#7f9aa6'], grade: ['rgba(60,115,150,0.28)', 'rgba(40,95,105,0.22)'] },
     '1-6': { night: ['#120b2c', '#3a2366', '#8a4170'], grade: ['rgba(150,60,180,0.24)', 'rgba(255,120,60,0.12)'] },
     '1-7': { storm: ['#34434e', '#62798a', '#a7b8bd'], grade: ['rgba(80,125,140,0.2)', 'rgba(60,100,90,0.16)'] },
     '2-2': { night: ['#0d1634', '#26355f', '#475683'], grade: ['rgba(90,120,190,0.2)', 'rgba(40,70,90,0.14)'], mist: true },
@@ -3756,6 +3843,7 @@
     '2-1': { pts: [G.MK, G.T1, G.T2, G.TA], col: '#6fb36a' },
     '3-1': { pts: [G.S, G.C, G.P, G.K, G.W, G.B, G.KB, GEO(113.2, -7.3)].map((p) => off(p, -3)), col: '#ff9a5a' },
     '3-2': { pts: [GEO(106.85, -6.2), GEO(107.25, -6.5), GEO(107.6, -6.9)], col: '#22b6d6' },
+    '3-4': { pts: [G.P, G.K, G.W].map((p) => off(p, 3)), col: '#9ac2d6' },
     '3-3': { pts: [G.MK, GEO(103.0, -3.2), GEO(102.35, -2.6)].map((p) => off(p, -3)), col: '#4fd2e8' },
     '4-1': { pts: [G.W, GEO(110.55, -7.5), GEO(110.44, -7.62)], col: '#e8c27a' },
   };
@@ -3776,6 +3864,7 @@
     '2-2': '<path d="M7 22V3"/><path d="M7 5l12-1.5v4L7 9z"/><circle cx="7" cy="13" r="1.6"/><path d="M4 22h6"/>',
     '2-3': '<ellipse cx="12" cy="12" rx="6" ry="9" transform="rotate(35 12 12)"/><path d="M8.6 17.4c3.2-3 .2-7.6 6.8-10.8"/>',
     '3-2': '<path d="M2 15h13l7 3v1H2z"/><path d="M4 21h16M8 19v2M16 19v2"/><path d="M2 11h6M1 8h5"/>',
+    '3-4': '<path d="M2 16h13l7 3v1H2z"/><path d="M4 22h16"/><path d="M6 4l-2 6h3l-2 5M14 3l-1 3M18 3l-1 3M10 5l-1 3"/>',
     '3-3': '<path d="M2 20l5-8 4 5 4-9 7 12z"/><path d="M3 16h12l5 2v1H3z"/>',
     '4-1': '<path d="M3 17h13l3-3v-4H8v4H3z"/><path d="M10 10V6h3v4M5 17v2M9 17v2M14 17v2"/><path d="M11 4c1-2 4-2 5 0"/>',
     '3-1': '<path d="M3 14h12l5 3v2H3z"/><path d="M5 14V10h9l3 4"/><path d="M2 21h20M18 9l3-2M18 12l4-1"/>',
@@ -3819,6 +3908,12 @@
       + '<g fill="#ffcf85" opacity=".5"><rect x="8" y="55" width="30" height=".7"/><rect x="12" y="57.5" width="22" height=".6"/><rect x="16" y="68" width="18" height=".8"/><rect x="2" y="74" width="30" height="1"/></g>'
       + '<g stroke="#56622c" stroke-width=".5"><path d="M0 54.5H80M0 57H80M0 66H80M0 71H80M0 78H80M0 88H80"/></g>'
       + cardDeck('g', '#c9c3bd', '#8a7d78', '#9c8f88'),
+    '3-4': cardSky('tb', [[0, '#1c2630'], [0.45, '#3b5361'], [0.75, '#6f8996']])
+      + '<path d="M54 8 L49 22 H54 L48 36" fill="none" stroke="#e8f4ff" stroke-width="1.6" opacity=".85"/>'
+      + '<g stroke="#bcd3df" stroke-width=".6" opacity=".55">' + Array.from({ length: 26 }, (_, i) => `<path d="M${(i * 7.3) % 82} ${(i * 13) % 50} l-3 7"/>`).join('') + '</g>'
+      + '<rect x="0" y="52" width="80" height="48" fill="#3f5446"/>'
+      + '<g stroke="#2d3d33" stroke-width=".5"><path d="M0 54.5H80M0 57H80M0 66H80M0 71H80M0 78H80M0 88H80"/></g>'
+      + cardDeck('b', '#9aa4ab', '#5d666d', '#6c757c'),
     '3-3': cardSky('tk', [[0, '#3f86c8'], [0.5, '#8cc2e4'], [0.66, '#e3f0f2']])
       + '<circle cx="62" cy="16" r="14" fill="#fff6d8" opacity=".35"/><circle cx="62" cy="16" r="4.5" fill="#fffbea"/>'
       + '<path d="M0 44 L8 34 L16 38 L28 20 L38 33 L48 26 L58 36 L70 24 L80 31 V56 H0z" fill="#8aa0b6"/><path d="M25 24 L28 20 L31.5 24.6 L29 23.4 L27 25z" fill="#eef4f7"/>'
@@ -3829,7 +3924,7 @@
       + cardDeck('k', '#d6dbdf', '#8f989f', '#a3abb2'),
   };
   // kereta asli (lokomotif + gerbong) digambar sekali ke kanvas transparan 480x600, moncong ke kanan
-  const TRAIN_CARD = { '3-2': 'hst2', '3-3': 'hst', '4-1': 'steam' }, trainCardCache = {};
+  const TRAIN_CARD = { '3-2': 'hst2', '3-3': 'hst', '3-4': 'hst2', '4-1': 'steam' }, trainCardCache = {};
   function trainCardImg(loco) {
     if (trainCardCache[loco]) return trainCardCache[loco];
     const cw = 480, ch = 600, cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
@@ -3857,7 +3952,7 @@
     try { drawTrain(V); } catch (e) { /* ilustrasi opsional */ } finally { W = kw; H = kh; N_COACH = keep; LOCO_FORCE = null; }
     return cv.toDataURL('image/png');
   }
-  const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100', '4-1': '0 0 80 100' };
+  const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100', '3-4': '0 0 80 100', '4-1': '0 0 80 100' };
   const cardArt = (id) => TRAIN_CARD[id] ? CARD_BG[id] + `<image href="${trainCardImg(TRAIN_CARD[id])}" x="0" y="0" width="80" height="100" preserveAspectRatio="none"/>` : MIS_ART[id];
   const misArt = (id) => MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
@@ -4200,7 +4295,7 @@
     textCache.clear();
   }
   // ringkasan tugas misi (1–2 kalimat) untuk halaman deskripsi yang muat satu layar HP tanpa digulir
-  const BRIEF_SHORT = {"1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Bersilang dengan KA 117 di Kali Kecil: tunggu sinyal S2 hijau.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
+  const BRIEF_SHORT = {"3-4": "Bawa Guntur 320 km/h menembus badai di Lengkung Watu. Rel basah: rem jauh lebih awal, ikuti papan REM, dan waspadai wesel Watu.", "1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Bersilang dengan KA 117 di Kali Kecil: tunggu sinyal S2 hijau.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
   function showBrief() {
     const m = MIS, R = ROUTE, f = finalStation();
     $('briefEyebrow').textContent = m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
