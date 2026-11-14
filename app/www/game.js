@@ -11405,34 +11405,39 @@
   const YARD_BASE = new WeakMap();
   function drawYardTrain(V, pk, yb, sc0) {
     // kereta terparkir dilukis pada resolusi layar sebenarnya (tajam di semua zoom) dengan pencahayaan adegan yang sama seperti kereta pemain.
-    // Gambar dasar di-cache per skala & cahaya (dilukis ulang hanya saat zoom/cahaya berubah) lalu ditempel 1:1 di piksel perangkat bulat: tidak bergoyang
+    // Gambar dasar di-cache (dilukis ulang saat cahaya berubah, kereta melaju, atau zoom sudah berhenti). Selama zoom berlangsung cache diskalakan mulus
+    // & diletakkan di posisi pecahan yang tepat sehingga ikut bergerak persis bersama rel (tidak bergoyang); saat kamera diam ditempel tepat di piksel perangkat (tajam)
     const { c, ppm, X } = V, P = ppm * sc0, nx = X(pk.nose), carL = pk.freight ? WAGON_LEN : COACH_LEN, TL = LOCO_LEN + pk.n * (carL + GAP), pad = 3;
     const minX = pk.flip ? nx - pad * P : nx - (TL + pad) * P, maxX = pk.flip ? nx + (TL + pad) * P : nx + pad * P, minY = yb - 9.5 * P, maxY = yb + 1.6 * P;
     if (minX > W + 20 || maxX < -20) return;
     const sa = Math.max(1, Math.abs(c.getTransform().a)), bw = Math.ceil((maxX - minX) * sa) + 2, bh = Math.ceil((maxY - minY) * sa) + 2;
-    const key = [(P * sa).toFixed(2), Math.round(V.p * 40), Math.round((V.rimA || 0) * 20), V.rim, !!V.night, Math.round((V.sunShadow || 0) * 10), pk.moving ? Math.round(pk.nose * 12) : 's'].join('|'); // kereta bergerak: dilukis ulang tiap langkah (roda berputar)
+    const key = [sa, Math.round(V.p * 40), Math.round((V.rimA || 0) * 20), V.rim, !!V.night, Math.round((V.sunShadow || 0) * 10), pk.moving ? Math.round(pk.nose * 12) : 's'].join('|'); // kereta bergerak: dilukis ulang tiap langkah (roda berputar)
     let B = YARD_BASE.get(pk);
-    if (!B || B.key !== key) {
+    const steady = !!B && Math.abs(P - B.lastP) < 1e-6, still = steady && Math.abs(minX - B.lastX) < 1e-3 && Math.abs(minY - B.lastY) < 1e-3; // zoom & kamera diam
+    if (B) { B.lastP = P; B.lastX = minX; B.lastY = minY; }
+    const fr = B ? P / B.P : 1;
+    if (!B || B.key !== key || Math.abs(fr - 1) > 0.25 || (steady && Math.abs(fr - 1) > 1e-4)) {
       if (!B) { B = { cv: document.createElement('canvas') }; YARD_BASE.set(pk, B); }
       const cv = B.cv; if (cv.width < bw || cv.height < bh) { cv.width = Math.max(cv.width, bw); cv.height = Math.max(cv.height, bh); }
       const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.setTransform(sa, 0, 0, sa, 0, 0);
       const L0 = (TL + pad) * P, w = maxX - minX, keep = { W, H, N_COACH, CAR_LEN, MIS, LOCO_FORCE };
       if (pk.flip) { g.translate(w, 0); g.scale(-1, 1); // lokomotif menghadap kiri: dicerminkan; tulisan tetap terbaca
         g.fillText = function (t, x, y, mw) { this.save(); this.translate(x, y); this.scale(-1, 1); CanvasRenderingContext2D.prototype.fillText.call(this, t, 0, 0, mw); this.restore(); }; }
-      const VV = Object.assign({}, V, { c: g, ppm: P, gy: yb - minY, X: (wx) => (pk.flip ? w - pad * P : L0) + wx * P, st: { x: pk.dyn ? -pk.nose : 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null, steam: 0, v: 0, notch: 0 },
+      const VV = Object.assign({}, V, { c: g, ppm: P, gy: yb - minY, X: (wx) => (pk.flip ? w - pad * P : L0) + wx * P, st: { x: 0, doors: 'closed', aboard: 0, spin: pk.dyn ? -pk.nose : 0, carDyn: null, steam: 0, v: 0, notch: 0 },
         tf: 0, lit: false, upper: undefined, bdy: () => 0, refl: 0, camX: 0 });
       W = Math.max(W, w + 400); H = Math.max(H, (maxY - minY) + 400); N_COACH = pk.n; CAR_LEN = carL; LOCO_FORCE = pk.loco === 'cakra' ? null : pk.loco; if (pk.freight) MIS = MISSIONS['2-1'];
       try { drawTrain(VV); } catch (e) { /* kereta parkir opsional */ } finally { if (Object.prototype.hasOwnProperty.call(g, 'fillText')) delete g.fillText; W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; }
-      B.key = key; B.w = bw; B.h = bh;
+      B.key = key; B.w = bw; B.h = bh; B.P = P; B.lastP = P; B.lastX = minX; B.lastY = minY;
     }
-    const dx0 = Math.round(minX * sa), dy0 = Math.round(minY * sa), cw = B.w, ch = B.h;
+    const f = P / B.P, kk = sa / f, cw = B.w, ch = B.h, DW = cw / kk, DH = ch / kk; // kk = piksel cache per px layar
+    const DX = still && Math.abs(f - 1) < 1e-4 ? Math.round(minX * sa) / sa : minX, DY = still && Math.abs(f - 1) < 1e-4 ? Math.round(minY * sa) / sa : minY;
     const need = (cv) => { if (!cv) cv = document.createElement('canvas'); if (cv.width < cw || cv.height < ch) { cv.width = Math.max(cv.width, cw); cv.height = Math.max(cv.height, ch); } return cv; };
     const roof = yb - trainH(4.25) * P, Ls = yardLights(V).filter((L) => L.x > minX - L.R * 2 && L.x < maxX + L.R * 2);
-    const blit = (SRC) => { if (!pk.dyn) { c.drawImage(SRC, 0, 0, cw, ch, dx0 / sa, dy0 / sa, cw / sa, ch / sa); return; }
+    const blit = (SRC) => { if (!pk.dyn) { c.drawImage(SRC, 0, 0, cw, ch, DX, DY, DW, DH); return; }
       // kereta yang masuk lewat wesel: tiap kendaraan digeser vertikal sesuai lintasannya sendiri (menyambung di lengkung)
       const sd = ROUTE.yard.sid[pk.sid], bnd = [0, LOCO_LEN + GAP / 2]; for (let q = 1; q <= pk.n; q++) bnd.push(LOCO_LEN + GAP + q * (carL + GAP) - GAP / 2);
       for (let k = 0; k < bnd.length - 1; k++) { const w0 = pk.nose + (k ? bnd[k] : -pad), w1 = pk.nose + (k === bnd.length - 2 ? bnd[k + 1] + pad : bnd[k + 1]), oy = DBL_K * (yardPath(pk.sid, pk.nose + (bnd[k] + bnd[k + 1]) / 2) - sd.o) * ppm + (pk.moving ? Math.sin(performance.now() / 1000 * 9 + k * 1.7) * 0.035 * ppm : 0); // + ayunan pegas
-        const s0 = Math.max(0, Math.floor(X(w0) * sa - dx0)), s1 = Math.min(cw, Math.ceil(X(w1) * sa - dx0) + 1); if (s1 <= s0) continue; c.drawImage(SRC, s0, 0, s1 - s0, ch, (dx0 + s0) / sa, dy0 / sa + oy, (s1 - s0) / sa, ch / sa); }
+        const s0 = Math.max(0, Math.floor((X(w0) - DX) * kk)), s1 = Math.min(cw, Math.ceil((X(w1) - DX) * kk) + 1); if (s1 <= s0) continue; c.drawImage(SRC, s0, 0, s1 - s0, ch, DX + s0 / kk, DY + oy, (s1 - s0) / kk, DH); }
       if (pk.lit) { const oy = DBL_K * (yardPath(pk.sid, pk.nose + 2) - sd.o) * ppm, lx = X(pk.nose) - 0.1 * P, ly = yb + oy - trainH(1.6) * P, dawnK = clamp((0.45 - V.p) / 0.45, 0, 1), k = (0.45 + 0.55 * dawnK) * (pk.moving ? 1 : 0.38); // lampu depan menyala & berkas ke depan (diredupkan setelah berhenti)
         if (pk.loco === 'cakra') { const t = performance.now() / 1000, ex = X(pk.nose + 8.2), ey = yb + oy - trainH(4.4) * P; for (let q = 0; q < 7; q++) { const ph = ((t * (pk.moving ? 0.9 : 0.35) + q / 7) % 1), r = (0.35 + ph * 1.2) * P, A = (pk.moving ? 0.26 : 0.14) * (1 - ph), px = ex + ph * (pk.moving ? 6 : 1.2) * P, py = ey - ph * 2.8 * P; const g = c.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, `rgba(96,98,102,${A.toFixed(3)})`); g.addColorStop(1, 'rgba(96,98,102,0)'); c.fillStyle = g; c.fillRect(px - r, py - r, 2 * r, 2 * r); } } // asap knalpot diesel
         c.save(); c.globalCompositeOperation = 'lighter';
@@ -11444,7 +11449,7 @@
     if (!Ls.length) { blit(B.cv); return; }
     YTL = need(YTL); const g = YTL.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, cw + 2, ch + 2); g.drawImage(B.cv, 0, 0, cw, ch, 0, 0, cw, ch);
     // cahaya lampu sorot & jendela dipo ditambahkan (aditif) hanya pada siluet kereta
-    YTL2 = need(YTL2); const h2 = YTL2.getContext('2d'); h2.setTransform(1, 0, 0, 1, 0, 0); h2.globalCompositeOperation = 'source-over'; h2.globalAlpha = 1; h2.clearRect(0, 0, cw + 2, ch + 2); h2.setTransform(sa, 0, 0, sa, -dx0, -dy0);
+    YTL2 = need(YTL2); const h2 = YTL2.getContext('2d'); h2.setTransform(1, 0, 0, 1, 0, 0); h2.globalCompositeOperation = 'source-over'; h2.globalAlpha = 1; h2.clearRect(0, 0, cw + 2, ch + 2); h2.setTransform(kk, 0, 0, kk, -DX * kk, -DY * kk);
     for (const L of Ls) { const rr = Math.hypot(L.R, yb - L.y), rg = h2.createRadialGradient(L.x, L.y, (yb - L.y) * 0.55, L.x, L.y, rr); rg.addColorStop(0, `rgba(${L.col},${(0.42 * L.a).toFixed(3)})`); rg.addColorStop(0.5, `rgba(${L.col},${(0.14 * L.a).toFixed(3)})`); rg.addColorStop(1, `rgba(${L.col},0)`);
       h2.fillStyle = rg; h2.fillRect(minX, minY, maxX - minX, maxY - minY);
       if (!L.win) { const sg = h2.createLinearGradient(L.x - 2.2 * ppm, 0, L.x + 2.2 * ppm, 0); sg.addColorStop(0, 'rgba(255,248,226,0)'); sg.addColorStop(0.5, `rgba(255,248,226,${(0.55 * L.a).toFixed(3)})`); sg.addColorStop(1, 'rgba(255,248,226,0)');
