@@ -12827,6 +12827,15 @@
         if (op < 0.01) line([[u(d0 + 10), 4.5], [u(d0 + 10), 1.2]], 'rgba(90,100,108,0.6)', 1);
         box(u(d0 + 18), u(d0 + 2), 0.75, 0.95, '#3a4045');
       }
+      if (!ARGOC && !STEAMC) { // gerbong Cakra setara Guntur/Agraveda: kaca memantulkan langit & cakrawala dengan kilau mengalir, badan berbentuk silinder,
+        // sisi matahari hangat, sambungan panel berkilau, oklusi di ujung gerbong, garis cahaya di bahu atap
+        const bx = Math.min(L(u(0)), L(u(240))), bw = Math.abs(L(u(240)) - L(u(0)));
+        for (let i = 0; i < 7; i++) { const wx = L(u(36 + i * 24.4)), ww = (21 / 12) * ppm; if (!V.lit) duskGlass(c, V, wx, Y(4.38), ww, 1.46 * ppm, () => roundRect(c, wx, Y(4.38), ww, 1.46 * ppm, 0.2 * ppm), 0.85); }
+        duskBody(c, V, bx, Y(4.85), bw, 3.85 * ppm, () => roundRect(c, bx, Y(4.85), bw, 3.85 * ppm, 0.35 * ppm));
+        c.strokeStyle = 'rgba(40,46,56,0.24)'; c.lineWidth = 1; c.beginPath(); for (const px of [30, 90, 150, 210]) { c.moveTo(L(u(px)), Y(4.78)); c.lineTo(L(u(px)), Y(1.6)); } c.stroke();
+        c.strokeStyle = 'rgba(255,255,255,0.3)'; c.beginPath(); for (const px of [30, 90, 150, 210]) { c.moveTo(L(u(px)) + 1, Y(4.78)); c.lineTo(L(u(px)) + 1, Y(1.6)); } c.stroke();
+        for (const [ex, dir] of [[bx, 1], [bx + bw, -1]]) { const eg = c.createLinearGradient(ex, 0, ex + dir * 0.6 * ppm, 0); eg.addColorStop(0, 'rgba(40,46,56,0.24)'); eg.addColorStop(1, 'rgba(40,46,56,0)'); c.fillStyle = eg; c.fillRect(Math.min(ex, ex + dir * 0.6 * ppm), Y(6.05), 0.6 * ppm, 5.0 * ppm); }
+        if (!V.night && !V.storm && V.tf < 0.5) { const T = skyTone(); c.strokeStyle = `rgba(${T.rim},0.75)`; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(L(u(8)), Y(6.08)); c.lineTo(L(u(232)), Y(6.08)); c.stroke(); } }
       c.fillStyle = SENJAC ? '#e9c26a' : '#4a5358'; c.font = `700 ${Math.max(6, Math.round(0.42 * ppm))}px "Plus Jakarta Sans", sans-serif`;
       c.textAlign = 'left'; c.textBaseline = 'middle';
       if (!STEAMC) c.fillText(HSTC ? `KN · 0${k + 1}` : HST2C ? `GT · 0${k + 1}` : ARGOC ? `EKS · 0${k + 1}` : `K1 · 0${k + 1}`, L(u(36)), Y(1.5)); // di atas tepi peron agar tidak terpotong saat berhenti di stasiun
@@ -13235,6 +13244,11 @@
       if (V.cabA > 0.02) { c.fillStyle = `rgba(255,215,143,${V.cabA})`; roundRect(c, L(3.55), Y(5.55), 2.1 * ppm, 1.35 * ppm, 0.18 * ppm); c.fill(); }
       if (V.refl > 0.01) { poly([[3.2, 5.55], [2.8, 5.55], [3.15, 4.2], [3.55, 4.2], [3.55, 4.5]], `rgba(255,255,255,${V.refl})`); poly([[1.1, 5.55], [0.95, 5.55], [0.25, 4.12], [0.42, 4.12]], `rgba(255,255,255,${V.refl * 1.4})`); }
       line([[1.45, 5.55], [1.45, 4.2]], mask, lw(0.08));
+      // setara Guntur/Agraveda: badan berbentuk silinder dengan sisi matahari hangat, kilau tepi atap, oklusi di ujung belakang, kaca visor memantulkan langit
+      duskBody(c, V, L(15.85), Y(6.05), 16.9 * ppm, 4.2 * ppm, body);
+      duskGlass(c, V, L(3.6), Y(5.55), 4.6 * ppm, 1.4 * ppm, () => { c.beginPath(); c.moveTo(...P(3.55, 5.55)); c.lineTo(...P(0.9, 5.55)); c.lineTo(...P(0.2, 4.15)); c.lineTo(...P(3.55, 4.15)); c.closePath(); }, 0.6);
+      { const eg = c.createLinearGradient(L(15.85), 0, L(15.85) + 0.6 * ppm * Math.sign(L(0) - L(15.85)), 0); eg.addColorStop(0, 'rgba(40,46,56,0.24)'); eg.addColorStop(1, 'rgba(40,46,56,0)'); c.save(); body(); c.clip(); c.fillStyle = eg; c.fillRect(Math.min(L(15.85), L(15.25)), Y(6.1), 0.6 * ppm, 4.4 * ppm); c.restore(); }
+      if (!V.night && !V.storm && V.tf < 0.5) { const T = skyTone(); c.strokeStyle = `rgba(${T.rim},0.75)`; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); c.moveTo(...P(15.0, 6.03)); c.lineTo(...P(3.4, 6.03)); c.stroke(); }
     }
     // pintu kabin (Guntur baru: badan mulus tanpa pintu/panel lama)
     if (!(SH === 'hst2' && !HSTL)) {
