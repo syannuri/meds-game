@@ -11598,7 +11598,7 @@
       c.strokeStyle = '#ff7a1a'; c.lineWidth = Math.max(1, 0.15 * u); c.beginPath(); c.moveTo(sx + 0.3 * u, y - 1.6 * u); c.lineTo(sx + 0.75 * u, y - 1.2 * u + sw); c.stroke(); }
   }
   function drawDoubleShadows(V) {
-    if (!ROUTE.double || !(V.sunShadow > 0.01) || !V.st) return;
+    if (!(V.sunShadow > 0.01) || !V.st || V.st !== S) return;
     const { c, ppm, gy, X, st } = V, G = dblShadowGeom(V), Lx = G.L;
     if (!SHD) SHD = document.createElement('canvas'); const cv = c.canvas; if (SHD.width !== cv.width || SHD.height !== cv.height) { SHD.width = cv.width; SHD.height = cv.height; }
     const g = SHD.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.clearRect(0, 0, SHD.width, SHD.height); g.setTransform(c.getTransform());
@@ -11611,15 +11611,17 @@
       g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); };
     const both = (xa, xb, y0, nL, nR, ext) => { g.fillStyle = 'rgba(10,14,20,0.45)'; shape(xa - 0.8 * ppm, xb + 0.8 * ppm, y0, nL, nR, ext, Lx * 1.12); g.fillStyle = 'rgba(10,14,20,1)'; shape(xa, xb, y0, nL, nR, ext, Lx * 0.9); };
     // Guntur (moncong di kanan, ekor rata)
-    both(X(st.x - TRAIN_LEN), X(st.x), gy + 0.3 * ppm, 0, 10 * ppm, 0);
+    both(X(st.x - TRAIN_LEN), X(st.x), gy + 0.3 * ppm, 0, (['hst', 'hst2', 'argo'].includes(MIS.loco) ? 10 : 3) * ppm, 0);
     // tiap Kilat (moncong di kiri & kabin belakang di kanan), kabur gerak memanjang ke belakang sebanding kecepatan
     let yMax = gy + Lx;
+    // kereta yang bersilang di jalur 2 (moncong di kiri): bayangannya jatuh di balas & sawah depan dengan warna yang sama
+    const MT = ROUTE.meet; if (MT && st.meet && st.meet.phase === 'run') { const xa = X(st.meet.x), xb = X(st.meet.x + oppLen()); if (xb > -80 && xa < W + 80) { const yb = gy + MEET_NEAR * ppm * meetK(st.meet.x + oppLen() / 2) * 1.0; both(xa, xb, yb + 0.3 * ppm, 3 * ppm, 0, 0); yMax = Math.max(yMax, yb + Lx * 1.12); } }
     for (const K of st.kilats || []) { const len = kilatLen(), xa = X(K.x), xb = X(K.x + len); if (xb < -80 || xa > W + 80) continue;
       const yb = gy + DBL_K * kO(K)(K.x + len / 2) * ppm, blur = REDUCE_MOTION ? 0 : clamp((K.v + (st.v || 0) - 45) / 50, 0, 0.85);
       both(xa, xb, yb + 0.3 * ppm, 10.5 * ppm, 10.5 * ppm, blur * 1.6 * ppm); yMax = Math.max(yMax, yb + Lx * 1.12); }
     // kegelapan seragam di dekat kaki, memudar ke ujung jauh: satu lapis untuk semua (tidak menumpuk)
     const a = 0.42 * V.sunShadow, fg = g.createLinearGradient(0, gy, 0, yMax);
-    fg.addColorStop(0, `rgba(0,0,0,${a})`); fg.addColorStop(clamp((gy + DBL_K * ROUTE.double.o * ppm - gy) / (yMax - gy), 0.05, 0.9), `rgba(0,0,0,${a * 0.85})`); fg.addColorStop(1, 'rgba(0,0,0,0)');
+    fg.addColorStop(0, `rgba(0,0,0,${a})`); fg.addColorStop(ROUTE.double ? clamp((gy + DBL_K * ROUTE.double.o * ppm - gy) / (yMax - gy), 0.05, 0.9) : 0.7, `rgba(0,0,0,${a * 0.85})`); fg.addColorStop(1, 'rgba(0,0,0,0)'); // gelap seragam di balas & sawah, memudar hanya di ujung
     g.globalCompositeOperation = 'destination-in'; g.fillStyle = fg; g.fillRect(-W, gy - ppm, W * 3, yMax - gy + 2 * ppm); g.globalCompositeOperation = 'source-over';
     c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(SHD, 0, 0); c.restore();
   }
@@ -12523,7 +12525,7 @@
 
     // ---- bayangan ----
     const x0 = L(TRAIN_LEN), x1 = fx;
-    if (V.sunShadow > 0.01 && !(ROUTE.double && !LOCO_FORCE)) { // jalur ganda: bayangan digabung dengan Kilat di drawDoubleShadows
+    if (V.sunShadow > 0.01 && V.st !== S) { // kereta pemain: bayangan matahari satu lapis di drawDoubleShadows (bersama kereta lain)
       // bayangan panjang matahari pagi jatuh ke depan-kiri di atas balas dan sawah
       const sg = c.createLinearGradient(0, gy, 0, gy + 5 * ppm);
       sg.addColorStop(0, `rgba(10,14,20,${0.42 * V.sunShadow})`); sg.addColorStop(1, 'rgba(10,14,20,0)');
