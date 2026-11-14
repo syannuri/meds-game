@@ -101,37 +101,47 @@
       tutorial: true, startClosed: true, noDoors: true,
       tags: ['Sinyal', 'Batas kecepatan'],
       speaker: { who: 'Dimas, pengatur perjalanan', initials: 'DM' },
-      brief: 'Pagi, Anett. Bawa Cakra kosong ke Cibening. Di Halte Kali Kecil kita bersilang dengan KA 117 Pangrango dari arah berlawanan: masuk sepur belok, berhenti, dan tunggu sinyal S2 hijau. Baca warna sinyalnya; aku pandu lewat radio.',
+      brief: 'Pagi, Anett. Bawa Cakra kosong ke Cibening, lintas bebas sampai 100 km/h. Waspadai sinyal blok B1 dan batas 70 di Tikungan Bukit Kapur. Di Halte Kali Kecil kita bersilang dengan KA 117 Pangrango, Cakra merah dari arah berlawanan: masuk sepur belok, berhenti, dan tunggu sinyal S2 hijau. Aku pandu lewat radio.',
       weather: 'cerah',
       intro: 'KA Lokal 205 dari Cibening masuk jalur 2. Tunggu ia berhenti dan S1 hijau, lalu berangkat.',
       reward: '<strong>Dimas:</strong> Sinyal sudah kamu kuasai. Berikutnya, penumpang pertamamu.',
       aboard: 0,
       route: {
-        lineSpeed: 60,
+        lineSpeed: 100,
+        // koordinat final (tidak direntangkan): 4 km, dua bentang lurus 100 km/h, tikungan & jembatan 70, area stasiun 40, wesel 30
         stations: [
           { name: 'SUKAMAJU', elev: '+386 m', x: 0, sched: 0, waiting: 0, heri: true },
-          { name: 'KALI KECIL', elev: '+398 m', x: 600, sched: 450, waiting: 0 },
-          { name: 'CIBENING', elev: '+412 m', x: 1200, sched: 900, waiting: 0, final: true, bening: true },
+          { name: 'KALI KECIL', elev: '+398 m', x: 2000, sched: 0, waiting: 0 },
+          { name: 'CIBENING', elev: '+412 m', x: 4000, sched: 0, waiting: 0, final: true, bening: true },
         ],
         zones: [
           { from: -120, to: 200, limit: 40, label: 'area Stasiun Sukamaju' },
-          { from: 410, to: 435, limit: 30, label: 'wesel masuk Kali Kecil', turnout: true },
-          { from: 350, to: 740, limit: 40, label: 'area Halte Kali Kecil' },
-          { from: 710, to: 735, limit: 30, label: 'wesel keluar Kali Kecil', turnout: true },
-          { from: 1000, to: 1350, limit: 40, label: 'area Stasiun Cibening' },
+          { from: 820, to: 1080, limit: 70, label: 'Tikungan Bukit Kapur', curve: true },
+          { from: 1740, to: 2150, limit: 40, label: 'area Halte Kali Kecil' },
+          { from: 1800, to: 1825, limit: 30, label: 'wesel masuk Kali Kecil', turnout: true },
+          { from: 2120, to: 2145, limit: 30, label: 'wesel keluar Kali Kecil', turnout: true },
+          { from: 2880, to: 3100, limit: 70, label: 'Jembatan Ci Bening' },
+          { from: 3800, to: 4150, limit: 40, label: 'area Stasiun Cibening' },
         ],
         signals: [
           { id: 'S1', x: 60, start: 0, init: 'R' },
-          { id: 'J1', x: 350, init: 'Y' },
-          { id: 'S2', x: 640, start: 1, init: 'R' },
-          { id: 'J2', x: 860, init: 'Y' },
-          { id: 'S3', x: 1080, init: 'R' },
+          { id: 'B1', x: 1300, init: 'G' },
+          { id: 'J1', x: 1600, init: 'Y' },
+          { id: 'S2', x: 2040, start: 1, init: 'R' },
+          { id: 'J2', x: 2600, init: 'Y' },
+          { id: 'S3', x: 3880, init: 'R' },
         ],
-        scripts: [{ type: 'hold', sig: 'S3', at: 900, near: 90, wait: 6, radio: 'Jalur aman, S3 hijau. Silakan jalan, Anett.' }],
-        // persilangan di Halte Kali Kecil: sepur belok di antara dua wesel; KA 117 Pangrango (merah marun-krem) lewat di jalur utama
-        meet: { st: 1, entry: 410, exit: 710, foul: 648, name: 'KA 117 Pangrango', cars: 4, liv: { band: '#7e1d2a', stripe: '#f2c94c', trim: '#f4ead2', cab: '#8e2230' } },
-        crossings: [], goats: [], fog: null, bridge: null, tunnel: null, grades: [], switchX: null, hints: [],
-        bufferStop: 1300,
+        scripts: [
+          // sinyal blok B1 mendadak merah (kereta langsir di petak depan), lalu kuning & hijau: Anett harus membaca & mengurangi kecepatan
+          { type: 'timed', sig: 'B1', at: 560, red: 11, yellow: 9, msg: 'Sinyal blok B1 MERAH: ada langsiran di petak depan. Kurangi kecepatan!', yellowMsg: 'B1 kuning: lewati dengan hati-hati, maks 40 km/h.' },
+          { type: 'hold', sig: 'S3', at: 3600, near: 90, wait: 6, radio: 'Jalur aman, S3 hijau. Silakan jalan, Anett.' },
+        ],
+        // persilangan di Halte Kali Kecil: sepur belok di antara dua wesel; KA 117 Pangrango (rangkaian Cakra livery merah) lewat langsung di jalur utama
+        meet: { st: 1, entry: 1800, exit: 2120, foul: 2052, ease: 75, name: 'KA 117 Pangrango', cars: 4, cakra: true, pal: 'merah', vmax: 22, liv: { body: '#eef1f3', band: '#a82337', stripe: '#e2b64a', trim: '#f4ead2', cab: '#a82337' } },
+        bridges: [{ from: 2900, to: 3080, truss: true, name: 'Jembatan Ci Bening' }],
+        crossings: [], goats: [], fog: null, bridge: null, tunnel: null, grades: [], switchX: null,
+        hints: [{ at: 600, msg: 'Tikungan Bukit Kapur di depan: batas 70 km/h. Kurangi tenaga lebih awal.' }, { at: 2600, msg: 'Jembatan Ci Bening di depan: batas 70 km/h.' }],
+        bufferStop: 4100,
         // emplasemen Sukamaju: jalur 2 (di balik peron pulau) & jalur 3 bergabung ke jalur utama lewat wesel di depan stasiun;
         // sinyal berangkat jalur 2/3 & sinyal masuk untuk kereta dari Cibening; KA Lokal 205 masuk jalur 2 sebelum Cakra berangkat
         yard: {
@@ -1048,7 +1058,7 @@
   };
   const ROUTE_LM = {
     '1-1': [{ id: 'menara', x: 260 }],
-    '1-2': [{ id: 'pg', x: 640 }],
+    '1-2': [{ id: 'pg', x: 3350 }],
     '1-3': [{ id: 'asam', x: 1020 }],
     '1-4': [{ id: 'candi', x: 520 }, { id: 'pg', x: 820 }, { id: 'masjid', x: 2330 }],
     '1-5': [{ id: 'gunung', x: 2400 }, { id: 'curug', x: 7800 }],
@@ -1064,7 +1074,7 @@
   // Tiap misi: k = faktor panjang antarstasiun, line = batas jalur baru, sched = jadwal tiba baru (detik jam game).
   // Peta posisi: ±A m di sekitar stasiun tetap (area stasiun, sinyal masuk, peron tidak berubah), bagian tengah direntangkan.
   const STRETCH = {
-    '1-2': { k: 3, line: 100, sched: [0, 760, 1560] }, '1-3': { k: 3, line: 100, sched: [0, 860, 1960] }, '1-4': { k: 4, line: 140, sched: [0, 1500, 3030] },
+    '1-2': { k: 1, line: 100, sched: [0, 820, 1700] }, '1-3': { k: 3, line: 100, sched: [0, 860, 1960] }, '1-4': { k: 4, line: 140, sched: [0, 1500, 3030] },
     '1-6': { k: 3, line: 130, sched: [0, 2090, 3380] }, '2-1': { k: 2.5, line: 100, sched: [0, 3100] }, '1-7': { k: 3, line: 120, sched: [0, 1900, 4400] },
     '2-2': { k: 3, line: 100, sched: [0, 1800, 3600] }, '2-3': { k: 3, line: 110, sched: [0, 1310, 3600] }, '4-1': { k: 2, line: 80, sched: [0, 2210, 4770] },
     // jadwal dihitung dari simulasi laju: selisih waktu tempuh lama→baru ditambahkan dengan cadangan 15% (kelonggaran sama seperti semula)
@@ -3289,20 +3299,22 @@
     S.splash = S.splash.filter((q) => q.life < q.max && q.y > -0.2);
   }
   const OPP_LOCO = 17, OPP_CAR = 20.5;
-  const oppLen = () => OPP_LOCO + ROUTE.meet.cars * OPP_CAR;
+  const oppLen = () => (ROUTE.meet.cakra ? LOCO_LEN + ROUTE.meet.cars * (COACH_LEN + GAP) : OPP_LOCO + ROUTE.meet.cars * OPP_CAR);
   function stepMeet(dt) {
     const MT = ROUTE.meet;
     if (!MT) return;
     const m = S.meet;
     // KA 112 baru masuk setelah Cakra berhenti di sepur belok
     if (m.phase === 'idle' && S.st >= MT.st) {
-      m.phase = 'run'; m.x = S.x + 230; m.v = 15;
+      m.phase = 'run'; m.x = S.x + (MT.vmax ? 760 : 230); m.v = MT.vmax || 15;
       radio(`${MT.name} masuk ${titleCase(ROUTE.stations[MT.st].name)} dari arah berlawanan. Tetap di sepur belok sampai sinyal S2 hijau.`, 5.5);
     }
     if (m.phase !== 'run') return;
-    m.v += clamp(13 - m.v, -0.6 * dt, 0.6 * dt);
+    m.v += clamp((MT.vmax || 13) - m.v, -0.6 * dt, 0.6 * dt);
     m.x -= m.v * dt;
-    if (!m.honked && m.x < S.x + 70) { m.honked = true; Sound.farHorn(); }
+    if (!m.honked && m.x < S.x + (MT.vmax ? 320 : 70)) { m.honked = true; Sound.farHorn(); }
+    if (MT.vmax && m.x < S.x && m.x + oppLen() > S.x - TRAIN_LEN) { // berpapasan cepat: hembusan tekanan udara & getaran
+      S.shake = Math.max(S.shake, 0.28); if (!m.pass) { m.pass = true; Sound.passBy(m.v * 3.6); HAPT.buzz([18, 30, 12], 0); } }
     if (!m.cleared && m.x + oppLen() < MT.foul - 4) {
       m.cleared = true;
       if (S.phase === 'dwell') setTimeout(() => { if (S && S.mode === 'play') radio(`${MT.name} sudah lewat. S2 hijau sebentar lagi, silakan berangkat.`, 4.5); }, 600);
@@ -3490,7 +3502,8 @@
       { target: '#precise', who: 'KK', text: 'Panduan titik henti: hentikan saat penunjuk di garis hijau.', when: () => stopAhead() < 30, done: () => S.v < 0.05 },
     ],
     '1-2': [
-      { target: '.strip-wrap', who: 'DM', text: 'Papan 40 di depan: batas kecepatan berlaku mulai papan itu.', when: () => S.phase === 'run' && S.x > 230 && S.st === 0, done: (t) => t > 5 },
+      { target: '.strip-wrap', who: 'DM', text: 'Lepas dari area stasiun, lintas bebas sampai 100 km/h. Tambah tenaga, tapi awasi papan batas berikutnya.', when: () => S.phase === 'run' && S.x > 230 && S.st === 0, done: (t) => t > 5 },
+      { target: '.strip-wrap', who: 'DM', text: 'Blok B1 MERAH! Turunkan kecepatan dan siap berhenti sebelum tiangnya. Biasanya cepat berubah kuning lalu hijau.', when: () => S.sig.B1 === 'R' && sigAhead('B1') > 0 && sigAhead('B1') < 900, done: (t) => t > 6 },
       { target: '.strip-wrap', who: 'DM', text: 'Sinyal masuk J1 kuning: Cakra dibelokkan ke sepur belok Kali Kecil. Paling cepat 30 km/h di wesel, lalu berhenti di marka.', when: () => sigAhead('J1') < 300 && sigAhead('J1') > 0, done: () => sigAhead('J1') < 0 },
       { target: '.strip-wrap', who: 'DM', text: 'Kita bersilang dengan KA 117. Sinyal keluar S2 tetap merah sampai ekornya melewati patok bebas merah-putih.', when: () => S.phase === 'dwell' && S.st === 1, done: () => S.meet && S.meet.cleared },
       { target: '#lever', who: 'DM', text: 'S2 hijau. Berangkat pelan, 30 km/h di wesel keluar.', when: () => S.st === 1 && S.sig.S2 === 'G' && sigAhead('S2') > 0, done: () => S.notch > 0 },
@@ -5799,7 +5812,7 @@
       // jendela berbingkai yang memantulkan langit, pintu, sambungan bordes berlipat, bogie & roda, peralatan bawah & AC atap,
       // muka ujung dengan pintu bordes, lampu ekor & alat perangkai; diterangi lampu sorot depo & matahari
       const LVm = (ROUTE.meet && ROUTE.meet.liv) || {};
-      const LIV = { meet: { body: '#ece4d2', s1: LVm.band || '#7e1d2a', s2: LVm.stripe || '#f2c94c', roof: '#b9b3a8', win: '#1d2228', nose: LVm.cab || '#8e2230' }, argo: { body: '#f1efeb', s1: '#e0702a', s2: '#a63a8a', roof: '#c3c7cc', win: '#1d242c', nose: '#e8873a' }, cakra: { body: '#eef1f3', s1: '#1f6f6d', s2: '#f2a516', roof: '#bfc6cc', win: '#1a2228', nose: '#1f6f6d' } };
+      const LIV = { meet: { body: LVm.body || '#ece4d2', s1: LVm.band || '#7e1d2a', s2: LVm.stripe || '#f2c94c', roof: '#b9b3a8', win: '#1d2228', nose: LVm.cab || '#8e2230' }, argo: { body: '#f1efeb', s1: '#e0702a', s2: '#a63a8a', roof: '#c3c7cc', win: '#1d242c', nose: '#e8873a' }, cakra: { body: '#eef1f3', s1: '#1f6f6d', s2: '#f2a516', roof: '#bfc6cc', win: '#1a2228', nose: '#1f6f6d' } };
       const PROF = [[1.38, 0.95], [1.45, 1.25], [1.45, 3.05], [1.41, 3.55], [1.3, 3.86], [1.08, 4.06], [0.7, 4.18], [0.25, 4.22]]; // [lateral dari sumbu, tinggi]
       const skyRef = (t) => mix(mix('#55708a', '#9fc0d8', p * (1 - dawnK)), '#1a2028', 0.25 + 0.5 * t), sunTint = SUNK > 0.05 ? `rgb(${sunRim})` : null;
       for (const pk of yardTrains()) {
@@ -9802,6 +9815,7 @@
     c.save();
     // jalur ganda: pantulan hanya di air sawah di depan tanggul jalur 2, tidak menimpa balas & rel jalur 2
     if (ROUTE.double) { const yc = gy + (DBL_K * ROUTE.double.o + 1.5) * ppm; c.beginPath(); c.rect(-20, yc, W + 40, H - yc + 20); c.clip(); }
+    if (ROUTE.meet) { const M = ROUTE.meet; c.beginPath(); c.moveTo(X(M.entry - 400), H + 40); for (let wx = M.entry - 400; wx <= M.exit + 400; wx += 4) c.lineTo(X(wx), gy + (MEET_NEAR * meetK(wx) + 1.6) * ppm); c.lineTo(X(M.exit + 400), H + 40); c.rect(X(M.exit + 400) - 1, -20, 1e5, H + 80); c.rect(X(M.entry - 400) - 1e5 + 1, -20, 1e5, H + 80); c.clip(); } // sepur belok: pantulan sawah tidak menutupi jalur utama di depan
     for (let i = i0; i <= i1; i++) for (let r = 0; r < 4; r++) {
       if (hash(i * 7.31 + r * 1.93) > 0.45) continue;  // hanya petak berair
       const t0 = r / rows + 0.025, t1 = (r + 1) / rows - 0.025, xa = X(i * cell), xb = X((i + 1) * cell);
@@ -11445,7 +11459,7 @@
   const kO = (K) => (K && K.t3 ? dblO3 : dblO); // jalur tempat Kilat melaju (2, atau 3 saat melintas langsung di stasiun)
   const kilatLen = () => LOCO_LEN * 2 + (ROUTE.double.kilat.cars || 6) * (COACH_LEN + GAP) + GAP;
   const MEET_NEAR = 4.6; // jarak layar (× ppm) jalur utama di depan sepur belok
-  const meetK = (x) => { const M = ROUTE.meet; return M ? smooth(M.entry, M.entry + 45, x) * (1 - smooth(M.exit - 45, M.exit, x)) : 0; };
+  const meetK = (x) => { const M = ROUTE.meet; if (!M) return 0; const e = M.ease || 45; return smooth(M.entry, M.entry + e, x) * (1 - smooth(M.exit - e, M.exit, x)); }; // lengkung balik (S) sepur belok sepanjang e m
   function drawMeetTrack(V) {
     const MT = ROUTE.meet; if (!MT) return;
     const { c, ppm, gy, X, wx0, wx1, p } = V;
@@ -11511,9 +11525,9 @@
     const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch; const c = cv.getContext('2d'), noseX = cw - pad * SP;
     const VV = { c, ppm: SP, gy: gyS, X: (wx) => noseX + wx * SP, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null, steam: 0 }, p: pq, storm: false, tf: 0, camX: 0,
       rimA: 0, rim: '#ffffff', refl: 0, lit: false, sunShadow: 0, night, bdy: () => 0 };
-    const keep = { W, H, N_COACH, CAR_LEN, MIS, LOCO_FORCE };
+    const keep = { W, H, N_COACH, CAR_LEN, MIS, LOCO_FORCE, NEO_PAL_FORCE };
     W = cw; H = ch; N_COACH = pk.n; CAR_LEN = carL; LOCO_FORCE = pk.loco === 'cakra' ? null : pk.loco; if (pk.freight) MIS = MISSIONS['2-1'];
-    try { drawTrain(VV); } catch (e) { /* sprite opsional */ } finally { W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; }
+    try { drawTrain(VV); } catch (e) { /* sprite opsional */ } finally { W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; NEO_PAL_FORCE = keep.NEO_PAL_FORCE; }
     let out = cv; if (pk.flip) { out = document.createElement('canvas'); out.width = cw; out.height = ch; const o = out.getContext('2d'); o.translate(cw, 0); o.scale(-1, 1); o.drawImage(cv, 0, 0); }
     if (Object.keys(YARD_SPRS).length > 8) for (const k in YARD_SPRS) delete YARD_SPRS[k];
     return (YARD_SPRS[key] = { cv: out, SP, gy: gyS, nose: pk.flip ? pad * SP : noseX, len: TL });
@@ -11548,13 +11562,13 @@
       if (!B) { B = { cv: document.createElement('canvas') }; YARD_BASE.set(pk, B); }
       const cv = B.cv; if (cv.width < bw || cv.height < bh) { cv.width = Math.max(cv.width, bw); cv.height = Math.max(cv.height, bh); }
       const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height); g.setTransform(sa, 0, 0, sa, 0, 0);
-      const L0 = (TL + pad) * P, w = maxX - minX, keep = { W, H, N_COACH, CAR_LEN, MIS, LOCO_FORCE };
+      const L0 = (TL + pad) * P, w = maxX - minX, keep = { W, H, N_COACH, CAR_LEN, MIS, LOCO_FORCE, NEO_PAL_FORCE };
       if (pk.flip) { g.translate(w, 0); g.scale(-1, 1); // lokomotif menghadap kiri: dicerminkan; tulisan tetap terbaca
         g.fillText = function (t, x, y, mw) { this.save(); this.translate(x, y); this.scale(-1, 1); CanvasRenderingContext2D.prototype.fillText.call(this, t, 0, 0, mw); this.restore(); }; }
       const VV = Object.assign({}, V, { c: g, ppm: P, gy: yb - minY, X: (wx) => (pk.flip ? w - pad * P : L0) + wx * P, st: { x: 0, doors: 'closed', aboard: 0, spin: pk.dyn ? -pk.nose : 0, carDyn: null, steam: 0, v: 0, notch: 0 },
         tf: 0, lit: false, upper: undefined, bdy: () => 0, refl: 0, camX: 0 });
-      W = Math.max(W, w + 400); H = Math.max(H, (maxY - minY) + 400); N_COACH = pk.n; CAR_LEN = carL; LOCO_FORCE = pk.loco === 'cakra' ? null : pk.loco; if (pk.freight) MIS = MISSIONS['2-1'];
-      try { drawTrain(VV); } catch (e) { /* kereta parkir opsional */ } finally { if (Object.prototype.hasOwnProperty.call(g, 'fillText')) delete g.fillText; W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; }
+      W = Math.max(W, w + 400); H = Math.max(H, (maxY - minY) + 400); N_COACH = pk.n; CAR_LEN = carL; LOCO_FORCE = pk.loco === 'cakra' ? null : pk.loco; if (pk.freight) MIS = MISSIONS['2-1']; if (pk.pal) NEO_PAL_FORCE = pk.pal;
+      try { drawTrain(VV); } catch (e) { /* kereta parkir opsional */ } finally { if (Object.prototype.hasOwnProperty.call(g, 'fillText')) delete g.fillText; W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; NEO_PAL_FORCE = keep.NEO_PAL_FORCE; }
       B.key = key; B.w = bw; B.h = bh; B.PS = PS; B.lastPS = PS; B.lastX = minX; B.lastY = minY;
     }
     const f = PS / B.PS, kk = B.PS / P, cw = B.w, ch = B.h, DW = cw / kk, DH = ch / kk; // kk = piksel cache per px layar (css)
@@ -11563,10 +11577,13 @@
     const roof = yb - trainH(4.25) * P, Ls = yardLights(V).filter((L) => L.x > minX - L.R * 2 && L.x < maxX + L.R * 2);
     const blit = (SRC) => { if (!pk.dyn) { c.drawImage(SRC, 0, 0, cw, ch, DX, DY, DW, DH); return; }
       // kereta yang masuk lewat wesel: tiap kendaraan digeser vertikal sesuai lintasannya sendiri (menyambung di lengkung)
-      const sd = ROUTE.yard.sid[pk.sid], bnd = [0, LOCO_LEN + GAP / 2]; for (let q = 1; q <= pk.n; q++) bnd.push(LOCO_LEN + GAP + q * (carL + GAP) - GAP / 2);
-      for (let k = 0; k < bnd.length - 1; k++) { const w0 = pk.nose + (k ? bnd[k] : -pad), w1 = pk.nose + (k === bnd.length - 2 ? bnd[k + 1] + pad : bnd[k + 1]), oy = DBL_K * (yardPath(pk.sid, pk.nose + (bnd[k] + bnd[k + 1]) / 2) - sd.o) * ppm + (pk.moving ? Math.sin(performance.now() / 1000 * 9 + k * 1.7) * 0.035 * ppm : 0); // + ayunan pegas
+      const sd = ROUTE.yard && ROUTE.yard.sid[pk.sid], oyAt = (x) => (pk.oyAt ? pk.oyAt(x) : DBL_K * (yardPath(pk.sid, x) - sd.o) * ppm), bnd = [0, LOCO_LEN + GAP / 2]; for (let q = 1; q <= pk.n; q++) bnd.push(LOCO_LEN + GAP + q * (carL + GAP) - GAP / 2);
+      if (pk.oyAt) { const t = performance.now() / 1000; for (let w = -pad; w < TL + pad; w += 1) { // lintasan lengkung (sepur belok): diiris per 1 m, tiap irisan mengikuti lengkung -> gerbong menikung mulus tanpa patahan antar-gerbong
+          const kv = w < LOCO_LEN + GAP / 2 ? 0 : 1 + Math.floor((w - LOCO_LEN - GAP / 2) / (carL + GAP)), oy = oyAt(pk.nose + w + 0.5) + (pk.moving ? Math.sin(t * 9 + kv * 1.7) * 0.035 * ppm : 0);
+          const s0 = Math.max(0, Math.floor((X(pk.nose + w) - DX) * kk)), s1 = Math.min(cw, Math.ceil((X(pk.nose + w + 1) - DX) * kk) + 1); if (s1 > s0) c.drawImage(SRC, s0, 0, s1 - s0, ch, DX + s0 / kk, DY + oy, (s1 - s0) / kk, DH); } }
+      else for (let k = 0; k < bnd.length - 1; k++) { const w0 = pk.nose + (k ? bnd[k] : -pad), w1 = pk.nose + (k === bnd.length - 2 ? bnd[k + 1] + pad : bnd[k + 1]), oy = oyAt(pk.nose + (bnd[k] + bnd[k + 1]) / 2) + (pk.moving ? Math.sin(performance.now() / 1000 * 9 + k * 1.7) * 0.035 * ppm : 0); // + ayunan pegas
         const s0 = Math.max(0, Math.floor((X(w0) - DX) * kk)), s1 = Math.min(cw, Math.ceil((X(w1) - DX) * kk) + 1); if (s1 <= s0) continue; c.drawImage(SRC, s0, 0, s1 - s0, ch, DX + s0 / kk, DY + oy, (s1 - s0) / kk, DH); }
-      if (pk.lit) { const oy = DBL_K * (yardPath(pk.sid, pk.nose + 2) - sd.o) * ppm, lx = X(pk.nose) - 0.1 * P, ly = yb + oy - trainH(1.6) * P, dawnK = clamp((0.45 - V.p) / 0.45, 0, 1), k = (0.45 + 0.55 * dawnK) * (pk.moving ? 1 : 0.38); // lampu depan menyala & berkas ke depan (diredupkan setelah berhenti)
+      if (pk.lit) { const oy = oyAt(pk.nose + 2), lx = X(pk.nose) - 0.1 * P, ly = yb + oy - trainH(1.6) * P, dawnK = clamp((0.45 - V.p) / 0.45, 0, 1), k = (0.45 + 0.55 * dawnK) * (pk.moving ? 1 : 0.38); // lampu depan menyala & berkas ke depan (diredupkan setelah berhenti)
         if (pk.loco === 'cakra') { const t = performance.now() / 1000, ex = X(pk.nose + 8.2), ey = yb + oy - trainH(4.4) * P; for (let q = 0; q < 7; q++) { const ph = ((t * (pk.moving ? 0.9 : 0.35) + q / 7) % 1), r = (0.35 + ph * 1.2) * P, A = (pk.moving ? 0.26 : 0.14) * (1 - ph), px = ex + ph * (pk.moving ? 6 : 1.2) * P, py = ey - ph * 2.8 * P; const g = c.createRadialGradient(px, py, 0, px, py, r); g.addColorStop(0, `rgba(96,98,102,${A.toFixed(3)})`); g.addColorStop(1, 'rgba(96,98,102,0)'); c.fillStyle = g; c.fillRect(px - r, py - r, 2 * r, 2 * r); } } // asap knalpot diesel
         c.save(); c.globalCompositeOperation = 'lighter';
         const bg = c.createRadialGradient(lx, ly, 0, lx, ly, 34 * P); bg.addColorStop(0, `rgba(255,236,190,${(0.3 * k).toFixed(3)})`); bg.addColorStop(0.5, `rgba(255,236,190,${(0.06 * k).toFixed(3)})`); bg.addColorStop(1, 'rgba(255,236,190,0)');
@@ -12039,6 +12056,10 @@
   let OPC = null, OPL = null;
   function drawOppTrain(V) {
     const MT = ROUTE.meet, st = V.st; if (!MT || !st.meet || st.meet.phase !== 'run') return;
+    if (MT.cakra) { // rangkaian Cakra livery merah: digambar dengan penggambar kereta game yang sama (detail & cahaya setara kereta pemain)
+      const m = st.meet; if (!m.spk) m.spk = { sid: 0, loco: 'cakra', pal: MT.pal || 'merah', n: MT.cars, flip: true, dyn: true, lit: true, meet: true };
+      m.spk.nose = m.x; m.spk.moving = true; m.spk.oyAt = (x) => MEET_NEAR * V.ppm * meetK(x);
+      drawYardTrain(V, m.spk, V.gy, 1.06); return; }
     if (!MT.liv) { drawOppTrainRaw(V); return; }
     const c = V.c, T = c.getTransform(), cw = c.canvas.width, ch = c.canvas.height;
     const need = (cv) => { if (!cv) cv = document.createElement('canvas'); if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; } return cv; };
@@ -12663,7 +12684,9 @@
     marun: { g: ['#a83c50', '#842539', '#5c1727'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.3)', pin: '#f4efe2' },
     zamrud: { g: ['#2f9488', '#1d7068', '#13514b'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.3)', pin: '#f2a516' },
     titan: { g: ['#a3afba', '#84919d', '#65727e'], led: ['#1f8f9a', '#38d6f0', '#bff6ff'], glow: 'rgba(80,220,255,0.35)', pin: '#f2a516' },
+    merah: { g: ['#cf3b4d', '#a82337', '#701526'], led: ['#d7b25a', '#f6dc96', '#fff6dc'], glow: 'rgba(255,215,150,0.32)', pin: '#f4efe2', coach: ['#e2b64a', '#a82337'] }, // KA 117 Pangrango: Cakra livery merah
   };
+  let NEO_PAL_FORCE = null; // palet sementara (kereta lain yang memakai rupa Cakra)
   const NEO_PAL_DEF = 'titan';
   function drawTrainRaw(V) {
     const { c, ppm, gy, X, st } = V;
@@ -12961,8 +12984,10 @@
         // papan injak panjang di bawah pintu
         c.fillStyle = '#2a1a12'; c.fillRect(sx0(4, 236), Y(1.38), sw0(4, 236), 0.14 * ppm); c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(sx0(4, 236), Y(1.38), sw0(4, 236), 1);
       } else {
-        box(u(240), u(0), 2.27, 2.6, '#f2a516');
-        box(u(240), u(0), 2.0, 2.22, '#1f6f6d');
+        const CP = NEO_PAL_FORCE && NEO_PAL[NEO_PAL_FORCE].coach;
+        if (CP) { box(u(240), u(0), 1.9, 2.62, CP[1]); box(u(240), u(0), 2.62, 2.72, CP[0]); box(u(240), u(0), 1.84, 1.9, CP[0]); } // KA 117: sabuk merah lebar berpinstripe emas
+        else { box(u(240), u(0), 2.27, 2.6, '#f2a516');
+        box(u(240), u(0), 2.0, 2.22, '#1f6f6d'); }
       }
       // jendela berbingkai
       if (!STEAMC) for (let i = 0; i < 7; i++) {
@@ -13503,7 +13528,7 @@
     if (NEOL) { // livery futuristik Cakra: badan putih mutiara, sapuan grafit gelap naik menyapu ke moncong, garis LED sian menyala di tepinya,
       // garis oranye tipis (menyambung pita gerbong), logo CAKRA miring & nomor kecil, kilau tepi
       const sw = [[15.85, 1.85], [15.85, 3.0], [10.5, 3.0], [6.2, 3.3], [2.6, 3.85], [0.6, 3.95], [-0.45, 3.55], [-0.9, 2.85], [-1.05, 2.2], [-1.05, 1.85]];
-      const sg = c.createLinearGradient(0, Y(3.95), 0, Y(1.85)); const NP = NEO_PAL[(typeof window !== 'undefined' && window.__neoPal) || NEO_PAL_DEF]; sg.addColorStop(0, NP.g[0]); sg.addColorStop(0.35, NP.g[1]); sg.addColorStop(1, NP.g[2]); poly(sw, sg);
+      const sg = c.createLinearGradient(0, Y(3.95), 0, Y(1.85)); const NP = NEO_PAL[NEO_PAL_FORCE || (typeof window !== 'undefined' && window.__neoPal) || NEO_PAL_DEF]; sg.addColorStop(0, NP.g[0]); sg.addColorStop(0.35, NP.g[1]); sg.addColorStop(1, NP.g[2]); poly(sw, sg);
       c.save(); c.beginPath(); sw.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); c.clip(); // kilau langit di permukaan grafit
       const kg = c.createLinearGradient(0, Y(3.9), 0, Y(3.0)); kg.addColorStop(0, 'rgba(200,225,240,0.18)'); kg.addColorStop(1, 'rgba(200,225,240,0)'); c.fillStyle = kg; c.fillRect(L(15.85), Y(4.0), 17 * ppm, 1.1 * ppm);
       c.fillStyle = 'rgba(255,255,255,0.05)'; for (let m = 15.2; m > 3; m -= 2.4) { c.beginPath(); c.moveTo(L(m), Y(3.9)); c.lineTo(L(m - 0.5), Y(3.9)); c.lineTo(L(m - 1.4), Y(1.85)); c.lineTo(L(m - 0.9), Y(1.85)); c.closePath(); c.fill(); } c.restore();
@@ -14836,7 +14861,7 @@ c.restore();
       c.beginPath(); c.moveTo(M(MTs.entry), ly); c.lineTo(M(MTs.entry + 40), ly + 8); c.lineTo(M(MTs.exit - 40), ly + 8); c.lineTo(M(MTs.exit), ly); c.stroke();
       if (S.meet.phase === 'run') {
         const ox = M(S.meet.x), oe = M(S.meet.x + oppLen());
-        if (oe > 0 && ox < w) { c.fillStyle = '#7fb0e8'; c.fillRect(clamp(ox, 0, w), ly + 5, clamp(oe, 0, w) - clamp(ox, 0, w), 6); c.beginPath(); c.moveTo(ox, ly + 2); c.lineTo(ox - 7, ly + 8); c.lineTo(ox, ly + 14); c.closePath(); c.fill(); c.fillText(MTs.name, clamp(ox, 0, w - 40), ly - 22); }
+        if (oe > 0 && ox < w) { c.fillStyle = MTs.cakra ? '#e5566b' : '#7fb0e8'; c.fillRect(clamp(ox, 0, w), ly + 5, clamp(oe, 0, w) - clamp(ox, 0, w), 6); c.beginPath(); c.moveTo(ox, ly + 2); c.lineTo(ox - 7, ly + 8); c.lineTo(ox, ly + 14); c.closePath(); c.fill(); if (MTs.cakra) { c.save(); c.font = '600 11px "Plus Jakarta Sans", sans-serif'; c.textBaseline = 'middle'; c.fillText(MTs.name.replace(/^(KA \d+).*/, '$1'), clamp(oe, 0, w) + 6, ly + 8); c.restore(); } else c.fillText(MTs.name, clamp(ox, 0, w - 40), ly - 22); }
       }
     }
     if (ROUTE.switchX && M(ROUTE.switchX) > 0 && M(ROUTE.switchX) < w) {
