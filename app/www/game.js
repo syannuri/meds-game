@@ -10,6 +10,11 @@
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const lerp = (a, b, t) => a + (b - a) * t;
   const smooth = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+  // badai berangsur reda (misi dengan MIS.clearing): kekuatan badai 1→0 dan kebasahan rel 1→0 (rel mengering lebih lambat dari langit)
+  const CLR = () => (typeof ROUTE !== 'undefined' && ROUTE && ROUTE.clearing) || null;
+  const stormK = (x) => { const C = CLR(); return C ? 1 - smooth(C.from, C.to, x) : 1; };
+  const wetK = (x) => { const C = CLR(); return C ? 1 - smooth(C.dryFrom, C.dryTo, x) : 1; };
+  const wetNow = (x) => (CLR() ? wetK(x) : MIS.rain ? 1 : 0), stormNow = (x) => (CLR() ? stormK(x) : MIS.sky === 'storm' ? 1 : 0); // tidak bergantung pada sakelar cuaca sementara saat render dua lapis
   const hash = (n) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
   // warna hex '#rrggbb' atau 'rgb(r,g,b)' (hasil mix sebelumnya) → bilangan 0xRRGGBB
   const colNum = (cc) => { if (cc[0] === '#') return parseInt(cc.slice(1), 16); const m = cc.match(/\d+(\.\d+)?/g); return m ? ((+m[0] & 255) << 16) | ((+m[1] & 255) << 8) | (+m[2] & 255) : 0; };
@@ -900,7 +905,7 @@
     tags: ['Kereta super cepat 320 km/h', 'Badai & rel basah', 'Sabotase wesel'],
     speaker: { who: 'Dimas, mekanik depo', initials: 'DM' },
     driver: { name: 'Anett', initials: 'AN' },
-    brief: 'Anett, lintas Lengkung Watu sekarang jalur kereta cepat: jalur ganda, jalur layang, dan Halilintar, Guntur generasi baru, boleh 320 km/h. Tapi badai belum reda. Rel basah: roda mudah selip saat menarik dan rem jauh lebih lemah. Dari 320 km/h kamu butuh lebih dari 5 km untuk berhenti, jadi ikuti papan REM. Dan hati-hati: orang yang dulu mengutak-atik wesel Watu belum tertangkap.',
+    brief: 'Anett, lintas Lengkung Watu sekarang jalur kereta cepat: jalur ganda, jalur layang, dan Halilintar, Guntur generasi baru, boleh 320 km/h. Tapi badai belum reda. Rel basah: roda mudah selip saat menarik dan rem jauh lebih lemah. Dari 320 km/h kamu butuh lebih dari 5 km untuk berhenti, jadi ikuti papan REM. Dan hati-hati: orang yang dulu mengutak-atik wesel Watu belum tertangkap. Setelah Watugede kita lanjut ke Tanjung Surya lewat Jembatan Lengkung Kali Bayu; prakiraan cuaca bilang badai reda sebelum kota.',
     weather: 'badai, hujan deras, petir, angin samping',
     intro: 'Masinis Anett, Halilintar siap di tengah badai. Tutup pintu dan berangkat dengan P1–P2.',
     reward: '<strong>Cerita:</strong> Di wesel Watu, kamera pengawas merekam truk berlogo TransKilat. Polsuska kini menjaga lintas Lengkung Watu siang dan malam.',
@@ -913,7 +918,8 @@
       stations: [
         { name: 'PASAR LAMA', elev: '+371 m', x: 0, sched: 0, waiting: 0, modern: true, futur: true },
         { name: 'KALI JERNIH', elev: '+348 m', x: 12000, sched: 1740, waiting: 16, modern: true, umbrellas: true },
-        { name: 'WATUGEDE', elev: '+455 m', x: 27000, sched: 3720, waiting: 12, final: true, modern: true, umbrellas: true },
+        { name: 'WATUGEDE', elev: '+455 m', x: 27000, sched: 3720, waiting: 12, modern: true, umbrellas: true },
+        { name: 'TANJUNG SURYA', elev: '+22 m', x: 44000, sched: 5900, waiting: 0, final: true, modern: true },
       ],
       zones: [
         { from: -120, to: 400, limit: 60, label: 'area Pasar Lama' },
@@ -923,6 +929,10 @@
         { from: 12300, to: 13300, limit: 160, label: 'keluar Kali Jernih' },
         { from: 17800, to: 19800, limit: 200, label: 'Terowongan Lengkung Watu' },
         { from: 25700, to: 27150, limit: 60, label: 'area Watugede' },
+        { from: 27150, to: 28300, limit: 160, label: 'keluar Watugede' },
+        { from: 32100, to: 33700, limit: 250, label: 'Jembatan Lengkung Kali Bayu' },
+        { from: 41600, to: 42900, limit: 200, label: 'masuk kota Tanjung Surya' },
+        { from: 42900, to: 44150, limit: 60, label: 'area Tanjung Surya' },
       ],
       signals: [
         { id: 'S1', x: 60, start: 0, init: 'R' },
@@ -930,6 +940,8 @@
         { id: 'S2', x: 12060, start: 1, init: 'R' },
         { id: 'B2', x: 22000, init: 'G' },
         { id: 'J2', x: 25600, init: 'G' },
+        { id: 'S3', x: 27060, start: 2, init: 'R' },
+        { id: 'J3', x: 42800, init: 'G' },
       ],
       scripts: [
         {
@@ -947,6 +959,7 @@
       bridges: [
         { from: 3000, to: 9000, viaduct: true, land: true, name: 'Jalur Layang Ledok' },
         { from: 14200, to: 15200, viaduct: true, name: 'Viaduk Kali Jernih' },
+        { from: 32300, to: 33500, arch: true, viaduct: true, gorge: true, main: [32815, 32985], name: 'Jembatan Lengkung Kali Bayu', year: '2034' },
       ],
       scenes: [
         { from: -500, to: 1600, kind: 'city', glass: true },
@@ -954,6 +967,10 @@
         { from: 9000, to: 11000, kind: 'wind' },
         { from: 13300, to: 17500, kind: 'terrace' },
         { from: 25500, to: 27600, kind: 'city', glass: true },
+        { from: 28300, to: 31900, kind: 'terrace' },
+        { from: 33900, to: 38000, kind: 'terrace' },
+        { from: 38000, to: 41300, kind: 'wind' },
+        { from: 41300, to: 45600, kind: 'city', glass: true },
       ],
       tunnel: { from: 17800, to: 19800, name: 'LENGKUNG WATU', year: '2033', modern: true },
       grades: [{ from: 1000, to: 3000, permil: -8, label: 'Turunan Ledok' }, { from: 16000, to: 22000, permil: 10, label: 'Tanjakan Watu' }],
@@ -965,15 +982,21 @@
         { at: 3, arrive: true, from: 640, v: 60, stop: -92, msg: 'Kilat KN 5012 masuk Pasar Lama di jalur 2, pelan menuju peron seberang. Halilintar berangkat di jalur 1: balas salam klaksonnya.' },
         { at: 10700, ahead: 3000, v: 200, slow: 120, t3: true, msg: 'Kilat KN 5014 melintas langsung di jalur 3 Kali Jernih. Kita berhenti di jalur 1, hati-hati peron licin.' },
         { at: 13500, ahead: 3600, v: 280, msg: 'Kilat KN 5016 menembus badai di jalur 2, 280 km/h. Tetap di jalur 1 dan balas klakson saat berpapasan.' },
+        { at: 37000, ahead: 3800, v: 300, msg: 'Kilat KN 5018 dari Tanjung Surya di jalur 2. Langit di belakangnya mulai terang.' },
       ] } },
-      neutral: [{ from: 7600, to: 7740 }, { from: 18600, to: 18740 }],
+      neutral: [{ from: 7600, to: 7740 }, { from: 18600, to: 18740 }, { from: 35800, to: 35940 }],
       hints: [
         { at: 40, msg: 'Rel basah: roda mudah selip di bawah 60 km/h. Berangkat dengan P1–P2, tabur pasir kalau selip.', kind: 'warn' },
         { at: 1700, msg: 'Lintas cepat di depan: batas 320 km/h. Di rel basah jarak pengereman dari 320 lebih dari 5 km.', kind: 'warn' },
         { at: 6000, msg: 'Angin badai di jalur layang: maks 220 km/h.', kind: 'warn' },
         { at: 17500, msg: 'Terowongan Lengkung Watu 2 km dengan seksi netral di dalamnya: tuas ke N.' },
+        { at: 31300, msg: 'Jembatan Lengkung Kali Bayu 1,2 km di depan, angin samping kencang di atas sungai: maks 250 km/h.', kind: 'warn' },
+        { at: 35200, msg: 'Badai mulai reda di depan. Langit terang lebih dulu, tapi rel masih basah beberapa kilometer lagi.' },
+        { at: 41000, msg: 'Memasuki Tanjung Surya: rel sudah kering, cuaca cerah.' },
       ],
-      bufferStop: 27100,
+      // badai berangsur reda sebelum kota tujuan: langit cerah dari from ke to (crossfade), rel mengering lebih lambat (dryFrom→dryTo)
+      clearing: { from: 35500, to: 40500, dryFrom: 38000, dryTo: 42500 },
+      bufferStop: 44100,
     },
   };
   // Babak 4: warisan uap, lintas pegunungan tua dengan lokomotif uap "Surya" (1912)
@@ -2959,9 +2982,9 @@
       if (n > 0 && !powerLocked) S.kwh += (n / 4) * (MIS.loco === 'argo' ? 5600 : 9600) * clamp(S.v / 8, 0.15, 1) * dt / 3600;
       if (n < 0 && n > -5 && S.v > 1 && !inNeutral) S.regen += clamp(-(S.aCmd || 0) / 1.2, 0, 1) * (MIS.loco === 'hst' ? 5200 : MIS.loco === 'argo' ? 4200 : 7200) * clamp(S.v / 10, 0, 1) * dt / 3600;
     }
-    const wet = MIS.rain && !inTunnel(S.x - LOCO_LEN);
+    const wetF = MIS.rain && !inTunnel(S.x - LOCO_LEN) ? wetK(S.x) : 0, wet = wetF > 0.5; // rel mengering bertahap setelah badai reda
     if (S.sandT > 0) S.sandT = Math.max(0, S.sandT - dt);
-    const grip = (wet && S.sandT <= 0 ? 0.78 : 1) * (MIS.grass ? 0.86 : 1); // rel basah / berumput melemahkan rem
+    const grip = (S.sandT <= 0 ? 1 - 0.22 * wetF : 1) * (MIS.grass ? 0.86 : 1); // rel basah / berumput melemahkan rem
     const massF = (MIS.freight ? 1.35 + S.load.reduce((a, b) => a + b, 0) * 0.22 : MIS.heavy ? 1 + S.aboard / 140 : 1) * (S.coupled ? 1.18 : 1); // kereta penuh lebih berat
     const brakeF = 1 + (massF - 1) * 0.6;
     // lintas ekspres: kurva daya diesel (tenaga konstan) supaya bisa mencapai 120 km/h; lintas biasa tetap seperti semula
@@ -3840,7 +3863,7 @@
     [[95.8, 2.9], [96.3, 2.6], [96.5, 2.4], [96.1, 2.5]], // Simeulue
   ].map(geoPoly);
   const G = {
-    D: GEO(106.4, -6.45), S: GEO(107.0, -6.55), A: GEO(107.5, -6.65), C: GEO(108.1, -6.75), P: GEO(108.9, -6.9), K: GEO(109.8, -7.1), W: GEO(110.7, -7.25), B: GEO(111.5, -7.35), KB: GEO(112.3, -7.45),
+    D: GEO(106.4, -6.45), S: GEO(107.0, -6.55), A: GEO(107.5, -6.65), C: GEO(108.1, -6.75), P: GEO(108.9, -6.9), K: GEO(109.8, -7.1), W: GEO(110.7, -7.25), TS: GEO(110.42, -6.95), B: GEO(111.5, -7.35), KB: GEO(112.3, -7.45),
     MK: GEO(103.75, -3.75), M2: GEO(103.3, -3.35), SB: GEO(102.85, -2.95), T1: GEO(104.3, -4.3), T2: GEO(104.85, -4.95), TA: GEO(105.3, -5.45),
   };
   const off = (p, d) => [p[0], p[1] + d];
@@ -3857,12 +3880,12 @@
     '2-1': { pts: [G.MK, G.T1, G.T2, G.TA], col: '#6fb36a' },
     '3-1': { pts: [G.S, G.C, G.P, G.K, G.W, G.B, G.KB, GEO(113.2, -7.3)].map((p) => off(p, -3)), col: '#ff9a5a' },
     '3-2': { pts: [GEO(106.85, -6.2), GEO(107.25, -6.5), GEO(107.6, -6.9)], col: '#22b6d6' },
-    '3-4': { pts: [G.P, G.K, G.W].map((p) => off(p, 3)), col: '#9ac2d6' },
+    '3-4': { pts: [G.P, G.K, G.W, G.TS].map((p) => off(p, 3)), col: '#9ac2d6' },
     '3-3': { pts: [G.MK, GEO(103.0, -3.2), GEO(102.35, -2.6)].map((p) => off(p, -3)), col: '#4fd2e8' },
     '4-1': { pts: [G.W, GEO(110.55, -7.5), GEO(110.44, -7.62)], col: '#e8c27a' },
   };
   // [x, y, nama, label di atas(-1)/bawah(1)]
-  const MAP_ST = [[...G.D, 'Depo', 1], [...G.S, 'Sukamaju', -1], [...G.A, '', 0], [...G.C, 'Cibening', 1], [...G.P, 'Pasar Lama', -1], [...G.K, 'Kali Jernih', 1], [...G.W, 'Watugede', -1], [...G.B, 'Krajan', 1], [...G.KB, 'Kedung Banteng', -1],
+  const MAP_ST = [[...G.D, 'Depo', 1], [...G.S, 'Sukamaju', -1], [...G.A, '', 0], [...G.C, 'Cibening', 1], [...G.P, 'Pasar Lama', -1], [...G.K, 'Kali Jernih', 1], [...G.W, 'Watugede', -1], [...G.TS, 'Tanjung Surya', 1], [...G.B, 'Krajan', 1], [...G.KB, 'Kedung Banteng', -1],
     [...GEO(113.2, -7.3), 'Kota Kencana', -1], [...G.MK, 'Muara Kelam', 1], [...G.M2, '', 0], [...G.SB, 'Simpang Barisan', -1], [...G.TA, 'Tanjung Api', 1]];
   const MAP_VOLC = [GEO(101.26, -1.7), GEO(103.12, -4.03), GEO(98.4, 3.2), GEO(106.98, -6.8), GEO(110.44, -7.55), GEO(112.92, -8.05)];
   // ikon garis 24x24 untuk karcis misi
@@ -4310,7 +4333,7 @@
     textCache.clear();
   }
   // ringkasan tugas misi (1–2 kalimat) untuk halaman deskripsi yang muat satu layar HP tanpa digulir
-  const BRIEF_SHORT = {"3-4": "Bawa Halilintar 320 km/h menembus badai di Lengkung Watu. Rel basah: rem jauh lebih awal, ikuti papan REM, dan waspadai wesel Watu.", "1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Bersilang dengan KA 117 di Kali Kecil: tunggu sinyal S2 hijau.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
+  const BRIEF_SHORT = {"3-4": "Bawa Halilintar 320 km/h menembus badai di Lengkung Watu sampai Tanjung Surya. Rel basah: rem jauh lebih awal, ikuti papan REM, waspadai wesel Watu. Badai reda sebelum kota.", "1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Bersilang dengan KA 117 di Kali Kecil: tunggu sinyal S2 hijau.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
   function showBrief() {
     const m = MIS, R = ROUTE, f = finalStation();
     $('briefEyebrow').textContent = m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
@@ -5523,7 +5546,7 @@
                 c.save(); c.shadowColor = 'rgba(255,59,74,0.7)'; c.shadowBlur = 8; quad(q0, q1, q2, q3, '#05070a'); c.restore(); c.strokeStyle = '#ff3b4a'; c.lineWidth = Math.max(1, hh * 0.04); c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.closePath(); c.stroke();
                 if (hw > 30) { c.save(); c.beginPath(); c.rect(lx, ty, hw, hh); c.clip(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 ${Math.max(7, Math.round(hh * 0.46))}px "Big Shoulders Display", sans-serif`; c.fillText(s.name, lx + hw / 2, ty + hh * 0.36, hw * 0.92);
                   c.fillStyle = '#ff3b4a'; c.fillRect(lx, ty + hh * 0.64, hw, Math.max(1, hh * 0.04)); c.fillStyle = '#ffc14d'; c.textAlign = 'left'; c.font = `800 ${Math.max(6, Math.round(hh * 0.2))}px "Plus Jakarta Sans", sans-serif`;
-                  const tk = 'HL 3401 HALILINTAR → WATUGEDE · 16.10 · JALUR 1 · ', tw = c.measureText(tk).width, off = (tN * hh * 1.2) % tw; c.fillText(tk + tk + tk, lx + 3 - off, ty + hh * 0.83); c.restore(); } } }
+                  const tk = 'HL 3401 HALILINTAR → TANJUNG SURYA · 16.10 · JALUR 1 · ', tw = c.measureText(tk).width, off = (tN * hh * 1.2) % tw; c.fillText(tk + tk + tk, lx + 3 - off, ty + hh * 0.83); c.restore(); } } }
             if (idx % 2 === 0 && d1 >= 1.4) { const b0 = W3(d1, oM, 1), k0 = W3(d1, oM, 4.4); if (b0 && k0) { c.strokeStyle = dk('#eef2f5'); c.lineWidth = Math.min(W * 0.012, Math.max(1.5, 0.24 * b0.k)); c.lineCap = 'round'; c.beginPath(); c.moveTo(b0.x, b0.y); c.lineTo(k0.x, k0.y); c.stroke();
               c.lineWidth = Math.min(W * 0.006, Math.max(1, 0.1 * b0.k)); c.beginPath(); for (const [dd, oo] of [[-1.5, oI + 0.6], [1.5, oI + 0.6], [-1.5, oO - 0.6], [1.5, oO - 0.6]]) { const q = W3(d1 + dd, oo, hE + 0.3); if (q) { c.moveTo(k0.x, k0.y); c.quadraticCurveTo(k0.x + (q.x - k0.x) * 0.2, q.y + (k0.y - q.y) * 0.25, q.x, q.y); } } c.stroke(); c.lineCap = 'butt'; } } // tiang pohon
             if (idx % 4 === 1 && d1 >= 1.4) { quad(W3(d1, -3.6, 3.7), W3(d1 + 1.8, -3.6, 3.7), W3(d1 + 1.8, -3.6, 4.4), W3(d1, -3.6, 4.4), '#0e1a2a'); quad(W3(d1 + 0.15, -3.62, 4.12), W3(d1 + 1.0, -3.62, 4.12), W3(d1 + 1.0, -3.62, 4.22), W3(d1 + 0.15, -3.62, 4.22), '#7fe6e0'); quad(W3(d1 + 0.15, -3.62, 3.9), W3(d1 + 0.7, -3.62, 3.9), W3(d1 + 0.7, -3.62, 3.98), W3(d1 + 0.15, -3.62, 3.98), '#f2c94c'); } // layar info
@@ -7382,11 +7405,24 @@
     return amb;
   }
   const HALI = () => MIS.livery === 'halilintar';
+  // daftar yang akan dilalui di depan (untuk AR & konsol Halilintar): jembatan, terowongan, kabut, seksi netral, stasiun, badai mereda, rel kering
+  function haliAhead(x) {
+    const L = [], add = (d, icon, label, rgb, kind) => { if (d > -5 && d < 16000) L.push({ d: Math.max(0, d), icon, label, rgb, kind }); }, dIn = (a) => Math.max(0, a - x); // sedang dilalui = jarak 0
+    for (const b of ROUTE.bridges || []) if (b.to > x) add(dIn(b.from), b.arch ? '⌒' : '═', b.from <= x ? `DI ${(b.name || 'JEMBATAN').toUpperCase()}` : (b.name || 'Jembatan').toUpperCase(), '120,200,255', 'bridge');
+    const T = ROUTE.tunnel; if (T && T.to > x) add(dIn(T.from), '◗', T.from <= x ? 'DI TEROWONGAN' : `TEROWONGAN ${T.name || ''}`.trim(), '200,200,210', 'tunnel');
+    const F = ROUTE.fog; if (F && F.to > x) add(dIn(F.from), '≋', F.from <= x ? 'DALAM KABUT' : 'KABUT', '210,220,226', 'fog');
+    for (const n of ROUTE.neutral || []) if (n.to > x) add(dIn(n.from), 'Ø', 'SEKSI NETRAL', '255,193,77', 'neutral');
+    const ns = nextStation(); if (ns) add(ns.x - x, '■', ns.name, '255,244,240', 'station');
+    const C = CLR(); if (C) { const k = stormK(x), w = wetK(x);
+      if (x < C.from) add(C.from - x, '☀', 'BADAI MEREDA', '255,193,77', 'clear'); else if (k > 0.03) add(0, '☀', `BADAI MEREDA ${Math.round((1 - k) * 100)}%`, '255,193,77', 'clear');
+      if (w > 0.03) add(C.dryTo - x, '◇', x < C.dryFrom ? 'REL MULAI KERING' : `REL MENGERING ${Math.round((1 - w) * 100)}%`, '95,224,160', 'dry'); }
+    return L.sort((a, b) => a.d - b.d);
+  }
   // ---------- kokpit Halilintar: AR di kaca depan (diproyeksikan ke rel sungguhan) ----------
   // koridor rel berwarna sesuai kecepatan aman, chevron bergerak, titik mulai rem dihitung dari fisika rem basah, penanda sinyal & batas berikutnya, marka henti stasiun
   function drawHaliAR(c, st, W3, night) {
     const kmh = st.v * 3.6, { lim } = currentLimit(), nl = nextLimitAhead(), ns = nextStation(), v = st.v, tt = performance.now() / 1000;
-    const RED = '255,59,74', GOLD = '255,193,77', WHT = '255,244,240', GRN = '95,224,160', aDec = MIS.rain ? 0.55 : 0.9;
+    const RED = '255,59,74', GOLD = '255,193,77', WHT = '255,244,240', GRN = '95,224,160', wetA = wetNow(st.x), aDec = 0.9 - 0.35 * wetA;
     const FONT = (w, px) => `${w} ${Math.max(8, Math.round(px))}px "Plus Jakarta Sans", sans-serif`, BIG = (px) => `900 ${Math.max(9, Math.round(px))}px "Big Shoulders Display", sans-serif`;
     c.save(); c.beginPath(); c.moveTo(W * 0.03, H * 0.66); c.quadraticCurveTo(W * 0.06, H * 0.35, W * 0.035, H * 0.03); c.quadraticCurveTo(W * 0.5, H * 0.075, W * 0.965, H * 0.03); c.quadraticCurveTo(W * 0.94, H * 0.35, W * 0.97, H * 0.66); c.closePath(); c.clip();
     c.globalCompositeOperation = 'lighter';
@@ -7413,16 +7449,25 @@
     if (sig && sig.x - st.x < 2200) { const asp = st.sig ? st.sig[sig.id] : 'G', rgb = asp === 'R' ? RED : asp === 'Y' ? GOLD : GRN; tag(W3(sig.x - st.x, 3.2, 6.2), `◆ ${sig.id}`, `${Math.round(sig.x - st.x)} m`, rgb, W * 0.06 * clamp((sig.x - st.x) / 400, 0, 1)); }
     // marka henti stasiun
     if (ns && !ns.pass) { const ds = ns.x - st.x; if (ds > 8 && ds < 1500) { const a = W3(ds, -1.6, 0.25), b = W3(ds, 1.6, 0.25); if (a && b) { c.strokeStyle = `rgba(${WHT},0.9)`; c.lineWidth = 3; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); } tag(W3(ds, 0, 3.4), 'HENTI', `${Math.round(ds)} m`, WHT); } }
+    // penanda struktur di depan (jembatan/terowongan/kabut) diproyeksikan ke rel
+    for (const it of haliAhead(st.x)) { if (it.d < 30 || it.d > 1600 || !['bridge', 'tunnel', 'fog', 'neutral'].includes(it.kind)) continue; tag(W3(it.d, -2.6, 9.5), `${it.icon} ${it.kind === 'bridge' ? 'JEMBATAN' : it.kind === 'tunnel' ? 'TEROWONGAN' : it.kind === 'fog' ? 'KABUT' : 'NETRAL'}`, `${Math.round(it.d)} m`, it.rgb, -W * 0.1 * clamp(it.d / 400, 0, 1)); }
+    // strip "DI DEPAN": hal yang akan dilalui berikutnya, berurutan dengan jaraknya
+    { const items = haliAhead(st.x).slice(0, 4), cw = W * 0.16, gap = W * 0.008, tw = items.length * cw + (items.length - 1) * gap, sx0 = W / 2 - tw / 2, sy = H * 0.085, sh = H * 0.05;
+      c.font = FONT(900, H * 0.019); c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.fillStyle = `rgba(${WHT},0.55)`; if (items.length) c.fillText('DI DEPAN', W / 2, sy - H * 0.008);
+      items.forEach((it, i) => { const x = sx0 + i * (cw + gap); c.fillStyle = `rgba(${it.rgb},0.12)`; roundRect(c, x, sy, cw, sh, 5); c.fill(); c.strokeStyle = `rgba(${it.rgb},0.7)`; c.lineWidth = 1; c.stroke();
+        c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillStyle = `rgb(${it.rgb})`; c.font = FONT(900, H * 0.026); c.fillText(it.icon, x + 6, sy + sh / 2);
+        c.font = FONT(900, H * 0.019); c.fillText(it.label, x + 6 + H * 0.03, sy + sh * 0.32, cw - H * 0.04); c.fillStyle = `rgba(${WHT},0.85)`; c.font = FONT(800, H * 0.019);
+        c.fillText(it.d < 1 ? 'SEKARANG' : it.d >= 1000 ? `${(it.d / 1000).toFixed(1).replace('.', ',')} km` : `${Math.round(it.d)} m`, x + 6 + H * 0.03, sy + sh * 0.72, cw - H * 0.04); }); }
     // bingkai pandang AR: sudut pembidik tipis & label sistem
     c.strokeStyle = `rgba(${RED},0.45)`; c.lineWidth = 1.5; const bx0 = W * 0.33, bx1 = W * 0.67, by0 = H * 0.2, by1 = H * 0.52, k = W * 0.025;
     c.beginPath(); for (const [x, y, sx, sy] of [[bx0, by0, 1, 1], [bx1, by0, -1, 1], [bx0, by1, 1, -1], [bx1, by1, -1, -1]]) { c.moveTo(x + sx * k, y); c.lineTo(x, y); c.lineTo(x, y + sy * k); } c.stroke();
     c.font = FONT(800, H * 0.02); c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.fillStyle = `rgba(${RED},0.75)`; c.fillText('HALILINTAR · AR-DRIVE', bx0, by0 - 5);
-    c.textAlign = 'right'; c.fillStyle = `rgba(${WHT},0.7)`; c.fillText(`μ ${(MIS.rain ? 0.09 + 0.015 * Math.sin(tt * 0.7) : 0.24).toFixed(2)} · ${MIS.rain ? 'REL BASAH' : 'REL KERING'}`, bx1, by0 - 5);
+    c.textAlign = 'right'; c.fillStyle = `rgba(${WHT},0.7)`; c.fillText(`μ ${(0.24 - 0.15 * wetA + 0.015 * wetA * Math.sin(tt * 0.7)).toFixed(2)} · ${wetA > 0.7 ? 'REL BASAH' : wetA > 0.15 ? 'REL MENGERING' : 'REL KERING'}`, bx1, by0 - 5);
     c.restore(); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
   }
   // ---------- konsol Halilintar: satu layar OLED melengkung mengikuti dasbor, tema grafit merah-emas ----------
   function drawHaliPanel(c, st, dy0, night, FONT, BIG) {
-    const kmh = st.v * 3.6, { lim } = currentLimit(), nl = nextLimitAhead(), ns = nextStation(), v = st.v, tt = performance.now() / 1000, aDec = MIS.rain ? 0.55 : 0.9;
+    const kmh = st.v * 3.6, { lim } = currentLimit(), nl = nextLimitAhead(), ns = nextStation(), v = st.v, tt = performance.now() / 1000, wetA = wetNow(st.x), stA = stormNow(st.x), aDec = 0.9 - 0.35 * wetA;
     const RED = '#ff3b4a', GOLD = '#ffc14d', WH = '#fff4f0', DIM = 'rgba(255,236,230,0.55)', GN = '#5fe0a0', BL = '#6fd0ff';
     const x0 = W * 0.06, x1 = W * 0.79, top = dy0 + H * 0.005, bot = dy0 + H * 0.165, cv = H * 0.03;
     // layar OLED melengkung: tepi atas mengikuti lengkung dasbor, kaca hitam pekat, bingkai tipis berpendar merah
@@ -7449,7 +7494,7 @@
       c.fillStyle = GOLD; c.font = BIG(Math.max(10, R * 0.24)); c.fillText(String(lim), cx, cy + R * 0.82); c.fillStyle = DIM; c.font = FONT(800, 8); c.fillText(`${Math.round(pw * 12800 - rg * 9600)} kW`, cx + R * 1.05, cy + R * 0.95); }
     // ---- kiri: profil pengereman (kecepatan vs jarak) ----
     { const gx0 = x0 + W * 0.02, gx1 = cx - R * 1.35, gy0 = top + cv + H * 0.04, gy1 = bot - H * 0.03, Dm = Math.max(1500, v * v / (2 * aDec) * 1.3);
-      c.fillStyle = DIM; c.font = FONT(900, 8.5); c.textAlign = 'left'; c.textBaseline = 'top'; c.fillText('PROFIL REM · REL ' + (MIS.rain ? 'BASAH' : 'KERING'), gx0, gy0 - H * 0.026);
+      c.fillStyle = DIM; c.font = FONT(900, 8.5); c.textAlign = 'left'; c.textBaseline = 'top'; c.fillText('PROFIL REM · REL ' + (wetA > 0.7 ? 'BASAH' : wetA > 0.15 ? 'MENGERING' : 'KERING'), gx0, gy0 - H * 0.026);
       c.strokeStyle = 'rgba(255,255,255,0.12)'; c.lineWidth = 1; c.strokeRect(gx0, gy0, gx1 - gx0, gy1 - gy0); for (let q = 1; q < 4; q++) { const y = gy0 + (gy1 - gy0) * q / 4; c.beginPath(); c.moveTo(gx0, y); c.lineTo(gx1, y); c.stroke(); }
       const X = (d) => gx0 + (gx1 - gx0) * clamp(d / Dm, 0, 1), Yv = (kk) => gy1 - (gy1 - gy0) * clamp(kk / GMAX, 0, 1);
       // batas kecepatan di depan (tangga emas)
@@ -7469,8 +7514,8 @@
       if (ns) { const dist = Math.max(0, ns.x - st.x), late = Math.round((st.clock || 0) - (ns.sched || 0)); c.fillStyle = WH; c.font = FONT(900, 9.5); c.fillText(titleCase(ns.name), rx0, r2, (rx1 - rx0) * 0.38);
         c.fillStyle = late > 20 ? RED : DIM; c.font = FONT(800, 8); c.fillText(late > 20 ? `telat ${fmtDur(late)}` : `tiba ${fmtClock(ns.sched || 0)}`, rx0 + (rx1 - rx0) * 0.4, r2, (rx1 - rx0) * 0.3);
         c.textAlign = 'right'; c.fillStyle = RED; c.font = BIG(15); c.fillText(dist >= 1000 ? `${(dist / 1000).toFixed(1).replace('.', ',')} km` : `${Math.round(dist)} m`, rx1, r2); c.textAlign = 'left'; }
-      const mu = MIS.rain ? 0.09 + 0.015 * Math.sin(tt * 0.7) : 0.24, wind = MIS.sky === 'storm' ? 58 + 9 * Math.sin(tt * 0.9) + 5 * Math.sin(tt * 2.3) : 8, kv = st.panto >= 1 && !st.inNeutral ? 25 + Math.sin(tt * 0.7) * 0.15 : 0;
-      const cards = [['ADHESI', `μ ${mu.toFixed(2)}`, mu < 0.12 ? GOLD : GN], ['ANGIN ⟂', `${Math.round(wind)} km/h`, wind > 50 ? GOLD : WH], ['LISTRIK', kv ? `${kv.toFixed(1).replace('.', ',')} kV` : st.inNeutral ? 'NETRAL' : 'TURUN', kv ? GOLD : RED], ['NYAMAN', `${Math.round(st.comfort)}%`, st.comfort >= 80 ? GN : GOLD]];
+      const mu = 0.24 - 0.15 * wetA + 0.015 * wetA * Math.sin(tt * 0.7), wind = 8 + stA * (50 + 9 * Math.sin(tt * 0.9) + 5 * Math.sin(tt * 2.3)), kv = st.panto >= 1 && !st.inNeutral ? 25 + Math.sin(tt * 0.7) * 0.15 : 0;
+      const cards = [['ADHESI', `μ ${mu.toFixed(2)}`, mu < 0.12 ? GOLD : GN], ['ANGIN ⟂', `${Math.round(wind)} km/h`, wind > 50 ? GOLD : WH], ['LISTRIK', kv ? `${kv.toFixed(1).replace('.', ',')} kV` : st.inNeutral ? 'NETRAL' : 'TURUN', kv ? GOLD : RED], ['CUACA', stA > 0.85 ? 'BADAI' : stA > 0.35 ? 'MEREDA ↗' : stA > 0.04 ? 'GERIMIS ↗' : 'CERAH', stA > 0.85 ? RED : stA > 0.04 ? GOLD : GN]];
       const cw = (rx1 - rx0) / 4, cyy = r2 + hgt * 0.13, ch = bot - cyy - hgt * 0.08;
       cards.forEach(([t, val, cl], i) => { const bx = rx0 + i * cw; c.fillStyle = 'rgba(255,255,255,0.05)'; roundRect(c, bx, cyy, cw - 4, ch, 4); c.fill(); c.fillStyle = cl; c.fillRect(bx, cyy + 3, 2, ch - 6);
         c.textBaseline = 'top'; c.fillStyle = DIM; c.font = FONT(800, 8); c.fillText(t, bx + 6, cyy + 2, cw - 10); c.fillStyle = cl; c.font = FONT(900, Math.max(9, ch * 0.42)); c.textBaseline = 'bottom'; c.fillText(val, bx + 6, cyy + ch - 1, cw - 10); }); }
@@ -7872,8 +7917,46 @@
     c.fillStyle = vg; c.fillRect(0, 0, W, H);
     c.restore();
   }
+  // render dengan transisi cuaca: di zona badai mereda, adegan cerah (sore keemasan) digambar dulu lalu adegan badai ditumpuk
+  // dengan kelegapan = kekuatan badai, sehingga langit, hujan, warna & cahaya berubah mulus; di atasnya efek sinar matahari menembus awan & pelangi
+  let STORM_CV = null, CLEAR_PASS = false;
   function render(dtReal) {
-    const c = ctx;
+    const C = CLR(), st0 = S || idleState;
+    if (!C || MIS.sky !== 'storm') { renderPass(dtReal, ctx); return; }
+    const k = stormK(st0.x);
+    if (k >= 0.999) { renderPass(dtReal, ctx); return; }
+    const keep = [MIS.sky, MIS.rain, MIS.golden], both = k > 0.004;
+    MIS.sky = 'dawn'; MIS.golden = true; MIS.rain = false; CLEAR_PASS = both;
+    try { renderPass(both ? 1e-6 : dtReal, ctx); } finally { MIS.sky = keep[0]; MIS.rain = keep[1]; MIS.golden = keep[2]; CLEAR_PASS = false; }
+    const sunC = LAST_SUN ? { x: LAST_SUN.x, y: LAST_SUN.y } : { x: W * 0.8, y: H * 0.3 };
+    if (both) { // lapis badai (memakai dt sebenarnya: hujan, kilat & kamera tetap bergerak)
+      if (!STORM_CV) STORM_CV = document.createElement('canvas'); if (STORM_CV.width !== cv.width || STORM_CV.height !== cv.height) { STORM_CV.width = cv.width; STORM_CV.height = cv.height; }
+      const sc = STORM_CV.getContext('2d'); sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, STORM_CV.width, STORM_CV.height);
+      renderPass(dtReal, sc);
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = Math.pow(k, 0.85); ctx.drawImage(STORM_CV, 0, 0); ctx.restore();
+    }
+    drawClearingFx(ctx, k, st0, sunC);
+  }
+  // efek saat badai mereda: berkas sinar matahari menembus celah awan (bergerak perlahan), rona keemasan sore, kilau basah, pelangi di sisi berlawanan
+  function drawClearingFx(c, k, st, sun) {
+    const cab = viewMode === 'cab', I = clamp(4 * k * (1 - k) * 1.15, 0, 1), tt = performance.now() / 1000, yMax = cab ? H * 0.655 : H, inT = (ROUTE.tunnel && st.x > ROUTE.tunnel.from && st.x < ROUTE.tunnel.to + 20);
+    if (inT) return;
+    c.save(); c.setTransform(DPR, 0, 0, DPR, 0, 0); c.beginPath(); if (cab && (MIS.loco === 'hst' || MIS.loco === 'hst2')) { c.moveTo(W * 0.03, H * 0.66); c.quadraticCurveTo(W * 0.06, H * 0.35, W * 0.035, H * 0.03); c.quadraticCurveTo(W * 0.5, H * 0.075, W * 0.965, H * 0.03); c.quadraticCurveTo(W * 0.94, H * 0.35, W * 0.97, H * 0.66); c.closePath(); } else if (cab) c.rect(W * 0.07, H * 0.07, W * 0.86, H * 0.58); else c.rect(0, 0, W, yMax); c.clip(); c.globalCompositeOperation = 'lighter'; // kabin: hanya di dalam bentuk kaca
+    // rona keemasan menyapu dari arah matahari (paling kuat saat awan baru terbuka)
+    { const g = c.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, W * 0.9); g.addColorStop(0, `rgba(255,200,120,${(0.22 * I + 0.06 * (1 - k)).toFixed(3)})`); g.addColorStop(0.45, `rgba(255,180,110,${(0.08 * I).toFixed(3)})`); g.addColorStop(1, 'rgba(255,170,100,0)'); c.fillStyle = g; c.fillRect(0, 0, W, yMax); }
+    // berkas sinar (crepuscular rays) dari matahari di balik tepi awan
+    if (I > 0.02) { const n = 9, L = Math.hypot(W, H) * 1.1; for (let q = 0; q < n; q++) { const base = Math.PI * (0.32 + 0.5 * q / (n - 1)) + 0.05 * Math.sin(tt * 0.13 + q * 1.7) + (sun.x > W / 2 ? 0.12 : -0.12), wdt = 0.035 + 0.03 * hash(q * 3.1), a = I * (0.07 + 0.06 * hash(q * 7.7)) * (0.7 + 0.3 * Math.sin(tt * 0.4 + q));
+        const g = c.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, L); g.addColorStop(0, `rgba(255,236,190,${a.toFixed(3)})`); g.addColorStop(0.6, `rgba(255,226,170,${(a * 0.4).toFixed(3)})`); g.addColorStop(1, 'rgba(255,226,170,0)');
+        c.fillStyle = g; c.beginPath(); c.moveTo(sun.x, sun.y); c.lineTo(sun.x + Math.cos(base - wdt) * L, sun.y + Math.sin(base - wdt) * L); c.lineTo(sun.x + Math.cos(base + wdt) * L, sun.y + Math.sin(base + wdt) * L); c.closePath(); c.fill(); } }
+    c.globalCompositeOperation = 'source-over';
+    // pelangi di sisi berlawanan dari matahari, selama sisa hujan masih turun (badai 15–60%)
+    const Rb = clamp((k - 0.08) / 0.12, 0, 1) * clamp((0.62 - k) / 0.15, 0, 1);
+    if (Rb > 0.01) { const hz = cab ? H * 0.42 : H * 0.6, cx = sun.x > W / 2 ? W * 0.28 : W * 0.72, cy = hz + W * 0.2, r0 = W * 0.42, cols = ['255,70,70', '255,150,60', '255,230,90', '110,220,110', '80,170,255', '90,90,220', '160,90,210'];
+      c.beginPath(); c.rect(0, 0, W, hz); c.clip(); c.lineWidth = W * 0.008; cols.forEach((col, i) => { c.strokeStyle = `rgba(${col},${(0.16 * Rb).toFixed(3)})`; c.beginPath(); c.arc(cx, cy, r0 - i * W * 0.0075, Math.PI * 1.08, Math.PI * 1.92); c.stroke(); });
+      c.strokeStyle = `rgba(255,255,255,${(0.05 * Rb).toFixed(3)})`; c.lineWidth = W * 0.03; c.beginPath(); c.arc(cx, cy, r0 - W * 0.06, Math.PI * 1.08, Math.PI * 1.92); c.stroke(); }
+    c.restore();
+  }
+  function renderPass(dtReal, c) {
     const st = S || idleState;
     activeBridge(st.x - TRAIN_LEN * 0.3);
     c.setTransform(DPR, 0, 0, DPR, 0, (railBump(st) * (viewMode === 'cab' ? 0.3 : 1) + trackJolt(st) * (viewMode === 'cab' ? 0.8 : 1) + (S && st === S && !REDUCE_MOTION ? Math.sin(performance.now() / 23) * 0.5 * clamp((S.v * 3.6 - 180) / 80, 0, 1) : 0)) * DPR); // getaran halus di kecepatan tinggi // kabin: hentakan sambungan jauh lebih halus; wesel & jembatan tetap terasa
@@ -8468,7 +8551,7 @@
         Sound.firework(0.05 + Math.random() * 0.4);
       }
     } else weather.fw.length = 0;
-    if (!MIS.rain) { weather.drops.length = 0; weather.flash = 0; return; }
+    if (!MIS.rain) { if (!CLEAR_PASS) { weather.drops.length = 0; weather.flash = 0; } return; }
     const want = Math.round(clamp(W * H / 2600, 60, 260));
     while (weather.drops.length < want) weather.drops.push({ x: Math.random() * (W + 200), y: Math.random() * H, s: 0.7 + Math.random() * 0.6 });
     if (weather.drops.length > want) weather.drops.length = want;
@@ -8708,7 +8791,7 @@
 
   // ---------- langit senja Argo Senja: biru-ungu di atas, merah muda, jingga, emas di cakrawala; awan kumulus disinari dari bawah ----------
   const DUSKCL = Array.from({ length: 12 }, (_, i) => ({ u: hash(i * 3.1 + 2), v: hash(i * 5.7 + 4), s: 0.6 + hash(i * 2.2 + 1) * 0.9, n: 5 + Math.floor(hash(i + 9) * 4) }));
-  const CLOUD_SPR = [];
+  const CLOUD_SPRS = {}; // sprite awan per jenis cuaca (badai & cerah dirender bergantian saat transisi; jangan saling menimpa)
   function drawDuskSky(V, mode) { // mode 'storm' / 'night': hanya lapisan awan (langit, bintang & bulan sudah digambar pemanggil)
     const { c, gy } = V, tt = performance.now() / 1000, sun = sunPos(V), ST = mode === 'storm', NT = mode === 'night', CLD = ST || NT;
     const g = c.createLinearGradient(0, 0, 0, gy);
@@ -8733,6 +8816,7 @@
       const body = ST ? lerp3([52, 62, 74], [86, 98, 108], low) : NT ? lerp3([34, 38, 74], [52, 54, 96], low) : DW ? lerp3(lerp3([120, 110, 160], [180, 130, 150], low), lerp3([236, 240, 248], [246, 240, 236], low), p) : GD ? lerp3([232, 234, 244], [240, 214, 200], low) : lerp3([86, 78, 150], [176, 92, 138], low), lit = ST ? [120, 134, 146] : NT ? [96, 104, 156] : DW ? lerp3(lerp3([250, 160, 150], [255, 180, 110], Math.max(low, ns)), [255, 248, 226], p) : GD ? lerp3([255, 244, 226], [255, 200, 124], Math.max(low, ns)) : lerp3([240, 140, 160], [255, 172, 96], Math.max(low, ns)), rim = [255, 226, 150];
       // tiap awan digambar sekali ke kanvas tersimpan (puluhan gradasi melingkar) lalu ditempel tiap frame; digambar ulang hanya bila warna/arah cahayanya berubah
       const SWd = w0 * 3.8, SHd = w0 * 1.5, key = `${MIS.id}|${mode || ''}|${Math.round(w0)}|${p}|${ns}|${sdK}`, ci = DUSKCL.indexOf(cl);
+      const CLOUD_SPR = CLOUD_SPRS[MIS.sky + (MIS.golden ? 'g' : '')] || (CLOUD_SPRS[MIS.sky + (MIS.golden ? 'g' : '')] = []);
       let sp = CLOUD_SPR[ci];
       if (!sp || sp.key !== key) {
         sp = CLOUD_SPR[ci] || (CLOUD_SPR[ci] = { cv: document.createElement('canvas') }); sp.key = key;
@@ -9906,7 +9990,8 @@
   }
   // ---------- sawah hidup: petak beragam warna, rumpun padi, kilau air, kuntul, petani bercaping ----------
   // matahari bergeser pelan mengikuti perjalanan (rel tidak pernah benar-benar lurus) dan arah kabin di tikungan
-  const sunPos = (V) => { const wx = V.sunX !== undefined ? V.sunX : V.camX || 0; const cabV = V.sunPan !== undefined; return { x: W * (cabV ? 0.2 : 0.8) + (cabV ? -1 : 1) * (W * 0.045 * Math.sin(wx / 1300) + W * 0.015 * Math.sin(wx / 410 + 1)) - (V.sunPan || 0) * 0.05, y: (MIS.dusk ? V.gy * (cabV ? 0.68 : 0.6) : MIS.golden ? V.gy * (cabV ? 0.6 : 0.5) : lerp(V.gy - 10, V.gy * 0.25, V.p)) + H * 0.012 * Math.sin(wx / 900) + twiOf(V.p) * V.gy * 0.42 }; };
+  let LAST_SUN = null;
+  const sunPos = (V) => { const wx = V.sunX !== undefined ? V.sunX : V.camX || 0; const cabV = V.sunPan !== undefined; return LAST_SUN = { x: W * (cabV ? 0.2 : 0.8) + (cabV ? -1 : 1) * (W * 0.045 * Math.sin(wx / 1300) + W * 0.015 * Math.sin(wx / 410 + 1)) - (V.sunPan || 0) * 0.05, y: (MIS.dusk ? V.gy * (cabV ? 0.68 : 0.6) : MIS.golden ? V.gy * (cabV ? 0.6 : 0.5) : lerp(V.gy - 10, V.gy * 0.25, V.p)) + H * 0.012 * Math.sin(wx / 900) + twiOf(V.p) * V.gy * 0.42 }; };
   // flare matahari bergaya lensa kamera: inti, sinar bintang berputar pelan, garis anamorfik, cincin & pantulan lensa
   // berwarna di sepanjang sumbu matahari→tengah layar; sedikit berkedip saat kereta melaju (terhalang tiang/pohon)
   const FLARE_G = [[-0.22, 0.018, [255, 214, 160], 0.07, 0], [0.32, 0.012, [255, 236, 200], 0.09, 0], [0.52, 0.045, [140, 220, 190], 0.035, 1], [0.7, 0.02, [255, 170, 120], 0.05, 0],
@@ -10682,7 +10767,7 @@
         c.fillStyle = '#ffffff'; c.font = `900 ${Math.max(7, Math.round(0.95 * ppm))}px "Big Shoulders Display", sans-serif`; c.textBaseline = 'middle'; c.textAlign = 'left'; c.fillText(s.name, bx + 0.6 * ppm, by + bh * 0.36);
         const nw = c.measureText(s.name).width; c.fillStyle = 'rgba(255,255,255,0.6)'; c.font = `700 ${Math.max(6, Math.round(0.38 * ppm))}px "Plus Jakarta Sans", sans-serif`; c.fillText(`${s.elev || ''}  ·  STASIUN KERETA CEPAT`, bx + 0.9 * ppm + nw, by + bh * 0.36);
         c.fillStyle = '#ff3b4a'; c.fillRect(bx, by + bh * 0.66, bxe - bx, Math.max(1, 0.06 * ppm));
-        const tick = 'HL 3401 HALILINTAR → WATUGEDE  ·  BERANGKAT 16.10  ·  JALUR 1  ·  320 km/h  ·  PERINGATAN CUACA: BADAI  ·  '; c.fillStyle = '#ffc14d'; c.font = `800 ${Math.max(6, Math.round(0.42 * ppm))}px "Plus Jakarta Sans", sans-serif`;
+        const tick = 'HL 3401 HALILINTAR → TANJUNG SURYA via WATUGEDE  ·  BERANGKAT 16.10  ·  JALUR 1  ·  320 km/h  ·  PERINGATAN CUACA: BADAI, CERAH DI TANJUNG SURYA  ·  '; c.fillStyle = '#ffc14d'; c.font = `800 ${Math.max(6, Math.round(0.42 * ppm))}px "Plus Jakarta Sans", sans-serif`;
         const tw = c.measureText(tick).width, off = (t * 2.2 * ppm) % tw; c.fillText(tick + tick, bx + 0.4 * ppm - off, by + bh * 0.84);
         const sh = c.createLinearGradient(bx, by, bx + (bxe - bx) * 0.5, by + bh); sh.addColorStop(0, 'rgba(255,255,255,0.12)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); c.fillStyle = sh; c.fillRect(bx, by, bxe - bx, bh); c.restore(); } }
     // tugu digital di peron: lempeng kaca hitam bertepi LED merah, logo PL, panah & nomor jalur
@@ -14277,6 +14362,7 @@
     if (layer === 'front' && ROUTE.double && ROUTE.bridge && !ROUTE.bridge.viaduct) V = Object.assign({}, V, { gy: V.gy + DBL_K * (ROUTE.double.o + 0.4) * V.ppm });
     if (ROUTE.bridge && ROUTE.bridge.wood) { drawTrestle(V, layer); return; }
     if (ROUTE.bridge && ROUTE.bridge.truss) { drawTruss(V, layer); return; }
+    if (ROUTE.bridge && ROUTE.bridge.arch) { drawDeckArch(V, layer); return; }
     if (ROUTE.bridge && ROUTE.bridge.viaduct) { drawViaduct(V, layer); return; }
     const G = bridgeGeom(V);
     if (!G) return;
@@ -14378,6 +14464,57 @@
     c.restore();
   }
   // viaduk beton berlengkung banyak di atas lembah sungai
+  // ---------- jembatan lengkung beton (deck arch) di atas sungai: busur utama parabola besar di bawah lantai rel, tiang spandrel ramping,
+  // lengkung pendekat di kedua ujung, pilar berkaki di air, gelagar bergaris cornice, sandaran berlampu, plakat nama, lampu sorot busur saat gelap ----------
+  function drawDeckArch(V, layer) {
+    const b = ROUTE.bridge, { c, X, ppm } = V, gy = V.gy + (ROUTE.double ? DBL_K * ROUTE.double.o * ppm : 0);
+    const x0 = X(b.from), x1 = X(b.to); if (x1 < -60 || x0 > W + 60 || layer === 'back') return;
+    const night = V.night, storm = V.storm, dark = night ? 1 : storm ? 0.55 : clamp((0.45 - V.p) / 0.45, 0, 1);
+    const conc = night ? '#5c616c' : storm ? '#9a9fa2' : mix('#d6cfc0', '#e4ddcf', V.p), concD = night ? '#3a3e48' : storm ? '#727a80' : '#a89f90', concL = night ? '#7d8390' : storm ? '#b9bec1' : '#f3eee4';
+    const wY = gy + 8.2 * ppm, dB = gy + 1.45 * ppm, [mA, mB] = b.main || [b.from + (b.to - b.from) * 0.3, b.to - (b.to - b.from) * 0.3], mid = (mA + mB) / 2, half = (mB - mA) / 2;
+    c.save();
+    // latar lembah: tepi seberang berkabut & bukit jauh, langit tampak di bawah lantai
+    { const yT = dB, ramp = 50 * ppm, bg = c.createLinearGradient(0, yT, 0, wY); bg.addColorStop(0, night ? '#1a2238' : storm ? '#8c9aa2' : mix('#a9bfca', '#cfdde2', V.p)); bg.addColorStop(1, night ? '#141c2c' : storm ? '#6e8078' : mix('#7d9c8c', '#9cbba6', V.p));
+      c.fillStyle = bg; c.fillRect(x0 - ramp, yT, x1 - x0 + ramp * 2, wY - yT + 1);
+      c.fillStyle = night ? '#121c18' : storm ? '#4c6052' : mix('#4f7258', '#6a8f6e', V.p); c.beginPath(); c.moveTo(x0 - ramp, wY + 1);
+      for (let x = x0 - ramp; x <= x1 + ramp; x += 8) c.lineTo(x, wY - (2.2 + 1.2 * Math.sin((x - X(0)) * 0.006) + 0.5 * Math.sin((x - X(0)) * 0.031)) * ppm); c.lineTo(x1 + ramp, wY + 1); c.closePath(); c.fill(); }
+    // busur utama: parabola dari kaki di air ke mahkota tepat di bawah lantai; tebal di kaki, ramping di mahkota
+    const spring = wY - 0.6 * ppm, crown = dB + 0.5 * ppm, yA = (x) => { const u = (x - mid) / half; return spring - (spring - crown) * (1 - u * u); }, thick = (x) => (1.5 + 1.4 * Math.pow((x - mid) / half, 2)) * ppm;
+    if (X(mB) > -40 && X(mA) < W + 40) {
+      const top = [], bot = []; for (let x = mA; x <= mB + 0.01; x += half / 30) { top.push([X(x), yA(x)]); bot.push([X(x), yA(x) + thick(x)]); }
+      const rg = c.createLinearGradient(0, crown, 0, spring); rg.addColorStop(0, concL); rg.addColorStop(0.5, conc); rg.addColorStop(1, concD);
+      c.fillStyle = rg; c.beginPath(); top.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); for (let i = bot.length - 1; i >= 0; i--) c.lineTo(bot[i][0], bot[i][1]); c.closePath(); c.fill();
+      c.strokeStyle = concL; c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath(); top.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke(); // tepi atas tersinari
+      c.strokeStyle = 'rgba(0,0,0,0.25)'; c.lineWidth = Math.max(1, 0.2 * ppm); c.beginPath(); bot.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke(); // bayangan intrados
+      c.strokeStyle = 'rgba(60,56,50,0.25)'; c.lineWidth = 1; c.beginPath(); for (let x = mA + 6; x < mB - 4; x += 6) { c.moveTo(X(x), yA(x)); c.lineTo(X(x), yA(x) + thick(x)); } c.stroke(); // sambungan segmen pracetak
+      // tiang spandrel ramping dari punggung busur ke lantai
+      for (let x = mA + 5; x < mB - 3; x += 7) { const yt = yA(x); if (yt - dB < 0.6 * ppm) continue; const sx = X(x), w = 0.7 * ppm;
+        const cg = c.createLinearGradient(sx - w / 2, 0, sx + w / 2, 0); cg.addColorStop(0, concL); cg.addColorStop(0.6, conc); cg.addColorStop(1, concD); c.fillStyle = cg; c.fillRect(sx - w / 2, dB, w, yt - dB + 1); }
+      // kaki busur: blok pondasi di tepi sungai
+      for (const x of [mA, mB]) { const sx = X(x); c.fillStyle = concD; c.beginPath(); c.moveTo(sx - 3 * ppm, wY + 0.5 * ppm); c.lineTo(sx - 1.6 * ppm, spring - 1.6 * ppm); c.lineTo(sx + 1.6 * ppm, spring - 1.6 * ppm); c.lineTo(sx + 3 * ppm, wY + 0.5 * ppm); c.closePath(); c.fill(); }
+      // lampu sorot busur saat gelap/badai
+      if (dark > 0.05) { c.save(); c.globalCompositeOperation = 'lighter'; for (let x = mA + half * 0.15; x < mB; x += half * 0.35) { const sx = X(x), sy = yA(x) + thick(x), g = c.createRadialGradient(sx, sy, 0, sx, sy, 9 * ppm); g.addColorStop(0, `rgba(255,214,160,${(0.28 * dark).toFixed(3)})`); g.addColorStop(1, 'rgba(255,214,160,0)'); c.fillStyle = g; c.fillRect(sx - 9 * ppm, sy - 9 * ppm, 18 * ppm, 18 * ppm); } c.restore(); }
+    }
+    // lengkung pendekat di kedua sisi: pilar ke air dengan lengkung setengah elips
+    for (const [a, e] of [[b.from, mA], [mB, b.to]]) { const n = Math.max(1, Math.round((e - a) / 34)), sp = (e - a) / n;
+      for (let k = 0; k < n; k++) { const xa = X(a + k * sp), xe = X(a + (k + 1) * sp), mx = (xa + xe) / 2, wh = (xe - xa) / 2; if (xe < -40 || xa > W + 40) continue;
+        c.fillStyle = conc; c.beginPath(); c.moveTo(xa, dB); c.lineTo(xe, dB); c.lineTo(xe, wY + 0.5 * ppm); c.lineTo(xe - 1.1 * ppm, wY + 0.5 * ppm); c.lineTo(xe - 1.1 * ppm, dB + 4.0 * ppm); c.ellipse(mx, dB + 4.0 * ppm, wh - 1.1 * ppm, 3.2 * ppm, 0, 0, Math.PI, true); c.lineTo(xa + 1.1 * ppm, wY + 0.5 * ppm); c.lineTo(xa, wY + 0.5 * ppm); c.closePath(); c.fill();
+        c.strokeStyle = concD; c.lineWidth = Math.max(1, 0.14 * ppm); c.beginPath(); c.ellipse(mx, dB + 4.0 * ppm, wh - 1.1 * ppm, 3.2 * ppm, 0, Math.PI, 0); c.stroke();
+        c.fillStyle = 'rgba(0,0,0,0.14)'; c.fillRect(xe - 1.1 * ppm, dB + 4.0 * ppm, 1.1 * ppm, wY - dB - 4.0 * ppm); } }
+    // gelagar lantai bergaris cornice, sandaran & tiang lampu
+    { const g = c.createLinearGradient(0, gy, 0, dB + 0.3 * ppm); g.addColorStop(0, concL); g.addColorStop(1, concD); c.fillStyle = g; c.fillRect(x0 - 0.5 * ppm, gy + 0.15 * ppm, x1 - x0 + ppm, 1.35 * ppm);
+      c.fillStyle = 'rgba(255,255,255,0.55)'; c.fillRect(x0 - 0.5 * ppm, gy + 0.15 * ppm, x1 - x0 + ppm, Math.max(1, 0.08 * ppm)); c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(x0 - 0.5 * ppm, dB - 0.12 * ppm, x1 - x0 + ppm, Math.max(1, 0.12 * ppm));
+      c.fillStyle = conc; c.fillRect(x0 - 0.5 * ppm, gy - 0.95 * ppm, x1 - x0 + ppm, 0.55 * ppm); c.fillStyle = 'rgba(255,255,255,0.4)'; c.fillRect(x0 - 0.5 * ppm, gy - 0.95 * ppm, x1 - x0 + ppm, 1);
+      for (let m = b.from + 6; m < b.to; m += 18) { const sx = X(m); if (sx < -10 || sx > W + 10) continue; c.fillStyle = '#4e575e'; c.fillRect(sx, gy - 3.4 * ppm, 0.12 * ppm, 2.5 * ppm); c.fillRect(sx - 0.45 * ppm, gy - 3.45 * ppm, 0.9 * ppm, 0.12 * ppm); const on = dark > 0.1;
+        c.fillStyle = on ? '#fff1c8' : '#d8dde3'; c.fillRect(sx - 0.38 * ppm, gy - 3.33 * ppm, 0.76 * ppm, 0.08 * ppm); if (on) { c.save(); c.globalCompositeOperation = 'lighter'; const lg = c.createRadialGradient(sx, gy - 3.3 * ppm, 0, sx, gy - 3.3 * ppm, 2.5 * ppm); lg.addColorStop(0, `rgba(255,232,180,${(0.35 * dark).toFixed(3)})`); lg.addColorStop(1, 'rgba(255,232,180,0)'); c.fillStyle = lg; c.fillRect(sx - 2.5 * ppm, gy - 5.8 * ppm, 5 * ppm, 5 * ppm); c.restore(); } }
+      // plakat nama di tengah gelagar
+      const px = X(mid); if (px > -60 && px < W + 60) { const pw = 18 * ppm, ph = 0.95 * ppm; c.fillStyle = '#2b2f35'; c.fillRect(px - pw / 2, gy + 0.35 * ppm, pw, ph); c.fillStyle = '#d9b45a'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 ${Math.max(6, Math.round(0.6 * ppm))}px "Big Shoulders Display", sans-serif`; c.fillText(`${(b.name || 'JEMBATAN LENGKUNG').toUpperCase()} · ${b.year || '2034'}`, px, gy + 0.35 * ppm + ph / 2, pw - 4); c.textAlign = 'start'; c.textBaseline = 'alphabetic'; } }
+    drawViaductRiver(V, x0, x1, wY);
+    // riak putih di kaki pilar & pondasi busur
+    { const tt = performance.now() / 1000; c.strokeStyle = 'rgba(240,248,250,0.5)'; c.lineWidth = 1; c.beginPath(); const feet = [mA, mB]; for (const [a, e] of [[b.from, mA], [mB, b.to]]) { const n = Math.max(1, Math.round((e - a) / 34)); for (let k = 1; k < n; k++) feet.push(a + k * (e - a) / n); }
+      for (const f of feet) { const sx = X(f); if (sx < -20 || sx > W + 20) continue; for (let q = 0; q < 2; q++) { const r = (1.6 + q * 1.2 + ((tt * 0.6 + q * 0.5) % 1) * 1.2) * ppm; c.moveTo(sx - r, wY + 0.6 * ppm + q * 0.4 * ppm); c.quadraticCurveTo(sx, wY + 1.1 * ppm + q * 0.4 * ppm, sx + r, wY + 0.6 * ppm + q * 0.4 * ppm); } } c.stroke(); }
+    c.restore();
+  }
   function drawViaduct(V, layer) {
     const b = ROUTE.bridge, { c, X, ppm } = V, gy = V.gy + (ROUTE.double ? DBL_K * ROUTE.double.o * ppm : 0); // jalur ganda: muka viaduk di depan jalur 2
     const x0 = X(b.from), x1 = X(b.to); if (x1 < -40 || x0 > W + 40) return;
@@ -15247,7 +15384,7 @@ c.restore();
       power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0, electric: !!S && (ELEC() || MIS.loco === 'argo'), steam: !!S && MIS.loco === 'steam', // Agraveda bertenaga listrik: suara traksi listrik, tanpa mesin diesel
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
-      px: st.x, rain: MIS.rain ? (tunnel ? 0.25 : 1) : 0, tunnel, sawit: MIS.land === 'sawit', city: (ROUTE.scenes || []).some((q) => q.kind === 'city' && st.x > q.from - 150 && st.x < q.to + 150), night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
+      px: st.x, rain: MIS.rain ? (tunnel ? 0.25 : 1) * stormNow(st.x) : 0, tunnel, sawit: MIS.land === 'sawit', city: (ROUTE.scenes || []).some((q) => q.kind === 'city' && st.x > q.from - 150 && st.x < q.to + 150), night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
       curve: !!(zoneAt(st.x) && zoneAt(st.x).curve),
       climb: (() => { const gr = gradeAt(st.x - TRAIN_LEN / 2); return gr && gr.permil > 0 ? gr.permil / 20 : 0; })(),
       lat: latAccel(st),
