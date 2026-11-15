@@ -907,6 +907,7 @@
     aboard: 24,
     ticket: 'hst',
     loco: 'hst2',
+    livery: 'halilintar', // Guntur generasi baru (prototipe livery)
     route: {
       lineSpeed: 320,
       stations: [
@@ -12648,7 +12649,16 @@
   }
   let LOCO_ORN = 'dayak';
   let LOCO_FORCE = null; // garasi: paksa gambar lokomotif tertentu
-  let LIVERY_FORCE = null; // livery pengganti untuk bentuk Guntur (mis. KA Cepat Garuda): { acc, pin, name, code }
+  let LIVERY_FORCE = null; // livery pengganti untuk bentuk Guntur (mis. KA Cepat Garuda): { acc, pin, name, code, band?, body?, mask? }
+  // gradasi badan Guntur (atap → rok); livery generasi baru boleh membawa warna badan sendiri
+  const gunturBody = (night) => { const B = LIVERY_FORCE && LIVERY_FORCE.body; if (!B) return [[0, night ? '#c9ced6' : '#fbfcfd'], [0.12, night ? '#d6dbe2' : '#ffffff'], [0.55, night ? '#c2c8d0' : '#eef0f3'], [0.8, night ? '#a9b0b9' : '#d9dde2'], [1, '#9aa1a9']];
+    const d = (col) => (night ? mix(col, '#7d8794', 0.25) : col); return [[0, d(B[0])], [0.12, d(B[1])], [0.55, d(B[2])], [0.8, d(B[3])], [1, B[4]]]; };
+  // usulan livery Guntur generasi baru (prototipe)
+  const NG_LIV = {
+    halilintar: { name: 'HALILINTAR', code: 'HL', acc: '#d81f2e', band: '#8e0f1c', pin: '#e6b84a', mask: '#16191e', body: ['#fdfdfc', '#ffffff', '#f1f2f3', '#dcdfe3', '#9ca3ab'] },
+    perak: { name: 'HALILINTAR', code: 'HL', acc: '#1fa6e0', band: '#0e3f73', pin: '#ffffff', mask: '#1a1f26', body: ['#e9edf1', '#f3f6f8', '#d3d9df', '#b6bec7', '#8b949e'] },
+    nila: { name: 'HALILINTAR', code: 'HL', acc: '#6d4bd6', band: '#2c1f6b', pin: '#3fd3e6', mask: '#14161c', body: ['#fbfbfd', '#ffffff', '#eeeff4', '#d8dbe3', '#9a9fab'] },
+  };
   // Kartu Masinis: pangkat dari total bintang, membuka livery Cakra di Garasi
   const RANKS = [
     { min: 0, name: 'Asisten Masinis', liv: 'dayak', livName: 'Dayak' },
@@ -12782,6 +12792,11 @@
     c.fillStyle = 'rgba(10,12,16,0.5)'; c.fillRect(xa, yTop - Math.max(1, 0.04 * ppm), xb - xa, Math.max(1, 0.05 * ppm)); // celah sambungan ke badan
   }
   function drawTrain(V) {
+    const LIVP = !LOCO_FORCE && !LIVERY_FORCE ? ((typeof window !== 'undefined' && window.__liv && NG_LIV[window.__liv]) || (MIS.livery && NG_LIV[MIS.livery]) || null) : null;
+    if (LIVP) { LIVERY_FORCE = LIVP; try { drawTrainCore(V); } finally { LIVERY_FORCE = null; } return; }
+    drawTrainCore(V);
+  }
+  function drawTrainCore(V) {
     const { c, ppm, gy } = V;
     const yP = gy - VPIV * ppm;
     c.save(); c.beginPath(); c.rect(-60, yP, W + 120, H); c.clip(); drawTrainRaw(V); c.restore();
@@ -12904,7 +12919,7 @@
         const wells = [[26, 76], [164, 214]];
         // badan: sudut atap membulat, alas rok penuh
         const body = () => { c.beginPath(); c.moveTo(xr, Y(0.34)); c.lineTo(xr, Y(5.65)); c.quadraticCurveTo(xr, Y(6.08), xr + 0.45 * ppm, Y(6.08)); c.lineTo(xf - 0.45 * ppm, Y(6.08)); c.quadraticCurveTo(xf, Y(6.08), xf, Y(5.65)); c.lineTo(xf, Y(0.34)); c.closePath(); };
-        body(); c.fillStyle = vgrad(6.08, 0.34, [[0, night ? '#c9ced6' : '#fbfcfd'], [0.12, night ? '#d6dbe2' : '#ffffff'], [0.55, night ? '#c2c8d0' : '#eef0f3'], [0.8, night ? '#a9b0b9' : '#d9dde2'], [1, '#9aa1a9']]); c.fill();
+        body(); c.fillStyle = vgrad(6.08, 0.34, gunturBody(night)); c.fill();
         bodySheen(c, V, xr, Y(6.08), cw, 5.74 * ppm, body, 0.8);
         // rok bawah abu muda dengan lekukan bogie; roda tampak di dalam lekukan
         c.save(); body(); c.clip();
@@ -13287,7 +13302,7 @@
         c.lineTo(...P(10.2, 6.08)); c.bezierCurveTo(...P(6.4, 6.07), ...P(3.2, 5.55), ...P(0.9, 4.15));
         c.bezierCurveTo(...P(-0.6, 3.25), ...P(-1.75, 2.3), ...P(-2.05, 1.55)); c.quadraticCurveTo(...P(-2.15, 1.0), ...P(-1.5, 0.74));
         c.bezierCurveTo(...P(-0.9, 0.5), ...P(-0.2, 0.36), ...P(0.8, 0.34)); c.closePath(); };
-      body(); c.fillStyle = vgrad(6.08, 0.34, [[0, night ? '#c9ced6' : '#fbfcfd'], [0.12, night ? '#d6dbe2' : '#ffffff'], [0.55, night ? '#c2c8d0' : '#eef0f3'], [0.8, night ? '#a9b0b9' : '#d9dde2'], [1, '#9aa1a9']]); c.fill();
+      body(); c.fillStyle = vgrad(6.08, 0.34, gunturBody(night)); c.fill();
       bodySheen(c, V, L(15.85), Y(6.08), 18 * ppm, 5.74 * ppm, body, 0.9);
       c.save(); body(); c.clip();
       // rok bawah & lekukan bogie
@@ -13307,6 +13322,11 @@
       c.strokeStyle = 'rgba(160,170,182,0.9)'; c.lineWidth = Math.max(1, lw(0.04)); c.beginPath(); c.moveTo(...P(16, 2.86)); c.lineTo(...P(8.0, 2.86)); c.stroke();
       c.lineCap = 'butt';
       c.restore();
+      if (LIVERY_FORCE && LIVERY_FORCE.mask) { // generasi baru: topeng moncong gelap mengilap membungkus kaca kokpit sampai ujung hidung
+        c.save(); body(); c.clip(); const mg = c.createLinearGradient(0, Y(6.1), 0, Y(2.2)); mg.addColorStop(0, mix(LIVERY_FORCE.mask, '#5a6878', 0.35)); mg.addColorStop(0.4, LIVERY_FORCE.mask); mg.addColorStop(1, mix(LIVERY_FORCE.mask, '#000000', 0.3)); c.fillStyle = mg;
+        c.beginPath(); c.moveTo(...P(10.4, 6.6)); c.lineTo(...P(-3, 6.6)); c.lineTo(...P(-3, 2.05)); c.bezierCurveTo(...P(-1.2, 2.3), ...P(1.6, 2.95), ...P(5.0, 3.0)); c.lineTo(...P(9.0, 3.0)); c.bezierCurveTo(...P(9.9, 3.0), ...P(10.2, 3.6), ...P(10.0, 4.8)); c.closePath(); c.fill();
+        c.strokeStyle = LIVERY_FORCE.acc; c.lineWidth = Math.max(1, lw(0.06)); c.beginPath(); c.moveTo(...P(-2.4, 2.1)); c.bezierCurveTo(...P(-1.2, 2.3), ...P(1.6, 2.95), ...P(5.0, 3.0)); c.lineTo(...P(9.0, 3.0)); c.bezierCurveTo(...P(9.9, 3.0), ...P(10.2, 3.6), ...P(10.0, 4.8)); c.stroke(); // garis tepi topeng berwarna aksen
+        c.globalAlpha = 0.25; c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(...P(9.4, 6.0)); c.bezierCurveTo(...P(6.0, 5.98), ...P(3.0, 5.5), ...P(0.9, 4.1)); c.lineTo(...P(1.2, 3.95)); c.bezierCurveTo(...P(3.2, 5.3), ...P(6.0, 5.8), ...P(9.4, 5.82)); c.closePath(); c.fill(); c.globalAlpha = 1; c.restore(); } // kilau atas
       // kaca kokpit menyatu dengan pita jendela samping (satu bidang kaca gelap yang naik mengikuti moncong)
       const glassP = () => { c.beginPath(); c.moveTo(...P(15.85, 4.62)); c.lineTo(...P(8.6, 4.62)); c.bezierCurveTo(...P(7.4, 4.62), ...P(6.7, 5.6), ...P(5.4, 5.68));
         c.bezierCurveTo(...P(3.6, 5.6), ...P(2.2, 4.95), ...P(1.15, 4.1)); c.bezierCurveTo(...P(0.9, 3.88), ...P(1.15, 3.7), ...P(1.6, 3.66));
@@ -13337,7 +13357,7 @@
       duskBody(c, V, L(15.85), Y(6.08), 18 * ppm, 5.74 * ppm, body);
       if (!V.night && !V.storm && V.tf < 0.5) { c.save(); body(); c.clip(); c.globalCompositeOperation = 'lighter'; const ng = c.createRadialGradient(L(1.2), Y(3.9), 0, L(1.2), Y(3.9), 2.8 * ppm); ng.addColorStop(0, `rgba(${skyTone().hi},0.5)`); ng.addColorStop(1, `rgba(${skyTone().hi},0)`); c.fillStyle = ng; c.fillRect(L(4.5), Y(6.2), 7 * ppm, 4 * ppm); c.restore(); }
       // logo & nomor
-      c.fillStyle = ACC; c.font = `italic 900 ${Math.max(6, Math.round(0.5 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
+      c.fillStyle = LIVERY_FORCE && LIVERY_FORCE.mask ? '#ffffff' : ACC; c.font = `italic 900 ${Math.max(6, Math.round(0.5 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'left'; c.textBaseline = 'middle';
       c.fillText(LIVERY_FORCE ? LIVERY_FORCE.name : 'GUNTUR', L(14.6), Y(2.0)); c.fillStyle = '#5a6470'; c.font = `800 ${Math.round(0.3 * ppm)}px "Big Shoulders Display", sans-serif`; if (ppm * (CINE.s || 1) >= 14) c.fillText(LIVERY_FORCE ? LIVERY_FORCE.code + ' 7001' : 'GT 6001', L(14.6), Y(1.7)); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     } else if (SH === 'hst2') {
       // ---- Guntur: kereta cepat bergaya Eropa (rangkaian menyatu), hidung panjang terpahat, kaca kokpit hitam, garis merah ramping ----
