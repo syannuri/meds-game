@@ -7319,8 +7319,17 @@
     // Cakra NEO: kaca visor tunggal yang lebar, tepi atas melengkung lembut turun ke samping, pilar A miring tebal (mengikuti kaca moncong NEO dari luar)
     const neo = !!o.neo, pano = !!o.pano || neo;
     const pxl = neo ? (y) => W * 0.085 + (W * 0.03 - W * 0.085) * (y / (H * 0.68)) : (y) => W * 0.032 + (W * 0.012 - W * 0.032) * (y / H), pxr = (y) => W - pxl(y);
-    const pTop = neo ? (x) => { const t = (x - W / 2) / (W / 2); return H * 0.058 + H * 0.085 * t * t; } : (x) => { const t = (x - W / 2) / (W / 2); return H * 0.062 + H * 0.07 * t * t * t * t; };
-    const winP = () => { const xa = neo ? pxl(pTop(pxl(H * 0.15))) : pxl(pTop(0) + H * 0.07), xb = W - xa; c.moveTo(xa, pTop(xa) + rr * (neo ? 1.4 : 0.6)); for (let x = xa; x <= xb + 0.1; x += W / 40) c.lineTo(x, pTop(x)); c.lineTo(xb, pTop(xb) + rr * (neo ? 1.4 : 0.6)); if (neo) { c.quadraticCurveTo(pxr(yb) + W * 0.004, (pTop(xb) + yb) / 2, pxr(yb), yb - rr * 0.8); c.quadraticCurveTo(pxr(yb) - W * 0.002, yb, pxr(yb) - rr, yb); c.lineTo(pxl(yb) + rr, yb); c.quadraticCurveTo(pxl(yb) + W * 0.002, yb, pxl(yb), yb - rr * 0.8); c.quadraticCurveTo(pxl(yb) - W * 0.004, (pTop(xa) + yb) / 2, xa, pTop(xa) + rr * 1.4); } else { c.lineTo(pxr(yb), yb); c.lineTo(pxl(yb), yb); } c.closePath(); };
+    const pTop = neo ? (x) => { const t = (x - W / 2) / (W / 2 - W * 0.085); return H * 0.06 + H * 0.065 * t * t; } : (x) => { const t = (x - W / 2) / (W / 2); return H * 0.062 + H * 0.07 * t * t * t * t; };
+    // kaca visor Cakra NEO: simetris kiri-kanan, keempat sudut dibulatkan dengan jari-jari sama, tepi atas melengkung halus, pilar samping lurus miring
+    const neoWin = () => { const xB = W * 0.035, xT = W * 0.085, yS = H * 0.125, yC = H * 0.06, R = H * 0.065, yBt = o.dy0 - H * 0.012;
+      const Qt = (t) => { const a = 1 - t, cy = 2 * yC - yS; return [a * a * xT + 2 * a * t * (W / 2) + t * t * (W - xT), a * a * yS + 2 * a * t * cy + t * t * yS]; };
+      const sl = Math.hypot(xT - xB, yS - yBt), ux = (xT - xB) / sl, uy = (yS - yBt) / sl, t0 = R / (W - 2 * xT) * 1.1;
+      const A = [xT - ux * R, yS - uy * R], Cc = [xB + ux * R, yBt + uy * R], B0 = Qt(t0);
+      c.moveTo(A[0], A[1]); c.quadraticCurveTo(xT, yS, B0[0], B0[1]);
+      for (let k = 1; k <= 48; k++) { const q = Qt(t0 + (1 - 2 * t0) * k / 48); c.lineTo(q[0], q[1]); }
+      c.quadraticCurveTo(W - xT, yS, W - A[0], A[1]); c.lineTo(W - Cc[0], Cc[1]); c.quadraticCurveTo(W - xB, yBt, W - xB - R, yBt);
+      c.lineTo(xB + R, yBt); c.quadraticCurveTo(xB, yBt, Cc[0], Cc[1]); c.closePath(); };
+    const winP = () => { if (neo) { neoWin(); return; } const xa = pxl(pTop(0) + H * 0.07), xb = pxr(pTop(0) + H * 0.07); c.moveTo(xa, pTop(xa) + rr * 0.6); for (let x = xa; x <= xb + 0.1; x += W / 40) c.lineTo(x, pTop(x)); c.lineTo(xb, pTop(xb) + rr * 0.6); c.lineTo(pxr(yb), yb); c.lineTo(pxl(yb), yb); c.closePath(); };
     const holes = () => { if (pano) winP(); else { win(xl, () => cL); win(() => cR, xr); } };
     // panel interior (plafon, pilar) dengan lubang jendela
     const pg = c.createLinearGradient(0, 0, 0, H); pg.addColorStop(0, col('#0b0d10', '#2c333a')); pg.addColorStop(0.5, col('#0e1115', '#353d45')); pg.addColorStop(1, col('#07090b', '#1f252b'));
