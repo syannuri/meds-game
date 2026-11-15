@@ -1846,8 +1846,8 @@
       if (info.bell > 0 && t >= nextBell) { crossingBell(0.04 + info.bell * 0.1); nextBell = t + 0.55; }
       const quiet = t < duckEnd.amb; // jangan tambah bunyi satwa saat ada peristiwa penting
       // suasana asri: gemerisik daun dan aneka burung, lebih ramai saat kereta pelan atau berhenti
-      const open = !info.tunnel && !info.rain && !info.night, calm = clamp(1 - v / 20, 0.35, 1);
-      set(L.leaves.g.gain, scene && !info.tunnel ? (info.rain ? 0.004 : 0.016 * calm) : 0, 0.8);
+      const open = !info.tunnel && !(info.rain > 0.15) && !info.night, calm = clamp(1 - v / 20, 0.35, 1);
+      set(L.leaves.g.gain, scene && !info.tunnel ? (info.rain > 0.15 ? 0.004 : 0.016 * calm) : 0, 0.8);
       if (t >= nextBird) {
         if (!quiet && info.fog < 0.6 && open) (Math.random() < 0.5 ? bird : bulbul)((0.014 + Math.random() * 0.018) * calm);
         nextBird = t + 0.7 + Math.random() * (info.fog > 0.3 ? 5 : 2.2) / calm;
@@ -1872,11 +1872,11 @@
       if (!quiet && info.night && !info.tunnel && t >= nextFrog) { frog(0.04); nextFrog = t + 0.6 + Math.random() * 1.6; }
       // kehidupan sekitar rel: motor lewat, anjing, sapi, klakson kota, sorak anak-anak
       const village = !info.city && !info.tunnel, lowV = clamp(1 - v / 25, 0.2, 1);
-      if (t >= nextMoto) { if (!quiet && village && !info.rain) motoPass((0.012 + Math.random() * 0.01) * lowV); nextMoto = t + 6 + Math.random() * 9; }
+      if (t >= nextMoto) { if (!quiet && village && !(info.rain > 0.15)) motoPass((0.012 + Math.random() * 0.01) * lowV); nextMoto = t + 6 + Math.random() * 9; }
       if (t >= nextDog) { if (!quiet && village && Math.random() < (info.night ? 0.8 : 0.45)) dogBark((0.012 + Math.random() * 0.01) * lowV); nextDog = t + 10 + Math.random() * 16; }
-      if (t >= nextCow) { if (!quiet && village && !info.night && !info.rain && !info.sawit) cowMoo((0.014 + Math.random() * 0.008) * lowV); nextCow = t + 18 + Math.random() * 22; }
+      if (t >= nextCow) { if (!quiet && village && !info.night && !(info.rain > 0.15) && !info.sawit) cowMoo((0.014 + Math.random() * 0.008) * lowV); nextCow = t + 18 + Math.random() * 22; }
       if (t >= nextHonk) { if (!quiet && info.city && !info.tunnel) carHonk((0.01 + Math.random() * 0.01) * lowV); nextHonk = t + 3 + Math.random() * 6; }
-      if (info.bell > 0.5 && t >= nextKids) { if (!quiet && !info.night && !info.rain && Math.random() < 0.6) kidsCheer(0.012); nextKids = t + 14 + Math.random() * 10; }
+      if (info.bell > 0.5 && t >= nextKids) { if (!quiet && !info.night && !(info.rain > 0.15) && Math.random() < 0.6) kidsCheer(0.012); nextKids = t + 14 + Math.random() * 10; }
       set(L.city.g.gain, scene && info.city && !info.tunnel ? 0.03 : 0, 1.2); // dengung lalu lintas kota
       if (!quiet && info.night && info.lebaran && t >= nextBedug) { bedug(0.28); nextBedug = t + 16 + Math.random() * 12; }
     }
@@ -2171,14 +2171,14 @@
         if (n === 3) { metal(1046.5 * 2, 0.1, 2, sfx, 1.25); [1318.5, 1568, 2093].forEach((f, k) => metal(f * 2, 0.045, 1.2, sfx, 1.3 + k * 0.07)); nz(ac.currentTime + 1.2, 'highpass', 3500, 0.5, 0.05, 0.9, sfx); }
         duck({ music: 0.6 }, 2.4);
       },
-      thunder(delay) {
-        if (!ac || muted) return;
+      thunder(delay, vol = 1) {
+        if (!ac || muted || vol < 0.02) return;
         const t = ac.currentTime + delay;
         const src = ac.createBufferSource(); src.buffer = brown;
         const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(120, t + 2.5);
         const gn = g(0);
-        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.55, t + 0.06);
-        gn.gain.exponentialRampToValueAtTime(0.2, t + 0.6); gn.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
+        gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.55 * vol, t + 0.06);
+        gn.gain.exponentialRampToValueAtTime(Math.max(0.0002, 0.2 * vol), t + 0.6); gn.gain.exponentialRampToValueAtTime(0.0001, t + 3.6);
         src.connect(f).connect(gn).connect(amb); src.start(t); src.stop(t + 3.7);
       },
       firework(delay) {
@@ -8631,10 +8631,10 @@
     }
     weather.flash = Math.max(0, weather.flash - dt * 2.6);
     weather.nextFlash -= dt;
-    if (weather.nextFlash <= 0) {
-      weather.flash = 1;
-      weather.nextFlash = 9 + Math.random() * 14;
-      Sound.thunder(0.6 + Math.random() * 2.2); HAPT.buzz(18);
+    if (weather.nextFlash <= 0) { // badai mereda: petir makin jarang, makin jauh (pelan & tertunda), lalu berhenti
+      const sk = stormNow((S || idleState).x);
+      weather.nextFlash = (9 + Math.random() * 14) / Math.max(0.25, sk);
+      if (sk > 0.3) { weather.flash = sk; Sound.thunder(0.6 + Math.random() * 2.2 + (1 - sk) * 2.5, Math.pow(sk, 1.6)); if (sk > 0.6) HAPT.buzz(18); }
     }
   }
   function drawWeather(V) {
@@ -15452,7 +15452,7 @@ c.restore();
       power: st.notch > 0 && st.doors !== 'open' && st.phase !== 'dwell' ? st.notch / 4 : 0, electric: !!S && (ELEC() || MIS.loco === 'argo'), steam: !!S && MIS.loco === 'steam', // Agraveda bertenaga listrik: suara traksi listrik, tanpa mesin diesel
       brake: Math.max(0, -st.aCmd), slip: !!st.slip,
       fog: fogAt(st.x + 30), dawn: MIS.sky === 'dawn' && st.clock < 420,
-      px: st.x, rain: MIS.rain ? (tunnel ? 0.25 : 1) * stormNow(st.x) : 0, tunnel, sawit: MIS.land === 'sawit', city: (ROUTE.scenes || []).some((q) => q.kind === 'city' && st.x > q.from - 150 && st.x < q.to + 150), night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
+      px: st.x, rain: MIS.rain ? (tunnel ? 0.25 : 1) * Math.pow(stormNow(st.x), 1.4) : 0, tunnel, sawit: MIS.land === 'sawit', city: (ROUTE.scenes || []).some((q) => q.kind === 'city' && st.x > q.from - 150 && st.x < q.to + 150), night: MIS.sky === 'night', lebaran: !!MIS.lebaran,
       curve: !!(zoneAt(st.x) && zoneAt(st.x).curve),
       climb: (() => { const gr = gradeAt(st.x - TRAIN_LEN / 2); return gr && gr.permil > 0 ? gr.permil / 20 : 0; })(),
       lat: latAccel(st),
