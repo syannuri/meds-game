@@ -7404,6 +7404,28 @@
       c.fillStyle = '#16181b'; c.beginPath(); c.arc(px, py, Math.max(4, W * 0.006), 0, 7); c.fill(); c.lineCap = 'butt'; }
     return amb;
   }
+  // siluet awak kokpit Guntur/Halilintar dilihat dari samping (kereta menghadap kanan: m kecil = depan). Varian:
+  // a = masinis duduk menghadap depan, berpeci/topi dinas, tangan di tuas samping, sandaran kursi; b = masinis + asisten; c = konsol menyala & masinis di balik sandaran
+  function drawCabCrew(c, P, ppm, A, v) {
+    const sil = `rgba(48,30,18,${(0.78 * A).toFixed(3)})`, seat = `rgba(36,24,16,${(0.6 * A).toFixed(3)})`;
+    const pts = (arr) => { c.beginPath(); arr.forEach(([m, h], i) => (i ? c.lineTo(...P(m, h)) : c.moveTo(...P(m, h)))); c.closePath(); c.fill(); };
+    const person = (m0, s, cap) => { // m0 = posisi pinggul; s = skala; menghadap ke depan (kanan)
+      c.fillStyle = seat; pts([[m0 + 0.55 * s, 3.2], [m0 + 0.7 * s, 3.2], [m0 + 0.62 * s, 4.75 * 1], [m0 + 0.42 * s, 4.78], [m0 + 0.42 * s, 4.45]]); // sandaran kursi
+      c.fillStyle = sil;
+      pts([[m0 + 0.42 * s, 3.25], [m0 + 0.5 * s, 4.28], [m0 + 0.2 * s, 4.36], [m0 - 0.08 * s, 4.22], [m0 - 0.2 * s, 3.25]]); // badan sedikit bersandar
+      c.beginPath(); c.ellipse(...P(m0 + 0.12 * s, 4.58), 0.2 * s * ppm, 0.25 * s * ppm, 0, 0, 7); c.fill(); // kepala
+      pts([[m0 - 0.06 * s, 4.6], [m0 - 0.13 * s, 4.52], [m0 - 0.06 * s, 4.47]]); // hidung (profil menghadap depan)
+      if (cap) { pts([[m0 + 0.32 * s, 4.72], [m0 + 0.3 * s, 4.86], [m0 - 0.02 * s, 4.88], [m0 - 0.12 * s, 4.74], [m0 - 0.3 * s, 4.7], [m0 - 0.05 * s, 4.68]]); } // topi dinas berpelindung
+      c.strokeStyle = sil; c.lineWidth = Math.max(1.5, 0.14 * s * ppm); c.lineCap = 'round'; c.beginPath(); c.moveTo(...P(m0 + 0.1 * s, 4.15)); c.lineTo(...P(m0 - 0.35 * s, 3.8)); c.lineTo(...P(m0 - 0.75 * s, 3.85)); c.stroke(); c.lineCap = 'butt'; // lengan ke tuas samping
+    };
+    if (v === 'c') { // konsol kaca menyala di depan masinis (layar merah-emas Halilintar), kepala sebagian tertutup sandaran tinggi
+      for (const [m, col] of [[2.3, '255,70,84'], [2.9, '255,193,77'], [3.5, '120,200,255']]) { const [x, y] = P(m, 3.78); c.fillStyle = `rgba(${col},${(0.85 * A).toFixed(3)})`; c.fillRect(x - 0.22 * ppm, y - 0.14 * ppm, 0.44 * ppm, 0.2 * ppm); }
+      c.fillStyle = sil; c.beginPath(); c.ellipse(...P(4.35, 4.5), 0.19 * ppm, 0.24 * ppm, 0, 0, 7); c.fill(); pts([[4.6, 3.3], [4.65, 4.22], [4.15, 4.3], [4.0, 3.3]]);
+      c.fillStyle = `rgba(30,20,14,${(0.75 * A).toFixed(3)})`; pts([[4.75, 3.2], [4.95, 3.2], [4.9, 4.95], [4.62, 4.98], [4.6, 4.3]]); // kursi bersandaran tinggi
+      return; }
+    person(4.15, 1, true); // masinis
+    if (v === 'b') person(6.4, 0.95, false); // asisten masinis di kursi belakang
+  }
   const HALI = () => MIS.livery === 'halilintar';
   // daftar yang akan dilalui di depan (untuk AR & konsol Halilintar): jembatan, terowongan, kabut, seksi netral, stasiun, badai mereda, rel kering
   function haliAhead(x) {
@@ -13584,7 +13606,7 @@
       glassP(); const gg = c.createLinearGradient(0, Y(5.68), 0, Y(2.95)); gg.addColorStop(0, '#3c5874'); gg.addColorStop(0.3, '#121b26'); gg.addColorStop(1, '#05080b'); c.fillStyle = gg; c.fill();
       c.save(); glassP(); c.clip();
       if (CABL > 0.02) { const cg = c.createLinearGradient(0, Y(5.7), 0, Y(3.0)); cg.addColorStop(0, `rgba(255,226,160,${CABL})`); cg.addColorStop(0.6, `rgba(255,206,122,${CABL})`); cg.addColorStop(1, `rgba(240,180,100,${CABL})`); c.fillStyle = cg; c.fillRect(L(9.0), Y(5.8), 10 * ppm, 2.9 * ppm); // kokpit menyala hangat seterang jendela gerbong, mengikuti bentuk kaca
-        c.fillStyle = `rgba(60,36,20,${(0.7 * CABL).toFixed(3)})`; c.beginPath(); c.arc(...P(3.3, 4.32), 0.27 * ppm, 0, 7); c.fill(); c.beginPath(); c.ellipse(...P(3.4, 3.78), 0.42 * ppm, 0.32 * ppm, 0, Math.PI, 0); c.fill(); // siluet masinis
+        drawCabCrew(c, P, ppm, CABL, (typeof window !== 'undefined' && window.__drv) || MIS.crew || 'a'); // siluet masinis di kokpit (pilihan bentuk)
         const dg = c.createLinearGradient(0, Y(3.75), 0, Y(2.95)); dg.addColorStop(0, 'rgba(20,14,10,0)'); dg.addColorStop(1, `rgba(20,14,10,${(0.6 * CABL).toFixed(3)})`); c.fillStyle = dg; c.fillRect(L(9.0), Y(3.75), 10 * ppm, 0.85 * ppm); } // dasbor gelap di bawah kaca
       c.globalAlpha = CABL > 0.3 ? 0.12 : 0.38; c.fillStyle = '#fff'; c.beginPath(); c.moveTo(...P(4.9, 5.66)); c.lineTo(...P(4.2, 5.62)); c.lineTo(...P(2.4, 3.9)); c.lineTo(...P(3.1, 3.85)); c.closePath(); c.fill();
       c.globalAlpha = CABL > 0.3 ? 0.06 : 0.16; c.beginPath(); c.moveTo(...P(6.3, 5.5)); c.lineTo(...P(5.9, 5.55)); c.lineTo(...P(4.6, 3.6)); c.lineTo(...P(5.0, 3.55)); c.closePath(); c.fill(); c.globalAlpha = 1;
