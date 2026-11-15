@@ -7952,7 +7952,7 @@
       const pf = CINE.paxX, hasPf = pf !== null && pf !== undefined;
       // penumpang: poros dipilih supaya kerumunan bergeser ke tengah layar seiring kamera mendekat
       const px = hasPf ? (CINE.s > 1.005 ? clamp((lerp(pf, W * 0.46, clamp((CINE.s - 1) / 1.3, 0, 1)) - pf * CINE.s) / (1 - CINE.s), 0, W) : clamp(pf, 0, W)) : clamp(r.x1 - len * fx, W * 0.2, W * 0.82), py = sh ? (sh.focus === 'wheels' ? r.bottom - (r.bottom - r.top) * 0.08 : r.bottom - (r.bottom - r.top) * 0.4) : r.bottom + (hasPf ? (r.bottom - r.top) * 0.15 : 0);
-      CINE.px = hasPf || !CINE.px ? px : CINE.px + (px - CINE.px) * Math.min(1, k * 1.2); CINE.py = CINE.py ? CINE.py + (py - CINE.py) * Math.min(1, k * 1.2) : py; }
+      CINE.px = !CINE.px ? px : CINE.px + (px - CINE.px) * Math.min(1, k * (hasPf ? 1.6 : 1.2)); /* poros zoom selalu bergerak halus */ CINE.py = CINE.py ? CINE.py + (py - CINE.py) * Math.min(1, k * 1.2) : py; }
     CINE.bars += ((CINE.shot && CINE.shot.t < CINE.shot.dur - 2.2 ? 1 : 0) - CINE.bars) * Math.min(1, k * 1.6);
   }
   // bingkai film (letterbox) tipis selama shot sinematik
@@ -8088,7 +8088,9 @@
     const ppmB = clamp(H / 44, 3.4, 13);
     if (window.__rnDebug) window.__rnCam = { camX, ppm, camLead, pc: (camX + W / (2 * ppm)) * ppmB - W / 2, old: camX * ppm };
     CINE.raw = { x0: X(st.x - TRAIN_LEN), x1: X(st.x), top: gy - 6.6 * ppm, bottom: gy };
-    { const pw = S && st === S && CINE.want > 1.5 ? paxFocus() : null; CINE.paxX = pw === null ? null : X(pw); }
+    { const pw = S && st === S && CINE.want > 1.5 ? paxFocus() : null; // titik fokus penumpang dihaluskan di ruang dunia: tidak meloncat saat satu penumpang selesai naik/turun
+      if (pw === null) CINE.pfW = null; else if (dtReal > 1e-4) CINE.pfW = CINE.pfW == null ? pw : CINE.pfW + (pw - CINE.pfW) * Math.min(1, dtReal * 1.1);
+      CINE.paxX = CINE.pfW == null ? null : X(CINE.pfW); }
     { const zx = (x) => CINE.px + (x - CINE.px) * CZ, zy = (y) => CINE.py + (y - CINE.py) * CZ, r = CINE.raw; trainScr = CZ > 1.001 ? { x0: zx(r.x0), x1: zx(r.x1), top: zy(r.top), bottom: zy(r.bottom) } : r; }
     // paralaks latar hanya mengikuti posisi kereta (bukan zoom/geser kamera), jadi saat mengerem
     // dan berhenti di stasiun pemandangan jauh tidak ikut 'berlari' ketika kamera mendekat
@@ -11978,6 +11980,7 @@
   function yardSprite(V, pk, sc0) {
     const night = false, pq = Math.max(0.4, Math.round(clamp(V.p, 0, 1) * 5) / 5), dev = V.ppm * sc0 /* sprite netral siang (tanpa sorot lampu terpanggang); gelap subuh & cahaya ditambahkan dinamis */ * Math.max(1, Math.abs(V.c.getTransform().a)), SP = clamp(Math.ceil(dev / 4) * 4, 16, 40);
     const key = [pk.loco, pk.n, !!pk.freight, night, pq, SP].join('|'); if (YARD_SPRS[key]) return YARD_SPRS[key];
+    { const base = [pk.loco, pk.n, !!pk.freight, night, pq].join('|'), L = yardSprite.last && yardSprite.last[base]; if (L && ZOOMING()) return L; }
     const carL = pk.freight ? WAGON_LEN : COACH_LEN, TL = LOCO_LEN + pk.n * (carL + GAP), pad = 3, cw = Math.ceil((TL + pad * 2) * SP), ch = Math.ceil(10.5 * SP), gyS = Math.round(9 * SP);
     const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch; const c = cv.getContext('2d'), noseX = cw - pad * SP;
     const VV = { c, ppm: SP, gy: gyS, X: (wx) => noseX + wx * SP, st: { x: 0, doors: 'closed', aboard: 0, spin: 0, carDyn: null, steam: 0 }, p: pq, storm: false, tf: 0, camX: 0,
@@ -11987,7 +11990,7 @@
     try { drawTrain(VV); } catch (e) { /* sprite opsional */ } finally { W = keep.W; H = keep.H; N_COACH = keep.N_COACH; CAR_LEN = keep.CAR_LEN; MIS = keep.MIS; LOCO_FORCE = keep.LOCO_FORCE; NEO_PAL_FORCE = keep.NEO_PAL_FORCE; }
     let out = cv; if (pk.flip) { out = document.createElement('canvas'); out.width = cw; out.height = ch; const o = out.getContext('2d'); o.translate(cw, 0); o.scale(-1, 1); o.drawImage(cv, 0, 0); }
     if (Object.keys(YARD_SPRS).length > 8) for (const k in YARD_SPRS) delete YARD_SPRS[k];
-    return (YARD_SPRS[key] = { cv: out, SP, gy: gyS, nose: pk.flip ? pad * SP : noseX, len: TL });
+    YARD_SPRS[key] = { cv: out, SP, gy: gyS, nose: pk.flip ? pad * SP : noseX, len: TL }; (yardSprite.last || (yardSprite.last = {}))[[pk.loco, pk.n, !!pk.freight, night, pq].join('|')] = YARD_SPRS[key]; return YARD_SPRS[key];
   }
   // sumber cahaya depo di layar (tampak samping): lampu sorot tiang, jendela gedung dipo; kekuatan mengikuti gelapnya subuh
   function yardLights(V) {
@@ -12295,12 +12298,16 @@
     o.strokeStyle = 'rgba(70,78,88,0.45)'; o.lineWidth = 1; o.beginPath(); for (let q = x + 0.18 * SP; q < x + w - 1; q += 0.22 * SP) { o.moveTo(q, Yh(5.8)); o.lineTo(q, Yh(0.6)); } o.stroke();
     o.fillStyle = 'rgba(20,26,34,0.55)'; o.fillRect(x - 1, Yh(4.62), w + 2, Yh(2.95) - Yh(4.62));
   }
+  // selama zoom kamera bergerak (mis. close-up penumpang saat berhenti), sprite rangkaian tidak dibuat ulang per jenjang resolusi:
+  // sprite yang ada cukup diskalakan (mulus, tanpa sentakan), lalu dibuat ulang setajam layar sekali setelah zoom diam
+  const ZOOMING = () => Math.abs(CINE.v) > 0.004 || Math.abs((CINE.want || 1) - CINE.s) > 0.012;
   const KILAT_SPRS = {};
   function kilatSprite(V) {
     const night = !!(V && (V.night || V.p < 0.14)), pk = V ? Math.round(clamp(V.p, 0, 1) * 5) / 5 : 0.6;
     // resolusi sprite = piksel perangkat per meter di layar (tidak diperbesar → tetap tajam di layar HP resolusi tinggi)
     const KD = ROUTE.double.kilat, dev = V && V.c ? V.ppm * 1.04 * Math.max(1, Math.abs(V.c.getTransform().a)) : 22, SPq = clamp(Math.ceil(dev / 4) * 4, 20, 44), litW = night || !!(V && V.lit), key = night + '|' + litW + '|' + pk + '|' + SPq + '|' + (KD.loco || 'hst');
     if (KILAT_SPRS[key]) return KILAT_SPRS[key];
+    { const base = key.replace(/\|\d+\|([^|]*)$/, '|$1'), L = kilatSprite.last; if (L && L.base === base && ZOOMING()) return L.spr; }
     for (const k in KILAT_SPRS) delete KILAT_SPRS[k]; // hanya satu suasana aktif dalam satu waktu
     const SP = SPq, n = ROUTE.double.kilat.cars || 6, TL = LOCO_LEN + n * (COACH_LEN + GAP), pad = 3;
     const cw = Math.ceil((TL + GAP + LOCO_LEN + pad * 2) * SP), ch = Math.ceil(10.5 * SP), gyS = Math.round(9 * SP);
@@ -12319,7 +12326,7 @@
     const sx0 = B.noseX - (LOCO_LEN + 0.4) * SP, sw = (LOCO_LEN + 0.4 + pad) * SP; // kabin belakang (menghadap kanan, tulisan terbaca)
     o.drawImage(B.cv, sx0, 0, sw, ch, pad * SP + (TL + GAP - 0.4) * SP, 0, sw, ch);
     if ((KD.loco || 'hst') === 'hst2') tailGangway(o, pad * SP + (TL - 0.15) * SP, (GAP + 0.1) * SP, gyS, SP, night); // Garuda: sambungan berlipat sewarna badan ke kabin ekor
-    return (KILAT_SPRS[key] = { cv: out, SP, gy: gyS, nose: pad * SP });
+    KILAT_SPRS[key] = { cv: out, SP, gy: gyS, nose: pad * SP }; kilatSprite.last = { base: key.replace(/\|\d+\|([^|]*)$/, '|$1'), spr: KILAT_SPRS[key] }; return KILAT_SPRS[key];
   }
   // pantulan sinar di badan Kilat (tampilan samping): pita kilau matahari yang bergeser saat rangkaian melaju, garis cahaya
   // di tepi atap, kilatan di sambungan panel yang menyala saat melintasi arah matahari, bayangan lembut di badan bawah, kilau bintang di moncong
@@ -12410,7 +12417,7 @@
   const GARUDA_SPRS = {};
   function garudaSprite(V, u) {
     const pk = Math.round(clamp(V.p, 0, 1) * 5) / 5, night = !!(V.night || V.p < 0.14), litW = night || !!V.lit, dev = u * Math.max(1, Math.abs(V.c.getTransform().a)), SP = clamp(Math.ceil(dev / 4) * 4, 16, 40), key = night + '|' + litW + '|' + pk + '|' + SP;
-    if (GARUDA_SPRS[key]) return GARUDA_SPRS[key]; for (const kk in GARUDA_SPRS) delete GARUDA_SPRS[kk];
+    if (GARUDA_SPRS[key]) return GARUDA_SPRS[key]; { const L = garudaSprite.last; if (L && L.base === night + '|' + litW + '|' + pk && ZOOMING()) return L.spr; } for (const kk in GARUDA_SPRS) delete GARUDA_SPRS[kk];
     const n = 5, TL = LOCO_LEN + n * (COACH_LEN + GAP), pad = 3, cw = Math.ceil((TL + GAP + LOCO_LEN + pad * 2 + 1) * SP), ch = Math.ceil(10.5 * SP), gyS = Math.round(9 * SP);
     const mk = (noText) => { const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch; const c = cv.getContext('2d'); if (noText) c.fillText = () => {};
       const noseX = cw - pad * SP; // moncong di kanan; ruang di kiri untuk kabin ekor
@@ -12425,7 +12432,7 @@
     // kabin ekor: salinan lokomotif dicerminkan (tanpa tulisan) dipasang di belakang gerbong terakhir
     const sx0 = B.noseX - (LOCO_LEN + 0.4) * SP, sw = (LOCO_LEN + 0.4 + pad) * SP, tailX = A.noseX - (TL + GAP) * SP;
     o.save(); o.translate(tailX + (0.4 + GAP) * SP, 0); o.scale(-1, 1); o.drawImage(B.cv, sx0, 0, sw, ch, 0, 0, sw, ch); o.restore(); // kabin ekor menyambung di BELAKANG gerbong terakhir (tidak menimpanya), moncong ke kiri
-    return (GARUDA_SPRS[key] = { cv: A.cv, SP, gy: gyS, nose: A.noseX, tail: tailX + (GAP - LOCO_LEN) * SP });
+    GARUDA_SPRS[key] = { cv: A.cv, SP, gy: gyS, nose: A.noseX, tail: tailX + (GAP - LOCO_LEN) * SP }; garudaSprite.last = { base: night + '|' + litW + '|' + pk, spr: GARUDA_SPRS[key] }; return GARUDA_SPRS[key];
   }
   // cahaya dinamis Garuda (sumber sama dengan Agraveda: V.rim/rimA, skyTone, posisi matahari): langit & tanah terpantul,
   // sisi hangat dekat matahari & teduh menjauh, pita kilau yang menyapu badan saat melaju, cahaya tepi atap, kilatan sambungan
