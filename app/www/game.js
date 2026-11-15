@@ -6624,7 +6624,10 @@
       // wiper pantograf modern: dua lengan sejajar, bilah karet tegak menyapu kaca; butir hujan yang tersapu
       // hilang lalu menempel lagi perlahan; di kecepatan tinggi butir terdorong angin ke atas
       const now = performance.now() / 1000, kmh = st.v * 3.6;
-      const per = clamp(1.9 - kmh / 120, 1.05, 1.9), pause = 0.28, cyc = per * 2 + pause * 2, tc = now % cyc;
+      const perT = clamp(1.9 - kmh / 120, 1.05, 1.9); // tempo sapuan mengikuti kecepatan, tapi berubah perlahan (motor wiper tidak melonjak)
+      CABW.per = CABW.per === undefined ? perT : CABW.per + (perT - CABW.per) * Math.min(1, ((now - (CABW.t || now)) || 0) * 0.8);
+      const per = CABW.per, pause = 0.28, cyc = per * 2 + pause * 2, dtw = clamp(now - (CABW.t || now), 0, 0.1); CABW.t = now;
+      CABW.ph = ((CABW.ph || 0) + dtw / cyc) % 1; const tc = CABW.ph * cyc; // fase terakumulasi: tidak meloncat saat tempo berubah
       const ease = (u) => u * u * (3 - 2 * u);
       const u = tc < per ? ease(tc / per) : tc < per + pause ? 1 : tc < per * 2 + pause ? 1 - ease((tc - per - pause) / per) : 0;
       // bilah panjang searah lengan (seperti wiper sungguhan) menyapu bidang kipas hampir seluruh kaca dari poros di bawah
@@ -8070,11 +8073,14 @@
   // inti sempit, pendar lampu di moncong, genangan cahaya di rel & kilau di kepala rel; saat hujan butir hujan di dalam berkas ikut tersinari
   function drawSoftHeadlight(V) {
     const st = V.st; if (!st || !ELEC() || V.night || V.tf > 0.2) return;
-    const { c, ppm, gy } = V, dark = V.storm ? 1 : MIS.rain ? 0.75 : clamp((0.45 - V.p) / 0.45, 0, 1) * 0.8 + 0.2, K = 0.55 * dark;
-    const lx = V.bx(st.x) - 0.5 * ppm, ly = gy - trainH(1.75) * ppm + V.bdy(st.x), len = 40 * ppm; if (lx < -len || lx > W + 40) return;
+    const { c, ppm, gy } = V, fog = fogAt(st.x + 30), dark = V.storm ? 1 : MIS.rain ? 0.75 : clamp((0.45 - V.p) / 0.45, 0, 1) * 0.8 + 0.2, K = 0.55 * Math.max(dark, fog * 0.9);
+    const lx = V.bx(st.x) - 0.5 * ppm, ly = gy - trainH(1.75) * ppm + V.bdy(st.x), len = 40 * (1 - 0.3 * fog) * ppm; if (lx < -len || lx > W + 40) return; // kabut tebal memendekkan jangkauan sorot
     c.save(); c.globalCompositeOperation = 'lighter';
     const g = c.createRadialGradient(lx, ly, 0, lx, ly, len); g.addColorStop(0, `rgba(255,244,222,${(0.24 * K).toFixed(3)})`); g.addColorStop(0.35, `rgba(255,240,214,${(0.07 * K).toFixed(3)})`); g.addColorStop(1, 'rgba(255,240,214,0)');
-    c.fillStyle = g; c.beginPath(); c.moveTo(lx, ly - 0.25 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly - 2.6 * ppm, lx + len, ly - 4.2 * ppm); c.lineTo(lx + len, ly + 4.6 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly + 2.2 * ppm, lx, ly + 0.25 * ppm); c.closePath(); c.fill(); // berkas lebar
+    c.fillStyle = g; for (let q = 0; q < 6; q++) { const sp = 0.5 + q * 0.17; c.globalAlpha = 0.3; c.beginPath(); c.moveTo(lx, ly - 0.25 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly - 2.6 * sp * ppm, lx + len, ly - 4.2 * sp * ppm); c.lineTo(lx + len, ly + 4.6 * sp * ppm); c.quadraticCurveTo(lx + len * 0.5, ly + 2.2 * sp * ppm, lx, ly + 0.25 * ppm); c.closePath(); c.fill(); } c.globalAlpha = 1; // berkas lebar bertepi lembut (berlapis, tanpa garis tepi tajam)
+    if (fog > 0.05) { for (const [r, a] of [[3, 0.22], [8, 0.1], [16, 0.05]]) { const hg = c.createRadialGradient(lx, ly, 0, lx, ly, r * ppm); hg.addColorStop(0, `rgba(255,246,230,${(a * fog).toFixed(3)})`); hg.addColorStop(1, 'rgba(255,246,230,0)'); c.fillStyle = hg; c.fillRect(lx - r * ppm, ly - r * ppm, 2 * r * ppm, 2 * r * ppm); } // halo hamburan cahaya di kabut
+      const t = performance.now() / 1000; for (let i = 0; i < 30; i++) { const u = (hash(i * 2.7) + t * (0.12 + hash(i) * 0.15)) % 1, x = lx + u * len * 0.85, y = ly + (hash(i * 4.9) - 0.5) * (0.6 + u * 7) * ppm, a = K * fog * 0.6 * (1 - u) * (0.5 + 0.5 * Math.sin(t * 3 + i)), r = Math.max(0.7, 0.1 * ppm);
+        if (a < 0.01) continue; const dg = c.createRadialGradient(x, y, 0, x, y, r * 3); dg.addColorStop(0, `rgba(255,255,250,${a.toFixed(3)})`); dg.addColorStop(1, 'rgba(255,255,250,0)'); c.fillStyle = dg; c.fillRect(x - r * 3, y - r * 3, r * 6, r * 6); } } // butir embun berkilau
     const gc = c.createRadialGradient(lx, ly, 0, lx, ly, len * 0.6); gc.addColorStop(0, `rgba(255,252,238,${(0.22 * K).toFixed(3)})`); gc.addColorStop(1, 'rgba(255,252,238,0)'); c.fillStyle = gc; c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + len * 0.6, ly - 1.8 * ppm); c.lineTo(lx + len * 0.6, ly + 1.8 * ppm); c.closePath(); c.fill(); // inti
     const pg = c.createRadialGradient(lx + 12 * ppm, gy, 0, lx + 12 * ppm, gy, 14 * ppm); pg.addColorStop(0, `rgba(255,236,196,${(0.24 * K).toFixed(3)})`); pg.addColorStop(1, 'rgba(255,236,196,0)'); c.save(); c.translate(0, gy); c.scale(1, 0.18); c.translate(0, -gy); c.fillStyle = pg; c.beginPath(); c.arc(lx + 12 * ppm, gy, 14 * ppm, 0, 7); c.fill(); c.restore(); // genangan di rel
     const rl = c.createLinearGradient(lx, 0, lx + 30 * ppm, 0); rl.addColorStop(0, `rgba(255,248,230,${(0.5 * K).toFixed(3)})`); rl.addColorStop(1, 'rgba(255,248,230,0)'); c.fillStyle = rl; c.fillRect(lx, gy - 0.12 * ppm, 30 * ppm, Math.max(1, 0.06 * ppm)); // kilau kepala rel
@@ -8085,12 +8091,12 @@
   }
   // sorot lampu depan saat berkabut/berembun (tampak samping, siang): berkas lembut menembus kabut, pendar lampu, butir embun berkilau di dalam berkas
   function drawFogBeam(V) {
-    const f = fogAt(V.st.x + 30); if (f < 0.05 || V.night || V.tf > 0.2) return;
+    const f = fogAt(V.st.x + 30); if (f < 0.05 || V.night || V.tf > 0.2 || ELEC()) return; // kereta listrik/cepat: sorot kabut sudah menyatu di drawSoftHeadlight (satu berkas di posisi lampu)
     const { c, ppm, gy, st } = V, lx = V.bx(st.x - 0.9), ly = gy - trainH(3.25) * ppm + V.bdy(st.x), K = f * 0.75, len = 46 * ppm, t = performance.now() / 1000;
     if (lx < -len || lx > W + 20) return;
     c.save(); c.globalCompositeOperation = 'lighter';
     const g = c.createRadialGradient(lx, ly, 0, lx, ly, len); g.addColorStop(0, `rgba(255,246,226,${(0.26 * K).toFixed(3)})`); g.addColorStop(0.4, `rgba(255,246,226,${(0.08 * K).toFixed(3)})`); g.addColorStop(1, 'rgba(255,246,226,0)');
-    c.fillStyle = g; c.beginPath(); c.moveTo(lx, ly - 0.3 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly - 3.2 * ppm, lx + len, ly - 5 * ppm); c.lineTo(lx + len, ly + 5.5 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly + 2.4 * ppm, lx, ly + 0.3 * ppm); c.closePath(); c.fill();
+    c.fillStyle = g; for (let q = 0; q < 6; q++) { const sp = 0.5 + q * 0.17; c.globalAlpha = 0.3; c.beginPath(); c.moveTo(lx, ly - 0.3 * ppm); c.quadraticCurveTo(lx + len * 0.5, ly - 3.2 * sp * ppm, lx + len, ly - 5 * sp * ppm); c.lineTo(lx + len, ly + 5.5 * sp * ppm); c.quadraticCurveTo(lx + len * 0.5, ly + 2.4 * sp * ppm, lx, ly + 0.3 * ppm); c.closePath(); c.fill(); } c.globalAlpha = 1; // tepi lembut berlapis
     const gc = c.createRadialGradient(lx, ly, 0, lx, ly, len * 0.65); gc.addColorStop(0, `rgba(255,252,238,${(0.24 * K).toFixed(3)})`); gc.addColorStop(1, 'rgba(255,252,238,0)'); c.fillStyle = gc; c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + len * 0.65, ly - 2.4 * ppm); c.lineTo(lx + len * 0.65, ly + 2.2 * ppm); c.closePath(); c.fill();
     for (const [r, a] of [[1.4, 0.55], [4.5, 0.16], [9, 0.07]]) { const lg = c.createRadialGradient(lx, ly, 0, lx, ly, r * ppm); lg.addColorStop(0, `rgba(255,248,230,${(a * K * 1.3).toFixed(3)})`); lg.addColorStop(1, 'rgba(255,248,230,0)'); c.fillStyle = lg; c.fillRect(lx - r * ppm, ly - r * ppm, 2 * r * ppm, 2 * r * ppm); } // pendar lampu di kabut
     for (let i = 0; i < 40; i++) { const u = (hash(i * 2.7) + t * (0.12 + hash(i) * 0.15)) % 1, x = lx + u * len * 0.85, y = ly + (hash(i * 4.9) - 0.5) * (0.6 + u * 9) * ppm, a = K * 0.6 * (1 - u) * (0.5 + 0.5 * Math.sin(t * 3 + i)), r = Math.max(0.7, 0.1 * ppm);
@@ -8449,12 +8455,16 @@
       const glass = () => { c.beginPath();
         if (NEO) { c.moveTo(Lm(3.6), Yh(5.78)); c.lineTo(Lm(2.4), Yh(5.8)); c.bezierCurveTo(Lm(1.3), Yh(5.72), Lm(0.4), Yh(5.1), Lm(-0.2), Yh(4.2)); c.lineTo(Lm(0.35), Yh(4.1)); c.bezierCurveTo(Lm(1.0), Yh(4.35), Lm(2.2), Yh(4.5), Lm(3.6), Yh(4.5)); }
         else if (CL === 'argo') { c.moveTo(Lm(5.0), Yh(5.62)); c.bezierCurveTo(Lm(2.6), Yh(5.62), Lm(1.0), Yh(5.1), Lm(-0.18), Yh(4.0)); c.lineTo(Lm(-0.36), Yh(3.7)); c.bezierCurveTo(Lm(0.6), Yh(3.82), Lm(2.4), Yh(4.4), Lm(4.4), Yh(4.62)); c.lineTo(Lm(5.0), Yh(4.66)); }
+        else if (CL === 'hst2') { const Pq = (m, h) => [Lm(m), Yh(h)]; // Guntur: sama persis dengan lekuk kaca kokpit (glassP) di gambar lokomotif
+          c.moveTo(...Pq(9.2, 4.62)); c.lineTo(...Pq(8.6, 4.62)); c.bezierCurveTo(...Pq(7.4, 4.62), ...Pq(6.7, 5.6), ...Pq(5.4, 5.68)); c.bezierCurveTo(...Pq(3.6, 5.6), ...Pq(2.2, 4.95), ...Pq(1.15, 4.1));
+          c.bezierCurveTo(...Pq(0.9, 3.88), ...Pq(1.15, 3.7), ...Pq(1.6, 3.66)); c.bezierCurveTo(...Pq(3.5, 3.4), ...Pq(5.8, 2.95), ...Pq(8.0, 2.95)); c.lineTo(...Pq(9.2, 2.95)); }
         else { c.moveTo(Lm(7.4), Yh(5.12)); c.bezierCurveTo(Lm(4.6), Yh(5.12), Lm(2.4), Yh(4.7), Lm(0.6), Yh(3.75)); c.lineTo(Lm(0.25), Yh(3.5)); c.bezierCurveTo(Lm(1.6), Yh(3.62), Lm(4.0), Yh(4.05), Lm(6.2), Yh(4.12)); c.lineTo(Lm(7.4), Yh(4.12)); }
         c.closePath(); };
       const mx = Lm(CL === 'argo' || NEO ? 2.2 : 3.4), my = Yh(4.55), gl = c.createRadialGradient(mx, my, 0, mx, my, 6 * ppm);
-      gl.addColorStop(0, `rgba(255,215,143,${alpha * 0.22})`); gl.addColorStop(1, 'rgba(255,215,143,0)'); c.fillStyle = gl; c.fillRect(mx - 6 * ppm, my - 6 * ppm, 12 * ppm, 12 * ppm);
-      const gg = c.createLinearGradient(Lm(CL === 'argo' ? 5 : NEO ? 3.6 : 7.4), 0, Lm(0), 0); gg.addColorStop(0, `rgba(255,205,130,${alpha * 0.25})`); gg.addColorStop(0.6, `rgba(255,222,160,${alpha * 0.45})`); gg.addColorStop(1, `rgba(255,232,180,${alpha * 0.3})`);
+      gl.addColorStop(0, `rgba(255,215,143,${alpha * 0.22})`); gl.addColorStop(1, 'rgba(255,215,143,0)'); c.save(); glass(); c.clip(); c.fillStyle = gl; c.fillRect(mx - 6 * ppm, my - 6 * ppm, 12 * ppm, 12 * ppm); c.restore(); // pendar dalam kabin hanya terlihat di dalam bentuk kaca
+      const gk = CL === 'hst2' ? 0.45 : 1, gg = c.createLinearGradient(Lm(CL === 'argo' ? 5 : NEO ? 3.6 : 7.4), 0, Lm(0), 0); gg.addColorStop(0, `rgba(255,205,130,${alpha * 0.25 * gk})`); gg.addColorStop(0.6, `rgba(255,222,160,${alpha * 0.45 * gk})`); gg.addColorStop(1, `rgba(255,232,180,${alpha * 0.3 * gk})`);
       c.fillStyle = gg; glass(); c.fill();
+      if (CL === 'hst2') { c.save(); glass(); c.clip(); const dg = c.createLinearGradient(0, Yh(3.9), 0, Yh(2.95)); dg.addColorStop(0, 'rgba(8,10,14,0)'); dg.addColorStop(1, 'rgba(8,10,14,0.55)'); c.fillStyle = dg; c.fillRect(Lm(9.2), Yh(3.9), 9 * ppm, (Yh(2.95) - Yh(3.9)) + 2); c.restore(); } // siluet dasbor gelap di bawah kaca kokpit Guntur
     } else {
       c.fillStyle = `rgba(255,215,143,${alpha * 0.35})`;
       c.fillRect(fx - 3.6 * ppm, gy - trainH(5.8) * ppm + V.bdy(st.x - 3), 2.5 * ppm, (trainH(5.8) - trainH(4.1)) * ppm);
@@ -13303,7 +13313,7 @@
         c.bezierCurveTo(...P(3.5, 3.4), ...P(5.8, 2.95), ...P(8.0, 2.95)); c.lineTo(...P(15.85, 2.95)); c.closePath(); };
       glassP(); const gg = c.createLinearGradient(0, Y(5.68), 0, Y(2.95)); gg.addColorStop(0, '#3c5874'); gg.addColorStop(0.3, '#121b26'); gg.addColorStop(1, '#05080b'); c.fillStyle = gg; c.fill();
       c.save(); glassP(); c.clip();
-      if (V.cabA > 0.02) { c.fillStyle = `rgba(255,215,143,${V.cabA})`; c.fillRect(L(8.5), Y(5.8), 8 * ppm, 2.6 * ppm); }
+      if (V.cabA > 0.02) { const cg = c.createLinearGradient(0, Y(5.7), 0, Y(3.0)); cg.addColorStop(0, `rgba(255,222,160,${(V.cabA * 0.7).toFixed(3)})`); cg.addColorStop(0.55, `rgba(255,205,130,${(V.cabA * 0.35).toFixed(3)})`); cg.addColorStop(1, 'rgba(255,205,130,0)'); c.fillStyle = cg; c.fillRect(L(8.5), Y(5.8), 8 * ppm, 2.85 * ppm); } // lampu plafon kabin: terang di atas, meredup ke dasbor
       c.globalAlpha = 0.38; c.fillStyle = '#fff'; c.beginPath(); c.moveTo(...P(4.9, 5.66)); c.lineTo(...P(4.2, 5.62)); c.lineTo(...P(2.4, 3.9)); c.lineTo(...P(3.1, 3.85)); c.closePath(); c.fill();
       c.globalAlpha = 0.16; c.beginPath(); c.moveTo(...P(6.3, 5.5)); c.lineTo(...P(5.9, 5.55)); c.lineTo(...P(4.6, 3.6)); c.lineTo(...P(5.0, 3.55)); c.closePath(); c.fill(); c.globalAlpha = 1;
       c.restore();
@@ -14866,14 +14876,14 @@ c.restore();
       g.addColorStop(clamp(fx / W, 0, 1), `rgba(214,222,224,${0.55 * f})`);
       g.addColorStop(1, `rgba(214,222,224,${0.95 * f})`);
       c.fillStyle = g; c.fillRect(0, 0, W, H);
-      // sorot lampu depan
-      c.save(); c.globalCompositeOperation = 'lighter';
+      // sorot lampu depan (kereta listrik/cepat: satu berkas lembut di drawSoftHeadlight, tidak digandakan di sini)
+      if (!ELEC()) { c.save(); c.globalCompositeOperation = 'lighter';
       const lx = V.bx(st.x + 0.3), ly = gy - trainH(3.9) * ppm + V.bdy(st.x);
       const lg = c.createRadialGradient(lx, ly, 0, lx, ly, 34 * ppm);
       lg.addColorStop(0, `rgba(255,236,170,${0.35 * f})`); lg.addColorStop(1, 'rgba(255,236,170,0)');
       c.fillStyle = lg;
-      c.beginPath(); c.moveTo(lx, ly); c.lineTo(lx + 34 * ppm, ly - 6 * ppm); c.lineTo(lx + 34 * ppm, ly + 5 * ppm); c.closePath(); c.fill();
-      c.restore();
+      for (let q = 0; q < 5; q++) { const sp = 0.55 + q * 0.2; c.globalAlpha = 0.34; c.beginPath(); c.moveTo(lx, ly - 0.2 * ppm); c.quadraticCurveTo(lx + 17 * ppm, ly - 3 * sp * ppm, lx + 34 * ppm, ly - 6 * sp * ppm); c.lineTo(lx + 34 * ppm, ly + 5 * sp * ppm); c.quadraticCurveTo(lx + 17 * ppm, ly + 2.5 * sp * ppm, lx, ly + 0.2 * ppm); c.closePath(); c.fill(); } // tepi lembut berlapis
+      c.restore(); }
     }
   }
 
