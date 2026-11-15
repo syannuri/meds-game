@@ -7919,22 +7919,22 @@
   }
   // render dengan transisi cuaca: di zona badai mereda, adegan cerah (sore keemasan) digambar dulu lalu adegan badai ditumpuk
   // dengan kelegapan = kekuatan badai, sehingga langit, hujan, warna & cahaya berubah mulus; di atasnya efek sinar matahari menembus awan & pelangi
-  let STORM_CV = null, CLEAR_PASS = false;
+  let STORM_CV = null, CLEAR_PASS = false, PASS_FIX = null, PASS_REUSE = false;
   function render(dtReal) {
     const C = CLR(), st0 = S || idleState;
     if (!C || MIS.sky !== 'storm') { renderPass(dtReal, ctx); return; }
     const k = stormK(st0.x);
     if (k >= 0.999) { renderPass(dtReal, ctx); return; }
     const keep = [MIS.sky, MIS.rain, MIS.golden], both = k > 0.004;
-    MIS.sky = 'dawn'; MIS.golden = true; MIS.rain = false; CLEAR_PASS = both;
-    try { renderPass(both ? 1e-6 : dtReal, ctx); } finally { MIS.sky = keep[0]; MIS.rain = keep[1]; MIS.golden = keep[2]; CLEAR_PASS = false; }
-    const sunC = LAST_SUN ? { x: LAST_SUN.x, y: LAST_SUN.y } : { x: W * 0.8, y: H * 0.3 };
-    if (both) { // lapis badai (memakai dt sebenarnya: hujan, kilat & kamera tetap bergerak)
+    if (both) { // lapis badai dulu (dt sebenarnya: hujan, kilat, kamera bergerak), ke kanvas bantu
       if (!STORM_CV) STORM_CV = document.createElement('canvas'); if (STORM_CV.width !== cv.width || STORM_CV.height !== cv.height) { STORM_CV.width = cv.width; STORM_CV.height = cv.height; }
       const sc = STORM_CV.getContext('2d'); sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, STORM_CV.width, STORM_CV.height);
-      renderPass(dtReal, sc);
-      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = Math.pow(k, 0.85); ctx.drawImage(STORM_CV, 0, 0); ctx.restore();
-    }
+      renderPass(dtReal, sc); }
+    // lapis cerah (sore keemasan) di kanvas utama: memakai posisi kamera & guncangan yang sama dengan lapis badai
+    MIS.sky = 'dawn'; MIS.golden = true; MIS.rain = false; CLEAR_PASS = both; PASS_REUSE = both;
+    try { renderPass(both ? 1e-6 : dtReal, ctx); } finally { MIS.sky = keep[0]; MIS.rain = keep[1]; MIS.golden = keep[2]; CLEAR_PASS = false; PASS_REUSE = false; }
+    const sunC = LAST_SUN ? { x: LAST_SUN.x, y: LAST_SUN.y } : { x: W * 0.8, y: H * 0.3 };
+    if (both) { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = Math.pow(k, 0.85); ctx.drawImage(STORM_CV, 0, 0); ctx.restore(); } // lampu jendela, kabin & sorot memudar bersama badai
     drawClearingFx(ctx, k, st0, sunC);
   }
   // efek saat badai mereda: berkas sinar matahari menembus celah awan (bergerak perlahan), rona keemasan sore, kilau basah, pelangi di sisi berlawanan
@@ -7959,7 +7959,7 @@
   function renderPass(dtReal, c) {
     const st = S || idleState;
     activeBridge(st.x - TRAIN_LEN * 0.3);
-    c.setTransform(DPR, 0, 0, DPR, 0, (railBump(st) * (viewMode === 'cab' ? 0.3 : 1) + trackJolt(st) * (viewMode === 'cab' ? 0.8 : 1) + (S && st === S && !REDUCE_MOTION ? Math.sin(performance.now() / 23) * 0.5 * clamp((S.v * 3.6 - 180) / 80, 0, 1) : 0)) * DPR); // getaran halus di kecepatan tinggi // kabin: hentakan sambungan jauh lebih halus; wesel & jembatan tetap terasa
+    const yJ = PASS_REUSE && PASS_FIX ? PASS_FIX.y : (railBump(st) * (viewMode === 'cab' ? 0.3 : 1) + trackJolt(st) * (viewMode === 'cab' ? 0.8 : 1) + (S && st === S && !REDUCE_MOTION ? Math.sin(performance.now() / 23) * 0.5 * clamp((S.v * 3.6 - 180) / 80, 0, 1) : 0)) * DPR; c.setTransform(DPR, 0, 0, DPR, 0, yJ); // getaran halus di kecepatan tinggi // kabin: hentakan sambungan jauh lebih halus; wesel & jembatan tetap terasa
     cineUpdate(dtReal);
     const CZ = viewMode === 'cab' ? 1 : CINE.s;
     if (CZ > 1.001) { c.translate(CINE.px, CINE.py); c.scale(CZ, CZ); c.translate(-CINE.px, -CINE.py); }
@@ -7980,7 +7980,8 @@
     camZoom += camZoomV * zdt;
     const ppm = clamp(H / 44, 3.4, 13) * camZoom * (PHOTO.on ? PHOTO.z : 1);
     const gy = Math.round(H * 0.64);
-    const shake = st.shake > 0 && !SMOOTH() ? (Math.random() - 0.5) * st.shake * (MIS.loco === 'hst2' || MIS.loco === 'hst' ? 3 : 7) : 0;
+    const shake = PASS_REUSE && PASS_FIX ? PASS_FIX.shake : st.shake > 0 && !SMOOTH() ? (Math.random() - 0.5) * st.shake * (MIS.loco === 'hst2' || MIS.loco === 'hst' ? 3 : 7) : 0;
+    if (!PASS_REUSE) PASS_FIX = { y: yJ, shake }; // render dua lapis: lapis kedua memakai guncangan yang sama (tanpa bayangan ganda)
     const fast = S && st === S && S.phase === 'run' && !REDUCE_MOTION ? clamp((S.v * 3.6 - 75) / 45, 0, 1) : 0;
     // geser jangkar kamera hanya selama kereta bergerak: setelah berhenti kamera diam total
     // ... dan tidak bergeser selama mengerem, supaya kereta tidak meluncur di layar saat melambat
