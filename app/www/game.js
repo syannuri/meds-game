@@ -105,11 +105,11 @@
       rain: false,
       tutorial: true, startClosed: true, noDoors: true,
       tags: ['Sinyal', 'Batas kecepatan'],
-      speaker: { who: 'Dimas, pengatur perjalanan', initials: 'DM' },
+      speaker: { who: 'Rahmat, pengatur perjalanan', initials: 'RH' },
       brief: 'Pagi, Anett. Bawa Cakra kosong ke Cibening, lintas bebas sampai 100 km/h. Waspadai sinyal blok B1 dan batas 70 di Tikungan Bukit Kapur. Di Halte Kali Kecil kita bersilang dengan KA 117 Pangrango, Cakra merah dari arah berlawanan: masuk sepur belok, berhenti, dan tunggu sinyal S2 hijau. Aku pandu lewat radio.',
       weather: 'cerah',
       intro: 'KA Lokal 205 dari Cibening masuk jalur 2. Tunggu ia berhenti dan S1 hijau, lalu berangkat.',
-      reward: '<strong>Dimas:</strong> Sinyal sudah kamu kuasai. Berikutnya, penumpang pertamamu.',
+      reward: '<strong>Rahmat:</strong> Sinyal sudah kamu kuasai. Berikutnya, penumpang pertamamu.',
       aboard: 0,
       route: {
         lineSpeed: 100,
@@ -261,11 +261,11 @@
       rain: true,
       tags: ['Hujan', '150 km/h', 'Terowongan', 'Wesel'],
       digitalCab: true,
-      speaker: { who: 'Dimas, mekanik depo', initials: 'DM' },
+      speaker: { who: 'Rahmat, mekanik depo', initials: 'RH' },
       brief: 'Hujan deras sejak siang, Anett. Lintas Lengkung Watu baru saja ditingkatkan sampai 150 km/h, tapi rel licin: pakai P1–P2 waktu berangkat, tabur pasir kalau roda selip, dan mulai mengerem jauh lebih awal. Satu lagi: semalam ada yang mengutak-atik wesel dekat Watu. Aku menunggu di sana.',
       weather: 'hujan deras, petir',
       intro: 'Sore yang basah, Anett. Tutup pintu, lalu berangkat pelan-pelan.',
-      reward: '<strong>Cerita:</strong> Di wesel Watu, Dimas menemukan bekas linggis berlogo TransKilat. Sinyal blok Watu kini dipasangi gembok baru.',
+      reward: '<strong>Cerita:</strong> Di wesel Watu, Rahmat menemukan bekas linggis berlogo TransKilat. Sinyal blok Watu kini dipasangi gembok baru.',
       aboard: 12,
       route: {
         lineSpeed: 150,
@@ -333,7 +333,7 @@
     brief: 'Pak Bram menantang kita, Anett. Siapa yang lebih dulu membawa pemudik dari Watugede ke Sukamaju malam ini, dialah yang dapat kontrak angkutan Lebaran. Bus Kilat 07 cepat di jalan raya, tapi bus wajib berhenti kalau palang perlintasan turun.',
     weather: 'malam takbiran, cerah',
     intro: 'Malam takbiran! Kereta penuh pemudik. Tutup pintu dan kalahkan bus Kilat 07.',
-    rewardWin: '<strong>Menang!</strong> Kontrak angkutan Lebaran jatuh ke Depo Sukamaju. Pak Bram pergi tanpa sepatah kata, tapi Dimas yakin urusan wesel belum selesai.',
+    rewardWin: '<strong>Menang!</strong> Kontrak angkutan Lebaran jatuh ke Depo Sukamaju. Pak Bram pergi tanpa sepatah kata, tapi Rahmat yakin urusan wesel belum selesai.',
     rewardLose: '<strong>Bus menang kali ini.</strong> Pak Bram tersenyum puas. Coba lagi: kalau kereta tiba di perlintasan lebih dulu, bus tertahan palang.',
     aboard: 22,
     route: {
@@ -407,11 +407,11 @@
     land: 'sawit',
     ticket: 'jungle',
     tags: ['Kereta barang', 'Muat presisi', 'Gajah', 'Turunan panjang'],
-    speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
+    speaker: { who: 'Uchie, PPKA magang', initials: 'UC' },
     brief: 'Selamat datang di Sumatra, Anett! Hari ini Cakra menarik empat gerbong batu bara dari Tambang Muara Kelam ke Dermaga Tanjung Api. Muat satu per satu tepat di bawah corong. Rangkaian penuh itu berat, jadi mulai mengerem jauh lebih awal, apalagi di turunan menuju pantai.',
     weather: 'pagi berkabut tipis',
     intro: 'Maju pelan ke corong muat. Hentikan gerbong 1 tepat di bawah corong.',
-    reward: '<strong>Cerita:</strong> Di dermaga, Sari menunjukkan peta tua milik Mamed: ada jalur cabang yang dulu ditutup menuju pedalaman Bukit Barisan. Babak 2 baru dimulai.',
+    reward: '<strong>Cerita:</strong> Di dermaga, Uchie menunjukkan peta tua milik Mamed: ada jalur cabang yang dulu ditutup menuju pedalaman Bukit Barisan. Babak 2 baru dimulai.',
     aboard: 0,
     route: {
       lineSpeed: 60,
@@ -462,7 +462,7 @@
     sky: 'storm',
     rain: true,
     tags: ['Lintas tunggal', 'Persilangan', 'Pohon tumbang', 'Banjir'],
-    speaker: { who: 'Dimas, mekanik depo', initials: 'DM' },
+    speaker: { who: 'Rahmat, mekanik depo', initials: 'RH' },
     brief: 'Hujan mulai reda, Anett, tapi lintas selatan masih berantakan. Jalur ke Kedung Banteng hanya satu rel. Di Halte Krajan kita bersilang dengan KA 112 Lintas Selatan dari arah berlawanan: masuk sepur belok pelan, berhenti sebelum patok bebas, lalu tunggu dia lewat. Angin tadi siang menumbangkan pohon di beberapa tempat, dan ada rel yang tergenang.',
     weather: 'hujan reda, angin kencang',
     intro: 'Tutup pintu dan berangkat. Waspadai pohon tumbang setelah Watugede.',
@@ -527,11 +527,11 @@
     land: 'sawit',
     ticket: 'jungle',
     tags: ['Malam gelap', 'Sinyal semafor', 'Jembatan kayu', 'Kabut lembah'],
-    speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
+    speaker: { who: 'Uchie, PPKA magang', initials: 'UC' },
     brief: 'Peta Mamed benar, Anett. Jalur cabang ke pedalaman Bukit Barisan masih ada, hanya lama tidak dipakai. Malam ini kita jalankan kereta inspeksi, satu gerbong saja. Sinyalnya masih semafor tua: lengan mendatar berarti berhenti, lengan terangkat berarti aman. Jembatan kayu Lubuk Tua maksimal 15 km/h, dan rumput di antara rel membuat rem lebih lemah.',
     weather: 'malam, kabut di lembah',
     intro: 'Kereta inspeksi siap. Tutup pintu; jalur di depan hanya diterangi lampu sorot.',
-    reward: '<strong>Cerita:</strong> Di Simpang Barisan, Sari menemukan buku harian kepala stasiun tahun 1950-an: jalur ini dulu mengangkut kopi rakyat. Warga desa sudah menunggu di peron, membawa karung kopi.',
+    reward: '<strong>Cerita:</strong> Di Simpang Barisan, Uchie menemukan buku harian kepala stasiun tahun 1950-an: jalur ini dulu mengangkut kopi rakyat. Warga desa sudah menunggu di peron, membawa karung kopi.',
     aboard: 3,
     route: {
       lineSpeed: 45,
@@ -585,7 +585,7 @@
     land: 'sawit',
     ticket: 'jungle',
     tags: ['Menyambung gerbong', 'Hari pasar', 'Rangkaian lebih panjang'],
-    speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
+    speaker: { who: 'Uchie, PPKA magang', initials: 'UC' },
     brief: 'Warga sepanjang jalur cabang minta tolong, Anett. Panen kopi harus sampai ke Muara Kelam pagi ini. Di Pasar Kopi Liwa, warga mendorong gerbong kopi ke belakang rangkaian. Setelah pintu ditutup, mundur pelan dan sambung: sentuh gerbong paling cepat 3 km/h, lalu tekan Sambung. Rangkaian jadi lebih panjang dan lebih berat.',
     weather: 'pagi berkabut tipis',
     intro: 'Hari pasar! Tutup pintu dan berangkat ke Pasar Kopi Liwa.',
@@ -736,7 +736,7 @@
     sky: 'dawn', golden: true, dayCycle: { from: 0.62, to: 0.22 }, // sore keemasan → senja di Kota Halimun
     rain: false,
     tags: ['Kereta cepat 250 km/h', 'Jalur layang', 'Sawah & kota modern'],
-    speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
+    speaker: { who: 'Uchie, PPKA magang', initials: 'UC' },
     driver: { name: 'Anett', initials: 'AN' }, // masinis kereta cepat Guntur
     brief: 'Anett, hari ini kamu dipercaya membawa Guntur, kereta cepat pertama kita. Jalurnya melayang di atas sawah dari Kencana Hub ke Kota Halimun, boleh sampai 250 km/h. Ingat: dari 250, kereta butuh lebih dari 3 km untuk berhenti. Ikuti papan REM dan sinyal kabin. Di Padi Raya kita berhenti sebentar menjemput petani dan pelajar.',
     weather: 'sore cerah keemasan, angin kencang di perbukitan',
@@ -823,7 +823,7 @@
     rain: false,
     land: 'sawit', paddy: true, // Bukit Barisan dengan sawah berair & pepohonan campuran (bukan kebun sawit)
     tags: ['Kilat G1 · 200 km/h', 'Ngarai & terowongan', 'Kabut pegunungan'],
-    speaker: { who: 'Sari, PPKA magang', initials: 'SR' },
+    speaker: { who: 'Uchie, PPKA magang', initials: 'UC' },
     driver: { name: 'Anett', initials: 'AN' },
     brief: 'Anett, jalur kereta cepat pertama di Sumatra dibuka hari ini. Guntur masih bertugas di Jawa, jadi kita bawa Kilat G1, kereta cepat generasi pertama. Ia lebih tua: tarikannya lebih lambat, remnya lebih panjang, dan rem regeneratifnya lebih lemah. Batasnya 200 km/h. Jalurnya menembus Bukit Barisan, melintasi ngarai tinggi dan terowongan panjang. Jemput warga di Lembah Sikai.',
     weather: 'pagi berkabut di pegunungan, angin lembah',
@@ -879,7 +879,7 @@
       neutral: [{ from: 6400, to: 6540 }, { from: 15400, to: 15540 }],
       // jalur ganda Bukit Barisan: jalur 2 (arah berlawanan) di kanan; tiap stasiun 3 jalur berwesel (jalur 3 lewat langsung). Berpapasan dengan Agraveda
       double: { o: 4.6, st: 8.3, t3: 12.9, kilat: { cars: 6, loco: 'argo', stripe: ['#f08a24', '#7a3a96'], stripeR: [0.3, 0.42, 0.47], reflRGB: '196,104,58',
-        who: ['Sari', 'SR'], passMsg: 'Agraveda sudah lewat. Jalur 2 kembali kosong.', greetMsg: 'Salam klakson terbalas! Masinis Agraveda melambai dari kabinnya.', events: [
+        who: ['Uchie', 'UC'], passMsg: 'Agraveda sudah lewat. Jalur 2 kembali kosong.', greetMsg: 'Salam klakson terbalas! Masinis Agraveda melambai dari kabinnya.', events: [
         { at: 3, arrive: true, from: 640, v: 60, stop: -92, msg: 'Agraveda AV 3802 dari Kota Barisan masuk Muara Kelam Baru di jalur 2, pelan menuju peron seberang. Kilat G1 berangkat di jalur 1: balas salam klaksonnya.' },
         { at: 7600, ahead: 2600, v: 200, slow: 140, t3: true, msg: 'Agraveda AV 3804 melintas langsung di jalur 3 Lembah Sikai tanpa berhenti. Kita berhenti di jalur 1: perhatikan papasannya di stasiun!' },
         { at: 11400, ahead: 3000, v: 200, msg: 'Agraveda AV 3806 turun dari Bukit Barisan di jalur 2, 200 km/h. Tetap di jalur 1 dan balas klakson saat berpapasan.' },
@@ -903,7 +903,7 @@
     sky: 'storm',
     rain: true,
     tags: ['Kereta super cepat 320 km/h', 'Badai & rel basah', 'Sabotase wesel'],
-    speaker: { who: 'Dimas, mekanik depo', initials: 'DM' },
+    speaker: { who: 'Rahmat, mekanik depo', initials: 'RH' },
     driver: { name: 'Anett', initials: 'AN' },
     brief: 'Anett, lintas Lengkung Watu sekarang jalur kereta cepat: jalur ganda, jalur layang, dan Halilintar, Guntur generasi baru, boleh 320 km/h. Tapi badai belum reda. Rel basah: roda mudah selip saat menarik dan rem jauh lebih lemah. Dari 320 km/h kamu butuh lebih dari 5 km untuk berhenti, jadi ikuti papan REM. Dan hati-hati: orang yang dulu mengutak-atik wesel Watu belum tertangkap. Setelah Watugede kita lanjut ke Tanjung Surya lewat Jembatan Lengkung Kali Bayu; prakiraan cuaca bilang badai reda sebelum kota.',
     weather: 'badai, hujan deras, petir, angin samping',
@@ -2645,14 +2645,14 @@
         + eyes(39.5) + brows(34.5, '#eceae4') + nose(45) + `<path d="M23.5 48.5q4.5-3.4 8.5-1 4-2.4 8.5 1-4 3.2-8.5 1.6-4.5 1.6-8.5-1.6z" fill="#eceae4"/><path d="M28 53q4 2 8 0" stroke="#7a3b2e" stroke-width="1.4" fill="none" stroke-linecap="round"/>`
         + `<path d="M23 42.5l5 0M36 42.5l5 0" stroke="rgba(90,50,30,.35)" stroke-width="1"/><circle cx="25.5" cy="39.5" r="4.2" fill="none" stroke="#8a7a60" stroke-width="1.1"/><circle cx="38.5" cy="39.5" r="4.2" fill="none" stroke="#8a7a60" stroke-width="1.1"/><path d="M29.7 39.5h4.6" stroke="#8a7a60" stroke-width="1.1"/>`
         + `<path d="M12 29c2-10 10-15 20-15s18 5 20 15z" fill="#1f3550"/><path d="M10 29h44c0 2-2 3.5-4 3.5H14c-2 0-4-1.5-4-3.5z" fill="#152538"/><rect x="11" y="27" width="42" height="2.2" fill="#d9a93a"/><path d="M29 19.5h6l-1 4.5h-4z" fill="#d9a93a"/><circle cx="32" cy="21" r="1.4" fill="#fff6d0"/>`,
-      // Dimas: mekanik muda, topi pet terbalik, wearpack biru, noda oli, senyum lebar
-      DM: bg('#3f8f86', '#1b4d48') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#2f5f9a"/><path d="M20 53l3 11M44 53l-3 11" stroke="#f2a516" stroke-width="2.4"/><rect x="36" y="56" width="6" height="5" rx="1" fill="#244a78"/><path d="M14 58l4 1" stroke="#1d1d1d" stroke-width="1.4" opacity=".5"/>`
+      // Rahmat: mekanik muda, topi pet terbalik, wearpack biru, noda oli, senyum lebar
+      RH: bg('#3f8f86', '#1b4d48') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#2f5f9a"/><path d="M20 53l3 11M44 53l-3 11" stroke="#f2a516" stroke-width="2.4"/><rect x="36" y="56" width="6" height="5" rx="1" fill="#244a78"/><path d="M14 58l4 1" stroke="#1d1d1d" stroke-width="1.4" opacity=".5"/>`
         + ears('#b87a52') + face('#b87a52', '#7a4a2a') + `<path d="M15 33c1-11 8-16 17-16s16 5 17 16c-3-4-6-6-9-6-5 2-12 2-17 0-3 0-6 2-8 6z" fill="#1b1512"/>`
         + `<path d="M14 26c1-7 8-11 18-11s17 4 18 11z" fill="#c8352b"/><rect x="13" y="24.5" width="38" height="3" rx="1.5" fill="#a32a22"/><path d="M8 27c1-2 4-2.5 7-2.5v3c-3 0-5 .2-7-.5z" fill="#a32a22"/><circle cx="32" cy="17" r="1.3" fill="#f2a516"/>`
         + eyes(39) + brows(34, '#1b1512') + nose(44) + `<path d="M25.5 48.5q6.5 6 13 0q-6.5 2.4-13 0z" fill="#fff"/><path d="M25.5 48.5q6.5 6 13 0" stroke="#7a3b2e" stroke-width="1.4" fill="none" stroke-linecap="round"/>`
         + blush + `<path d="M40 44.5q2.5.6 3.5-1" stroke="#2a2420" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".55"/>`,
-      // Sari: PPKA magang, kerudung teal berlipit, topi merah PPKA, mata besar berbulu lentik, bibir merah muda
-      SR: bg('#e0948a', '#7a3448') + fem({ skin: '#e2b28c', sh: '#b07a58', veil: '#23877e', veilD: '#16605a', veilL: '#3aa79c', lip: '#d9566a', iris: '#4a2a1c', brooch: '#f2c94c', top: '#f6f0e4' })
+      // Uchie: PPKA magang, kerudung teal berlipit, topi merah PPKA, mata besar berbulu lentik, bibir merah muda
+      UC: bg('#e0948a', '#7a3448') + fem({ skin: '#e2b28c', sh: '#b07a58', veil: '#23877e', veilD: '#16605a', veilL: '#3aa79c', lip: '#d9566a', iris: '#4a2a1c', brooch: '#f2c94c', top: '#f6f0e4' })
         + `<path d="M15.5 25.5c1-7 8-11 16.5-11s15.5 4 16.5 11z" fill="#d83a2e"/><path d="M19 19q13-6 26 0" stroke="#ef6a5a" stroke-width="1.2" fill="none" opacity=".8"/><rect x="13.5" y="24.3" width="37" height="3.4" rx="1.7" fill="#1d1a18"/><rect x="14" y="24.3" width="36" height="1" rx=".5" fill="#f3ead6" opacity=".7"/><circle cx="32" cy="19.8" r="2" fill="#f2c94c"/><circle cx="32" cy="19.8" r=".8" fill="#fff6d0"/>`
         + `<path d="M40.5 61.5l5 1.2" stroke="#c0a060" stroke-width="1.1"/><rect x="45" y="61.2" width="5.6" height="2.8" rx="1.4" fill="#d6dbe0"/>`,
       // Bu Anna: kepala stasiun, kerudung marun berlipit dengan bros, kacamata tipis emas, seragam putih berpangkat
@@ -2673,7 +2673,7 @@
     return (id) => P[id] ? `<svg viewBox="0 0 64 64" aria-hidden="true">${P[id]}</svg>` : null;
   })();
   function setAvatar(el, id) { if (!el) return; const sv = PORTRAIT(id); if (sv) { el.innerHTML = sv; el.classList.add('pic'); } else { el.textContent = id; el.classList.remove('pic'); } }
-  function radio(text, dur = 6.5, who = 'Dimas', initials = 'DM') {
+  function radio(text, dur = 6.5, who = 'Rahmat', initials = 'RH') {
     const el = $('radio');
     $('radioText').textContent = text;
     $('radioWho').textContent = `Radio · ${who}`;
@@ -2942,7 +2942,7 @@
         S.stoppedShortShown = false;
         Sound.signalChime();
         toast(S.st === 0 ? 'Sinyal hijau! Dorong tuas ke P untuk berangkat.' : 'Sinyal berangkat hijau. Lanjutkan perjalanan.', 'good', 3, null, 3);
-        if (MIS.freight && S.st === 0) setTimeout(() => { if (S && S.mode === 'play') radio('Muara Kelam ke Cakra: jalur aman sampai Tanjung Api. Hati-hati, rombongan gajah sering melintas pagi begini.', 6.5, 'Sari', 'SR'); }, 1500);
+        if (MIS.freight && S.st === 0) setTimeout(() => { if (S && S.mode === 'play') radio('Muara Kelam ke Cakra: jalur aman sampai Tanjung Api. Hati-hati, rombongan gajah sering melintas pagi begini.', 6.5, 'Uchie', 'UC'); }, 1500);
       }
     }
   }
@@ -2951,12 +2951,12 @@
   // sinyal masuk kembali merah setelah dilewati; setelah berhenti, sinyal berangkat kereta pemain boleh hijau
   function stepArrival(dt) {
     const R = S && S.arr; if (!R) return; const A = ROUTE.yard.arrival;
-    if (R.said === 0 && S.t > 1.2) { R.said = 1; radio(`${A.name} dari Cibening masuk jalur 2, Anett. Sinyal masuk M kuning: belok ke jalur 2 lalu berhenti di peron pulau. S1 kita tetap merah dulu.`, 6, 'Dimas', 'DM'); }
+    if (R.said === 0 && S.t > 1.2) { R.said = 1; radio(`${A.name} dari Cibening masuk jalur 2, Anett. Sinyal masuk M kuning: belok ke jalur 2 lalu berhenti di peron pulau. S1 kita tetap merah dulu.`, 6, 'Rahmat', 'RH'); }
     if (R.state === 'run' && !R.honk && R.x < 330) { R.honk = true; Sound.farHorn(); } // klakson saat mendekati stasiun
     if (R.state === 'run') { const gap = Math.max(0, R.x - A.stop), vmax = Math.sqrt(2 * (A.dec || 0.5) * gap); R.v = Math.min(A.v, vmax, R.v + 0.5 * dt); R.x -= R.v * dt;
       const sg = (ROUTE.yard.sigs || []).find((q) => q.id === A.sig); if (sg && R.x < sg.x - 2 && S.sig[sg.id] !== 'R') S.sig[sg.id] = 'R';
       if (gap < 0.05 || (R.v < 0.03 && gap < 0.6)) { R.x = A.stop; R.v = 0; R.state = 'stopped'; R.t = 0; } }
-    else if (R.state === 'stopped') { R.t += dt; if (R.t > 2.2 && !R.done) { R.done = true; radio(`${A.name} sudah berhenti sempurna di jalur 2. S1 hijau sebentar lagi.`, 4.5, 'Dimas', 'DM'); } }
+    else if (R.state === 'stopped') { R.t += dt; if (R.t > 2.2 && !R.done) { R.done = true; radio(`${A.name} sudah berhenti sempurna di jalur 2. S1 hijau sebentar lagi.`, 4.5, 'Rahmat', 'RH'); } }
     R.pk.nose = R.x; R.pk.moving = R.state === 'run';
   }
   function step(dt) {
@@ -3122,7 +3122,7 @@
         // kebablasan melewati corong: aktifkan mundur supaya gerbong bisa kembali ke bawah corong
         S.rev = true;
         toast(`Gerbong ${i + 1} lewat ${fmtM(d)} m dari corong. Mode MUNDUR: dorong tuas ke P untuk mundur pelan.`, 'warn', 4, null, 3);
-        radio(`Kebablasan, Anett. Mundur pelan sampai gerbong ${i + 1} tepat di bawah corong, lalu berhenti.`, 5.5, 'Sari', 'SR');
+        radio(`Kebablasan, Anett. Mundur pelan sampai gerbong ${i + 1} tepat di bawah corong, lalu berhenti.`, 5.5, 'Uchie', 'UC');
       } else if (S.v === 0 && prevV === 0 && d <= -6 && d > -60 && S.rev) {
         S.rev = false;
         toast(`Terlalu jauh mundur. Mode MAJU lagi: maju pelan ${fmtM(-d)} m ke corong.`, 'warn', 3.2, null, 3);
@@ -3138,7 +3138,7 @@
       const el = S.eleph;
       if (el.phase === 'idle' && S.x > E.trigger) {
         el.phase = 'block'; el.t = 0;
-        radio(`Cakra, hati-hati! Rombongan gajah melintas di depan, sekitar ${Math.round(E.x - S.x)} m. Berhenti dan tunggu, jangan dibunyikan klakson.`, 7, 'Sari', 'SR');
+        radio(`Cakra, hati-hati! Rombongan gajah melintas di depan, sekitar ${Math.round(E.x - S.x)} m. Berhenti dan tunggu, jangan dibunyikan klakson.`, 7, 'Uchie', 'UC');
         Sound.trumpet(0.4);
       }
       if (el.phase === 'block') {
@@ -3187,7 +3187,7 @@
         if (S.kevt[ei] || S.x < ev.at) return; S.kevt[ei] = true;
         const x = ev.arrive ? ev.from : Math.min(S.x + ev.ahead, T && S.x < T.from ? T.from - 160 : Infinity);
         S.kilats.push({ x, v: ev.v / 3.6, vmax: ev.v / 3.6, slow: ev.slow ? ev.slow / 3.6 : 0, t3: !!ev.t3, stopX: ev.arrive ? ev.stop : null, acc: ev.arrive ? (ev.v / 3.6) ** 2 / (2 * Math.max(1, x - ev.stop)) : 0, honk: false, pass: false, greet: false });
-        radio(ev.msg, 7, ...(KD.who || ['Sari', 'SR']));
+        radio(ev.msg, 7, ...(KD.who || ['Uchie', 'UC']));
       });
       S.kilats = S.kilats.filter((K) => {
         if (K.stopX !== null) { K.v = K.x > K.stopX ? Math.sqrt(2 * K.acc * Math.max(0, K.x - K.stopX)) + 0.15 : 0; K.x = Math.max(K.stopX, K.x - K.v * dt); } // masuk stasiun: melambat hingga berhenti di peron
@@ -3209,7 +3209,7 @@
       });
       S.kilat = S.kilats[0] || null; // kompatibel: kilat terdekat
     }
-    for (const e of S.events || []) if (!e.warned && S.x >= e.warnAt) { e.warned = true; radio(e.msg, 6.5, 'Dimas', 'DM'); HAPT.buzz([16, 40, 16], 0); }
+    for (const e of S.events || []) if (!e.warned && S.x >= e.warnAt) { e.warned = true; radio(e.msg, 6.5, 'Rahmat', 'RH'); HAPT.buzz([16, 40, 16], 0); }
     if (S.x >= ROUTE.bufferStop - 0.5) fail(`Kereta menabrak penahan di ujung rel ${titleCase(finalStation().name)}.`);
 
     S.comfort = clamp(S.comfort, 0, 100);
@@ -3351,7 +3351,7 @@
     const CP = ROUTE.couple;
     S.cw = { front: S.x - TRAIN_LEN - CP.gap, slide: 0, contact: false, ready: false };
     S.dwell.step = 'couple'; S.dwell.timer = 0;
-    radio('Warga sudah mendorong gerbong kopi ke belakang rangkaian. Mundur pelan, sentuh paling cepat 3 km/h, lalu tekan Sambung.', 7, 'Sari', 'SR');
+    radio('Warga sudah mendorong gerbong kopi ke belakang rangkaian. Mundur pelan, sentuh paling cepat 3 km/h, lalu tekan Sambung.', 7, 'Uchie', 'UC');
   }
   const coupleGap = () => (S.cw ? S.x - TRAIN_LEN - S.cw.front : Infinity);
   function stepCouple(dt) {
@@ -3387,7 +3387,7 @@
     S.moment = { kind: (cw.speed || 0) <= 3 ? 'good' : 'ok', label: 'TERSAMBUNG', t: 0, x: cw.front, coins: (cw.speed || 0) <= 3 ? 30 : 10, sub: `kontak ${fmtM(cw.speed || 0)} km/h` };
     S.coins += (cw.speed || 0) <= 3 ? 30 : 10;
     S.dwell.step = 'signal'; S.dwell.timer = 0;
-    radio(`Tersambung! Rangkaian sekarang ${markNum()} kendaraan: berhenti di marka "${markNum()}".`, 5, 'Sari', 'SR');
+    radio(`Tersambung! Rangkaian sekarang ${markNum()} kendaraan: berhenti di marka "${markNum()}".`, 5, 'Uchie', 'UC');
     renderLever();
   }
 
@@ -3514,7 +3514,7 @@
     }
   }
 
-  // ---------- petunjuk misi pembuka: layar meredup, kontrol disorot, satu kalimat dari Mamed/Dimas ----------
+  // ---------- petunjuk misi pembuka: layar meredup, kontrol disorot, satu kalimat dari Mamed/Rahmat ----------
   const stopAhead = () => { const ns = S.phase === 'run' ? nextStation() : null; return ns ? ns.x - S.x : Infinity; };
   const sigAhead = (id) => { const q = ROUTE.signals.find((g) => g.id === id); return q ? q.x - S.x : Infinity; };
   const TUTORIAL = {
@@ -3526,13 +3526,13 @@
       { target: '#precise', who: 'KK', text: 'Panduan titik henti: hentikan saat penunjuk di garis hijau.', when: () => stopAhead() < 30, done: () => S.v < 0.05 },
     ],
     '1-2': [
-      { target: '.strip-wrap', who: 'DM', text: 'Lepas dari area stasiun, lintas bebas sampai 100 km/h. Tambah tenaga, tapi awasi papan batas berikutnya.', when: () => S.phase === 'run' && S.x > 230 && S.st === 0, done: (t) => t > 5 },
-      { target: '.strip-wrap', who: 'DM', text: 'Blok B1 MERAH! Turunkan kecepatan dan siap berhenti sebelum tiangnya. Biasanya cepat berubah kuning lalu hijau.', when: () => S.sig.B1 === 'R' && sigAhead('B1') > 0 && sigAhead('B1') < 900, done: (t) => t > 6 },
-      { target: '.strip-wrap', who: 'DM', text: 'Sinyal masuk J1 kuning: Cakra dibelokkan ke sepur belok Kali Kecil. Paling cepat 30 km/h di wesel, lalu berhenti di marka.', when: () => sigAhead('J1') < 300 && sigAhead('J1') > 0, done: () => sigAhead('J1') < 0 },
-      { target: '.strip-wrap', who: 'DM', text: 'Kita bersilang dengan KA 117. Sinyal keluar S2 tetap merah sampai ekornya melewati patok bebas merah-putih.', when: () => S.phase === 'dwell' && S.st === 1, done: () => S.meet && S.meet.cleared },
-      { target: '#lever', who: 'DM', text: 'S2 hijau. Berangkat pelan, 30 km/h di wesel keluar.', when: () => S.st === 1 && S.sig.S2 === 'G' && sigAhead('S2') > 0, done: () => S.notch > 0 },
-      { target: '.strip-wrap', who: 'DM', text: 'J2 kuning, S3 merah di depan Cibening. Berhenti sebelum tiangnya; aku hijaukan setelah jalur aman.', when: () => sigAhead('S3') < 220 && S.sig.S3 === 'R', done: () => S.v === 0 || S.sig.S3 === 'G' },
-      { target: '#lever', who: 'DM', text: 'S3 hijau. Silakan jalan lagi ke Cibening.', when: () => S.sig.S3 === 'G' && sigAhead('S3') > 0, done: () => S.notch > 0 },
+      { target: '.strip-wrap', who: 'RH', text: 'Lepas dari area stasiun, lintas bebas sampai 100 km/h. Tambah tenaga, tapi awasi papan batas berikutnya.', when: () => S.phase === 'run' && S.x > 230 && S.st === 0, done: (t) => t > 5 },
+      { target: '.strip-wrap', who: 'RH', text: 'Blok B1 MERAH! Turunkan kecepatan dan siap berhenti sebelum tiangnya. Biasanya cepat berubah kuning lalu hijau.', when: () => S.sig.B1 === 'R' && sigAhead('B1') > 0 && sigAhead('B1') < 900, done: (t) => t > 6 },
+      { target: '.strip-wrap', who: 'RH', text: 'Sinyal masuk J1 kuning: Cakra dibelokkan ke sepur belok Kali Kecil. Paling cepat 30 km/h di wesel, lalu berhenti di marka.', when: () => sigAhead('J1') < 300 && sigAhead('J1') > 0, done: () => sigAhead('J1') < 0 },
+      { target: '.strip-wrap', who: 'RH', text: 'Kita bersilang dengan KA 117. Sinyal keluar S2 tetap merah sampai ekornya melewati patok bebas merah-putih.', when: () => S.phase === 'dwell' && S.st === 1, done: () => S.meet && S.meet.cleared },
+      { target: '#lever', who: 'RH', text: 'S2 hijau. Berangkat pelan, 30 km/h di wesel keluar.', when: () => S.st === 1 && S.sig.S2 === 'G' && sigAhead('S2') > 0, done: () => S.notch > 0 },
+      { target: '.strip-wrap', who: 'RH', text: 'J2 kuning, S3 merah di depan Cibening. Berhenti sebelum tiangnya; aku hijaukan setelah jalur aman.', when: () => sigAhead('S3') < 220 && S.sig.S3 === 'R', done: () => S.v === 0 || S.sig.S3 === 'G' },
+      { target: '#lever', who: 'RH', text: 'S3 hijau. Silakan jalan lagi ke Cibening.', when: () => S.sig.S3 === 'G' && sigAhead('S3') > 0, done: () => S.notch > 0 },
     ],
     '1-3': [
       { target: '#btnDoor', who: 'BW', text: 'Tutup pintu dulu sebelum berangkat.', when: () => S.phase === 'dwell' && S.st === 0 && S.dwell.step === 'close', done: () => S.dwell.step !== 'close' },
@@ -3543,29 +3543,29 @@
     ],
   };
   TUTORIAL['1-7'] = [
-    { target: '#lever', who: 'DM', text: 'Pohon tumbang di depan! Tarik tuas ke EB, rem darurat tidak mengurangi kenyamanan sekarang.', when: () => S.tree && S.tree.phase === 'warn' && S.v > 3, done: () => S.notch <= -4 || S.v === 0 },
-    { target: '.strip-wrap', who: 'DM', text: 'J1 kuning: kita masuk sepur belok Krajan. Paling cepat 30 km/h di wesel, lalu berhenti sebelum patok bebas merah-putih.', when: () => sigAhead('J1') < 260 && sigAhead('J1') > 0, done: (t) => t > 7 },
-    { target: '.strip-wrap', who: 'DM', text: 'KA 112 lewat di jalur utama. S2 baru hijau setelah ekornya melewati patok bebas.', when: () => S.phase === 'dwell' && S.st === 1 && S.dwell.step === 'signal' && !S.meet.cleared, done: () => S.meet.cleared },
-    { target: '.strip-wrap', who: 'DM', text: 'Genangan di depan: maksimal 10 km/h dan jangan berhenti di air.', when: () => ROUTE.flood.from - S.x < 320 && ROUTE.flood.from > S.x, done: () => S.x > ROUTE.flood.to },
+    { target: '#lever', who: 'RH', text: 'Pohon tumbang di depan! Tarik tuas ke EB, rem darurat tidak mengurangi kenyamanan sekarang.', when: () => S.tree && S.tree.phase === 'warn' && S.v > 3, done: () => S.notch <= -4 || S.v === 0 },
+    { target: '.strip-wrap', who: 'RH', text: 'J1 kuning: kita masuk sepur belok Krajan. Paling cepat 30 km/h di wesel, lalu berhenti sebelum patok bebas merah-putih.', when: () => sigAhead('J1') < 260 && sigAhead('J1') > 0, done: (t) => t > 7 },
+    { target: '.strip-wrap', who: 'RH', text: 'KA 112 lewat di jalur utama. S2 baru hijau setelah ekornya melewati patok bebas.', when: () => S.phase === 'dwell' && S.st === 1 && S.dwell.step === 'signal' && !S.meet.cleared, done: () => S.meet.cleared },
+    { target: '.strip-wrap', who: 'RH', text: 'Genangan di depan: maksimal 10 km/h dan jangan berhenti di air.', when: () => ROUTE.flood.from - S.x < 320 && ROUTE.flood.from > S.x, done: () => S.x > ROUTE.flood.to },
   ];
   TUTORIAL['2-2'] = [
-    { target: '.strip-wrap', who: 'SR', text: 'Semafor M1: lengan mendatar dan lampu merah berarti berhenti. Tunggu sampai lengannya terangkat.', when: () => sigAhead('M1') < 300 && sigAhead('M1') > 0 && S.sig.M1 === 'R', done: () => S.sig.M1 === 'G' },
-    { target: '.strip-wrap', who: 'SR', text: 'Jembatan kayu tua di depan: maksimal 15 km/h. Di atas 25 km/h jembatannya tidak kuat.', when: () => ROUTE.bridge.from - S.x < 260 && ROUTE.bridge.from > S.x, done: () => S.x > ROUTE.bridge.to },
+    { target: '.strip-wrap', who: 'UC', text: 'Semafor M1: lengan mendatar dan lampu merah berarti berhenti. Tunggu sampai lengannya terangkat.', when: () => sigAhead('M1') < 300 && sigAhead('M1') > 0 && S.sig.M1 === 'R', done: () => S.sig.M1 === 'G' },
+    { target: '.strip-wrap', who: 'UC', text: 'Jembatan kayu tua di depan: maksimal 15 km/h. Di atas 25 km/h jembatannya tidak kuat.', when: () => ROUTE.bridge.from - S.x < 260 && ROUTE.bridge.from > S.x, done: () => S.x > ROUTE.bridge.to },
   ];
   TUTORIAL['2-3'] = [
-    { target: '#lever', who: 'SR', text: 'Gerbong kopi di belakang. Dorong tuas ke P1 sebentar untuk mundur, lalu N dan meluncur pelan.', when: () => S.phase === 'dwell' && S.dwell.step === 'couple' && S.cw && S.cw.slide >= 1 && S.v < 0.1 && coupleGap() > 3, done: () => S.v > 0.3 },
-    { target: '#btnDoor', who: 'SR', text: 'Sudah menempel. Tekan Sambung.', when: () => S.phase === 'dwell' && S.dwell.step === 'couple' && S.cw && S.cw.ready, done: () => S.coupled },
+    { target: '#lever', who: 'UC', text: 'Gerbong kopi di belakang. Dorong tuas ke P1 sebentar untuk mundur, lalu N dan meluncur pelan.', when: () => S.phase === 'dwell' && S.dwell.step === 'couple' && S.cw && S.cw.slide >= 1 && S.v < 0.1 && coupleGap() > 3, done: () => S.v > 0.3 },
+    { target: '#btnDoor', who: 'UC', text: 'Sudah menempel. Tekan Sambung.', when: () => S.phase === 'dwell' && S.dwell.step === 'couple' && S.cw && S.cw.ready, done: () => S.coupled },
   ];
   TUTORIAL['3-1'] = [
     { target: '#btnPanto', who: 'BW', text: 'Agraveda bertenaga listrik 25 kV. Naikkan pantograf dulu agar menempel di kawat.', when: () => S.panto < 1 && S.pantoT < 1, done: () => S.pantoT >= 1 },
     { target: '#lever', who: 'BW', text: 'Seksi netral di depan: kawat tanpa tegangan. Taruh tuas di N sampai papan DAYA ON.', when: () => ROUTE.neutral.some((q) => q.from - S.x < 700 && q.from - S.x > 0), done: () => !S.inNeutral && ROUTE.neutral.every((q) => S.x < q.from - 700 || S.x > q.to) },
   ];
   TUTORIAL['3-2'] = [
-    { target: '#btnPanto', who: 'SR', text: 'Guntur bertenaga listrik. Naikkan pantograf dulu agar menempel di kawat 25 kV.', when: () => S.panto < 1 && S.pantoT < 1, done: () => S.pantoT >= 1 },
-    { target: '#lever', who: 'SR', text: 'Seksi netral di depan: kawat tanpa tegangan. Taruh tuas di N sampai papan DAYA ON.', when: () => ROUTE.neutral.some((q) => q.from - S.x < 700 && q.from - S.x > 0), done: () => !S.inNeutral && ROUTE.neutral.every((q) => S.x < q.from - 700 || S.x > q.to) },
-    { target: '#lever', who: 'SR', text: 'Rem dengan B1–B4: motor jadi generator dan mengembalikan listrik ke jaringan. Skor energi ada di akhir.', when: () => S.notch < 0 && S.v > 20, done: (t) => t > 5 },
+    { target: '#btnPanto', who: 'UC', text: 'Guntur bertenaga listrik. Naikkan pantograf dulu agar menempel di kawat 25 kV.', when: () => S.panto < 1 && S.pantoT < 1, done: () => S.pantoT >= 1 },
+    { target: '#lever', who: 'UC', text: 'Seksi netral di depan: kawat tanpa tegangan. Taruh tuas di N sampai papan DAYA ON.', when: () => ROUTE.neutral.some((q) => q.from - S.x < 700 && q.from - S.x > 0), done: () => !S.inNeutral && ROUTE.neutral.every((q) => S.x < q.from - 700 || S.x > q.to) },
+    { target: '#lever', who: 'UC', text: 'Rem dengan B1–B4: motor jadi generator dan mengembalikan listrik ke jaringan. Skor energi ada di akhir.', when: () => S.notch < 0 && S.v > 20, done: (t) => t > 5 },
   ];
-  const TUT_WHO = { KK: 'Mamed', DM: 'Radio · Dimas', BW: 'Bu Anna', SR: 'Radio · Sari' };
+  const TUT_WHO = { KK: 'Mamed', RH: 'Radio · Rahmat', BW: 'Bu Anna', UC: 'Radio · Uchie' };
   function updateTutorial(dt) {
     const coach = ui.coach; if (!coach) return;
     const beats = TUTORIAL[MIS.id];
@@ -3664,11 +3664,11 @@
       { m: '2-3', t: 'Sekarung kopi Liwa', x: 'Kopi titipan Pak Kades sampai di depo. Mamed membuka karungnya, menghirup lama, lalu terdiam. Liwa adalah kampung tempat ia pertama kali bertugas, empat puluh tahun lalu.' },
       { m: '4-1', t: 'Surya bernyanyi lagi', x: 'Halaman terakhir buku kulit itu berisi sketsa Surya 1912. Kini halaman itu ditempeli foto baru: Mamed dan kamu di depan Surya yang mengepul, dikelilingi warga Watugede.' },
     ] },
-    { who: 'Dimas', role: 'pengatur perjalanan & mekanik', av: 'DM', arc: 'Jejak TransKilat', ch: [
-      { m: '1-2', t: 'Suara di balik radio', x: 'Dimas mengatur perjalanan dari menara sinyal yang sempit. Di mejanya ada model Cakra dari kaleng bekas. "Suatu hari aku yang duduk di kabin," katanya sambil tertawa.' },
-      { m: '1-5', t: 'Bekas linggis', x: 'Dimas memotret bekas linggis di wesel Watu dan logo TransKilat yang tertinggal. Malam itu ia tidak pulang: ia menunggui sinyal blok sampai pagi.' },
-      { m: '1-6', t: 'Lampu mobil di perlintasan', x: 'Saat duel malam takbiran, Dimas melihat mobil hitam berhenti lama di dekat perlintasan Watugede. Pelatnya ia catat di punggung tangan.' },
-      { m: '1-7', t: 'Laporan untuk polsuska', x: 'Catatan Dimas sampai ke polisi khusus kereta. Pohon tumbang di Krajan ternyata tumbang sendiri, tapi pelat mobil hitam itu milik pengawas TransKilat. Kasusnya kini diselidiki.' },
+    { who: 'Rahmat', role: 'pengatur perjalanan & mekanik', av: 'RH', arc: 'Jejak TransKilat', ch: [
+      { m: '1-2', t: 'Suara di balik radio', x: 'Rahmat mengatur perjalanan dari menara sinyal yang sempit. Di mejanya ada model Cakra dari kaleng bekas. "Suatu hari aku yang duduk di kabin," katanya sambil tertawa.' },
+      { m: '1-5', t: 'Bekas linggis', x: 'Rahmat memotret bekas linggis di wesel Watu dan logo TransKilat yang tertinggal. Malam itu ia tidak pulang: ia menunggui sinyal blok sampai pagi.' },
+      { m: '1-6', t: 'Lampu mobil di perlintasan', x: 'Saat duel malam takbiran, Rahmat melihat mobil hitam berhenti lama di dekat perlintasan Watugede. Pelatnya ia catat di punggung tangan.' },
+      { m: '1-7', t: 'Laporan untuk polsuska', x: 'Catatan Rahmat sampai ke polisi khusus kereta. Pohon tumbang di Krajan ternyata tumbang sendiri, tapi pelat mobil hitam itu milik pengawas TransKilat. Kasusnya kini diselidiki.' },
     ] },
     { who: 'Bu Anna', role: 'kepala stasiun', av: 'BW', arc: 'Stasiun yang Hidup', ch: [
       { m: '1-3', t: 'Nama-nama penumpang', x: 'Bu Anna hafal penumpang tetapnya: Mbok Sum pedagang sayur, dan Raka, anak SMP yang selalu duduk di gerbong depan supaya bisa melihat masinis.' },
@@ -3676,11 +3676,11 @@
       { m: '1-6', t: 'Raka pulang mudik', x: 'Di antara pemudik malam takbiran ada Raka, kini kuliah di kota. Ia melambai ke kabin dan berteriak, "Aku mau jadi masinis seperti Kak Anett!"' },
       { m: '3-1', t: 'Surat di gerbong eksekutif', x: 'Bu Anna ikut Argo Senja sebagai penumpang. Di Kota Kencana ia menitipkan surat: "Dulu Sukamaju hampir ditutup. Sekarang ekspres berhenti di sini. Terima kasih, Anett."' },
     ] },
-    { who: 'Sari', role: 'PPKA magang', av: 'SR', arc: 'Dari Magang ke PPKA', ch: [
-      { m: '2-1', t: 'Suara pertama di Sumatra', x: 'Hari pertama Sari memandu sendiri. Tangannya gemetar memegang mikrofon, tapi suaranya tenang. Selesai bertugas ia menulis di buku harian: "Hari ini aku tidak salah satu kata pun."' },
-      { m: '2-2', t: 'Tuas semafor tua', x: 'Tuas semafor Lubuk Tua berkarat dan berat. Sari menariknya dengan dua tangan sambil menahan tawa. "Ternyata begini rasanya jadi PPKA zaman Mamed."' },
-      { m: '3-2', t: 'Ujian di menara Padi Raya', x: 'Perjalanan Guntur hari ini sekaligus ujian akhir Sari. Penguji mencatat setiap instruksinya. Saat Guntur berhenti tepat di marka Padi Raya, penguji mengangguk pelan.' },
-      { m: '3-3', t: 'Topi merah resmi', x: 'Sari dilantik menjadi PPKA penuh di Kota Barisan. Topi merah barunya masih kaku. Ia memberi hormat pertama ke kabin Kilat, dan kamu membalas dengan dua kali klakson.' },
+    { who: 'Uchie', role: 'PPKA magang', av: 'UC', arc: 'Dari Magang ke PPKA', ch: [
+      { m: '2-1', t: 'Suara pertama di Sumatra', x: 'Hari pertama Uchie memandu sendiri. Tangannya gemetar memegang mikrofon, tapi suaranya tenang. Selesai bertugas ia menulis di buku harian: "Hari ini aku tidak salah satu kata pun."' },
+      { m: '2-2', t: 'Tuas semafor tua', x: 'Tuas semafor Lubuk Tua berkarat dan berat. Uchie menariknya dengan dua tangan sambil menahan tawa. "Ternyata begini rasanya jadi PPKA zaman Mamed."' },
+      { m: '3-2', t: 'Ujian di menara Padi Raya', x: 'Perjalanan Guntur hari ini sekaligus ujian akhir Uchie. Penguji mencatat setiap instruksinya. Saat Guntur berhenti tepat di marka Padi Raya, penguji mengangguk pelan.' },
+      { m: '3-3', t: 'Topi merah resmi', x: 'Uchie dilantik menjadi PPKA penuh di Kota Barisan. Topi merah barunya masih kaku. Ia memberi hormat pertama ke kabin Kilat, dan kamu membalas dengan dua kali klakson.' },
     ] },
   ];
   const kisahSeen = () => { try { const a = JSON.parse(store.get('rn.kisah') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
@@ -8798,9 +8798,9 @@
     c.fillStyle = '#3a3a3a'; c.fillRect(bx - 0.12 * ppm, by - 2.4 * ppm, 0.24 * ppm, 2.4 * ppm);
     c.fillStyle = locked && ss && ss.phase !== 'idle' ? '#f4f1e8' : ss && ss.phase !== 'idle' ? '#d0392b' : '#f4f1e8';
     c.beginPath(); c.arc(bx, by - 2.7 * ppm, 0.5 * ppm, 0, 7); c.fill();
-    // Dimas memeriksa wesel
+    // Rahmat memeriksa wesel
     if (ss && ss.phase !== 'idle') {
-      // Dimas berjalan dari wesel menuju lokomotif sambil membawa lentera
+      // Rahmat berjalan dari wesel menuju lokomotif sambil membawa lentera
       const dx = X(Math.min(sw + 2, st.x + 18)), dy = gy + 2.6 * ppm;
       person(c, dx, dy, ppm, 7, { color: '#f08a24', helmet: true });
       if (ss.phase === 'work' || ss.phase === 'red') {
