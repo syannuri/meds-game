@@ -2700,6 +2700,31 @@
       BW: bg('#a68ac4', '#43305f') + fem({ skin: '#cf9e7a', sh: '#9a6a4a', veil: '#8a3244', veilD: '#64202f', veilL: '#a84a5c', lip: '#b8485a', iris: '#3a2418', brooch: '#e8c45a', top: '#fbf8f1', mature: true })
         + `<path d="M19.5 37.6h9.8a1.6 1.6 0 0 1 1.6 1.6v1.2a4 4 0 0 1-4 4h-5a4 4 0 0 1-4-4v-1.2a1.6 1.6 0 0 1 1.6-1.6zM34.7 37.6h9.8a1.6 1.6 0 0 1 1.6 1.6v1.2a4 4 0 0 1-4 4h-5a4 4 0 0 1-4-4v-1.2a1.6 1.6 0 0 1 1.6-1.6z" fill="rgba(255,255,255,.1)" stroke="#c9a24a" stroke-width="1"/><path d="M30.9 39.4q1.1-.8 2.2 0" stroke="#c9a24a" stroke-width="1" fill="none"/>`
         + `<rect x="15" y="57.5" width="8" height="2.6" rx="1" fill="#d9a93a"/><rect x="41" y="57.5" width="8" height="2.6" rx="1" fill="#d9a93a"/><path d="M16 58.8h6M42 58.8h6" stroke="#8a6a20" stroke-width=".6"/>`,
+      // ---- penumpang tetap ----
+      // Pak Darto: pedagang sayur, caping bambu, kaos oblong & handuk kecil di bahu, kumis tipis, senyum ramah
+      DR: bg('#8fb46a', '#3f5f2a') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#d9c9a0"/><path d="M14 56q8-4 14 2l-2 6H12z" fill="#f2f2ea"/><path d="M15 58q6-2 11 2" stroke="#c9c9bc" stroke-width="1" fill="none"/>`
+        + ears('#a8714c') + face('#a8714c', '#6a4028') + `<path d="M16 35c1-9 7-14 16-14s15 5 16 14c-4-3-9-5-16-5s-12 2-16 5z" fill="#2a2420"/>`
+        + eyes(39.5) + brows(34.5, '#2a2420') + nose(45) + `<path d="M26 48.6q6-1.8 12 0" stroke="#2a2420" stroke-width="1.8" fill="none" stroke-linecap="round"/>` + smile(51.5) + blush
+        + `<path d="M4 31L32 11l28 20q-28 5-56 0z" fill="#d6b56a"/><path d="M4 31q28 5 56 0" stroke="#a8843e" stroke-width="1.4" fill="none"/><path d="M14 25L32 12l18 13M20 28L32 14l12 14" stroke="#b8954e" stroke-width=".8" fill="none" opacity=".8"/><circle cx="32" cy="11.5" r="1.4" fill="#8a6a2e"/>`,
+      // Laras: mahasiswi, kerudung biru langit, kacamata bulat tipis, tas ransel, ceria
+      LR: bg('#7ab0d8', '#2e5a86') + fem({ skin: '#e6b892', sh: '#b88262', veil: '#5b8fc9', veilD: '#3f6ea6', veilL: '#86b4e4', lip: '#d4687a', iris: '#3a2418', brooch: '#f2f2f2', top: '#f4efe4', grin: true })
+        + `<circle cx="25.6" cy="40.3" r="4.6" fill="rgba(255,255,255,.08)" stroke="#2a2a30" stroke-width=".9"/><circle cx="38.4" cy="40.3" r="4.6" fill="rgba(255,255,255,.08)" stroke="#2a2a30" stroke-width=".9"/><path d="M30.2 40q1.8-1 3.6 0" stroke="#2a2a30" stroke-width=".9" fill="none"/>`
+        + `<path d="M10 64l3-9 5-1-2 10zM54 64l-3-9-5-1 2 10z" fill="#e0703a"/>`,
+      // Raka: anak sekolah calon masinis, topi masinis mainan kebesaran, gigi ompong, pipi bulat
+      RA: bg('#f2c45a', '#b8742a') + `<path d="M10 64c2-8 10-11 22-11s20 3 22 11z" fill="#f4f1e8"/><path d="M27 53l5 5 5-5" fill="#c8352b"/>`
+        + ears('#b98258') + `<path d="M32 59c-9 0-15-6-15-16v-5c0-9 6-15 15-15s15 6 15 15v5c0 10-6 16-15 16z" fill="#b98258"/>`
+        + `<path d="M17 36c0-9 6-14 15-14s15 5 15 14c-3-4-8-6-15-6s-12 2-15 6z" fill="#1b1512"/>`
+        + eyes(40) + brows(35.5, '#1b1512') + `<ellipse cx="22" cy="46" rx="3.2" ry="2" fill="#e5806a" opacity=".35"/><ellipse cx="42" cy="46" rx="3.2" ry="2" fill="#e5806a" opacity=".35"/>`
+        + `<path d="M26.5 48.5q5.5 5.5 11 0q-5.5 1.8-11 0z" fill="#7a2626"/><rect x="29.2" y="48.8" width="2.4" height="2" fill="#fff"/><rect x="33.2" y="48.8" width="2.4" height="2" fill="#fff"/>`
+        + `<path d="M12 28c1-9 9-14 20-14s19 5 20 14z" fill="#1f3550"/><path d="M8 28h48c0 2.4-2 3.6-4 3.6H12c-2 0-4-1.2-4-3.6z" fill="#152538"/><rect x="12" y="26" width="40" height="2.2" fill="#d9a93a"/><circle cx="32" cy="20" r="2" fill="#d9a93a"/>`,
+      // Mbah Karto: lansia, peci hitam, rambut & kumis putih, kerutan, tongkat, baju batik cokelat
+      MK: bg('#c9a07a', '#6a4a30') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#7a4a28"/><path d="M14 58q4-2 6 0t6 0 6 0 6 0 6 0 6 0" stroke="#d9a35a" stroke-width="1.2" fill="none"/><path d="M14 62q4-2 6 0t6 0 6 0 6 0 6 0 6 0" stroke="#d9a35a" stroke-width="1.2" fill="none"/>`
+        + ears('#a87a58') + face('#a87a58', '#6a4a30') + `<path d="M16 36c0-4 2-6 4-7M48 36c0-4-2-6-4-7" stroke="#eeeae2" stroke-width="3" fill="none" stroke-linecap="round"/>`
+        + eyes(40) + brows(35, '#eeeae2', 0.6) + nose(45) + `<path d="M24.5 48.6q4-2.6 7.5-.8 3.5-1.8 7.5.8-3.6 2.4-7.5 1.2-3.9 1.2-7.5-1.2z" fill="#eeeae2"/><path d="M28.5 53q3.5 1.4 7 0" stroke="#7a3b2e" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+        + `<path d="M22 31.5q3-1 6 0M36 31.5q3-1 6 0M21 44q2 1.5 4 1M43 44q-2 1.5-4 1" stroke="rgba(90,55,35,.45)" stroke-width=".9" fill="none"/>`
+        + `<path d="M17 27c0-8 7-11 15-11s15 3 15 11z" fill="#141414"/><rect x="17" y="25" width="30" height="3" fill="#1e1e1e"/><path d="M19 22q13-4 26 0" stroke="#3a3a3a" stroke-width=".9" fill="none"/>`,
+      // Bu Ratih: guru SD yang sedang hamil, kerudung hijau zaitun, wajah teduh
+      BR: bg('#b8c98a', '#5a6a32') + fem({ skin: '#d6a882', sh: '#a0704e', veil: '#6f8a3a', veilD: '#4f6a22', veilL: '#90aa58', lip: '#c05a64', iris: '#3a2418', brooch: '#f0d9a0', top: '#e8dcc4', mature: true }),
       // Pak Bram: bos bus rival, kacamata hitam, kumis tebal, jaket oranye
       PB: bg('#d9894a', '#6a3218') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#e8822a"/><path d="M26 52l6 7 6-7" fill="#1d1d1d"/><path d="M22 53l-4 11M42 53l4 11" stroke="#b85a14" stroke-width="2"/>`
         + ears('#a8714c') + face('#a8714c', '#6a4028') + `<path d="M15 34c0-12 8-18 17-18s17 6 17 18c-2-6-5-9-8-10-3 3-15 3-18 0-3 1-6 4-8 10z" fill="#141210"/><path d="M22 21q10-6 20 0" stroke="#3a3632" stroke-width="1.2" fill="none" opacity=".8"/>`
@@ -2846,7 +2871,7 @@
       }
       if (step === 'couple') { tryCouple(); return; }
       if (step === 'close' && !S.choiceOpen) { const cr = crowds.get(S.st); if (cr && cr.people.some((p) => p.transit && (p.state === 'run' || p.state === 'step'))) { toast('Tunggu penumpang transit naik dulu.', 'warn', 2.2, 'transit', 3); return; } }
-      if (step === 'close' && S.choiceOpen) { toast('Putuskan dulu: tunggu KA sambungan atau berangkat tepat waktu.', 'warn', 2.4, 'choice', 3); return; }
+      if (step === 'close' && S.choiceOpen) { toast('Putuskan dulu pilihanmu di panel keputusan.', 'warn', 2.4, 'choice', 3); return; }
       if (step === 'close') {
         S.doors = 'closed'; Sound.door(false);
         const CP = ROUTE.couple;
@@ -2979,7 +3004,8 @@
       }
       if (done) {
         dw.step = 'close'; dw.timer = 0;
-        { const ev = (S.events || []).find((e) => e.kind === 'dispatch' && e.si === S.st); if (ev && !S.dispatch) openDispatch(ev); }
+        { const ev = (S.events || []).find((e) => e.kind === 'dispatch' && e.si === S.st); if (ev && !S.dispatch) openDispatch(ev);
+          else { const D = !MIS.daily && DILEMMAS[MIS.id]; if (D && D.st === S.st && !S.story && !S.choiceOpen) openStory(D); } }
         toast(st.travelers ? 'Pemudik dan barang bawaannya sudah naik. Tutup pintu.' : st.traders ? 'Para pedagang sudah naik dengan keranjangnya. Tutup pintu.' : st.umbrellas ? 'Penumpang naik sambil melipat payung. Tutup pintu.' : 'Penumpang sudah naik. Tutup pintu.', 'info', 3, null, 2);
       }
     } else if (dw.step === 'unload') {
@@ -3800,9 +3826,11 @@
     C.t += dt;
     if (!C.q) { const pool = (CHAT_MIS[MIS.id] || []).concat(CHAT[MIS.id[0]] || CHAT[1]); const off = Math.floor(Math.random() * pool.length); C.q = pool.map((_, i) => pool[(i + off) % pool.length]);
       if (CHAT_MIS[MIS.id]) C.q.unshift(CHAT_MIS[MIS.id][0]);
+      for (const q of regRiders()) { const st = regOf(q.id); C.q.unshift(['Uchie', 'UC', st.n ? q.greet[st.last === 'bad' ? 'bad' : 'good'] : q.greet.first]); } // sapaan penumpang tetap (diteruskan Uchie dari gerbong)
+      try { const F = JSON.parse(store.get('rn.follow') || '[]'); if (F.length) { C.q.unshift(F.shift()); store.set('rn.follow', JSON.stringify(F)); } } catch (e) { /* abaikan */ } // akibat keputusan sebelumnya
       if (!store.get('rn.premiseHeard') && MISSION_ORDER.includes(MIS.id)) C.q.unshift(['Rahmat', 'RH', 'Anett, kabar dari direksi: lintas tua Watugede, rumah Surya, akan ditutup akhir musim kalau dianggap sepi dan merugi.'], ['Rahmat', 'RH', 'Setiap perjalananmu dicatat sebagai Kepercayaan Lintas: tepat waktu, nyaman, hemat, aman. Buktikan jalur ini hidup. Kemajuannya ada di tab Kisah.']); }
     const prem = !store.get('rn.premiseHeard') && C.q[0] && C.q[0][2].startsWith('Anett, kabar dari direksi');
-    if (C.n >= (prem ? 5 : 3) || !C.q.length) return;
+    if (C.n >= (prem ? 6 : 4) || !C.q.length) return;
     const wait = C.n === 0 ? (prem ? 8 : 22) : C.lastPrem ? 7 : 38;
     if (C.t < wait || radioTimer > 0 || toastTimer > 0) return;
     const kmh = S.v * 3.6; if (kmh < Math.max(30, ROUTE.lineSpeed * 0.4)) return;
@@ -3812,6 +3840,81 @@
     if ((S.events || []).some((e) => !e.warned && e.warnAt - S.x < 1500) || S.choiceOpen) return;
     const [who, av, text] = C.q.shift(); radio(text, 6.5, who, av); C.n++; C.t = 0;
     C.lastPrem = text.startsWith('Anett, kabar dari direksi'); if (text.startsWith('Setiap perjalananmu dicatat')) store.set('rn.premiseHeard', '1');
+  }
+  // ---------- penumpang tetap: mengingat cara Anett membawa kereta ----------
+  // kedekatan 0–100 (mulai 50) naik/turun dari hal yang paling mereka pedulikan; kabar di layar hasil, sapaan di perjalanan berikutnya, surat saat ≥ 80
+  const REGULARS = [
+    { id: 'DR', name: 'Pak Darto', role: 'pedagang sayur Pasar Minggu', cares: 'kenyamanan & rem halus', mis: ['1-3', '1-4', '1-6', '2-3'],
+      judge: (o) => (o.comfort >= 90 && !o.eb ? 'good' : o.comfort < 75 || o.eb ? 'bad' : 'ok'),
+      say: { good: 'Sayur saya sampai pasar mulus tanpa memar. Besok saya bawakan kopi untuk masinisnya!', ok: 'Lumayan, cuma dua-tiga ikat bayam yang lecek. Terima kasih, Mbak.', bad: 'Aduh, rem mendadak tadi bikin keranjang tomat saya tumpah. Hati-hati, ya, Mbak masinis.' },
+      greet: { first: 'Pak Darto naik di gerbong dua dengan dua keranjang sayur. Katanya: titip, rem pelan-pelan, ya!', good: 'Pak Darto naik lagi, membawa termos kopi untukmu. "Masinis yang remnya halus, sayurku aman lagi, kan?"', bad: 'Pak Darto naik lagi sambil memeluk keranjang tomatnya erat-erat. Semoga hari ini mulus.' },
+      letter: 'Sepucuk surat berbau daun pisang: "Mbak Anett, berkat kereta yang halus, sayur saya selalu segar dan pelanggan bertambah. Kios saya sekarang ada dua. Salam dari Pasar Minggu. — Darto"' },
+    { id: 'LR', name: 'Laras', role: 'mahasiswi teknik, pulang-pergi kampus', cares: 'ketepatan waktu', mis: ['1-3', '1-7', '3-1', '3-2'],
+      judge: (o) => (o.late !== null && o.late <= 30 ? 'good' : o.late === null || o.late > 120 ? 'bad' : 'ok'),
+      say: { good: 'Tepat waktu! Aku sampai sebelum dosen killer itu masuk kelas. Kamu penyelamatku.', ok: 'Telat sedikit, tapi masih sempat absen. Fiuh.', bad: 'Telat lagi... aku dihitung tidak hadir. Semoga besok lebih cepat, ya.' },
+      greet: { first: 'Mahasiswi bernama Laras naik dengan ransel penuh buku. Ia bertanya: kereta ini selalu tepat waktu, kan?', good: 'Laras naik lagi dan melambai ke kabin: "Kereta Mbak Anett selalu tepat waktu. Aku sampai pakai jadwalmu untuk alarm."', bad: 'Laras naik sambil melirik jam tangannya. Hari ini ada ujian pagi. Jangan sampai terlambat.' },
+      letter: 'Sebuah kartu dari kampus: "Skripsiku tentang ketepatan waktu kereta lokal, dan data terbaiknya dari perjalananmu. Aku lulus dengan nilai A! — Laras"' },
+    { id: 'RA', name: 'Raka', role: 'anak SD, bercita-cita jadi masinis', cares: 'berhenti tepat di marka', mis: ['1-5', '1-6', '3-3', '4-1'],
+      judge: (o) => (o.stops.length && o.stops.every((q) => Math.abs(q.offset) <= 1) ? 'good' : o.stops.some((q) => Math.abs(q.offset) > 4) ? 'bad' : 'ok'),
+      say: { good: 'Pas banget di marka! Aku catat di buku: Kak Anett, berhenti sempurna, nilai seratus!', ok: 'Hampir pas! Kata Kak Uchie, masinis hebat juga pernah meleset sedikit.', bad: 'Lho, kok kelewatan markanya? Aku jadi harus lari ke pintu, hehe.' },
+      greet: { first: 'Anak kecil bertopi masinis mainan duduk paling depan dan menempel di kaca. Namanya Raka. Ia ingin melihatmu berhenti tepat di marka.', good: 'Raka naik lagi dengan buku catatannya. "Kak Anett, hari ini berhenti sempurna lagi, ya? Aku mau mencatat!"', bad: 'Raka naik lagi dan berkata pelan: "Hari ini pasti pas markanya. Aku percaya Kak Anett."' },
+      letter: 'Gambar krayon dari Raka: Surya, Cakra, dan seorang masinis berkerudung di kabin. Di bawahnya tertulis besar-besar: "AKU MAU JADI MASINIS SEPERTI KAK ANETT."' },
+    { id: 'MK', name: 'Mbah Karto', role: 'pensiunan guru, berjalan bertongkat', cares: 'berhenti dekat marka & perjalanan tenang', mis: ['1-5', '1-7', '2-2', '4-1'],
+      judge: (o) => (o.avgOff !== null && o.avgOff <= 2 && o.comfort >= 85 ? 'good' : o.comfort < 70 || (o.avgOff !== null && o.avgOff > 5) ? 'bad' : 'ok'),
+      say: { good: 'Pintunya tepat di depan bangku saya, jadi saya tak perlu berjalan jauh. Matur nuwun, Nduk.', ok: 'Agak jauh sedikit dari pintu, tapi tongkat saya masih kuat.', bad: 'Kereta terguncang dan pintunya jauh sekali. Lutut tua ini kerepotan, Nduk.' },
+      greet: { first: 'Seorang kakek bertongkat naik pelan-pelan. Uchie membantunya duduk. Namanya Mbah Karto, dulu guru SD di Watugede.', good: 'Mbah Karto naik lagi dan tersenyum ke kabin: "Masinis yang sabar, Mbah suka naik keretamu."', bad: 'Mbah Karto naik pelan-pelan, berpegangan erat. Bawa dengan tenang hari ini, ya.' },
+      letter: 'Surat bertulisan tangan rapi gaya lama: "Empat puluh tahun saya mengajar anak-anak Watugede untuk tertib. Kini saya melihat murid yang tak pernah saya ajar, tapi tertib sekali di relnya. Bangga. — Karto"' },
+    { id: 'BR', name: 'Bu Ratih', role: 'guru SD, sedang hamil tujuh bulan', cares: 'kehalusan & keselamatan', mis: ['1-4', '2-3', '3-3', '3-4'],
+      judge: (o) => (o.comfort >= 92 && !o.viol ? 'good' : o.comfort < 80 || o.viol >= 2 ? 'bad' : 'ok'),
+      say: { good: 'Halus sekali, sampai bayiku tidur tenang sepanjang jalan. Terima kasih, Mbak Anett.', ok: 'Aman, hanya agak terguncang di beberapa tempat.', bad: 'Guncangan tadi membuat saya pusing. Tolong lebih pelan, ya, Mbak.' },
+      greet: { first: 'Seorang ibu hamil naik dan duduk di kursi prioritas. Uchie berbisik: itu Bu Ratih, guru SD, tujuh bulan. Bawa dengan halus.', good: 'Bu Ratih naik lagi dan mengangguk ke kabin. "Saya pilih keretamu karena paling halus."', bad: 'Bu Ratih naik lagi dengan hati-hati. Uchie mengingatkan: tolong lebih halus hari ini.' },
+      letter: 'Kartu ucapan dengan foto bayi mungil: "Kenalkan, Anett kecil. Namanya kami ambil dari masinis yang membawa kami dengan selamat setiap minggu. — Keluarga Ratih"' },
+  ];
+  const regOf = (id) => { try { return JSON.parse(store.get('rn.reg.' + id) || 'null') || { v: 50, n: 0, last: null }; } catch (e) { return { v: 50, n: 0, last: null }; } };
+  const regSet = (id, o) => store.set('rn.reg.' + id, JSON.stringify(o));
+  const regRiders = () => (MIS.daily ? [] : REGULARS.filter((q) => q.mis.includes(MIS.id)));
+  function regBump(id, d) { const o = regOf(id); o.v = clamp(o.v + d, 0, 100); regSet(id, o); }
+  function earnRegulars(r) {
+    if (r.failed) return '';
+    const fin = S.stops.find((q) => q.name === finalStation().name), stops = S.stops.concat(S.loads || []);
+    const o = { comfort: S.comfort, eb: !!S.ebUsed, viol: S.violations.length, late: fin ? fin.clock - fin.sched : null, stops, avgOff: stops.length ? stops.reduce((a, q) => a + Math.abs(q.offset), 0) / stops.length : null };
+    return regRiders().map((q) => { const out = q.judge(o), st = regOf(q.id), d = { good: 12, ok: 3, bad: -10 }[out], before = st.v;
+      st.v = clamp(st.v + d, 0, 100); st.n++; st.last = out; const letter = st.v >= 80 && !st.letter; if (letter) st.letter = 1; regSet(q.id, st);
+      return `<div class="rreg ${out}"><i>${PORTRAIT(q.id) || q.id}</i><div><b>${q.name} <em>${d > 0 ? '+' : ''}${d}</em></b><small>"${q.say[out]}"</small></div></div>`
+        + (letter ? `<div class="rcert story"><i>${PORTRAIT(q.id) || '✉️'}</i><div><b>SURAT DARI ${q.name.toUpperCase()}</b><small>${q.letter}</small></div></div>` : ''); }).join('');
+  }
+  // ---------- dilema bermakna: pilihan sah dengan akibat ke waktu, penumpang & cerita berikutnya ----------
+  const DILEMMAS = {
+    '1-5': { st: 1, id: 'badai', title: 'Badai memburuk · Kali Jernih', text: 'Petir menyambar di depan, hujan makin deras. Mbah Karto dan beberapa penumpang lansia tampak cemas. Menunggu 3 menit sampai hujan reda sedikit, atau berangkat sesuai jadwal?',
+      opts: [{ k: 'wait', label: 'Tunggu 3 menit', sub: 'penumpang tenang · tiba lebih lambat', delay: 180, reg: { MK: 10, LR: -6 }, toast: 'Tiga menit kemudian hujan sedikit reda. Penumpang lansia bernapas lega.', follow: ['Uchie', 'UC', 'Mbah Karto menitip salam: terima kasih sudah menunggu badai reda di Kali Jernih. Katanya, masinis yang sabar itu langka.'], log: 'Menunggu badai reda di Kali Jernih' },
+        { k: 'go', label: 'Berangkat sesuai jadwal', sub: 'jadwal aman · penumpang cemas', reg: { MK: -6, LR: 6 }, toast: 'Berangkat menembus hujan. Bawa dengan sangat hati-hati.', follow: ['Rahmat', 'RH', 'Direksi memuji kereta badai kemarin yang tetap tepat waktu. Tapi Bu Anna bilang beberapa penumpang lansia mengeluh takut.'], log: 'Menembus badai tepat waktu' }] },
+    '1-6': { st: 1, id: 'anak', title: 'Anak terpisah · Pasar Lama', text: 'Seorang anak menangis di peron: ibunya masih di loket, berlari ke sini. Bus Pak Bram sudah mendahului. Tahan pintu 30 detik, atau berangkat sekarang?',
+      opts: [{ k: 'wait', label: 'Tahan pintu 30 detik', sub: 'ibu & anak naik bersama · bus makin jauh', delay: 30, pax: 2, runners: 2, reg: { RA: 12, DR: 4 }, toast: 'Sang ibu berlari, menggendong anaknya, dan naik tepat waktu. Seisi gerbong bertepuk tangan.', follow: ['Bu Anna', 'BW', 'Ibu yang anaknya kau tunggu di Pasar Lama menitipkan sekotak kue lebaran untukmu. Katanya, malam takbiran itu tak akan ia lupakan.'], log: 'Menunggu ibu dan anak di Pasar Lama' },
+        { k: 'go', label: 'Berangkat sekarang', sub: 'kejar bus · ibu naik kereta berikutnya', reg: { RA: -8 }, toast: 'Pintu tertutup. Petugas peron menenangkan si anak sampai ibunya datang.', follow: ['Bu Anna', 'BW', 'Anak di Pasar Lama kemarin akhirnya pulang dengan kereta berikutnya. Ia menangis cukup lama, kata petugas peron.'], log: 'Berangkat tanpa menunggu ibu di Pasar Lama' }] },
+    '2-3': { st: 1, id: 'bidan', title: 'Bu Ratih tidak enak badan · Pasar Kopi Liwa', text: 'Bu Ratih pusing setelah perjalanan berguncang. Bidan desa bisa datang memeriksa dalam 2 menit. Tunggu bidan, atau lanjut dan bawa kereta sehalus mungkin?',
+      opts: [{ k: 'wait', label: 'Tunggu bidan 2 menit', sub: 'Bu Ratih diperiksa · tiba lebih lambat', delay: 120, reg: { BR: 15, LR: -4 }, toast: 'Bidan memeriksa Bu Ratih: semuanya baik. Ia tersenyum lega dan berterima kasih.', follow: ['Uchie', 'UC', 'Bu Ratih mengirim pesan: terima kasih sudah menunggu bidan di Liwa. Ia dan bayinya sehat.'], log: 'Menunggu bidan untuk Bu Ratih' },
+        { k: 'go', label: 'Lanjut, bawa sehalus mungkin', sub: 'jadwal aman · kenyamanan harus tetap tinggi', reg: { BR: -5 }, toast: 'Berangkat. Uchie menemani Bu Ratih di gerbong. Jaga tarikan dan rem tetap halus.', follow: ['Uchie', 'UC', 'Bu Ratih sampai dengan selamat kemarin, tapi masih lemas. Lain kali mungkin lebih baik menunggu bidan, katanya pelan.'], log: 'Lanjut membawa Bu Ratih tanpa menunggu bidan' }] },
+    '3-2': { st: 1, id: 'laptop', title: 'Laptop tertinggal · Padi Raya', text: 'Laras berlari ke pintu kabin: laptop berisi skripsinya tertinggal di bangku peron. Petugas bisa mengambilkannya dalam 40 detik. Tahan Guntur, atau berangkat tepat waktu?',
+      opts: [{ k: 'wait', label: 'Tahan 40 detik', sub: 'laptop Laras selamat · jadwal kereta cepat bergeser', delay: 40, reg: { LR: 15 }, toast: 'Petugas berlari membawa laptop itu. Laras memeluknya dan membungkuk ke arah kabin.', follow: ['Laras', 'LR', 'Mbak Anett, skripsiku selamat! Kalau laptop itu hilang, aku harus mengulang setahun. Terima kasih sudah menunggu.'], log: 'Menahan Guntur demi laptop Laras' },
+        { k: 'go', label: 'Berangkat tepat waktu', sub: 'kereta cepat tidak boleh tertunda · laptop dikirim kereta berikutnya', reg: { LR: -10 }, toast: 'Guntur berangkat. Petugas berjanji mengirim laptop itu dengan kereta berikutnya.', follow: ['Laras', 'LR', 'Laptopku sampai juga dengan kereta berikutnya, tapi aku terlambat presentasi. Tidak apa-apa, aku mengerti, kereta cepat harus tepat waktu.'], log: 'Guntur berangkat tepat waktu tanpa menunggu laptop' }] },
+  };
+  const choiceLog = () => { try { return JSON.parse(store.get('rn.choices') || '[]'); } catch (e) { return []; } };
+  function openStory(D) {
+    const q = ROUTE.stations[D.st], el = document.createElement('div'); S.choiceOpen = true; S.storyD = D;
+    el.className = 'choice story'; el.id = 'choiceBox'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Keputusan masinis');
+    el.innerHTML = `<b>KEPUTUSANMU · ${D.title}</b><p>${D.text}</p><div class="cbtns">${D.opts.map((o, i) => `<button type="button" data-i="${i}"${i ? ' data-c="go"' : ''}>${o.label}<small>${o.sub}</small></button>`).join('')}</div>`;
+    el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; Sound.ui && Sound.ui('confirm'); chooseStory(D, D.opts[+b.dataset.i]); });
+    $('game').appendChild(el); Sound.ui && Sound.ui('select'); HAPT.buzz([16, 40, 16], 0); void q;
+  }
+  function chooseStory(D, o) {
+    if (!S || !S.choiceOpen) return; S.choiceOpen = false; S.dispatch = o.k; S.story = { D, o }; const el = $('choiceBox'); if (el) el.remove();
+    if (o.delay) S.clock += o.delay; if (o.pax) S.aboard += o.pax;
+    for (const [id, d] of Object.entries(o.reg || {})) regBump(id, d);
+    if (o.runners) { const cr = crowds.get(D.st), q = ROUTE.stations[D.st]; if (cr) for (let k = 0; k < o.runners; k++) { const seed = 1400 + k * 17; cr.people.push({ role: 'late', state: 'run', kind: k ? 'child' : 'hijab', seed, x: q.x + 18 + k * 1.6, z: 0.4 + k * 0.1,
+      shirt: PAX_SHIRT[Math.floor(hash(seed + 0.5) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1.1) * PAX_PANTS.length)], skin: PAX_SKIN[Math.floor(hash(seed + 2.2) * PAX_SKIN.length)], hijab: PAX_HIJAB[Math.floor(hash(seed + 3.3) * PAX_HIJAB.length)], dir: -1, alpha: 1, ph: k, run: true, k: 0, wave: 0, transit: true }); } }
+    try { const F = JSON.parse(store.get('rn.follow') || '[]'); F.push(o.follow); store.set('rn.follow', JSON.stringify(F.slice(-4))); } catch (e) { /* abaikan */ }
+    const L = choiceLog().filter((q) => q.id !== D.id); L.push({ id: D.id, m: MIS.id, k: o.k, t: o.log }); store.set('rn.choices', JSON.stringify(L));
+    toast(o.toast, o.k === 'wait' ? 'good' : 'info', 3.2, null, 3);
   }
   // ---------- misi besar: Kepercayaan Lintas ----------
   // Lintas tua Watugede (rumah Surya) terancam ditutup. Tiap perjalanan menambah kepercayaan: nilai rapor terbaik tiap misi dijumlah (0–100%).
@@ -3843,7 +3946,11 @@
   function renderKisah() {
     const el = $('kisahBox'); if (!el) return;
     const seen = kisahSeen();
-    el.innerHTML = trustHTML() + KISAH.map((a) => {
+    const regH = `<section class="karc regs"><header><div class="kc-av">${PORTRAIT('DR')}</div><div><b>Penumpang tetap</b><small><span>Mereka mengingat cara kamu membawa kereta</span></small></div><span class="kprog">${REGULARS.filter((q) => regOf(q.id).n).length}/${REGULARS.length}</span></header><ol>${REGULARS.map((q) => { const st = regOf(q.id);
+      return st.n ? `<li class="kch open reg"><i>${PORTRAIT(q.id)}</i><div><b>${q.name} · ${q.role}</b><div class="tmeter sm"><i style="width:${st.v}%"></i></div><p>Peduli ${q.cares}. ${st.last ? `"${q.say[st.last]}"` : ''}${st.letter ? `</p><p class="letter">${q.letter}` : ''}</p></div></li>`
+        : `<li class="kch lock"><b>???</b><p><span>Naik di misi</span> ${q.mis.join(', ')}</p></li>`; }).join('')}</ol></section>`;
+    const dl = choiceLog(), decH = dl.length ? `<section class="karc"><header><div class="kc-av">${PORTRAIT('UC')}</div><div><b>Keputusanmu</b><small><span>Pilihan di peron & akibatnya</span></small></div><span class="kprog">${dl.length}/${Object.keys(DILEMMAS).length}</span></header><ol>${dl.map((q) => `<li class="kch open"><b>Misi ${q.m}</b><p>${q.t}</p></li>`).join('')}</ol></section>` : '';
+    el.innerHTML = trustHTML() + regH + decH + KISAH.map((a) => {
       const got = a.ch.filter(kisahOpen).length;
       const chs = a.ch.map((c, i) => kisahOpen(c)
         ? `<li class="kch open${seen.includes(a.av + i) ? '' : ' unread'}"><b>${i + 1}. ${c.t}</b><p>${c.x}</p></li>`
@@ -4016,8 +4123,9 @@
       ['KOIN', `${r.total}`, 'gold', `misi ${r.base} + henti ${S.coins} + nyaman ${r.comfortBonus}${r.penalty ? ` − ${r.penalty}` : ''}${S.expert ? ' ×1,5' : ''}`],
     ];
     if (ELEC()) tiles.push(['ENERGI', `${Math.round(S.kwh)} kWh`, ecoBonus ? 'ok' : '', `regen ${Math.round(S.regen)} kWh (${regenPct}%)${ecoBonus ? ' · +80 hemat' : ' · target 20%'}`]);
-    const rep = travelReport(r), gs = saveGhost(rep, r.failed), cert = earnCert(r), spec = earnSpecial(r, rep), trust = earnTrust(rep, r);
-    $('resCard').innerHTML = `${trust}${cert}${spec}${reportHTML(rep, gs)}${goalList}
+    const rep = travelReport(r), gs = saveGhost(rep, r.failed), cert = earnCert(r), spec = earnSpecial(r, rep), trust = earnTrust(rep, r), regs = earnRegulars(r);
+    const dec = S.story ? `<div class="rdec"><b>Keputusanmu:</b> ${S.story.o.log}</div>` : '';
+    $('resCard').innerHTML = `${trust}${regs ? `<div class="rregs">${regs}</div>` : ''}${dec}${cert}${spec}${reportHTML(rep, gs)}${goalList}
       <table class="rtable">
         <thead><tr><th>Stasiun</th><th>Berhenti</th><th>Tiba / jadwal</th></tr></thead>
         <tbody>${loadRows}${rows}${rivalRow}</tbody>
@@ -4606,7 +4714,7 @@
     const pick = (pad) => { for (let k = 0; k < 80; k++) { const x = Math.round(st[0].x + 600 + Math.random() * (last - st[0].x - 1300)); if (free(x, pad)) return x; } return null; };
     // stasiun antara berpenumpang: tempat keputusan dispatcher (tunggu KA sambungan atau berangkat)
     const midSt = MIS.freight ? [] : st.map((q, i) => [q, i]).filter(([q, i]) => i > 0 && !q.final && !q.pass && i < st.length - 1);
-    const pool = (R.lineSpeed >= 180 ? ['tsr', 'sig'] : ['tsr', 'goat', 'sig']).concat(midSt.length ? ['dispatch', 'dispatch'] : []);
+    const pool = (R.lineSpeed >= 180 ? ['tsr', 'sig'] : ['tsr', 'goat', 'sig']).concat(midSt.length && !DILEMMAS[MIS.id] ? ['dispatch', 'dispatch'] : []); // misi berdilema cerita: tanpa dispatch acak
     const n = Math.random() < 0.45 ? 2 : 1, kinds = [];
     while (kinds.length < n && pool.length) { const k = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; if (!kinds.includes(k)) kinds.push(k); }
     if (typeof window !== 'undefined' && window.__evForce) kinds.splice(0, kinds.length, ...window.__evForce);
