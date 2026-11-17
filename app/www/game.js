@@ -3277,12 +3277,13 @@
       // lokomotif uap: empat hentakan per putaran roda penggerak (keliling 5,03 m); tiap hentakan = kepulan putih + bunyi 'cuh'
       const work = power > 0 ? 1 : 0.25;
       S.chuff = (S.chuff || 0) + S.v * dt * 4 / 5.03;
-      if (S.chuff >= 1) { S.chuff -= Math.floor(S.chuff); if (S.v > 0.15) { for (let q = 0; q < 2 + Math.round(power * 2); q++) S.smoke.push(puff(S.x - 1.95, trainH(7.4), true, power)); if (power > 0.4 && Math.random() < 0.5) S.smoke.push(exhaust(S.x - 1.95, trainH(7.4), power, true)); Sound.chuff(work * (0.5 + power * 0.5), S.v); } }
-      if (Math.random() < 1.5 * dt) S.smoke.push(puff(S.x - 1.95, trainH(7.3), true, 0)); // uap tipis saat diam
-      if (Math.random() < 0.6 * dt) S.smoke.push(puff(S.x - 7.6, trainH(6.0), true, 0));  // desis katup pengaman
+      if (S.chuff >= 1) { S.chuff -= Math.floor(S.chuff); if (S.v > 0.15) { for (let q = 0; q < 2 + Math.round(power * 2); q++) S.smoke.push(puff(S.x - 1.95, trainH(8.5), true, power)); if (power > 0.4 && Math.random() < 0.5) S.smoke.push(exhaust(S.x - 1.95, trainH(8.5), power, true)); Sound.chuff(work * (0.5 + power * 0.5), S.v); } }
+      if (Math.random() < 1.5 * dt) S.smoke.push(puff(S.x - 1.95, trainH(8.4), true, 0)); // uap tipis saat diam
+      if (Math.random() < 0.6 * dt) S.smoke.push(puff(S.x - 7.6, trainH(6.95), true, 0));  // desis katup pengaman
     } else if (!ELEC()) {
-      if (Math.random() < rateSmoke * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), power, false));
-      if ((S.burst > 0 || S.slip) && Math.random() < 11 * dt) S.smoke.push(exhaust(S.x - 8.2, trainH(6.8), 1, true));
+      // knalpot diesel: kabut tipis saat langsam, semburan abu kecokelatan saat bertenaga, kepulan hitam saat tuas dinaikkan (turbo menyusul)
+      const dRate = 8 + power * 14 + (S.burst > 0 ? 10 : 0);
+      for (let q = Math.floor(dRate * dt + Math.random()); q > 0; q--) S.smoke.push(exhaust(S.x - 8.2 + Math.random() * 0.3, trainH(6.75), power, S.burst > 0 || S.slip));
     } else {
       // kereta listrik: tanpa asap; sesekali percik biru di sepatu pantograf saat melaju kencang
       S.arc = Math.max(0, (S.arc || 0) - dt);
@@ -3293,7 +3294,7 @@
       p.life += dt; p.x += p.vx * dt + (p.sw !== undefined ? Math.sin(p.sw + p.life * 3.1) * 0.35 * dt : 0); p.y += p.vy * dt; p.vy *= 0.993; p.vx *= 0.995; p.r += p.grow * dt * (1 - p.life / (p.max * 1.6));
     }
     S.smoke = S.smoke.filter((p) => p.life < p.max);
-    if (S.smoke.length > 140) S.smoke.splice(0, S.smoke.length - 140);
+    if (S.smoke.length > 220) S.smoke.splice(0, S.smoke.length - 220);
     if (S.shake > 0) S.shake = Math.max(0, S.shake - dt * 1.6);
   }
 
@@ -3301,13 +3302,14 @@
   // asap knalpot diesel: kepulan tipis berlapis yang tertiup angin (lebih kencang saat hujan/badai),
   // kepekatan mengikuti notch; saat selip/hentakan hanya sedikit lebih gelap, tidak menggumpal
   function exhaust(x, y, power, dark) {
-    const wind = (MIS && (MIS.rain || MIS.sky === 'storm')) ? 2.6 : 1.1;
+    // semburan gas panas dari cerobong: melesat naik lalu melambat, mengembang & tertiup angin (posisi dunia: tertinggal di belakang kereta yang melaju)
+    const wind = (MIS && (MIS.rain || MIS.sky === 'storm')) ? 2.6 : 0.9;
     return {
-      x: x + (Math.random() - 0.5) * 0.25, y, r: 0.18 + power * 0.08,
-      grow: 0.42 + power * 0.32 + Math.random() * 0.22 + (dark ? 0.18 : 0),
-      vx: (Math.random() - 0.5) * 0.5 - wind - power * 0.4, vy: 1.1 + power * 1.3 + Math.random() * 0.5,
-      sw: Math.random() * 6.3, life: 0, max: 1.3 + Math.random() * 0.7 + (dark ? 0.3 : 0), dark,
-      a: dark ? 0.2 + Math.random() * 0.06 : 0.15 + power * 0.2,
+      x: x + (Math.random() - 0.5) * 0.2, y, r: 0.22 + power * 0.08 + (dark ? 0.06 : 0),
+      grow: 0.5 + power * 0.55 + Math.random() * 0.3 + (dark ? 0.35 : 0),
+      vx: (Math.random() - 0.5) * 0.4 - wind, vy: 1.6 + power * 2.6 + (dark ? 1.2 : 0) + Math.random() * 0.6,
+      sw: Math.random() * 6.3, life: 0, max: 1.5 + power * 1.0 + Math.random() * 0.8 + (dark ? 0.6 : 0), dark, haze: !dark && power < 0.2, dsl: true,
+      a: dark ? 0.15 + Math.random() * 0.05 : power < 0.2 ? 0.26 + Math.random() * 0.06 : 0.12 + power * 0.08,
     };
   }
   function puff(x, y, white, power = 0) {
@@ -4305,6 +4307,7 @@
     { k: 'hst2', mis: '3-2', name: 'Guntur', title: 'Masinis Kereta Cepat Guntur' },
     { k: 'hst', mis: '3-3', name: 'Kilat G1', title: 'Masinis Kilat G1' },
     { k: 'hali', mis: '3-4', name: 'Halilintar', title: 'Masinis Halilintar' },
+    { k: 'steam', mis: '4-1', name: 'Surya', title: 'Masinis Lokomotif Uap Surya' },
   ];
   const certOpen = (q) => !q.mis || bestOf(q.mis) >= 2;
   let GAR_CV = null;
@@ -4320,7 +4323,7 @@
     c.fillStyle = '#2a2f33'; c.beginPath(); c.ellipse(w / 2, gy + 6, w * 0.46, h * 0.1, 0, 0, 7); c.fill();
     c.fillStyle = '#7d8487'; c.fillRect(w * 0.06, gy - 2, w * 0.88, 2); c.fillStyle = '#a3a9ab'; c.fillRect(w * 0.06, gy + 2, w * 0.88, 2);
     // lokomotif terpilih dari samping, digambar dengan fungsi kereta di game
-    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Lokomotif listrik 25 kV · 200 km/h · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · 200 km/h · misi 3-3'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'], hali: ['HALILINTAR · HL 7001', 'Guntur generasi baru · 320 km/h · tahan badai · misi 3-4'] };
+    const CAT = { cakra: ['CAKRA · RN 2001', null], argo: ['AGRAVEDA · AV 3801', 'Lokomotif listrik 25 kV · 200 km/h · Argo Senja'], hst: ['KILAT G1 · KN 5001', 'Kereta cepat generasi 1 · 200 km/h · misi 3-3'], hst2: ['GUNTUR · GT 6001', 'Kereta cepat 250 km/h · gaya Eropa · misi 3-2'], hali: ['HALILINTAR · HL 7001', 'Guntur generasi baru · 320 km/h · tahan badai · misi 3-4'], steam: ['SURYA · 1912', 'Lokomotif uap 1-C-1 · dipulihkan warga Watugede · misi 4-1'] };
     if (!CAT[titleMap.loco]) titleMap.loco = 'cakra';
     const AG = titleMap.loco !== 'cakra', CQ = CERTS.find((q) => q.k === titleMap.loco), locked = !certOpen(CQ);
     const V = { c, ppm, gy, X: (wx) => w / 2 + (wx - 9) * ppm, st: { x: 18, doors: 'closed', aboard: 0, spin: 0, carDyn: null }, p: 0.7, storm: false, tf: 0, camX: 0, rimA: 0.35, rim: '#ffcf8a', refl: 0.15, lit: false, sunShadow: 0, night: false, bdy: () => 0 };
@@ -13104,6 +13107,18 @@
     const aD = ang * 0.5 / 0.8; // sudut roda penggerak (jari-jari 0,8 m)
     // ---- bagian bawah (tanpa pemadatan): bantalan penyangga, pilot, silinder, roda, batang ----
     unsq(() => {
+      const rv = (x, y, r) => { c.fillStyle = 'rgba(0,0,0,0.45)'; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.fillStyle = 'rgba(255,255,255,0.22)'; c.beginPath(); c.arc(x - r * 0.3, y - r * 0.3, r * 0.45, 0, 7); c.fill(); }; // paku keling
+      // rangka utama (pelat baja tebal) di balik roda: dari balok depan sampai bawah kabin, berlubang peringan & berpaku keling
+      c.fillStyle = vgrad(1.36, 0.6, [[0, '#2a2d30'], [1, '#121314']]); c.fillRect(L(10.7), Y(1.36), 10.2 * ppm, 0.76 * ppm);
+      c.fillStyle = '#0b0c0d'; for (const m of [4.38, 6.12]) { c.beginPath(); c.ellipse(L(m), Y(0.98), 0.22 * ppm, 0.2 * ppm, 0, 0, 7); c.fill(); }
+      for (let m = 0.8; m < 10.6; m += 0.42) rv(L(m), Y(1.3), Math.max(0.6, 0.035 * ppm));
+      // kotak api & pan abu di bawah kabin (menutup celah antara roda penggerak & roda belakang)
+      c.fillStyle = vgrad(1.4, 0.55, [[0, '#33302c'], [0.5, '#1d1b19'], [1, '#0e0d0c']]); c.beginPath(); c.moveTo(L(10.45), Y(1.38)); c.lineTo(L(7.95), Y(1.38)); c.lineTo(L(8.1), Y(0.72)); c.lineTo(L(10.3), Y(0.72)); c.closePath(); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.08)'; c.lineWidth = Math.max(1, 0.03 * ppm); c.beginPath(); for (let m = 8.3; m < 10.3; m += 0.32) { c.moveTo(L(m), Y(1.34)); c.lineTo(L(m), Y(0.76)); } c.stroke();
+      c.fillStyle = 'rgba(255,120,40,0.35)'; c.fillRect(L(10.1), Y(0.82), 1.9 * ppm, 0.05 * ppm); // pendar bara di celah pan abu
+      // lengan bogie belakang (Bissel) & bogie depan: dari poros roda ke titik putar pada rangka
+      c.strokeStyle = '#1f2224'; c.lineWidth = Math.max(2, 0.16 * ppm); c.lineCap = 'round';
+      c.beginPath(); c.moveTo(L(9.05), Y(0.5)); c.lineTo(L(7.9), Y(0.72)); c.moveTo(L(0.95), Y(0.45)); c.lineTo(L(2.35), Y(0.66)); c.stroke(); c.lineCap = 'butt';
       // pilot/penghalau sapi
       c.fillStyle = '#2a1f1a'; c.beginPath(); c.moveTo(L(-0.15), Y(1.05)); c.lineTo(L(-1.05), Y(0.18)); c.lineTo(L(0.55), Y(0.18)); c.lineTo(L(0.55), Y(1.05)); c.closePath(); c.fill();
       c.strokeStyle = '#6a5440'; c.lineWidth = Math.max(1, 0.05 * ppm); c.beginPath(); for (let q = 0; q < 5; q++) { const t = q / 4; c.moveTo(L(-0.15 - 0.9 * t), Y(1.05 - 0.87 * t)); c.lineTo(L(0.55), Y(1.05 - 0.87 * t)); } c.stroke();
@@ -13143,6 +13158,40 @@
       c.fillStyle = '#5d6166'; c.fillRect(xh - 0.2 * ppm, yh - 0.12 * ppm, 0.4 * ppm, 0.24 * ppm);
       c.lineCap = 'butt';
       for (const [px, py] of pins) { c.fillStyle = '#e3c06a'; c.beginPath(); c.arc(px, py, Math.max(1.5, 0.08 * ppm), 0, 7); c.fill(); }
+      // kotak gandar & pegas daun di atas roda depan dan belakang (penyangga yang terlihat jelas)
+      const truck = (m, r, span) => { const ax = L(m), ay = Y(r);
+        c.fillStyle = '#2c3034'; roundRect(c, ax - 0.17 * ppm, ay - 0.2 * ppm, 0.34 * ppm, 0.4 * ppm, 0.06 * ppm); c.fill(); c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(ax - 0.17 * ppm, ay - 0.2 * ppm, 0.34 * ppm, Math.max(1, 0.03 * ppm)); // kotak gandar
+        c.fillStyle = '#d9a441'; c.beginPath(); c.arc(ax, ay, Math.max(1, 0.07 * ppm), 0, 7); c.fill();
+        c.fillStyle = '#3a3f44'; c.fillRect(ax - 0.05 * ppm, Y(r + 0.55), 0.1 * ppm, 0.35 * ppm); // tiang ke pegas
+        const sy = Y(r + 0.55), hw = span / 2 * ppm, th = Math.max(1, 0.05 * ppm); // pegas daun: pelat bertumpuk, terpanjang di atas, sedikit melengkung
+        for (let q = 0; q < 4; q++) { const w = hw * (1 - q * 0.22), yy = sy + q * th * 1.05; c.fillStyle = q % 2 ? '#3a4046' : '#545b62'; c.beginPath(); c.moveTo(ax - w, yy - th * 0.6); c.quadraticCurveTo(ax, yy + th * 0.9, ax + w, yy - th * 0.6); c.lineTo(ax + w, yy + th * 0.4); c.quadraticCurveTo(ax, yy + th * 1.9, ax - w, yy + th * 0.4); c.closePath(); c.fill(); }
+        c.fillStyle = '#6a7078'; c.fillRect(ax - 0.1 * ppm, sy - th * 0.2, 0.2 * ppm, th * 4.6); // klem pegas
+        c.strokeStyle = '#2a2e32'; c.lineWidth = Math.max(1, 0.06 * ppm); c.beginPath(); c.moveTo(ax - hw, sy - 0.06 * ppm); c.lineTo(ax - hw, Y(1.36)); c.moveTo(ax + hw, sy - 0.06 * ppm); c.lineTo(ax + hw, Y(1.36)); c.stroke(); }; // penggantung ke rangka
+      truck(9.05, 0.48, 1.3); truck(0.95, 0.42, 1.1);
+      // pegas daun roda penggerak (terlihat di antara roda, di bawah pelat injak)
+      for (const m of [4.375, 6.125]) { const x = L(m), y = Y(1.18); c.fillStyle = '#3f454b'; for (let q = 0; q < 3; q++) { const w = (0.42 - q * 0.1) * ppm; c.fillRect(x - w, y + q * 0.05 * ppm, w * 2, 0.045 * ppm); } }
+      // batang luncur kedua & keran pembuang di silinder, peti uap (katup piston) di atas silinder
+      c.fillStyle = '#8a8f93'; c.fillRect(L(4.4), Y(1.07), 1.6 * ppm, 0.1 * ppm);
+      c.fillStyle = vgrad(2.0, 1.6, [[0, '#4a5a4e'], [1, '#22302a']]); roundRect(c, L(2.55), Y(1.98), 1.6 * ppm, 0.42 * ppm, 0.08 * ppm); c.fill();
+      c.fillStyle = BRASS; c.fillRect(L(2.55), Y(1.98), 0.08 * ppm, 0.42 * ppm); c.fillRect(L(1.03), Y(1.98), 0.08 * ppm, 0.42 * ppm);
+      c.strokeStyle = 'rgba(255,255,255,0.15)'; c.lineWidth = Math.max(1, 0.03 * ppm); for (const m of [1.5, 2.1]) { c.beginPath(); c.moveTo(L(m), Y(1.6)); c.lineTo(L(m), Y(0.8)); c.stroke(); } // pita pengikat lapisan silinder
+      c.fillStyle = '#5d6166'; for (const m of [1.2, 2.4]) c.fillRect(L(m), Y(0.8), 0.06 * ppm, 0.18 * ppm);
+      // roda gigi katup Walschaerts: engkol balik di pena roda utama → batang eksentrik → link ekspansi (bergoyang) → batang radius → tuas kombinasi di kepala silang
+      { const mp = pins[1], ea = aD + Math.PI / 2, ex = mp[0] + Math.cos(ea) * 0.26 * ppm, ey = mp[1] + Math.sin(ea) * 0.26 * ppm;
+        const lkx = L(4.45), lky = Y(1.5) + Math.sin(aD + Math.PI / 2) * 0.12 * ppm; // link ekspansi berayun
+        const clx = L(2.85) + Math.cos(aD) * cr * 0.95, cly = Y(1.55);
+        c.strokeStyle = '#c3c7ca'; c.lineWidth = Math.max(1, 0.07 * ppm); c.lineCap = 'round';
+        c.beginPath(); c.moveTo(mp[0], mp[1]); c.lineTo(ex, ey); c.stroke(); // engkol balik
+        c.beginPath(); c.moveTo(ex, ey); c.lineTo(lkx, lky + 0.15 * ppm); c.stroke(); // batang eksentrik
+        c.beginPath(); c.moveTo(lkx, lky); c.lineTo(clx, cly); c.stroke(); // batang radius
+        c.beginPath(); c.moveTo(clx, cly); c.lineTo(xh, yh); c.stroke(); // tuas kombinasi
+        c.fillStyle = '#2c3034'; roundRect(c, L(4.32), Y(1.78), 0.3 * ppm, 0.6 * ppm, 0.12 * ppm); c.fill(); // dudukan link
+        c.fillStyle = '#e3c06a'; for (const [px, py] of [[ex, ey], [lkx, lky], [clx, cly]]) { c.beginPath(); c.arc(px, py, Math.max(1, 0.05 * ppm), 0, 7); c.fill(); } c.lineCap = 'butt'; }
+      // pipa pasir ke depan roda penggerak
+      c.strokeStyle = 'rgba(40,44,48,0.85)'; c.lineWidth = Math.max(1, 0.03 * ppm); c.beginPath(); for (const m of [2.75, 4.5]) { c.moveTo(L(m - 0.35), Y(1.36)); c.quadraticCurveTo(L(m - 0.55), Y(0.7), L(m - 0.72), Y(0.22)); } c.stroke();
+      // tangga kabin & penghubung lantai kabin–tender (apron)
+      c.strokeStyle = '#2a2d30'; c.lineWidth = Math.max(1, 0.06 * ppm); c.beginPath(); c.moveTo(L(10.75), Y(1.36)); c.lineTo(L(10.75), Y(0.55)); c.moveTo(L(10.35), Y(1.36)); c.lineTo(L(10.35), Y(0.55)); for (const h of [0.6, 0.95]) { c.moveTo(L(10.75), Y(h)); c.lineTo(L(10.35), Y(h)); } c.stroke();
+      c.fillStyle = '#1b1d1f'; c.fillRect(L(11.55), Y(1.4), 0.85 * ppm, 0.16 * ppm);
       // uap bocor kecil di silinder saat melaju pelan (keran pembuang)
       if (!LOCO_FORCE && st.v > 0.2 && st.v < 4 && st.notch > 0) { c.fillStyle = 'rgba(245,248,250,0.5)'; for (let q = 0; q < 4; q++) { const rr = (0.25 + q * 0.18 + Math.random() * 0.1) * ppm; c.beginPath(); c.arc(L(1.6 - q * 0.45), Y(0.55 + q * 0.12), rr, 0, 7); c.fill(); } }
       // tender: rangka & roda
@@ -13154,20 +13203,20 @@
     c.fillStyle = BLK; c.fillRect(L(10.9), Y(2.2), 11.0 * ppm, (2.2 - 1.6) * ppm);
     c.fillStyle = RED; c.fillRect(L(10.9), Y(1.86), 11.0 * ppm, 0.12 * ppm);
     // ruang asap (smokebox) & pintu depan
-    c.fillStyle = vgrad(5.3, 2.2, [[0, '#3a3d40'], [0.45, '#1b1d1f'], [1, '#0e0f10']]); c.fillRect(L(2.1), Y(5.3), 1.85 * ppm, 3.1 * ppm);
-    c.fillStyle = '#2a2d30'; c.beginPath(); c.ellipse(L(0.22), Y(3.75), 0.16 * ppm, 1.45 * ppm, 0, 0, 7); c.fill();
+    c.fillStyle = vgrad(5.3, 2.2, [[0, '#3a3d40'], [0.45, '#1b1d1f'], [1, '#0e0f10']]); c.fillRect(L(2.1), Y(5.65), 1.85 * ppm, 3.45 * ppm);
+    c.fillStyle = '#2a2d30'; c.beginPath(); c.ellipse(L(0.22), Y(3.92), 0.16 * ppm, 1.62 * ppm, 0, 0, 7); c.fill();
     c.fillStyle = BRASS; c.beginPath(); c.arc(L(0.18), Y(3.75), 0.09 * ppm, 0, 7); c.fill();
     // ketel: hitam mengilap, pita kuningan, pegangan tangan
-    c.fillStyle = vgrad(5.15, 2.2, [[0, '#4a4f53'], [0.22, '#25282b'], [0.6, '#131516'], [1, '#0b0c0d']]); c.fillRect(L(8.2), Y(5.15), 6.1 * ppm, 2.95 * ppm);
-    c.fillStyle = 'rgba(255,255,255,0.16)'; c.fillRect(L(8.2), Y(4.75), 6.1 * ppm, Math.max(1, 0.08 * ppm));
-    for (const m of [3.3, 4.9, 6.5, 8.1]) { c.fillStyle = brass(2.2, 5.15); c.fillRect(L(m + 0.07), Y(5.15), 0.14 * ppm, 2.95 * ppm); }
-    line([[8.0, 4.25], [2.3, 4.25]], '#c9ccce', lw(0.04));
+    c.fillStyle = vgrad(5.5, 2.2, [[0, '#4a4f53'], [0.22, '#25282b'], [0.6, '#131516'], [1, '#0b0c0d']]); c.fillRect(L(8.2), Y(5.5), 6.1 * ppm, 3.3 * ppm);
+    c.fillStyle = 'rgba(255,255,255,0.16)'; c.fillRect(L(8.2), Y(5.05), 6.1 * ppm, Math.max(1, 0.08 * ppm));
+    for (const m of [3.3, 4.9, 6.5, 8.1]) { c.fillStyle = brass(2.2, 5.5); c.fillRect(L(m + 0.07), Y(5.5), 0.14 * ppm, 3.3 * ppm); }
+    line([[8.0, 4.5], [2.3, 4.5]], '#c9ccce', lw(0.04));
     // cerobong bertudung & kubah
-    c.fillStyle = vgrad(7.0, 5.2, [[0, '#3a3d40'], [1, '#121314']]); c.fillRect(L(1.6), Y(6.9), 0.72 * ppm, 1.7 * ppm);
-    c.fillStyle = '#b06a32'; c.fillRect(L(1.78), Y(7.2), 1.08 * ppm, 0.3 * ppm); // tudung tembaga
-    c.fillStyle = brass(5.1, 6.1); c.beginPath(); c.moveTo(L(5.55), Y(5.15)); c.quadraticCurveTo(L(5.55), Y(6.1), L(4.95), Y(6.1)); c.quadraticCurveTo(L(4.35), Y(6.1), L(4.35), Y(5.15)); c.closePath(); c.fill(); // kubah uap
-    c.fillStyle = vgrad(5.8, 5.1, [[0, '#4a4f53'], [1, '#17191b']]); c.beginPath(); c.moveTo(L(6.95), Y(5.15)); c.quadraticCurveTo(L(6.95), Y(5.8), L(6.55), Y(5.8)); c.quadraticCurveTo(L(6.15), Y(5.8), L(6.15), Y(5.15)); c.closePath(); c.fill(); // kubah pasir
-    c.fillStyle = BRASS; c.fillRect(L(7.75), Y(5.75), 0.18 * ppm, 0.6 * ppm); c.fillRect(L(7.45), Y(5.55), 0.12 * ppm, 0.4 * ppm); // katup pengaman & peluit
+    c.fillStyle = vgrad(7.6, 5.5, [[0, '#3a3d40'], [1, '#121314']]); c.fillRect(L(1.62), Y(7.6), 0.78 * ppm, 2.1 * ppm);
+    c.fillStyle = '#b06a32'; c.fillRect(L(1.8), Y(7.95), 1.14 * ppm, 0.3 * ppm); // tudung tembaga
+    c.fillStyle = brass(5.4, 6.75); c.beginPath(); c.moveTo(L(5.65), Y(5.45)); c.quadraticCurveTo(L(5.65), Y(6.75), L(4.95), Y(6.75)); c.quadraticCurveTo(L(4.25), Y(6.75), L(4.25), Y(5.45)); c.closePath(); c.fill(); // kubah uap
+    c.fillStyle = vgrad(5.8, 5.1, [[0, '#4a4f53'], [1, '#17191b']]); c.beginPath(); c.moveTo(L(7.05), Y(5.45)); c.quadraticCurveTo(L(7.05), Y(6.35), L(6.55), Y(6.35)); c.quadraticCurveTo(L(6.05), Y(6.35), L(6.05), Y(5.45)); c.closePath(); c.fill(); // kubah pasir
+    c.fillStyle = BRASS; c.fillRect(L(7.75), Y(6.2), 0.18 * ppm, 0.75 * ppm); c.fillRect(L(7.45), Y(6.0), 0.12 * ppm, 0.55 * ppm); // katup pengaman & peluit
     // lampu minyak di depan ruang asap
     c.fillStyle = brass(4.6, 5.5); roundRect(c, L(0.75), Y(5.5), 0.6 * ppm, 0.9 * ppm, 0.08 * ppm); c.fill();
     c.fillStyle = '#fff2c4'; c.beginPath(); c.arc(L(0.05), Y(5.05), 0.17 * ppm, 0, 7); c.fill();
@@ -13186,8 +13235,24 @@
     c.fillStyle = '#0d0d0e'; c.beginPath(); c.moveTo(L(15.9), Y(4.7)); for (let k = 0; k <= 8; k++) { const m = 15.9 - k * 0.55; c.lineTo(L(m), Y(5.15 + 0.22 * Math.sin(k * 2.3) + 0.15 * (k % 2))); } c.lineTo(L(11.5), Y(4.7)); c.closePath(); c.fill();
     c.fillStyle = 'rgba(255,255,255,0.18)'; for (let k = 0; k < 9; k++) { c.beginPath(); c.arc(L(15.6 - k * 0.48), Y(5.05 + 0.12 * Math.sin(k * 1.7)), Math.max(0.8, 0.06 * ppm), 0, 7); c.fill(); }
     c.fillStyle = BRASS; c.font = `800 ${Math.max(5, Math.round(0.36 * ppm))}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('PERKERETAAPIAN NUSANTARA', L(13.8), Y(3.2), 3.8 * ppm); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+    // detail gagah: paku keling ketel, pipa air umpan, pompa udara Westinghouse, bibir cerobong, jendela & atap kabin berlis
+    c.fillStyle = 'rgba(255,255,255,0.18)'; for (const hh of [5.35, 2.45]) for (let m = 2.25; m < 8.1; m += 0.3) { c.beginPath(); c.arc(L(m), Y(hh), Math.max(0.5, 0.03 * ppm), 0, 7); c.fill(); }
+    line([[8.15, 3.05], [3.4, 3.05], [3.1, 3.4]], BRASS, lw(0.07)); // pipa air umpan ke katup klep
+    c.fillStyle = brass(3.2, 3.7); c.beginPath(); c.arc(L(3.05), Y(3.45), 0.13 * ppm, 0, 7); c.fill();
+    { const px = 2.75; c.fillStyle = vgrad(4.3, 2.2, [[0, '#4a4f53'], [1, '#1a1c1e']]); roundRect(c, L(px + 0.32), Y(4.3), 0.62 * ppm, 2.1 * ppm, 0.12 * ppm); c.fill(); // pompa udara di sisi ruang asap
+      c.fillStyle = BRASS; c.fillRect(L(px + 0.32), Y(3.3), 0.62 * ppm, 0.1 * ppm); c.fillRect(L(px + 0.32), Y(4.3), 0.62 * ppm, 0.08 * ppm); }
+    c.fillStyle = vgrad(8.3, 7.9, [[0, '#4a4f53'], [1, '#141516']]); c.fillRect(L(1.54), Y(8.25), 0.94 * ppm, 0.32 * ppm); // bibir cerobong melebar
+    c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(L(1.54), Y(8.25), 0.94 * ppm, Math.max(1, 0.05 * ppm));
+    c.fillStyle = vgrad(7.25, 6.95, [[0, '#4a4f53'], [1, '#17191b']]); c.beginPath(); c.moveTo(L(11.45), Y(7.0)); c.quadraticCurveTo(L(11.45), Y(7.3), L(11.1), Y(7.3)); c.lineTo(L(7.95), Y(7.3)); c.quadraticCurveTo(L(7.75), Y(7.25), L(7.8), Y(7.0)); c.closePath(); c.fill(); // atap kabin melengkung menjorok
+    c.fillStyle = '#0e1612'; roundRect(c, L(10.85), Y(6.25), 1.25 * ppm, 1.15 * ppm, 0.15 * ppm); c.fill(); // jendela belakang kabin
+    c.fillStyle = 'rgba(150,190,200,0.35)'; roundRect(c, L(10.8), Y(6.2), 1.15 * ppm, 1.05 * ppm, 0.12 * ppm); c.fill();
+    c.fillStyle = '#1a2a22'; c.fillRect(L(11.05), Y(5.0), 0.1 * ppm, 2.7 * ppm); // tepi pintu kabin
+    line([[11.2, 5.6], [11.2, 2.6]], BRASS, lw(0.05)); line([[8.0, 5.6], [8.0, 2.6]], BRASS, lw(0.05)); // pegangan tangan kabin
+    c.fillStyle = vgrad(6.75, 6.55, [[0, '#2e3134'], [1, '#121314']]); c.fillRect(L(9.85), Y(6.75), 1.35 * ppm, 0.16 * ppm); // atap peneduh jendela
+    // pelat injak depan turun ke balok penyangga (khas lokomotif uap)
+    c.fillStyle = BLK; c.beginPath(); c.moveTo(L(1.35), Y(2.2)); c.quadraticCurveTo(L(0.85), Y(2.2), L(0.65), Y(1.65)); c.lineTo(L(0.65), Y(1.55)); c.lineTo(L(1.6), Y(1.6)); c.closePath(); c.fill();
     // pantulan cahaya tepi (rim) dari matahari
-    if (V.rimA > 0.02) { c.fillStyle = V.rim; c.globalAlpha = V.rimA * 0.6; c.fillRect(L(8.2), Y(5.15), 6.1 * ppm, Math.max(1, 0.06 * ppm)); c.fillRect(L(11.0), Y(6.6), Math.max(1, 0.08 * ppm), 4.4 * ppm); c.globalAlpha = 1; }
+    if (V.rimA > 0.02) { c.fillStyle = V.rim; c.globalAlpha = V.rimA * 0.6; c.fillRect(L(8.2), Y(5.5), 6.1 * ppm, Math.max(1, 0.06 * ppm)); c.fillRect(L(11.0), Y(6.6), Math.max(1, 0.08 * ppm), 4.4 * ppm); c.globalAlpha = 1; }
   }
   function locoWheel(c, x, y, r, ang) {
     c.fillStyle = '#15181b'; c.beginPath(); c.arc(x, y, r * 1.07, 0, 7); c.fill();                       // flens
@@ -14692,7 +14757,7 @@
     else { const k = Math.round(lerp(92, 128, p)); dark = `${k},${k - 4},${k - 2}`; }
     const smokeSp = puffSprite(dark), steamSp = puffSprite('246,246,246'), sandSp = puffSprite('176,138,85');
     const sootSp = puffSprite(V.night ? '72,76,94' : '58,58,62');
-    const dustSp = puffSprite('70,64,58'), tanSp = puffSprite(V.night ? '90,86,96' : '196,170,130');
+    const dustSp = puffSprite('70,64,58'), tanSp = puffSprite(V.night ? '90,86,96' : '196,170,130'), hazeSp = puffSprite(V.night ? '110,118,140' : '118,124,134'), dslSp = puffSprite(V.night ? '104,106,122' : V.storm ? '120,122,128' : '138,130,120');
     c.save();
     for (const s of st.smoke || []) {
       const t = s.life / s.max;
@@ -14701,7 +14766,7 @@
       if (a <= 0.01) continue;
       const r = s.r * ppm * 1.35;
       c.globalAlpha = Math.min(1, a);
-      c.drawImage(s.tan ? tanSp : s.dust ? dustSp : s.sand ? sandSp : s.white ? steamSp : s.dark ? sootSp : smokeSp, V.bx(s.x) - r, gy - s.y * ppm - r + V.bdy(s.x), r * 2, r * 2);
+      c.drawImage(s.tan ? tanSp : s.dust ? dustSp : s.sand ? sandSp : s.white ? steamSp : s.dark ? sootSp : s.haze ? hazeSp : s.dsl ? dslSp : smokeSp, V.bx(s.x) - r, gy - s.y * ppm - r + V.bdy(s.x), r * 2, r * 2);
     }
     for (const l of st.leaves || []) {
       c.save(); c.globalAlpha = clamp(1 - l.life / l.max, 0, 1);
