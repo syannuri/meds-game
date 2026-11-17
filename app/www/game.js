@@ -5262,10 +5262,12 @@
       if (b0 > a0) {
         const oo = (d) => MO * meetK(x0 + d), okM = (d) => d > a0 - 0.01 && d < b0 + 0.01;
         // balas jalur 2 (menyatu dengan balas jalur 1 di daerah wesel), tekstur batu
-        for (let d = b0; d > a0; d -= 2) { const e = Math.max(a0, d - 2); quad(W3(e, oo(e) - 2.3, 0), W3(e, oo(e) + 2.3, 0), W3(d, oo(d) + 2.3, 0), W3(d, oo(d) - 2.3, 0), mix('#8d8275', '#a59a8c', p)); }
-        { const tn3 = [mix('#6f665d', '#7c736a', p), mix('#a39889', '#b2a798', p), mix('#827869', '#8e8478', p)]; for (const [lat, zz, sz, tn] of CAB_BAL) { const d = 1.5 + (((zz * 60 - x0) % 60) + 60) % 60; if (!okM(d)) continue; const q = W3(d, oo(d) + lat * 2.2, 0.02); if (!q) continue; const r = Math.max(0.6, sz * 0.06 * q.k); c.fillStyle = tn3[tn < 0.33 ? 0 : tn < 0.66 ? 1 : 2]; c.fillRect(q.x - r / 2, q.y - r / 2, r, r * 0.7); } }
+        // jalur 1 (bantalan & rel) tidak ditimpa: hamparan jalur 2 dimulai di luar ujung bantalan jalur 1
+        const L1 = 1.22, lo = (d) => Math.max(L1, oo(d) - 2.3);
+        for (let d = b0; d > a0; d -= 2) { const e = Math.max(a0, d - 2); quad(W3(e, lo(e), 0), W3(e, Math.max(L1, oo(e) + 2.3), 0), W3(d, Math.max(L1, oo(d) + 2.3), 0), W3(d, lo(d), 0), mix('#8d8275', '#a59a8c', p)); }
+        { const tn3 = [mix('#6f665d', '#7c736a', p), mix('#a39889', '#b2a798', p), mix('#827869', '#8e8478', p)]; for (const [lat, zz, sz, tn] of CAB_BAL) { const d = 1.5 + (((zz * 60 - x0) % 60) + 60) % 60; if (!okM(d) || oo(d) + lat * 2.2 < L1) continue; const q = W3(d, oo(d) + lat * 2.2, 0.02); if (!q) continue; const r = Math.max(0.6, sz * 0.06 * q.k); c.fillStyle = tn3[tn < 0.33 ? 0 : tn < 0.66 ? 1 : 2]; c.fillRect(q.x - r / 2, q.y - r / 2, r, r * 0.7); } }
         // bantalan beton (di daerah wesel bantalan memanjang menyangga kedua jalur)
-        for (let wd = Math.floor((x0 + Math.min(b0, 140)) / slp) * slp; wd > x0 + a0; wd -= slp) { const d = wd - x0, o = oo(d), sh = o < 4.6; quad(W3(d - 0.12, (sh ? -1.2 : o - 1.2), 0.05), W3(d - 0.12, o + 1.2, 0.05), W3(d + 0.12, o + 1.2, 0.05), W3(d + 0.12, (sh ? -1.2 : o - 1.2), 0.05), mix('#6f6a63', '#8b857b', p)); }
+        for (let wd = Math.floor((x0 + Math.min(b0, 140)) / slp) * slp; wd > x0 + a0; wd -= slp) { const d = wd - x0, o = oo(d), sh = o < 4.6, l0 = Math.max(L1 - 0.02, o - 1.2); if (o + 1.2 <= L1) continue; quad(W3(d - 0.12, (sh ? L1 - 0.02 : l0), 0.05), W3(d - 0.12, o + 1.2, 0.05), W3(d + 0.12, o + 1.2, 0.05), W3(d + 0.12, (sh ? L1 - 0.02 : l0), 0.05), mix('#6f6a63', '#8b857b', p)); }
         // rel bervolume (badan gelap + kepala terang) seperti jalur lain, kilau kepala rel; garis tipis minimum supaya tidak putus di kejauhan
         [-0.53, 0.53].forEach((ro) => { let prev = null; for (let d = a0; d <= b0 + 0.01; d += d < 40 ? 1.5 : 3) { const dd = Math.min(d, b0), o = oo(dd) + ro;
           if (prev !== null) { const [pa, po] = prev; quad(W3(pa, po - 0.04, 0.02), W3(dd, o - 0.04, 0.02), W3(dd, o - 0.035, 0.16), W3(pa, po - 0.035, 0.16), '#3a3e42'); quad(W3(pa, po - 0.035, 0.16), W3(dd, o - 0.035, 0.16), W3(dd, o + 0.035, 0.16), W3(pa, po + 0.035, 0.16), '#a6aeb2');
@@ -12071,16 +12073,17 @@
     // balas jalur 2 sewarna & bertekstur sama dengan jalur 1; di daerah wesel celah antar-jalur terisi balas (satu hamparan), lereng gelap hanya di tepi luar
     const balTop = mix('#8d8275', '#a59a8c', p), balSide = mix('#5d5349', '#766a5e', p), slp = mix('#6f6a63', '#8b857b', p), night = V.night;
     const band = (yf0, yf1, col) => { c.fillStyle = col; c.beginPath(); for (let x = a; x <= b + 0.01; x += 1) c.lineTo(X(x), yf0(x)); for (let x = b; x >= a - 0.01; x -= 1) c.lineTo(X(x), yf1(x)); c.closePath(); c.fill(); };
-    band((x) => Math.min(gy + 0.5 * ppm, yAt(x) - 0.62 * ppm), (x) => yAt(x) + 0.5 * ppm, balTop); // muka atas (menyambung ke balas jalur 1)
-    band((x) => yAt(x) + 0.5 * ppm, (x) => yAt(x) + 1.45 * ppm, balSide); // lereng depan
+    // jalur 1 tidak ditimpa sama sekali (pola balas & bantalannya tetap menerus melewati wesel): hamparan jalur 2 dimulai tepat di bawah bantalan jalur 1
+    const G0 = gy + 0.3 * ppm, top2 = (x) => Math.max(G0, yAt(x) - 0.62 * ppm);
+    band((x) => Math.min(G0, top2(x)), (x) => Math.max(G0, yAt(x) + 0.5 * ppm), balTop); // muka atas (menyambung ke balas jalur 1)
+    band((x) => Math.max(G0, yAt(x) + 0.5 * ppm), (x) => yAt(x) + 1.45 * ppm, balSide); // lereng depan
     c.fillStyle = 'rgba(0,0,0,0.12)'; for (let x = a; x < b; x += 1) { const y = yAt(x); c.fillRect(X(x), y + 0.5 * ppm, ppm + 1, Math.max(1, 0.12 * ppm)); } // garis bahu
     // batu balas: butir terang-gelap tertancap di dunia
-    for (let m = Math.ceil(a / 0.35) * 0.35; m < b; m += 0.35) { const h1 = hash(m * 3.17), sx = X(m + h1 * 0.3), y = yAt(m) - 0.55 * ppm + hash(m * 7.1) * 1.9 * ppm; c.fillStyle = h1 < 0.33 ? mix('#6f665d', '#7c736a', p) : h1 < 0.66 ? mix('#b3a898', '#c2b7a8', p) : mix('#827869', '#8e8478', p); c.fillRect(sx, y, Math.max(1, 0.16 * ppm), Math.max(1, 0.1 * ppm)); }
+    for (let m = Math.ceil(a / 0.35) * 0.35; m < b; m += 0.35) { const h1 = hash(m * 3.17), sx = X(m + h1 * 0.3), y = Math.max(G0, yAt(m) - 0.55 * ppm) + hash(m * 7.1) * 1.9 * ppm; c.fillStyle = h1 < 0.33 ? mix('#6f665d', '#7c736a', p) : h1 < 0.66 ? mix('#b3a898', '#c2b7a8', p) : mix('#827869', '#8e8478', p); c.fillRect(sx, y, Math.max(1, 0.16 * ppm), Math.max(1, 0.1 * ppm)); }
     // bantalan beton: di daerah wesel memanjang menyangga kedua jalur sekaligus
-    for (let m = Math.ceil(a / 0.6) * 0.6; m < b; m += 0.6) { const sx = X(m), y = yAt(m), sep = y - gy, top = sep < 2.2 * ppm ? gy - 0.5 * ppm : y - 0.5 * ppm, h = (y + 0.3 * ppm) - top;
+    for (let m = Math.ceil(a / 0.6) * 0.6; m < b; m += 0.6) { const sx = X(m), y = yAt(m), top = Math.max(G0, y - 0.5 * ppm), h = (y + 0.3 * ppm) - top; if (h < 0.15 * ppm) continue; // di dekat lidah: perpanjangan bantalan jalur 1 ke arah jalur 2
       c.fillStyle = slp; c.fillRect(sx, top, 0.28 * ppm, h); c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(sx + 0.22 * ppm, top, 0.06 * ppm, h); c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(sx, top, 0.28 * ppm, Math.max(1, 0.05 * ppm)); }
     // rel: profil kepala-badan-kaki, penambat, kilau matahari & cahaya tepi dinamis (sama dengan jalur ganda)
-    railsAlong(V, a, b, (x) => yAt(x) - gy < 2.2 * ppm, () => gy, 1, false); // rel jalur sepur belok digambar ulang di atas bantalan panjang wesel (tidak terputus)
     railsAlong(V, a, b, () => true, yAt, 1, false);
     // wesel di kedua ujung: lidah wesel meruncing, jarum (frog) & rel pengantar, batang penggerak & mesin wesel kuning-abu, lampu indikator
     for (const [toe, dir] of [[MT.entry, 1], [MT.exit, -1]]) {
