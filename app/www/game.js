@@ -13427,9 +13427,11 @@
     songket: { g: ['#4b3a63', '#33264a', '#1f1530'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.32)', pin: '#e9b949', coach: ['#e9b949', '#33264a'] },
     emas: { g: ['#e0bb62', '#c09238', '#8c6522'], led: ['#fff1c4', '#fff8de', '#ffffff'], glow: 'rgba(255,236,170,0.4)', pin: '#2a1d0a', coach: ['#2a1d0a', '#c09238'] },
     merdeka: { g: ['#e8473f', '#cc2229', '#951219'], led: ['#f4f1e8', '#ffffff', '#ffffff'], glow: 'rgba(255,255,255,0.35)', pin: '#ffffff', coach: ['#ffffff', '#cc2229'] },
+    dayak: { g: ['#9b2a36', '#7a1a28', '#4f0f19'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.32)', pin: '#e9b949', coach: ['#e9b949', '#7a1a28'], orn: 'dayak' }, // merah marun berukir Dayak emas
+    nila: { g: ['#4f63b8', '#384a96', '#25326c'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.3)', pin: '#f4efe2', coach: ['#f4efe2', '#384a96'] },
     lebaran: { g: ['#3a9a58', '#227a3e', '#145228'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.35)', pin: '#e9b949', coach: ['#e9b949', '#227a3e'] },
   });
-  const LIV_PAL = { dayak: 'titan', kawung: 'safir', parang: 'zamrud', mega: 'marun', songket: 'songket', garuda: 'emas', merdeka: 'merdeka', lebaran: 'lebaran' };
+  const LIV_PAL = { dayak: 'dayak', kawung: 'safir', parang: 'zamrud', mega: 'nila', songket: 'songket', garuda: 'emas', merdeka: 'merdeka', lebaran: 'lebaran' };
   const playerPal = () => LIV_PAL[LOCO_ORN] || NEO_PAL_DEF;
   { const sv = store.get('rn.livery'); if (sv && LIV_PAL[sv] && livOpen(sv)) LOCO_ORN = sv; } // pulihkan livery tersimpan (setelah daftar palet siap)
   let NEO_PAL_FORCE = null; // palet sementara (kereta lain yang memakai rupa Cakra)
@@ -14280,6 +14282,9 @@
       const sw = [[15.85, 1.85], [15.85, 3.0], [10.5, 3.0], [6.2, 3.3], [2.6, 3.85], [0.6, 3.95], [-0.45, 3.55], [-0.9, 2.85], [-1.05, 2.2], [-1.05, 1.85]];
       const sg = c.createLinearGradient(0, Y(3.95), 0, Y(1.85)); const NP = NEO_PAL[NEO_PAL_FORCE || (typeof window !== 'undefined' && window.__neoPal) || ((!LOCO_FORCE || LOCO_FORCE === 'none') && playerPal()) || NEO_PAL_DEF]; sg.addColorStop(0, NP.g[0]); sg.addColorStop(0.35, NP.g[1]); sg.addColorStop(1, NP.g[2]); poly(sw, sg);
       c.save(); c.beginPath(); sw.forEach(([m, h], i) => (i ? c.lineTo(L(m), Y(h)) : c.moveTo(L(m), Y(h)))); c.closePath(); c.clip(); // kilau langit di permukaan grafit
+      if (NP.orn) { // livery berukir: ukiran Dayak emas tepat di dalam sabuk, dari belakang logo CAKRA sampai moncong (nomor & logo tetap bersih)
+        c.save(); c.globalAlpha = 0.92; drawOrnament(c, NP.orn, L(9.7), L(-1.2), Y(2.86), Y(1.96), 1.1 * ppm, '#e9b949'); c.restore();
+        line([[15.85, 1.95], [-1.0, 1.95]], 'rgba(233,185,73,0.85)', lw(0.04)); }
       const kg = c.createLinearGradient(0, Y(3.9), 0, Y(3.0)); kg.addColorStop(0, 'rgba(200,225,240,0.18)'); kg.addColorStop(1, 'rgba(200,225,240,0)'); c.fillStyle = kg; c.fillRect(L(15.85), Y(4.0), 17 * ppm, 1.1 * ppm);
       c.fillStyle = 'rgba(255,255,255,0.05)'; for (let m = 15.2; m > 3; m -= 2.4) { c.beginPath(); c.moveTo(L(m), Y(3.9)); c.lineTo(L(m - 0.5), Y(3.9)); c.lineTo(L(m - 1.4), Y(1.85)); c.lineTo(L(m - 0.9), Y(1.85)); c.closePath(); c.fill(); } c.restore();
       const top = [[15.85, 3.0], [10.5, 3.0], [6.2, 3.3], [2.6, 3.85], [0.6, 3.95], [-0.45, 3.55]];
