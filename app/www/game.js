@@ -13276,31 +13276,62 @@
     // jas drill biru berkancing kuningan) & juru api di belakangnya disinari bara tungku. Digambar tanpa pemadatan tinggi (proporsi tubuh asli).
     if (!LOCO_FORCE || V.crew) unsq(() => { const Ys = (h) => (V.upper ? yP + (Y(h) - yP) * VS : Y(h)), u = ppm;
       c.save(); c.beginPath(); c.rect(L(9.75) - 0.02 * u, Ys(5.78), 1.32 * u, Ys(4.5) - Ys(5.78)); c.rect(L(8.5) - 0.25 * u, Ys(5.95), 0.5 * u, Ys(4.5) - Ys(5.95)); c.clip(); // di dalam bingkai jendela + kepala sedikit mencondong keluar
-      // juru api (lebih gelap, dalam kabin): siluet berpeci menunduk ke pintu tungku, sekop di tangan
-      c.fillStyle = '#3d2f26'; c.fillRect(L(9.66), Ys(4.98), 0.36 * u, Ys(4.5) - Ys(4.98)); // badan berkaos lusuh
-      c.fillStyle = '#7a5236'; c.beginPath(); c.ellipse(L(9.45), Ys(5.1), 0.12 * u, 0.14 * u, 0, 0, 7); c.fill(); // wajah
-      c.fillStyle = '#1a1310'; c.beginPath(); c.ellipse(L(9.46), Ys(5.22), 0.14 * u, 0.06 * u, 0, Math.PI, 0); c.fill(); c.fillRect(L(9.46) - 0.14 * u, Ys(5.22), 0.28 * u, 0.04 * u); // peci hitam c.strokeStyle = '#3a2a1c'; c.lineWidth = Math.max(1, 0.05 * u); c.beginPath(); c.moveTo(L(9.4), Ys(4.85)); c.lineTo(L(9.05), Ys(4.6)); c.stroke();
-      c.fillStyle = 'rgba(255,150,60,0.35)'; c.beginPath(); c.ellipse(L(9.45) + 0.06 * u, Ys(5.1), 0.07 * u, 0.12 * u, 0, 0, 7); c.fill(); // pipi diterangi api
-      // masinis: badan berjas biru di jendela, lengan bertumpu di ambang jendela
-      const hx = L(8.62), hy = Ys(5.3);
-      c.fillStyle = '#23365a'; c.beginPath(); c.moveTo(L(9.05), Ys(4.5)); c.lineTo(L(9.0), Ys(5.02)); c.quadraticCurveTo(hx, Ys(5.12), L(8.5), Ys(4.98)); c.lineTo(L(8.48), Ys(4.5)); c.closePath(); c.fill(); // jas drill
-      c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(L(8.95), Ys(5.0), 0.1 * u, Ys(4.5) - Ys(5.0)); // lipatan terang jas
-      c.fillStyle = '#d9a441'; for (const h of [4.62, 4.8]) { c.beginPath(); c.arc(L(8.56), Ys(h), Math.max(0.6, 0.03 * u), 0, 7); c.fill(); } // kancing kuningan
-      c.strokeStyle = '#23365a'; c.lineWidth = Math.max(1.5, 0.13 * u); c.lineCap = 'round'; c.beginPath(); c.moveTo(L(8.75), Ys(4.95)); c.lineTo(L(8.62), Ys(4.62)); c.lineTo(L(8.3), Ys(4.6)); c.stroke(); // lengan di ambang
-      c.fillStyle = '#b07a52'; c.beginPath(); c.arc(L(8.28), Ys(4.6), Math.max(0.8, 0.06 * u), 0, 7); c.fill(); // tangan
-      c.fillStyle = '#c0312a'; c.beginPath(); c.moveTo(L(8.82), Ys(5.07)); c.lineTo(L(8.48), Ys(5.07)); c.lineTo(L(8.58), Ys(4.9)); c.closePath(); c.fill(); // setangan leher merah
-      c.fillStyle = '#b8805a'; c.beginPath(); c.ellipse(hx, hy, 0.135 * u, 0.165 * u, 0, 0, 7); c.fill(); // wajah (profil menghadap depan/kanan)
-      c.beginPath(); c.moveTo(hx + 0.12 * u, hy - 0.02 * u); c.lineTo(hx + 0.18 * u, hy + 0.04 * u); c.lineTo(hx + 0.11 * u, hy + 0.06 * u); c.closePath(); c.fill(); // hidung
-      c.fillStyle = '#2a1c14'; c.fillRect(hx + 0.03 * u, hy + 0.07 * u, 0.13 * u, 0.04 * u); // kumis
-      c.fillStyle = '#1e1a18'; c.beginPath(); c.arc(hx + 0.06 * u, hy - 0.03 * u, Math.max(0.5, 0.02 * u), 0, 7); c.fill(); // mata
-      c.fillStyle = '#3a2a20'; c.fillRect(hx - 0.14 * u, hy - 0.08 * u, 0.06 * u, 0.16 * u); // cambang
-      // topi pet dinas tempo dulu: mahkota datar biru tua berlis merah, pet hitam mengilap ke depan, lencana kuningan, kacamata pelindung di atas pet
-      c.fillStyle = '#1b2742'; c.beginPath(); c.moveTo(hx - 0.17 * u, hy - 0.1 * u); c.lineTo(hx - 0.2 * u, hy - 0.27 * u); c.lineTo(hx + 0.15 * u, hy - 0.29 * u); c.lineTo(hx + 0.14 * u, hy - 0.1 * u); c.closePath(); c.fill();
-      c.fillStyle = '#a8261d'; c.fillRect(hx - 0.17 * u, hy - 0.14 * u, 0.31 * u, 0.035 * u);
-      c.fillStyle = '#0d0d0f'; c.beginPath(); c.moveTo(hx + 0.08 * u, hy - 0.11 * u); c.quadraticCurveTo(hx + 0.26 * u, hy - 0.11 * u, hx + 0.28 * u, hy - 0.06 * u); c.lineTo(hx + 0.1 * u, hy - 0.08 * u); c.closePath(); c.fill();
-      c.fillStyle = '#d9a441'; c.beginPath(); c.arc(hx + 0.09 * u, hy - 0.2 * u, Math.max(0.6, 0.035 * u), 0, 7); c.fill();
-      c.strokeStyle = '#5a3a22'; c.lineWidth = Math.max(0.8, 0.025 * u); c.beginPath(); c.moveTo(hx - 0.19 * u, hy - 0.24 * u); c.lineTo(hx + 0.14 * u, hy - 0.25 * u); c.stroke(); // tali kacamata
-      for (const ox of [0.0, 0.09]) { c.fillStyle = '#7a6040'; c.beginPath(); c.arc(hx + ox * u, hy - 0.25 * u, Math.max(0.7, 0.045 * u), 0, 7); c.fill(); c.fillStyle = 'rgba(170,215,230,0.85)'; c.beginPath(); c.arc(hx + ox * u, hy - 0.25 * u, Math.max(0.5, 0.03 * u), 0, 7); c.fill(); }
+      // juru api (dalam kabin, menghadap ke belakang ke pintu tungku): bahu membulat membungkuk, kaos singlet, peci, lengan memegang sekop; sisi depan disinari bara
+      { const sx = L(9.42), sy = Ys(5.12), sk2 = '#8a5a3a';
+        c.fillStyle = '#4a3a2c'; c.beginPath(); c.moveTo(L(9.72), Ys(4.48)); c.quadraticCurveTo(L(9.74), Ys(4.95), L(9.55), Ys(5.02)); c.quadraticCurveTo(L(9.3), Ys(5.04), L(9.2), Ys(4.86)); c.lineTo(L(9.2), Ys(4.48)); c.closePath(); c.fill(); // badan membungkuk
+        c.fillStyle = sk2; c.beginPath(); c.moveTo(L(9.62), Ys(5.0)); c.quadraticCurveTo(L(9.68), Ys(4.86), L(9.6), Ys(4.75)); c.lineTo(L(9.5), Ys(4.8)); c.quadraticCurveTo(L(9.52), Ys(4.92), L(9.5), Ys(5.0)); c.closePath(); c.fill(); // bahu & lengan telanjang
+        c.fillStyle = sk2; c.beginPath(); c.moveTo(sx + 0.11 * u, sy + 0.08 * u); c.quadraticCurveTo(sx + 0.15 * u, sy - 0.04 * u, sx + 0.1 * u, sy - 0.12 * u); c.quadraticCurveTo(sx - 0.02 * u, sy - 0.17 * u, sx - 0.1 * u, sy - 0.08 * u);
+        c.lineTo(sx - 0.15 * u, sy - 0.02 * u); c.quadraticCurveTo(sx - 0.15 * u, sy + 0.01 * u, sx - 0.1 * u, sy + 0.02 * u); c.quadraticCurveTo(sx - 0.09 * u, sy + 0.1 * u, sx - 0.03 * u, sy + 0.13 * u); c.quadraticCurveTo(sx + 0.06 * u, sy + 0.15 * u, sx + 0.11 * u, sy + 0.08 * u); c.closePath(); c.fill(); // kepala profil menunduk ke belakang
+        c.fillStyle = 'rgba(255,140,50,0.45)'; c.beginPath(); c.ellipse(sx - 0.07 * u, sy + 0.03 * u, 0.05 * u, 0.08 * u, 0, 0, 7); c.fill(); // wajah disinari bara
+        c.fillStyle = '#1a1310'; c.beginPath(); c.moveTo(sx - 0.13 * u, sy - 0.09 * u); c.quadraticCurveTo(sx, sy - 0.24 * u, sx + 0.13 * u, sy - 0.1 * u); c.lineTo(sx + 0.12 * u, sy - 0.06 * u); c.lineTo(sx - 0.12 * u, sy - 0.05 * u); c.closePath(); c.fill(); // peci hitam
+        c.strokeStyle = '#2a1e14'; c.lineWidth = Math.max(1, 0.05 * u); c.lineCap = 'round'; c.beginPath(); c.moveTo(L(9.55), Ys(4.82)); c.lineTo(L(9.95), Ys(4.6)); c.stroke(); // gagang sekop
+        c.fillStyle = '#4a4f55'; c.beginPath(); c.moveTo(L(9.92), Ys(4.65)); c.lineTo(L(10.08), Ys(4.62)); c.lineTo(L(10.06), Ys(4.52)); c.lineTo(L(9.9), Ys(4.55)); c.closePath(); c.fill(); }
+      // masinis: tubuh tiga perempat menghadap depan, bahu membulat & condong ke jendela, lengan menekuk bertumpu di ambang, tangan memegang bingkai
+      const hx = L(8.64), hy = Ys(5.3), sk = '#b98560', skD = '#8f5e3e', skL = '#d6a07a', jk = '#22355a', jkD = '#15223d', jkL = '#3a5486';
+      const bz = (pts, fill) => { c.fillStyle = fill; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k += 2) { if (pts[k + 1]) c.quadraticCurveTo(pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1]); else c.lineTo(pts[k][0], pts[k][1]); } c.closePath(); c.fill(); };
+      // badan & bahu (jas drill): bahu membulat, punggung sedikit membungkuk, dada menghadap jendela
+      bz([[L(9.12), Ys(4.48)], [L(9.18), Ys(4.95)], [L(8.98), Ys(5.07)], [hx, Ys(5.13)], [L(8.42), Ys(5.02)], [L(8.36), Ys(4.75)], [L(8.4), Ys(4.48)]], jk);
+      bz([[L(9.12), Ys(4.48)], [L(9.16), Ys(4.86)], [L(9.04), Ys(5.0)], [L(9.0), Ys(4.78)], [L(9.02), Ys(4.48)]], 'rgba(10,18,36,0.45)'); // sisi punggung berbayang lembut
+      c.strokeStyle = jkL; c.lineWidth = Math.max(0.8, 0.025 * u); c.beginPath(); c.moveTo(L(8.95), Ys(5.04)); c.quadraticCurveTo(L(8.75), Ys(5.1), L(8.5), Ys(5.0)); c.stroke(); // kilau bahu
+      c.strokeStyle = jkD; c.lineWidth = Math.max(0.8, 0.02 * u); c.beginPath(); c.moveTo(L(8.58), Ys(5.02)); c.lineTo(L(8.55), Ys(4.5)); c.stroke(); // belahan jas
+      c.fillStyle = '#d9a441'; for (const h of [4.62, 4.76, 4.9]) { c.beginPath(); c.arc(L(8.53), Ys(h), Math.max(0.6, 0.022 * u), 0, 7); c.fill(); } // kancing kuningan
+      c.fillStyle = '#e8e2d2'; bz([[L(8.7), Ys(5.08)], [L(8.6), Ys(5.02)], [L(8.52), Ys(5.07)], [L(8.6), Ys(5.12)], [L(8.7), Ys(5.08)]], '#e8e2d2'); // kerah kemeja putih
+      // setangan leher merah: simpul & ujung kain jatuh di dada, berlipat
+      bz([[L(8.74), Ys(5.1)], [L(8.62), Ys(5.04)], [L(8.5), Ys(5.1)], [L(8.55), Ys(4.98)], [L(8.6), Ys(4.86)], [L(8.66), Ys(4.98)]], '#b52a24');
+      c.strokeStyle = '#7e1915'; c.lineWidth = Math.max(0.6, 0.015 * u); c.beginPath(); c.moveTo(L(8.6), Ys(5.04)); c.lineTo(L(8.6), Ys(4.9)); c.stroke();
+      // lengan atas turun dari bahu, siku menekuk di ambang jendela, lengan bawah ke depan; tangan memegang bingkai jendela
+      c.lineCap = 'round'; c.lineJoin = 'round';
+      c.strokeStyle = jk; c.lineWidth = Math.max(1.6, 0.14 * u); c.beginPath(); c.moveTo(L(8.72), Ys(4.98)); c.quadraticCurveTo(L(8.8), Ys(4.72), L(8.66), Ys(4.6)); c.quadraticCurveTo(L(8.5), Ys(4.56), L(8.36), Ys(4.6)); c.stroke();
+      c.strokeStyle = jkL; c.lineWidth = Math.max(0.7, 0.03 * u); c.beginPath(); c.moveTo(L(8.76), Ys(4.86)); c.quadraticCurveTo(L(8.8), Ys(4.7), L(8.68), Ys(4.64)); c.stroke(); // kilau lengan
+      c.fillStyle = jkD; c.fillRect(L(8.4), Ys(4.66), 0.05 * u, 0.12 * u); // manset
+      bz([[L(8.36), Ys(4.66)], [L(8.27), Ys(4.7)], [L(8.24), Ys(4.6)], [L(8.27), Ys(4.53)], [L(8.36), Ys(4.55)]], sk); // tangan menggenggam bingkai
+      c.strokeStyle = skD; c.lineWidth = Math.max(0.5, 0.012 * u); c.beginPath(); c.moveTo(L(8.31), Ys(4.66)); c.lineTo(L(8.3), Ys(4.56)); c.stroke(); // ruas jari
+      // leher berbayang di bawah rahang
+      c.fillStyle = skD; c.fillRect(hx - 0.06 * u, Ys(5.2), 0.12 * u, Ys(5.08) - Ys(5.2));
+      // kepala profil menghadap depan: tengkorak membulat, dahi, hidung, bibir, dagu & rahang (bukan elips)
+      c.fillStyle = sk; c.beginPath(); c.moveTo(hx - 0.12 * u, hy + 0.1 * u); c.quadraticCurveTo(hx - 0.16 * u, hy - 0.02 * u, hx - 0.12 * u, hy - 0.13 * u);
+      c.quadraticCurveTo(hx, hy - 0.2 * u, hx + 0.11 * u, hy - 0.11 * u); // tengkorak & dahi
+      c.quadraticCurveTo(hx + 0.13 * u, hy - 0.05 * u, hx + 0.12 * u, hy - 0.02 * u); c.lineTo(hx + 0.17 * u, hy + 0.04 * u); c.quadraticCurveTo(hx + 0.17 * u, hy + 0.07 * u, hx + 0.12 * u, hy + 0.07 * u); // hidung
+      c.quadraticCurveTo(hx + 0.13 * u, hy + 0.1 * u, hx + 0.11 * u, hy + 0.12 * u); c.quadraticCurveTo(hx + 0.12 * u, hy + 0.16 * u, hx + 0.07 * u, hy + 0.18 * u); // bibir & dagu
+      c.quadraticCurveTo(hx - 0.04 * u, hy + 0.19 * u, hx - 0.12 * u, hy + 0.1 * u); c.closePath(); c.fill();
+      c.fillStyle = 'rgba(80,45,25,0.35)'; c.beginPath(); c.moveTo(hx - 0.12 * u, hy + 0.1 * u); c.quadraticCurveTo(hx - 0.02 * u, hy + 0.18 * u, hx + 0.06 * u, hy + 0.17 * u); c.quadraticCurveTo(hx - 0.02 * u, hy + 0.12 * u, hx - 0.06 * u, hy + 0.02 * u); c.closePath(); c.fill(); // bayangan rahang
+      c.fillStyle = skL; c.beginPath(); c.ellipse(hx + 0.07 * u, hy - 0.06 * u, 0.04 * u, 0.025 * u, -0.3, 0, 7); c.fill(); // kilau dahi
+      c.fillStyle = 'rgba(200,90,70,0.28)'; c.beginPath(); c.ellipse(hx + 0.05 * u, hy + 0.06 * u, 0.04 * u, 0.03 * u, 0, 0, 7); c.fill(); // rona pipi
+      bz([[hx - 0.04 * u, hy + 0.01 * u], [hx - 0.08 * u, hy - 0.01 * u], [hx - 0.07 * u, hy + 0.05 * u], [hx - 0.04 * u, hy + 0.08 * u], [hx - 0.02 * u, hy + 0.04 * u]], skD); // telinga
+      c.fillStyle = '#2a1a12'; bz([[hx + 0.02 * u, hy + 0.09 * u], [hx + 0.08 * u, hy + 0.07 * u], [hx + 0.14 * u, hy + 0.09 * u], [hx + 0.1 * u, hy + 0.115 * u], [hx + 0.04 * u, hy + 0.11 * u]], '#2a1a12'); // kumis tebal melengkung
+      c.fillStyle = '#3a2618'; c.beginPath(); c.moveTo(hx - 0.12 * u, hy - 0.1 * u); c.quadraticCurveTo(hx - 0.15 * u, hy + 0.0 * u, hx - 0.1 * u, hy + 0.08 * u); c.lineTo(hx - 0.07 * u, hy + 0.06 * u); c.quadraticCurveTo(hx - 0.1 * u, hy - 0.02 * u, hx - 0.08 * u, hy - 0.1 * u); c.closePath(); c.fill(); // rambut belakang & cambang
+      c.fillStyle = '#1e1612'; c.beginPath(); c.ellipse(hx + 0.07 * u, hy - 0.01 * u, Math.max(0.5, 0.018 * u), Math.max(0.4, 0.012 * u), 0, 0, 7); c.fill(); // mata menyipit menatap jalur
+      c.strokeStyle = '#3a2618'; c.lineWidth = Math.max(0.6, 0.015 * u); c.beginPath(); c.moveTo(hx + 0.04 * u, hy - 0.04 * u); c.quadraticCurveTo(hx + 0.07 * u, hy - 0.055 * u, hx + 0.1 * u, hy - 0.04 * u); c.stroke(); // alis
+      // topi pet dinas: mahkota lunak sedikit miring ke depan, pita berlis merah, pet hitam mengilap melengkung, lencana kuningan, kacamata pelindung di atas pet
+      c.fillStyle = '#1b2742'; c.beginPath(); c.moveTo(hx - 0.15 * u, hy - 0.1 * u); c.quadraticCurveTo(hx - 0.2 * u, hy - 0.22 * u, hx - 0.14 * u, hy - 0.28 * u); c.quadraticCurveTo(hx + 0.02 * u, hy - 0.33 * u, hx + 0.16 * u, hy - 0.27 * u); c.quadraticCurveTo(hx + 0.17 * u, hy - 0.18 * u, hx + 0.13 * u, hy - 0.11 * u); c.closePath(); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.12)'; c.beginPath(); c.ellipse(hx + 0.02 * u, hy - 0.27 * u, 0.1 * u, 0.025 * u, -0.1, 0, 7); c.fill(); // kilau mahkota
+      c.fillStyle = '#0f1628'; c.fillRect(hx - 0.155 * u, hy - 0.15 * u, 0.29 * u, 0.05 * u); c.fillStyle = '#a8261d'; c.fillRect(hx - 0.155 * u, hy - 0.135 * u, 0.29 * u, 0.018 * u); // pita topi berlis merah
+      c.fillStyle = '#0b0b0d'; c.beginPath(); c.moveTo(hx + 0.08 * u, hy - 0.1 * u); c.quadraticCurveTo(hx + 0.22 * u, hy - 0.12 * u, hx + 0.27 * u, hy - 0.07 * u); c.quadraticCurveTo(hx + 0.2 * u, hy - 0.075 * u, hx + 0.1 * u, hy - 0.08 * u); c.closePath(); c.fill(); // pet
+      c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = Math.max(0.5, 0.012 * u); c.beginPath(); c.moveTo(hx + 0.12 * u, hy - 0.105 * u); c.quadraticCurveTo(hx + 0.2 * u, hy - 0.115 * u, hx + 0.25 * u, hy - 0.085 * u); c.stroke(); // kilau pet
+      c.fillStyle = '#d9a441'; c.beginPath(); c.arc(hx + 0.1 * u, hy - 0.2 * u, Math.max(0.6, 0.028 * u), 0, 7); c.fill();
+      c.strokeStyle = '#5a3a22'; c.lineWidth = Math.max(0.7, 0.02 * u); c.beginPath(); c.moveTo(hx - 0.17 * u, hy - 0.22 * u); c.quadraticCurveTo(hx - 0.02 * u, hy - 0.27 * u, hx + 0.14 * u, hy - 0.25 * u); c.stroke(); // tali kulit kacamata
+      for (const ox of [-0.02, 0.07]) { c.fillStyle = '#8a6a44'; c.beginPath(); c.ellipse(hx + ox * u, hy - 0.25 * u, Math.max(0.7, 0.042 * u), Math.max(0.6, 0.034 * u), 0, 0, 7); c.fill(); c.fillStyle = 'rgba(150,200,220,0.9)'; c.beginPath(); c.ellipse(hx + ox * u, hy - 0.25 * u, Math.max(0.5, 0.028 * u), Math.max(0.4, 0.022 * u), 0, 0, 7); c.fill(); c.fillStyle = 'rgba(255,255,255,0.8)'; c.beginPath(); c.arc(hx + (ox + 0.01) * u, hy - 0.26 * u, Math.max(0.3, 0.008 * u), 0, 7); c.fill(); }
+      c.lineJoin = 'miter';
       c.lineCap = 'butt'; c.restore(); });
     c.fillStyle = vgrad(7.05, 6.6, [[0, '#3a3d40'], [1, '#121314']]); c.fillRect(L(11.25), Y(7.0), 3.45 * ppm, 0.42 * ppm); // atap melengkung
     c.fillStyle = brass(3.0, 3.8); roundRect(c, L(10.6), Y(3.85), 2.2 * ppm, 0.8 * ppm, 0.1 * ppm); c.fill();
