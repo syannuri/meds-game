@@ -1179,7 +1179,8 @@
     let eventBusyUntil = 0;
     let musicTimer = null, nextBeat = 0, beat = 0, musicLevel = MIX.musicIdle;
     let idVoice = null;
-    let elecMode = false, steamMode = false;
+    let elecMode = false, steamMode = false, hornKind = 'cakra';
+    const MUS = { tense: 0, relief: 0, tT: 0, rT: 0 }; // lapisan musik adaptif (dihaluskan per ketukan)
     let lastJoint = null, nextPump = 0, rpm = 0.2, turboS = 0.2, lastUpd = 0, lastFX = null;
     let hornNodes = null, noiseBuf = null, track = { turnouts: [], decks: [], bridge: null }, railBus = null, lastGirder = null, nextStep = 0;
     const meters = {};
@@ -1579,7 +1580,22 @@
       }
       if (pos % 2 === 0) tone(110, 0.16, 0.22, { bus: music, delay: d, to: 70, glide: 0.18 });
       if (pos % 4 === 1) burst(2200, 1.5, 0.05, 0.06, 'bandpass', music, d + BEAT * 0.5);
-      if (!titleMode) return;
+      if (!titleMode) { // musik adaptif saat bermain
+        MUS.tense += (MUS.tT - MUS.tense) * 0.3; MUS.relief += (MUS.rT - MUS.relief) * 0.2;
+        const T = MUS.tense, Rl = MUS.relief * (1 - T);
+        if (T > 0.04) { // tegang: detak jantung rendah, kendang cepat, dengung gong berselisih nada (berdenyut)
+          tone(58, 0.2 * T, 0.42, { bus: music, delay: d, attack: 0.01, to: 46, glide: 0.35 });
+          tone(56, 0.12 * T, 0.32, { bus: music, delay: d + BEAT * 0.3, attack: 0.01, to: 46, glide: 0.25 });
+          burst(1500, 2.6, 0.045 * T, 0.05, 'bandpass', music, d + BEAT * 0.5); if (T > 0.5) burst(1900, 3, 0.035 * T, 0.04, 'bandpass', music, d + BEAT * 0.75);
+          if (pos % 8 === 0) { tone(BASE * 0.5, 0.05 * T, BEAT * 8.2, { type: 'triangle', bus: music, delay: d, attack: 1.2 }); tone(BASE * 0.5 * 1.059, 0.04 * T, BEAT * 8.2, { type: 'triangle', bus: music, delay: d, attack: 1.4 }); }
+          if (pos % 4 === 2 && T > 0.3) metal(BASE * 2 * SL[nx] * 1.059, 0.05 * T, 0.5, music, d); // bonang sumbang
+        }
+        if (Rl > 0.04) { // lega: alas nada hangat & suling yang mengalun (seperti lagu menu, lebih lembut)
+          if (pos % 8 === 0) { tone(BASE * 0.5 * SL[n], 0.05 * Rl, BEAT * 8.4, { type: 'triangle', bus: music, delay: d, attack: 1.0 }); tone(BASE * 0.75 * SL[n], 0.035 * Rl, BEAT * 8.2, { type: 'triangle', bus: music, delay: d + 0.05, attack: 1.2 }); tone(BASE * SL[nx], 0.025 * Rl, BEAT * 8, { type: 'sine', bus: music, delay: d + 0.1, attack: 1.4 }); }
+          if (pos === 4 || pos === 12) tone(BASE * 2 * SL[nx], 0.045 * Rl, BEAT * 3.4, { type: 'sine', bus: music, delay: d, attack: 0.35, to: BASE * 2 * SL[n], glide: BEAT * 2.8 });
+        }
+        return;
+      }
       // lagu menu: alas nada hangat, kendang, dan suling agar halaman utama terasa hidup
       if (pos % 8 === 0) {
         tone(BASE * 0.5 * SL[n], 0.05, BEAT * 8.4, { type: 'triangle', bus: music, delay: d, attack: 0.9 });
@@ -1722,7 +1738,7 @@
       const load = run && power > 0 ? rpm : 0;
       const fr = 16 + rpm * 34;
       const ele = !!info.electric, dz = ele || info.steam ? 0 : 1; // kereta listrik & uap: semua lapisan diesel dibungkam
-      elecMode = ele; steamMode = !!info.steam;
+      elecMode = ele; steamMode = !!info.steam; hornKind = info.horn || 'cakra'; MUS.tT = info.tension || 0; MUS.rT = info.relief || 0;
       L.diesel.o1.frequency.setTargetAtTime(fr, t, 0.08);
       L.diesel.o2.frequency.setTargetAtTime(fr * 1.006, t, 0.08);
       L.diesel.o3.frequency.setTargetAtTime(fr / 2, t, 0.08);
@@ -1840,7 +1856,7 @@
       set(L.river.g.gain, scene ? info.river * 0.11 : 0, 0.4);
       set(L.crowd.g.gain, scene ? info.crowd * 0.07 : 0, 0.5);
       titleMode = !!info.title;
-      const want = !musicOn || muted ? 0 : info.running ? MIX.musicPlay : info.title ? MIX.musicTitle : MIX.musicIdle;
+      const want = !musicOn || muted ? 0 : info.running ? MIX.musicPlay * (1 + 0.7 * MUS.tense + 0.6 * MUS.relief) : info.title ? MIX.musicTitle : MIX.musicIdle;
       if (Math.abs(want - musicLevel) > 0.001) { musicLevel = want; set(music.gain, want, 0.6); }
       if (!scene) return;
       if (info.bell > 0 && t >= nextBell) { crossingBell(0.04 + info.bell * 0.1); nextBell = t + 0.55; }
@@ -1882,15 +1898,20 @@
     }
 
     // ---- pengumuman stasiun: menunggu pintu/rem selesai ----
-    function chime(at) { [784, 659, 523, 659].forEach((f, i) => metal(f, 0.09, 1.1, sfx, at + i * 0.42)); }
-    function announce(text) {
+    // jingle stasiun orisinal bernada slendro (saron lembut + gong kecil): naik untuk keberangkatan, turun untuk kedatangan
+    function chime(at, kind) {
+      const up = [5, 6, 7, 6, 5, 3, 5], down = [7, 6, 5, 3, 2, 3, 5], seq = kind === 'arrive' ? down : up, B0 = 349.2;
+      seq.forEach((n, i) => { const f = B0 * (n === 7 ? 2 : SL[n]); metal(f, 0.085, 1.2, sfx, at + i * 0.26); metal(f * 2, 0.025, 0.6, sfx, at + i * 0.26 + 0.13); });
+      tone(B0 * 0.5, 0.06, 2.6, { bus: sfx, delay: at + seq.length * 0.26, attack: 0.02 }); tone(B0 * 0.5 * 1.004, 0.04, 2.6, { bus: sfx, delay: at + seq.length * 0.26, attack: 0.02 });
+    }
+    function announce(text, kind) {
       if (!ac || muted) return;
       const wait = Math.max(0, eventBusyUntil - ac.currentTime);
       const dur = 2 + text.length * 0.07;
       setTimeout(() => {
         if (!ac || muted) return;
         duck({ amb: 0.55, music: 0.75, engine: 0.3 }, dur);
-        chime(0);
+        chime(0, kind);
         busyFor(dur);
         if (!idVoice || !('speechSynthesis' in window)) return;
         setTimeout(() => {
@@ -1900,7 +1921,7 @@
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(u);
           } catch (e) { /* speech not available */ }
-        }, 1700);
+        }, 2300);
       }, wait * 1000);
     }
 
@@ -2060,8 +2081,10 @@
           gn.connect(pk).connect(lp).connect(sfx);
           const dl = ac.createDelay(1.2); dl.delayTime.value = 0.42; const fb = g(0.2), eg = g(0.22); lp.connect(dl); dl.connect(fb).connect(dl); dl.connect(eg).connect(amb);
           const oscs = [];
-          [[554.4, 1], [740, 0.85]].forEach(([fq, lv]) => [-4, 4].forEach((ct) => {
-            const o = ac.createOscillator(); o.type = 'square'; const f0 = fq * Math.pow(2, ct / 1200); o.frequency.value = f0;
+          const HK = { argo: { f: [[494, 1], [659, 0.85]], w: 'square', lp: 2500 }, hst: { f: [[587, 1], [784, 0.8]], w: 'triangle', lp: 3800 }, hali: { f: [[622, 1], [831, 0.8], [988, 0.55]], w: 'sawtooth', lp: 4400 } }[hornKind] || { f: [[554.4, 1], [740, 0.85]], w: 'square', lp: 3200 };
+          lp.frequency.value = HK.lp; // Agraveda: dua nada rendah hangat · Kilat: nada tinggi bening · Guntur: dua nada tegas · Halilintar: akor tiga nada terang
+          HK.f.forEach(([fq, lv]) => [-4, 4].forEach((ct) => {
+            const o = ac.createOscillator(); o.type = HK.w; const f0 = fq * Math.pow(2, ct / 1200); o.frequency.value = f0;
             const og = g(lv * 0.22); o.connect(og).connect(gn); o.start(t); oscs.push([o, 0]);
           }));
           duck({ amb: 0.45, music: 0.45 }, 6);
@@ -2911,7 +2934,7 @@
     toast(`${rating.r.toUpperCase()}! ${fmtM(Math.abs(d))} m ${where} dari marka. ${MIS.freight ? 'Membongkar muatan...' : MIS.noDoors && st.final ? '' : 'Buka pintu.'}`, kind, 3.2, null, 3);
     if (MIS.freight) { Sound.coal(4.5); return; }
     if (MIS.loco === 'steam' && st.water) toast('Menara air di atas tender: tangki diisi selama berhenti.', 'info', 3, null, 2);
-    if (st.final) setTimeout(() => Sound.announce(`Kereta telah tiba di Stasiun ${titleCase(st.name)}, stasiun akhir. Terima kasih telah bepergian bersama ${MIS.loco === 'steam' ? 'Surya' : 'Cakra'}.`), 900);
+    if (st.final) setTimeout(() => Sound.announce(`Kereta ${trainLabel().name} telah tiba di Stasiun ${titleCase(st.name)}, stasiun akhir. Terima kasih telah bepergian bersama ${trainLabel().name}. Pastikan tidak ada barang yang tertinggal.`, 'arrive'), 900);
   }
 
   function updateDwell(dt) {
@@ -2969,6 +2992,7 @@
         S.stoppedShortShown = false;
         Sound.signalChime();
         toast(S.st === 0 ? 'Sinyal hijau! Dorong tuas ke P untuk berangkat.' : 'Sinyal berangkat hijau. Lanjutkan perjalanan.', 'good', 3, null, 3);
+        if (S.st > 0 && !MIS.freight) Sound.announce(`${trainLabel().kind} ${trainLabel().name} tujuan ${titleCase(finalStation().name)} segera diberangkatkan dari Stasiun ${titleCase(ROUTE.stations[S.st].name)}. Hati-hati di peron.`, 'depart');
         if (MIS.freight && S.st === 0) setTimeout(() => { if (S && S.mode === 'play') radio('Muara Kelam ke Cakra: jalur aman sampai Tanjung Api. Hati-hati, rombongan gajah sering melintas pagi begini.', 6.5, 'Uchie', 'UC'); }, 1500);
       }
     }
@@ -3123,7 +3147,7 @@
     const ns = nextStation();
     if (!MIS.freight && ns && S.phase === 'run' && ns.x - S.x < 420 && ns.x - S.x > 0 && !S.hints['ann' + S.st]) {
       S.hints['ann' + S.st] = true;
-      Sound.announce(`Sesaat lagi kereta akan tiba di Stasiun ${titleCase(ns.name)}. Periksa kembali barang bawaan Anda.`);
+      Sound.announce(`Para penumpang yang terhormat, sesaat lagi kereta akan tiba di Stasiun ${titleCase(ns.name)}. Periksa kembali barang bawaan Anda.`, 'arrive');
     }
     if (ns && S.phase === 'run' && ns.x - S.x < 260 && ns.x - S.x > 0) hintOnce('stop' + S.st, MIS.freight ? `${ns.name}: berhenti tepat di marka bongkar.` : `Stasiun ${ns.name}: berhenti tepat di marka kuning "${markNum()}".`);
 
@@ -4514,6 +4538,11 @@
     }
   }
   let RAND_EV = [];
+  // nama & jenis kereta untuk pengumuman stasiun
+  function trainLabel() {
+    if (MIS.livery === 'halilintar') return { name: 'Halilintar', kind: 'Kereta cepat' };
+    return { argo: { name: 'Argo Senja', kind: 'Kereta eksekutif' }, hst: { name: 'Kilat', kind: 'Kereta cepat' }, hst2: { name: 'Guntur', kind: 'Kereta cepat' }, steam: { name: 'Surya', kind: 'Kereta wisata' } }[MIS.loco] || { name: 'Cakra', kind: 'Kereta lokal' };
+  }
   function startMission() {
     { const ob = $('choiceBox'); if (ob) ob.remove(); }
     ROUTE._bb = null; initGauge();
@@ -4539,7 +4568,7 @@
     const thisRun = S;
     if (ROUTE.rival) setTimeout(() => { if (S === thisRun && S.mode === 'play') radio(`Selamat bertanding, anak muda. ${ROUTE.rival.name} belum pernah kalah.`, 6, 'Pak Bram', 'PB'); }, 4500);
     toast(MIS.intro, 'info', 4, null, 3);
-    if (!MIS.freight) setTimeout(() => { if (S && S.st === 0) Sound.announce(`Perhatian. Kereta lokal Cakra tujuan ${titleCase(finalStation().name)} di jalur satu akan segera diberangkatkan.`); }, 600);
+    if (!MIS.freight) setTimeout(() => { if (S && S.st === 0) Sound.announce(`Perhatian, perhatian. ${trainLabel().kind} ${trainLabel().name} tujuan ${titleCase(finalStation().name)} di jalur satu akan segera diberangkatkan. Penumpang yang tidak berkepentingan dimohon menjauhi jalur.`, 'depart'); }, 600);
   }
 
   // ---------- input ----------
@@ -15771,7 +15800,28 @@ c.restore();
       climb: (() => { const gr = gradeAt(st.x - TRAIN_LEN / 2); return gr && gr.permil > 0 ? gr.permil / 20 : 0; })(),
       lat: latAccel(st),
       bridgeFrac: b ? clamp((Math.min(st.x, b.to) - Math.max(st.x - TRAIN_LEN, b.from)) / TRAIN_LEN, 0, 1) : 0,
+      tension: running ? musicTension(st) : 0, relief: running ? musicRelief(st) : 0,
+      horn: MIS.livery === 'halilintar' ? 'hali' : MIS.loco,
     };
+  }
+  // ketegangan musik (0..1): sinyal merah di depan saat melaju, badai, bahaya di rel, melebihi batas, keputusan dispatcher
+  function musicTension(st) {
+    let t = 0;
+    if (st.v > 2) { const sg = ROUTE.signals.find((q) => q.x > st.x && q.x - st.x < 700); if (sg && st.sig && st.sig[sg.id] === 'R') t = Math.max(t, 0.35 + 0.6 * clamp(1 - (sg.x - st.x) / 700, 0, 1)); }
+    if (MIS.sky === 'storm') t = Math.max(t, 0.55 * stormNow(st.x));
+    if (st.overT > 0.2) t = Math.max(t, 0.75);
+    if (st.tree && st.tree.phase === 'warn') t = 1;
+    if (ROUTE.elephants && st.eleph && (st.eleph.phase === 'block' || st.eleph.phase === 'cross') && Math.abs(ROUTE.elephants.x - st.x) < 600) t = Math.max(t, 0.85);
+    if ((ROUTE.goats || []).some((g) => g.x - st.x > 0 && g.x - st.x < 350) && st.v > 3) t = Math.max(t, 0.45);
+    if (st.choiceOpen) t = Math.max(t, 0.35);
+    return t;
+  }
+  // kelegaan musik (0..1): badai mereda (cahaya keemasan), tiba di stasiun akhir
+  function musicRelief(st) {
+    let r = 0;
+    if (MIS.sky === 'storm' && CLR()) { const k = stormK(st.x); r = Math.max(r, clamp((1 - k) * 1.6, 0, 1) * clamp(k * 6 + 0.35, 0, 1)); }
+    if (st.phase === 'dwell' && ROUTE.stations[st.st] && ROUTE.stations[st.st].final) r = Math.max(r, 0.9);
+    return r;
   }
 
   // ---------- loop ----------
@@ -15852,7 +15902,7 @@ c.restore();
     radio: (t, w, i) => radio(t, 6, w, i), portrait: (id) => PORTRAIT(id),
     get mode() { return mode; },
     get cine() { return CINE; },
-    get perf() { return PERF; }, get gfx() { return GFX; },
+    get perf() { return PERF; }, get gfx() { return GFX; }, get audio() { return audioInfo(); },
     setNotch: (n) => setNotch(n, false), horn, door, sand, start: startMission,
     audioMeter: () => Sound.meter(),
     loadTarget: (i) => loadTarget(i),
