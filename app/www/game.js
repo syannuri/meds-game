@@ -13240,7 +13240,7 @@
     { min: 8, name: 'Masinis Muda', liv: 'kawung', livName: 'Kawung' },
     { min: 16, name: 'Masinis', liv: 'parang', livName: 'Parang' },
     { min: 26, name: 'Masinis Utama', liv: 'mega', livName: 'Mega Mendung' },
-    { min: 40, name: 'Masinis Kereta Cepat', liv: 'songket', livName: 'Songket' },
+    { min: 40, name: 'Masinis Kereta Cepat', liv: 'songket', livName: 'Jepara' },
     { min: 60, name: 'Masinis Legenda', liv: 'garuda', livName: 'Garuda Emas' },
   ];
   const totalStars = () => MISSION_ORDER.reduce((a, id) => a + bestOf(id), 0);
@@ -13287,6 +13287,32 @@
       const su = h * 0.62, step = su * 2.6;
       let i = 0;
       for (let x = x0 + su; x < x1 + step; x += step / 2, i++) dayakScroll(c, x, ym + (i % 2 ? -1 : 1) * h * 0.04, su, i % 2 ? -1 : 1, col, col === '#f2a516' ? '#ffd27a' : '#d0392b');
+    } else if (kind === 'jepara') {
+      // ukiran Jepara: sulur utama bergelombang, daun trubusan meruncing berujung ikal, ulir spiral (pilin) di antara lengkung, buah bulat bertiga
+      const amp = h * 0.2, wl = h * 2.5, yAt = (x) => ym + Math.sin((x - x0) / wl * Math.PI * 2) * amp, hi = 'rgba(255,240,190,0.55)';
+      c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = col; c.fillStyle = col;
+      const vine = (lw0) => { c.lineWidth = lw0; c.beginPath(); for (let x = x0; x <= x1 + u * 0.2; x += u * 0.08) { const y = yAt(x); x === x0 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); };
+      vine(Math.max(1.2, h * 0.075));
+      const leaf = (bx, by, ang, L0, w0) => { // daun trubusan: lonjong meruncing, ujung mengikal, urat tengah gelap
+        const ca = Math.cos(ang), sa = Math.sin(ang), P = (a, b) => [bx + ca * a - sa * b, by + sa * a + ca * b];
+        c.beginPath(); c.moveTo(...P(0, 0)); c.quadraticCurveTo(...P(L0 * 0.35, -w0), ...P(L0 * 0.85, -w0 * 0.25)); c.quadraticCurveTo(...P(L0 * 1.05, w0 * 0.3), ...P(L0 * 0.8, w0 * 0.45));
+        c.quadraticCurveTo(...P(L0 * 0.4, w0 * 0.9), ...P(0, 0)); c.fill();
+        c.save(); c.strokeStyle = 'rgba(20,14,10,0.55)'; c.lineWidth = Math.max(0.6, u * 0.03); c.beginPath(); c.moveTo(...P(L0 * 0.05, 0)); c.quadraticCurveTo(...P(L0 * 0.45, w0 * 0.05), ...P(L0 * 0.8, w0 * 0.1)); c.stroke(); c.restore(); };
+      const spiral = (cx, cy, R0, dir) => { c.lineWidth = Math.max(1, h * 0.06); c.beginPath(); for (let t = 0; t <= Math.PI * 3.2; t += 0.15) { const r = R0 * (1 - t / (Math.PI * 3.6)), a = dir * t - Math.PI / 2 * dir; const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r; t ? c.lineTo(x, y) : c.moveTo(x, y); } c.stroke(); };
+      for (let k = 0, x = x0 + wl * 0.25; x < x1 + wl; x += wl / 2, k++) {
+        const sg = k % 2 ? -1 : 1, yc = yAt(x); // puncak lengkung: sg>0 di bawah garis tengah
+        leaf(x - h * 0.04, yc, sg > 0 ? -2.45 : 2.45, h * 0.46, h * 0.17); // daun ke arah tengah, condong ke belakang
+        leaf(x + h * 0.06, yc, sg > 0 ? -0.6 : 0.6, h * 0.36, h * 0.13); // daun kecil ke depan
+        // ulir pilin (spiral) besar di sisi berlawanan dari lengkung, tangkainya menempel ke sulur
+        const zx = x + wl / 4, R0 = h * 0.2, zc = ym - sg * h * 0.16;
+        c.lineWidth = Math.max(1, h * 0.05); c.beginPath(); c.moveTo(zx - h * 0.28, yAt(zx - h * 0.28)); c.quadraticCurveTo(zx - h * 0.12, zc - sg * R0, zx + h * 0.05, zc - sg * R0); c.stroke();
+        spiral(zx + h * 0.05, zc, R0, sg);
+        leaf(zx + h * 0.2, yAt(zx + h * 0.2), sg > 0 ? 0.9 : -0.9, h * 0.26, h * 0.08); // tunas kecil di sisi lain
+        for (const [dx, dy] of [[0, 0], [0.09, 0.05], [-0.01, 0.1]]) { c.beginPath(); c.arc(x + h * (0.28 + dx), yc - sg * h * (0.06 + dy), h * 0.04, 0, 7); c.fill(); } // buah bertiga
+      }
+      c.save(); c.strokeStyle = hi; c.lineWidth = Math.max(0.6, u * 0.03); c.beginPath(); for (let x = x0; x <= x1; x += u * 0.08) { const y = yAt(x) - u * 0.03; x === x0 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); c.restore(); // kilau pahatan
+      c.fillRect(x0, yTop + h * 0.02, x1 - x0, Math.max(1, u * 0.04)); c.fillRect(x0, yBot - h * 0.02 - Math.max(1, u * 0.04), x1 - x0, Math.max(1, u * 0.04)); // bingkai tipis
+      c.lineCap = 'butt'; c.lineJoin = 'miter';
     } else if (kind === 'kawung') {
       // empat kelopak lonjong mengelilingi titik, berulang
       const step = u * 1.0, r = u * 0.42;
@@ -13424,7 +13450,7 @@
   };
   // livery pemain: tiap livery pangkat/spesial memberi warna sabuk bawah, garis LED & pita gerbong Cakra NEO sendiri
   Object.assign(NEO_PAL, {
-    songket: { g: ['#4b3a63', '#33264a', '#1f1530'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.32)', pin: '#e9b949', coach: ['#e9b949', '#33264a'] },
+    songket: { g: ['#2c2827', '#181514', '#0b0909'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.32)', pin: '#e9b949', coach: ['#e9b949', '#181514'], orn: 'jepara' }, // hitam eboni berukir Jepara emas
     emas: { g: ['#e0bb62', '#c09238', '#8c6522'], led: ['#fff1c4', '#fff8de', '#ffffff'], glow: 'rgba(255,236,170,0.4)', pin: '#2a1d0a', coach: ['#2a1d0a', '#c09238'] },
     merdeka: { g: ['#e8473f', '#cc2229', '#951219'], led: ['#f4f1e8', '#ffffff', '#ffffff'], glow: 'rgba(255,255,255,0.35)', pin: '#ffffff', coach: ['#ffffff', '#cc2229'] },
     dayak: { g: ['#9b2a36', '#7a1a28', '#4f0f19'], led: ['#c9a24e', '#ecd08a', '#fff3d1'], glow: 'rgba(240,205,130,0.32)', pin: '#e9b949', coach: ['#e9b949', '#7a1a28'], orn: 'dayak' }, // merah marun berukir Dayak emas
