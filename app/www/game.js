@@ -3282,6 +3282,7 @@
       S.kilat = S.kilats[0] || null; // kompatibel: kilat terdekat
     }
     for (const e of S.events || []) if (!e.warned && S.x >= e.warnAt) { e.warned = true; radio(e.msg, 6.5, 'Rahmat', 'RH'); HAPT.buzz([16, 40, 16], 0); }
+    stepChat(dt);
     if (S.x >= ROUTE.bufferStop - 0.5) fail(`Kereta menabrak penahan di ujung rel ${titleCase(finalStation().name)}.`);
 
     S.comfort = clamp(S.comfort, 0, 100);
@@ -3770,10 +3771,79 @@
   function kisahCard(a, c, i, isNew) {
     return `<div class="kc${isNew ? ' new' : ''}"><div class="kc-av">${PORTRAIT(a.av) || a.av}</div><div class="kc-t"><small>${isNew ? '<em>KISAH BARU</em> · ' : ''}${a.who} · <span>${a.arc}</span> ${i + 1}/${a.ch.length}</small><b>${c.t}</b><p>${c.x}</p></div></div>`;
   }
+  // ---------- radio hidup: obrolan ringan kru di lintas yang tenang ----------
+  // hanya saat lintas lurus tanpa batas/sinyal/stasiun/kejadian di depan, radio & notifikasi sedang kosong; jeda panjang, paling banyak 3 per perjalanan
+  const CHAT = {
+    1: [['Rahmat', 'RH', 'Di mejaku ada model Cakra dari kaleng bekas. Tiap kau lewat menara, kuputar sedikit ke arah relnya. Kebiasaan aneh, ya?'],
+      ['Uchie', 'UC', 'Topi PPKA baruku masih kaku sekali, Anett. Kata Bu Anna, nanti lemas sendiri setelah seratus kali angkat tongkat hijau.'],
+      ['Bu Anna', 'BW', 'Pak Darto titip pesan: sayurnya sampai di pasar tanpa memar minggu ini. Katanya karena rem masinisnya halus.'],
+      ['Rahmat', 'RH', 'Petak lurus begini enak, ya. Dulu waktu magang, aku menghitung tiang listrik supaya tidak mengantuk. Rekorku 412.'],
+      ['Uchie', 'UC', 'Anak-anak SD Cibening menggambar keretamu untuk tugas sekolah. Lokomotifnya kebanyakan berwarna merah semua, hehe.']],
+    2: [['Rahmat', 'RH', 'Sinyal radio di Sumatra suka putus-putus. Kalau suaraku hilang, percayai papan dan sinyal, bukan aku.'],
+      ['Mamed', 'KK', 'Hutan di kiri itu dulu kebun karet milik kakekku. Tiap lewat sini aku masih mencari pohon yang ia tandai.'],
+      ['Uchie', 'UC', 'Petisi warga Watugede sudah dikirim ke kota. Katanya rapor perjalananmu ikut dilampirkan. Jangan gugup!']],
+    3: [['Rahmat', 'RH', 'Tiga ratus kilometer per jam dan kopimu tidak tumpah. Itu yang ditulis penumpang gerbong satu di kartu saran.'],
+      ['Uchie', 'UC', 'Penumpang kelas bisnis bertanya: masinisnya siapa? Kubilang: Anett dari lintas Watugede. Mereka terkejut, lintas kecil itu masih ada.'],
+      ['Rahmat', 'RH', 'Direksi memantau data kereta cepat hari ini. Kalau rapormu bagus, mereka akan bertanya dari mana kamu belajar menyetir. Jawab saja: dari Surya.']],
+    4: [['Mamed', 'KK', 'Dengar ritmenya, Anett: cuh, cuh, cuh. Kalau iramanya rata, Surya bahagia. Kalau tersendat, ia minta perhatian.'],
+      ['Mamed', 'KK', 'Juru apiku dulu bisa menebak tanjakan dari bau asap. Aku tak pernah bisa. Barangkali kau bisa.'],
+      ['Mamed', 'KK', 'Lihat warga di pematang itu. Mereka belum pernah melihat Surya berlari secepat ini. Aku juga belum, sejak 1987.']],
+  };
+  const CHAT_MIS = {
+    '1-2': [['Rahmat', 'RH', 'Lintas Kali Kecil–Cibening ini yang paling panjang dan lurus. Rasakan Cakra berlari penuh, tapi jangan lupa papan REM.']],
+    '3-4': [['Uchie', 'UC', 'Penumpang Halilintar memotret badai dari jendela. Katanya seperti naik pesawat di atas awan, tapi lebih tenang.']],
+    '4-1': [['Mamed', 'KK', 'Tahun 1912, Surya diuji di lembah ini. Katanya ia mencapai seratus kilometer per jam dan masinisnya kehilangan topi. Pegang topimu.']],
+  };
+  function stepChat(dt) {
+    if (!S || S.phase !== 'run' || MIS.freight === 'none') return;
+    const C = S.chat || (S.chat = { t: 0, n: 0, q: null });
+    C.t += dt;
+    if (!C.q) { const pool = (CHAT_MIS[MIS.id] || []).concat(CHAT[MIS.id[0]] || CHAT[1]); const off = Math.floor(Math.random() * pool.length); C.q = pool.map((_, i) => pool[(i + off) % pool.length]);
+      if (CHAT_MIS[MIS.id]) C.q.unshift(CHAT_MIS[MIS.id][0]);
+      if (!store.get('rn.premiseHeard') && MISSION_ORDER.includes(MIS.id)) C.q.unshift(['Rahmat', 'RH', 'Anett, kabar dari direksi: lintas tua Watugede, rumah Surya, akan ditutup akhir musim kalau dianggap sepi dan merugi.'], ['Rahmat', 'RH', 'Setiap perjalananmu dicatat sebagai Kepercayaan Lintas: tepat waktu, nyaman, hemat, aman. Buktikan jalur ini hidup. Kemajuannya ada di tab Kisah.']); }
+    const prem = !store.get('rn.premiseHeard') && C.q[0] && C.q[0][2].startsWith('Anett, kabar dari direksi');
+    if (C.n >= (prem ? 5 : 3) || !C.q.length) return;
+    const wait = C.n === 0 ? (prem ? 8 : 22) : C.lastPrem ? 7 : 38;
+    if (C.t < wait || radioTimer > 0 || toastTimer > 0) return;
+    const kmh = S.v * 3.6; if (kmh < Math.max(30, ROUTE.lineSpeed * 0.4)) return;
+    if (zoneAt(S.x) || nextLimitAhead()) return;
+    if (ROUTE.signals.some((q) => q.x > S.x && q.x - S.x < 900 && S.sig[q.id] !== 'G')) return;
+    const ns = ROUTE.stations[S.st + 1]; if (ns && ns.x - S.x < 800) return;
+    if ((S.events || []).some((e) => !e.warned && e.warnAt - S.x < 1500) || S.choiceOpen) return;
+    const [who, av, text] = C.q.shift(); radio(text, 6.5, who, av); C.n++; C.t = 0;
+    C.lastPrem = text.startsWith('Anett, kabar dari direksi'); if (text.startsWith('Setiap perjalananmu dicatat')) store.set('rn.premiseHeard', '1');
+  }
+  // ---------- misi besar: Kepercayaan Lintas ----------
+  // Lintas tua Watugede (rumah Surya) terancam ditutup. Tiap perjalanan menambah kepercayaan: nilai rapor terbaik tiap misi dijumlah (0–100%).
+  const PREMISE = 'Rapat direksi memutuskan: lintas tua Watugede, rumah lokomotif Surya, akan ditutup akhir musim karena dianggap sepi dan merugi. Kecuali kita bisa membuktikan jalur ini hidup. Setiap perjalananmu dicatat: tepat waktu, nyaman, hemat, aman. Kumpulkan Kepercayaan Lintas, Anett. Seluruh Nusantara sedang menonton.';
+  const TRUST_MS = [
+    { at: 0, who: 'Rahmat', av: 'RH', t: 'Surat dari direksi', x: PREMISE },
+    { at: 20, who: 'Bu Anna', av: 'BW', t: 'Penumpang mulai kembali', x: 'Loket Cibening ramai lagi. Bu Anna memajang rapor perjalananmu di papan pengumuman: "Kereta pagi tepat waktu, dan rem masinisnya halus. Ajak tetanggamu naik kereta!"' },
+    { at: 40, who: 'Uchie', av: 'UC', t: 'Petisi warga Watugede', x: 'Uchie membawa map tebal ke menara sinyal: empat ribu tanda tangan warga yang menolak penutupan lintas. "Mereka menandatangani karena kereta kita bisa diandalkan, Anett. Itu karena kamu."' },
+    { at: 60, who: 'Rahmat', av: 'RH', t: 'Inspeksi direksi', x: 'Direksi diam-diam naik kereta pagi. Rahmat baru tahu setelah mereka turun: "Mereka mencatat semuanya, dan tak satu pun catatannya buruk. Keputusan penutupan ditinjau ulang."' },
+    { at: 75, who: 'Mamed', av: 'KK', t: 'Lintas diselamatkan', x: 'Surat kedua datang dari direksi: lintas Watugede tetap dibuka, dan Surya dipertahankan untuk kereta wisata. Mamed membaca surat itu dua kali, lalu menyimpannya di buku catatan kulitnya.' },
+    { at: 90, who: 'Mamed', av: 'KK', t: 'Kereta peresmian Jalur Nusantara', x: 'Jalur Nusantara diresmikan, dan kereta pertamanya ditarik Surya 1912. Di kabin: Mamed sebagai juru api, dan kamu di kursi masinis. Sepanjang lintas, warga berdiri di pematang dan melambai.' },
+  ];
+  const trustBest = (id) => Number(store.get('rn.trust.' + id) || 0);
+  const trustNow = () => Math.round(MISSION_ORDER.reduce((a, id) => a + trustBest(id), 0) / MISSION_ORDER.length);
+  function trustHTML() {
+    const t = trustNow(), nx = TRUST_MS.find((q) => q.at > t);
+    const ms = TRUST_MS.map((q) => (t >= q.at ? `<li class="kch open"><b>${q.at}% · ${q.t}</b><p>${q.x}</p></li>` : `<li class="kch lock"><b>${q.at}% · ???</b><p><span>Capai Kepercayaan Lintas ${q.at}%</span></p></li>`)).join('');
+    return `<section class="karc trust"><header><div class="kc-av">${PORTRAIT('KK') || 'KK'}</div><div><b>Misi besar: selamatkan lintas Watugede</b><small><span>Kepercayaan Lintas</span> · <span>${nx ? `${nx.at - t}% lagi menuju "${nx.t}"` : 'Jalur Nusantara diresmikan'}</span></small></div><span class="kprog">${t}%</span></header>
+      <div class="tmeter"><i style="width:${t}%"></i>${TRUST_MS.filter((q) => q.at > 0).map((q) => `<em style="left:${q.at}%"></em>`).join('')}</div><ol>${ms}</ol></section>`;
+  }
+  // dipanggil di layar hasil: simpan nilai rapor terbaik misi ini, laporkan kenaikan & tonggak cerita yang baru terbuka
+  function earnTrust(rep, r) {
+    if (r.failed || MIS.daily || !MISSION_ORDER.includes(MIS.id)) return '';
+    const before = trustNow(); if (rep.total > trustBest(MIS.id)) store.set('rn.trust.' + MIS.id, String(rep.total)); const after = trustNow();
+    const fresh = TRUST_MS.filter((q) => q.at > 0 && before < q.at && after >= q.at);
+    const line = `<div class="rtrust"><b>Kepercayaan Lintas ${after}%</b><i><s style="width:${before}%"></s><u style="left:${before}%;width:${after - before}%"></u></i><small>${after > before ? `+${after - before}% dari perjalanan ini` : 'Ulangi dengan nilai lebih tinggi untuk menambah kepercayaan'}</small></div>`;
+    return line + fresh.map((q) => `<div class="rcert story"><i>${PORTRAIT(q.av) || '📜'}</i><div><b>KISAH LINTAS · ${q.t}</b><small>${q.x}</small></div></div>`).join('');
+  }
   function renderKisah() {
     const el = $('kisahBox'); if (!el) return;
     const seen = kisahSeen();
-    el.innerHTML = KISAH.map((a) => {
+    el.innerHTML = trustHTML() + KISAH.map((a) => {
       const got = a.ch.filter(kisahOpen).length;
       const chs = a.ch.map((c, i) => kisahOpen(c)
         ? `<li class="kch open${seen.includes(a.av + i) ? '' : ' unread'}"><b>${i + 1}. ${c.t}</b><p>${c.x}</p></li>`
@@ -3946,8 +4016,8 @@
       ['KOIN', `${r.total}`, 'gold', `misi ${r.base} + henti ${S.coins} + nyaman ${r.comfortBonus}${r.penalty ? ` − ${r.penalty}` : ''}${S.expert ? ' ×1,5' : ''}`],
     ];
     if (ELEC()) tiles.push(['ENERGI', `${Math.round(S.kwh)} kWh`, ecoBonus ? 'ok' : '', `regen ${Math.round(S.regen)} kWh (${regenPct}%)${ecoBonus ? ' · +80 hemat' : ' · target 20%'}`]);
-    const rep = travelReport(r), gs = saveGhost(rep, r.failed), cert = earnCert(r), spec = earnSpecial(r, rep);
-    $('resCard').innerHTML = `${cert}${spec}${reportHTML(rep, gs)}${goalList}
+    const rep = travelReport(r), gs = saveGhost(rep, r.failed), cert = earnCert(r), spec = earnSpecial(r, rep), trust = earnTrust(rep, r);
+    $('resCard').innerHTML = `${trust}${cert}${spec}${reportHTML(rep, gs)}${goalList}
       <table class="rtable">
         <thead><tr><th>Stasiun</th><th>Berhenti</th><th>Tiba / jadwal</th></tr></thead>
         <tbody>${loadRows}${rows}${rivalRow}</tbody>
@@ -4499,7 +4569,7 @@
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
       ${(() => { const d = m.driver || DRIVER; return `<dt>Masinis</dt><dd class="drv"><span class="drvpic">${PORTRAIT(d.initials) || ''}</span>${d.name}</dd>`; })()}<dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat G1 KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : m.loco === 'steam' ? 'Lokomotif uap Surya 1912' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : m.loco === 'steam' ? 'wisata' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
-      <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.tutorial || m.id === '1-1' ? '' : `<dt>Medali</dt><dd class="bmed">${MEDALS.map((q) => `<span title="${q.name}: ${q.tip}">${q.icon}</span>`).join(' ')} <small>+ kejadian acak</small></dd>`}${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
+      <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd><dt>Lintas</dt><dd>Kepercayaan ${trustNow()}% · ${trustBest(m.id) ? `nilai terbaikmu di misi ini ${trustBest(m.id)}` : 'misi ini belum menyumbang'}</dd>${m.tutorial || m.id === '1-1' ? '' : `<dt>Medali</dt><dd class="bmed">${MEDALS.map((q) => `<span title="${q.name}: ${q.tip}">${q.icon}</span>`).join(' ')} <small>+ kejadian acak</small></dd>`}${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
       const art = m.daily ? dailyArt(m.base).replace('class="tart"', 'class="bart"') : misArt(m.id).replace('class="tart"', 'class="bart"');
       const x0 = R.stations[0].x, x1 = f.x;
