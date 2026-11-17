@@ -5210,10 +5210,17 @@
     if (MTc && !inTun) {
       const a0 = Math.max(1.2, MTc.entry - x0), b0 = Math.min(FAR, MTc.exit - x0);
       if (b0 > a0) {
-        const oo = (d) => MO * meetK(x0 + d);
-        for (let d = b0; d > a0; d -= 3) { const e = Math.max(a0, d - 3); quad(W3(e, oo(e) - 2.3, 0), W3(e, oo(e) + 2.3, 0), W3(d, oo(d) + 2.3, 0), W3(d, oo(d) - 2.3, 0), mix('#8d8275', '#a59a8c', p)); }
-        for (let wd = Math.floor((x0 + Math.min(b0, 60)) / slp) * slp; wd > x0 + a0; wd -= slp) { const d = wd - x0, o = oo(d); quad(W3(d - 0.12, o - 1.2, 0.05), W3(d - 0.12, o + 1.2, 0.05), W3(d + 0.12, o + 1.2, 0.05), W3(d + 0.12, o - 1.2, 0.05), mix('#6f6a63', '#8b857b', p)); }
-        [-0.53, 0.53].forEach((ro) => { for (let d = b0; d > a0; d -= 2) { const e = Math.max(a0, d - 2); quad(W3(e, oo(e) + ro - 0.035, 0.16), W3(d, oo(d) + ro - 0.035, 0.16), W3(d, oo(d) + ro + 0.035, 0.16), W3(e, oo(e) + ro + 0.035, 0.16), '#9aa2a6'); } });
+        const oo = (d) => MO * meetK(x0 + d), okM = (d) => d > a0 - 0.01 && d < b0 + 0.01;
+        // balas jalur 2 (menyatu dengan balas jalur 1 di daerah wesel), tekstur batu
+        for (let d = b0; d > a0; d -= 2) { const e = Math.max(a0, d - 2); quad(W3(e, oo(e) - 2.3, 0), W3(e, oo(e) + 2.3, 0), W3(d, oo(d) + 2.3, 0), W3(d, oo(d) - 2.3, 0), mix('#8d8275', '#a59a8c', p)); }
+        { const tn3 = [mix('#6f665d', '#7c736a', p), mix('#a39889', '#b2a798', p), mix('#827869', '#8e8478', p)]; for (const [lat, zz, sz, tn] of CAB_BAL) { const d = 1.5 + (((zz * 60 - x0) % 60) + 60) % 60; if (!okM(d)) continue; const q = W3(d, oo(d) + lat * 2.2, 0.02); if (!q) continue; const r = Math.max(0.6, sz * 0.06 * q.k); c.fillStyle = tn3[tn < 0.33 ? 0 : tn < 0.66 ? 1 : 2]; c.fillRect(q.x - r / 2, q.y - r / 2, r, r * 0.7); } }
+        // bantalan beton (di daerah wesel bantalan memanjang menyangga kedua jalur)
+        for (let wd = Math.floor((x0 + Math.min(b0, 140)) / slp) * slp; wd > x0 + a0; wd -= slp) { const d = wd - x0, o = oo(d), sh = o < 4.6; quad(W3(d - 0.12, (sh ? -1.2 : o - 1.2), 0.05), W3(d - 0.12, o + 1.2, 0.05), W3(d + 0.12, o + 1.2, 0.05), W3(d + 0.12, (sh ? -1.2 : o - 1.2), 0.05), mix('#6f6a63', '#8b857b', p)); }
+        // rel bervolume (badan gelap + kepala terang) seperti jalur lain, kilau kepala rel; garis tipis minimum supaya tidak putus di kejauhan
+        [-0.53, 0.53].forEach((ro) => { let prev = null; for (let d = a0; d <= b0 + 0.01; d += d < 40 ? 1.5 : 3) { const dd = Math.min(d, b0), o = oo(dd) + ro;
+          if (prev !== null) { const [pa, po] = prev; quad(W3(pa, po - 0.04, 0.02), W3(dd, o - 0.04, 0.02), W3(dd, o - 0.035, 0.16), W3(pa, po - 0.035, 0.16), '#3a3e42'); quad(W3(pa, po - 0.035, 0.16), W3(dd, o - 0.035, 0.16), W3(dd, o + 0.035, 0.16), W3(pa, po + 0.035, 0.16), '#a6aeb2');
+            const m0 = W3(pa, po, 0.17), m1 = W3(dd, o, 0.17); if (m0 && m1) { c.strokeStyle = 'rgba(232,236,238,0.75)'; c.lineWidth = Math.max(0.8, 0.022 * m0.k); c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke(); } }
+          prev = [dd, o]; } });
       }
     }
 
@@ -5293,7 +5300,7 @@
       for (let i = Math.ceil(x0 / 9); i * 9 < x0 + dMax; i++) {
         const side = hash(i * 1.3) < 0.5 ? -1 : 1, wd = i * 9 + hash(i) * 5, ht = sawit ? 8 + hash(i * 3.7) * 3 : 5 + hash(i * 3.7) * 6;
         // jalur ganda: pohon di kanan bergeser ke luar jalur 2/3 (tidak tumbuh di antara rel, sama seperti tampilan luar)
-        const o = side * (8 + hash(i * 2.1) * 26) + (side > 0 && DBc ? dblO3(wd) : 0);
+        const o = side * (8 + hash(i * 2.1) * 26) + (side > 0 && DBc ? dblO3(wd) : 0) + (side > 0 && ROUTE.meet ? 10 * meetK(wd) : 0); // persilangan: pohon kanan tidak tumbuh di jalur 2
         if (nearStation(wd) && side < 0 && Math.abs(o) < 22) continue;
         if (side < 0 && ROUTE.stations.some((g) => (g.grand || g.grandJ || g.heri || g.bening || g.modern) && wd > g.x - 140 && wd < g.x + 45)) continue;
         if (ROUTE.yard && wd > -230 && wd < 250 && Math.abs(o) < 34) continue; // area depo: jalur simpan & gedung dipo, tanpa pohon // halaman terminal megah terbuka (tidak tertutup pohon)
@@ -11937,6 +11944,7 @@
     for (let m = Math.ceil(a / 0.6) * 0.6; m < b; m += 0.6) { const sx = X(m), y = yAt(m), sep = y - gy, top = sep < 2.2 * ppm ? gy - 0.5 * ppm : y - 0.5 * ppm, h = (y + 0.3 * ppm) - top;
       c.fillStyle = slp; c.fillRect(sx, top, 0.28 * ppm, h); c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(sx + 0.22 * ppm, top, 0.06 * ppm, h); c.fillStyle = 'rgba(255,255,255,0.12)'; c.fillRect(sx, top, 0.28 * ppm, Math.max(1, 0.05 * ppm)); }
     // rel: profil kepala-badan-kaki, penambat, kilau matahari & cahaya tepi dinamis (sama dengan jalur ganda)
+    railsAlong(V, a, b, (x) => yAt(x) - gy < 2.2 * ppm, () => gy, 1, false); // rel jalur sepur belok digambar ulang di atas bantalan panjang wesel (tidak terputus)
     railsAlong(V, a, b, () => true, yAt, 1, false);
     // wesel di kedua ujung: lidah wesel meruncing, jarum (frog) & rel pengantar, batang penggerak & mesin wesel kuning-abu, lampu indikator
     for (const [toe, dir] of [[MT.entry, 1], [MT.exit, -1]]) {
