@@ -2821,12 +2821,15 @@
       if (k > 0) { const prev = S.carDyn[k - 1]; D.g += ((k === 1 ? target : prev.g) - D.g) * Math.min(1, dt * 4); D.s = prev.s + D.g; }
       const [mF, len] = carSpan(k);
       [['F', mF + 3], ['R', mF + len - 3]].forEach(([b, m]) => {
-        const j = Math.floor((S.x - m - D.s) / 25);
+        const bx = S.x - m - D.s, j = Math.floor(bx / 25), pb = D['p' + b];
         if (D['j' + b] !== null && j !== D['j' + b] && S.v > 1 && !FS) D['v' + b] -= 0.3 + S.v * 0.045;
+        // wesel/sambungan jembatan: tiap bogie menghentak saat melintas, merambat dari lokomotif ke gerbong belakang; badan sedikit terangkat lalu mengayun
+        if (pb !== undefined && S.v > 1.5 && !FS && !REDUCE_MOTION) for (const [wx, a] of joltPts()) if (pb < wx && bx >= wx) D['v' + b] += (Math.random() < 0.5 ? -1 : 1) * a * (0.55 + Math.min(S.v, 30) * 0.05);
+        D['p' + b] = bx;
         D['j' + b] = j;
         const h = Math.min(dt, 0.05);
         D['v' + b] += (-80 * D['y' + b] - 7 * D['v' + b]) * h;
-        D['y' + b] = clamp(D['y' + b] + D['v' + b] * h, -0.06, 0.06);
+        D["y" + b] = clamp(D["y" + b] + D["v" + b] * h, -0.085, 0.085);
       });
       D.dy = (D.yF + D.yR) / 2;
       D.pitch = (D.yR - D.yF) / len - a * 0.004;
@@ -7896,14 +7899,18 @@
   // ---------- rasa melaju: hentakan halus saat bogie melindas wesel & sambungan jembatan, getaran rendah di atas jembatan baja ----------
   // (juga untuk kereta cepat yang tanpa sambungan rel biasa); posisi wesel: wesel jalur 2/3 stasiun, wesel cabang, sepur silang
   let JOLT_PTS = null, JOLT_RT = null;
-  function trackJolt(st) {
-    if (!S || st !== S || REDUCE_MOTION) return 0;
-    const kmh = st.v * 3.6; if (kmh < 8) return 0;
+  function joltPts() { // titik guncang: wesel di ujung emplasemen, wesel persilangan, sambungan jembatan
     if (JOLT_RT !== ROUTE) { JOLT_RT = ROUTE; JOLT_PTS = [];
       if (ROUTE.double) for (const s2 of allStations()) JOLT_PTS.push([s2.x - 470, 1], [s2.x + 190, 1]);
       if (ROUTE.switchX !== null && ROUTE.switchX !== undefined) JOLT_PTS.push([ROUTE.switchX, 1.2]);
       if (ROUTE.meet) JOLT_PTS.push([ROUTE.meet.entry, 1.2], [ROUTE.meet.exit, 1.2]);
       for (const b of ROUTE.bridges || (ROUTE.bridge ? [ROUTE.bridge] : [])) JOLT_PTS.push([b.from, 0.8], [b.to, 0.8]); }
+    return JOLT_PTS;
+  }
+  function trackJolt(st) {
+    if (!S || st !== S || REDUCE_MOTION) return 0;
+    const kmh = st.v * 3.6; if (kmh < 8) return 0;
+    joltPts();
     const sp = clamp(kmh / 90, 0.35, 1.3), wid = Math.max(0.35, st.v * 0.012); let j = 0;
     for (const [wx, a] of JOLT_PTS) { const r = st.x - wx; if (r < -2 || r > 16) continue; // bogie depan & belakang lokomotif (± 2,5 m & 13 m dari moncong)
       for (const [bo, sg] of [[2.5, 1], [13, -0.7]]) { const u = (r - bo) / wid; if (Math.abs(u) < 3) j += sg * a * Math.exp(-u * u) * 1.1 * sp; } }
@@ -7962,7 +7969,7 @@
     if (!S || S.phase !== 'dwell' || MIS.freight) return null;
     const step = S.dwell.step, st = ROUTE.stations[S.st], cr = crowds.get(S.st);
     if (!(step === 'open' || step === 'board' || step === 'alight')) return null;
-    const ppl = cr ? cr.people.filter((p) => p.role !== 'ppka' && p.alpha > 0.05 && p.state !== 'gone' && p.state !== 'in') : [];
+    const ppl = cr ? cr.people.filter((p) => p.role !== 'ppka' && p.role !== 'see' && p.role !== 'late' && p.alpha > 0.05 && p.state !== 'gone' && p.state !== 'in') : [];
     const expect = step === 'alight' ? (S.aboard > 0 || (cr && cr.alightLeft > 0)) : st.waiting > 0 && (!cr || !cr.boardDone);
     if (!ppl.length && !expect) return null;
     if (ppl.length) return ppl.reduce((a, p) => a + p.x, 0) / ppl.length;
@@ -8025,7 +8032,54 @@
   // render dengan transisi cuaca: di zona badai mereda, adegan cerah (sore keemasan) digambar dulu lalu adegan badai ditumpuk
   // dengan kelegapan = kekuatan badai, sehingga langit, hujan, warna & cahaya berubah mulus; di atasnya efek sinar matahari menembus awan & pelangi
   let STORM_CV = null, CLEAR_PASS = false, PASS_FIX = null, PASS_REUSE = false;
-  function render(dtReal) {
+  // ---------- kedalaman sinematik ----------
+  // kabur kedalaman: salin lapisan jauh yang sudah tergambar ke buffer 1/3 resolusi lalu tumpuk kembali (bilinear = kabur lembut);
+  // memudar ke bawah supaya tidak ada garis potong di cakrawala. Mati pada mode hemat efek & mode kurangi gerak tidak berpengaruh (bukan gerak)
+  let DOF_CV = null, BLOOM_T = null;
+  function depthBlur(c, V) {
+    if (GFX.fx >= 1 || viewMode === 'cab' || V.st !== S && V.st !== idleState) return;
+    const cv2 = c.canvas, T = c.getTransform(), yb = Math.min(cv2.height, Math.round(T.d * (V.gy + 0.5 * V.ppm) + T.f)); if (yb < 20) return;
+    const sw = Math.max(8, Math.round(cv2.width / 4)), sh = Math.max(4, Math.round(yb / 4));
+    if (!DOF_CV) DOF_CV = document.createElement('canvas'); if (DOF_CV.width !== sw || DOF_CV.height !== sh) { DOF_CV.width = sw; DOF_CV.height = sh; }
+    const d = DOF_CV.getContext('2d'); d.imageSmoothingEnabled = true; d.clearRect(0, 0, sw, sh); d.drawImage(cv2, 0, 0, cv2.width, yb, 0, 0, sw, sh);
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.imageSmoothingEnabled = true;
+    const n = 6, fadeFrom = 0.62; // bagian atas penuh; 38% terbawah memudar bertahap
+    for (let i = 0; i < n; i++) { const u0 = i === 0 ? 0 : fadeFrom + (1 - fadeFrom) * (i - 1) / (n - 1), u1 = fadeFrom + (1 - fadeFrom) * i / (n - 1);
+      const a = 0.66 * (i === 0 ? 1 : 1 - (i - 0.5) / (n - 1)); if (a <= 0.02) continue;
+      c.globalAlpha = a; c.drawImage(DOF_CV, 0, u0 * sh, sw, (u1 - u0) * sh, 0, u0 * yb, cv2.width, (u1 - u0) * yb); }
+    c.restore();
+  }
+  // bloom: cahaya terang (lampu, jendela, sinyal, instrumen) berpendar lembut saat gelap. Buffer 1/8 resolusi dikalikan dengan dirinya
+  // (nilai^4: bagian gelap & menengah lenyap, sumber paling terang tersisa) lalu ditampilkan sebagai kanvas kecil di atas layar dengan mode campur
+  // 'plus-lighter' CSS: pembesaran & pencampuran dikerjakan kompositor peramban (GPU), bukan kode gambar. Diperbarui tiap 2 frame.
+  let BLOOM_EL = null, BLOOM_N = 0;
+  function bloom(c, k) {
+    const on = k >= 0.04 && GFX.fx < 2 && c.canvas === cv;
+    if (!on) { if (BLOOM_EL && BLOOM_EL.style.display !== 'none') BLOOM_EL.style.display = 'none'; return; }
+    if (!BLOOM_EL) { BLOOM_EL = document.createElement('canvas'); BLOOM_EL.setAttribute('aria-hidden', 'true');
+      BLOOM_EL.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;';
+      BLOOM_EL.style.mixBlendMode = 'plus-lighter'; if (BLOOM_EL.style.mixBlendMode !== 'plus-lighter') BLOOM_EL.style.mixBlendMode = 'screen';
+      cv.insertAdjacentElement('afterend', BLOOM_EL); BLOOM_T = document.createElement('canvas'); }
+    BLOOM_EL.style.display = 'block'; BLOOM_EL.style.opacity = (clamp(k, 0, 1) * 0.75).toFixed(3);
+    if (++BLOOM_N % 2) return;
+    const bw = Math.max(8, Math.round(cv.width / 8)), bh = Math.max(8, Math.round(cv.height / 8));
+    for (const b of [BLOOM_EL, BLOOM_T]) if (b.width !== bw || b.height !== bh) { b.width = bw; b.height = bh; }
+    const g = BLOOM_EL.getContext('2d'), t = BLOOM_T.getContext('2d');
+    g.globalCompositeOperation = 'copy'; g.globalAlpha = 1; g.drawImage(cv, 0, 0, bw, bh);
+    for (let q = 0; q < 2; q++) { t.globalCompositeOperation = 'copy'; t.drawImage(BLOOM_EL, 0, 0); g.globalCompositeOperation = 'multiply'; g.drawImage(BLOOM_T, 0, 0); } // nilai^4: hanya sumber paling terang
+    // lebarkan sedikit: salin bergeser (pendaran lebih bulat)
+    t.drawImage(BLOOM_EL, 0, 0); g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.5;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) g.drawImage(BLOOM_T, dx, dy);
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    if (viewMode === 'cab') g.clearRect(0, Math.round(bh * 0.6), bw, bh); // kokpit: dasbor & angka instrumen tidak ikut berpendar (tetap terbaca)
+  }
+  function bloomK() { // seberapa gelap adegan: malam penuh, badai (ikut mereda), terowongan
+    const st = S || idleState; let k = MIS.sky === 'night' ? 1 : MIS.sky === 'storm' ? 0.65 * (CLR() ? stormK(st.x) : 1) : 0;
+    const T = ROUTE.tunnel; if (T && st.x > T.from + 30 && st.x - TRAIN_LEN < T.to) k = Math.max(k, 0.5);
+    return k;
+  }
+  function render(dtReal) { renderCore(dtReal); bloom(ctx, bloomK()); }
+  function renderCore(dtReal) {
     const C = CLR(), st0 = S || idleState;
     if (!C || MIS.sky !== 'storm') { renderPass(dtReal, ctx); return; }
     const k = stormK(st0.x);
@@ -8225,6 +8279,7 @@
     drawLandmarks(V, true);
     drawRidges(V);
     { const sw = seaWeight(V); if (sw < 0.99) { c.save(); c.globalAlpha = 1 - sw; drawFarLand(V); c.restore(); } }
+    depthBlur(c, V); // ruang tajam: langit, gunung & daratan jauh sedikit kabur; lapisan tengah & kereta yang digambar setelah ini tetap tajam
     { const sw = seaWeight(V); if (sw < 0.99 && !(ROUTE.scenes || []).some((q) => q.kind === 'city' && sceneWeight(V, q) > 0.5)) { c.save(); c.globalAlpha = 1 - sw; drawRoadTraffic(V); c.restore(); } }
     drawScenes(V);
     { const sw = seaWeight(V); if (sw < 0.99) { c.save(); c.globalAlpha = 1 - sw; drawLandmarks(V); c.restore(); } }
@@ -10406,6 +10461,14 @@
         delay: 0.2 + hash(seed + 8.8) * 3, ph: hash(seed + 9.9) * 6, dir: 1, alpha: 1, k: 0,
       });
     }
+    // pengantar & penjemput: berdiri di belakang peron, melambai saat kereta bergerak di dekat mereka
+    const nSee = MIS.freight || s.pass ? 0 : 2 + Math.floor(hash(si * 5.3 + 1.1) * 3);
+    for (let k = 0; k < nSee; k++) { const seed = 500 + si * 31 + k * 7, r = hash(seed * 1.7);
+      people.push({ role: 'see', state: 'stand', kind: r < 0.3 ? 'hijab' : r < 0.45 ? 'child' : r < 0.55 ? 'elder' : 'adult', seed,
+        x: s.x - 88 + hash(seed + 0.3) * 100, z: 0.72 + hash(seed + 0.9) * 0.22,
+        shirt: PAX_SHIRT[Math.floor(hash(seed) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1.1) * PAX_PANTS.length)],
+        skin: PAX_SKIN[Math.floor(hash(seed + 2.2) * PAX_SKIN.length)], hijab: PAX_HIJAB[Math.floor(hash(seed + 4.4) * PAX_HIJAB.length)],
+        umbrella: s.umbrellas && hash(seed + 1.7) < 0.75, dir: hash(seed + 3.3) < 0.5 ? -1 : 1, alpha: 1, ph: hash(seed + 9.9) * 6, wave: 0 }); }
     const ppka = { role: 'ppka', state: 'stand', kind: 'ppka', x: s.x - 40, z: 0.86, shirt: '#f4f1e8', pants: '#2a3442', skin: '#a8704a', dir: 1, alpha: 1, ph: 0 };
     const started = S.phase === 'dwell' && S.st === si && S.dwell.step !== 'open' && S.dwell.step !== 'board';
     return { si, s, people, ppka, doors: null, alightLeft: 0, spawnT: 0, kond: null, paddle: 0, whistled: !!started, boardDone: !!started };
@@ -10472,9 +10535,26 @@
           if (d.alight > 0 && !d.busy) { d.alight--; d.busy = true; spawnAlighter(cr, d); }
         }
       }
+      // penumpang terlambat: setelah naik-turun selesai, sesekali seseorang berlari dari ujung peron mengejar pintu
+      if (here && step === 'board' && cr.doors && cr.left <= 2 && !cr.lateRolled && !s.final) { cr.lateRolled = true;
+        if ((Math.random() < 0.45 || window.__late) && S.doors === 'open') { const seed = 900 + si * 17, sx = s.x + 22; // dari pintu masuk peron di ujung depan (dekat lokomotif)
+          cr.people.push({ role: 'late', state: 'run', kind: hash(seed) < 0.5 ? 'backpack' : 'adult', seed, x: sx, z: 0.55,
+            shirt: PAX_SHIRT[Math.floor(hash(seed + 0.5) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1.1) * PAX_PANTS.length)],
+            skin: PAX_SKIN[Math.floor(hash(seed + 2.2) * PAX_SKIN.length)], hijab: PAX_HIJAB[0], dir: -1, alpha: 1, ph: 0, run: true, k: 0, wave: 1 });
+          toast('Ada penumpang berlari mengejar kereta! Tahan pintu sebentar?', 'info', 2.6, 'late', 2); } }
       let left = 0;
       for (const p of cr.people) {
         p.moving = false;
+        if (p.role === 'see') { // melambai saat kereta bergerak di dekatnya (datang atau berangkat)
+          const near = Math.abs(S.x - TRAIN_LEN / 2 - p.x) < 140 && S.v > 0.3;
+          p.wave = clamp(p.wave + (near ? dt : -dt) * 2.5, 0, 1); if (near) p.dir = Math.sign(S.x - TRAIN_LEN / 2 - p.x) || 1; continue; }
+        if (p.role === 'late') {
+          if (p.state === 'run') { const d = p.door || (p.door = crowdDoors(cr).reduce((a, q) => (Math.abs(q.cx - p.x) < Math.abs(a.cx - p.x) ? q : a)));
+            p.wave = Math.max(0, p.wave - dt * 0.4); // melambai sambil berlari di awal
+            if (walkTo(p, d.cx, 0.05, dt, 5.2)) { if (S.doors === 'open' && S.v < 0.1) { p.state = 'step'; p.k = 0; p.run = false; Sound.boardThump(); } else { p.state = 'missed'; p.run = false; p.t = 0; p.dir = 1; } } }
+          else if (p.state === 'step') { p.k += dt / 0.45; if (p.k >= 1) { p.state = 'in'; S.aboard++; toast('Penumpang terlambat sempat naik. "Terima kasih, Pak Masinis!"', 'good', 2.4, 'late2', 2); } }
+          else if (p.state === 'missed') { p.t += dt; p.wave = p.t < 2.5 ? 1 : Math.max(0, p.wave - dt); if (p.t > 4) p.alpha = Math.max(0, p.alpha - dt); }
+          continue; }
         if (p.role === 'alight') {
           if (p.state === 'out') {
             p.k += dt / 0.55;
@@ -10518,7 +10598,7 @@
         }
       }
       cr.left = left;
-      cr.people = cr.people.filter((p) => !(p.role === 'alight' && p.state === 'fade' && p.alpha <= 0));
+      cr.people = cr.people.filter((p) => !((p.role === 'alight' && p.state === 'fade' || p.role === 'late') && p.alpha <= 0));
       // semboyan berangkat: PPKA mengangkat tongkat hijau, kondektur meniup peluit lalu naik
       const sendOff = here && (step === 'close' || step === 'signal') && cr.boardDone;
       cr.paddle = clamp(cr.paddle + (sendOff ? dt : -dt) * 2.2, 0, 1);
@@ -10565,7 +10645,7 @@
   function paxDraw(c, x, y, s, p, paddle) {
     const child = p.kind === 'child', st = paxStyle(p);
     const h = (p.kind === 'elder' ? 1.56 : child ? 1.12 : st.woman ? 1.6 : 1.68) * s;
-    const ph = p.ph || 0, mv = !!p.moving, sw = mv ? Math.sin(ph) * 0.42 : 0;
+    const ph = p.ph || 0, mv = !!p.moving, sw = mv ? Math.sin(ph) * (p.run ? 0.7 : 0.42) : 0, wv = p.wave || 0;
     const bob = mv ? -Math.abs(Math.sin(ph)) * h * 0.018 : 0;
     const hipY = y - h * 0.48 + bob, shY = y - h * 0.81 + bob, headR = h * (child ? 0.09 : 0.075), headY = y - h * 0.9 + bob;
     const dir = p.dir || 1, shade = (col, k) => mix(col, '#101418', k);
@@ -10591,6 +10671,7 @@
     const arm = (sg, col) => { const aa = -sw * sg * 0.85, Lu = h * 0.16, Lf = h * 0.15, ex = x + Math.sin(aa) * Lu * dir, ey = shY + h * 0.04 + Math.cos(aa) * Lu, ax = ex + Math.sin(aa + 0.35) * Lf * dir, ay = ey + Math.cos(aa + 0.35) * Lf;
       c.strokeStyle = col; c.lineWidth = h * 0.055; c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(ex, ey); c.stroke(); c.strokeStyle = shade(p.skin, sg < 0 ? 0.25 : 0); c.lineWidth = h * 0.045; c.beginPath(); c.moveTo(ex, ey); c.lineTo(ax, ay); c.stroke(); };
     const special = (p.kind === 'ppka' && paddle > 0.02) || p.kind === 'elder' || p.kind === 'trader' || (clapNow && p.role === 'board') || (p.kind === 'kond' && p.whistle);
+    const waving = !special && wv > 0.02 && !(p.umbrella && !p.run);
     if (!special) arm(-1, shade(p.shirt, 0.3));
     // badan: baju dengan motif
     const tw = h * (st.uni ? 0.22 : 0.2), th = hipY - shY + h * 0.04;
@@ -10620,6 +10701,12 @@
       c.beginPath(); c.moveTo(x - h * 0.06, shY + h * 0.04); c.lineTo(x - h * 0.03, headY - headR * 1.6 - up); c.moveTo(x + h * 0.06, shY + h * 0.04); c.lineTo(x + h * 0.03, headY - headR * 1.6 - up); c.stroke();
     } else if (p.kind === 'kond' && p.whistle) {
       c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(x + dir * h * 0.08, headY + headR * 0.6); c.stroke();
+    } else if (waving) { // tangan terangkat melambai: lengan atas naik, lengan bawah berayun kiri-kanan, telapak terbuka
+      const tw2 = performance.now() / 1000 * 7.5 + (p.seed || 0), ex = x + dir * h * 0.14 * wv, ey = shY + h * 0.04 - h * 0.12 * wv, sway = Math.sin(tw2) * 0.5 + dir * 0.15;
+      const hx = ex + Math.sin(sway) * h * 0.18 * wv, hy = ey - Math.cos(sway) * h * 0.18 * wv;
+      c.strokeStyle = p.shirt; c.lineWidth = h * 0.055; c.beginPath(); c.moveTo(x, shY + h * 0.04); c.lineTo(ex, ey); c.stroke();
+      c.strokeStyle = p.skin; c.lineWidth = h * 0.045; c.beginPath(); c.moveTo(ex, ey); c.lineTo(hx, hy); c.stroke();
+      c.fillStyle = p.skin; c.beginPath(); c.arc(hx, hy, h * 0.03, 0, 7); c.fill();
     } else arm(1, p.shirt);
     // leher & kepala
     c.fillStyle = p.skin; c.fillRect(x - headR * 0.35, headY + headR * 0.6, headR * 0.7, shY - headY - headR * 0.5);
