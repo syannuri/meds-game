@@ -2319,7 +2319,7 @@
   let W = 0, H = 0, DPR = 1, SW = 0, SH = 0;
   // kualitas grafis adaptif: bila jarak antar-frame terus tinggi (HP kewalahan), resolusi gambar diturunkan bertahap;
   // dinaikkan lagi bila sudah lancar cukup lama. 'rn.gfx' = 'high' mengunci resolusi penuh.
-  const GFX = { q: 1, slow: 0, fast: 0, lock: store.get('rn.gfx') === 'high' };
+  const GFX = { q: 1, fx: 0, slow: 0, fast: 0, lock: store.get('rn.gfx') === 'high' }; // q = skala resolusi; fx = tingkat pengurangan efek berat (0 penuh, 1 hemat, 2 hemat-lanjut) bila resolusi sudah minimum
   const wantDPR = () => Math.max(1, Math.min(2, window.devicePixelRatio || 1) * GFX.q);
   let mode = 'title';
   let radioDur = 1, trainScr = null;
@@ -2964,6 +2964,10 @@
   function step(dt) {
     const prevX = S.x, prevV = S.v;
     S.t += dt; S.clock += dt * TIME_SCALE;
+    if (S.mode === 'play') { // catatan perjalanan: profil kecepatan (rapor & grafik), porsi meluncur (efisiensi), jejak waktu (rekaman bayangan)
+      const T = S.trace || (S.trace = { pts: [], lastT: -9, coast: 0, dist: 0 });
+      if (S.v > 0.5) { T.dist += S.v * dt; if (S.notch === 0) T.coast += S.v * dt; }
+      if (S.t - T.lastT >= 0.5) { T.lastT = S.t; T.pts.push([Math.round(S.x * 10) / 10, Math.round(S.t * 10) / 10, Math.round(S.v * 36) / 10]); } }
 
     // --- dinamika kereta ---
     const n = S.notch;
@@ -3313,7 +3317,7 @@
       if (S.floodStop > 4) violation('floodstop', 'Berhenti di genangan. Kereta harus terus berjalan pelan.', 5);
     } else S.floodStop = 0;
     // cipratan dari roda yang menerjang air
-    if (inW && S.v > 0.5 && S.splash.length < 120) {
+    if (inW && S.v > 0.5 && S.splash.length < [120, 70, 40][GFX.fx]) {
       const n = Math.random() < S.v * dt * 6 ? 2 : 0;
       for (let i = 0; i < n; i++) {
         const wx = S.x - Math.random() * TRAIN_LEN;
@@ -3764,6 +3768,48 @@
     requestAnimationFrame(() => { go(); requestAnimationFrame(go); });
   }
   window.addEventListener('resize', () => { if (mode === 'result') fitResult(); });
+  // ---------- rapor perjalanan: empat nilai, nilai total & grade, grafik kecepatan, rekaman bayangan terbaik ----------
+  const ghostKey = () => 'rn.ghost.' + (MIS.daily ? 'd' + MIS.daily.key : MIS.id);
+  let GHOST_C = null;
+  function ghostData() { const k = ghostKey(); if (GHOST_C && GHOST_C.k === k) return GHOST_C.d; let d = null; try { d = JSON.parse(store.get(k) || 'null'); } catch (e) { d = null; } GHOST_C = { k, d }; return d; }
+  function ghostXAt(t) { const g = ghostData(); if (!g || !g.pts.length) return null; const P = g.pts; if (t <= P[0][1]) return P[0][0]; if (t >= P[P.length - 1][1]) return null; // bayangan sudah tiba
+    let lo = 0, hi = P.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (P[m][1] <= t) lo = m; else hi = m; } const a = P[lo], b = P[hi], u = (t - a[1]) / Math.max(1e-6, b[1] - a[1]); return a[0] + (b[0] - a[0]) * u; }
+  function ghostTAt(x) { const g = ghostData(); if (!g || !g.pts.length) return null; const P = g.pts; for (let i = 1; i < P.length; i++) if (P[i][0] >= x) { const a = P[i - 1], b = P[i], u = (x - a[0]) / Math.max(1e-6, b[0] - a[0]); return a[1] + (b[1] - a[1]) * clamp(u, 0, 1); } return null; }
+  function travelReport(r) {
+    const T = S.trace || { pts: [], coast: 0, dist: 0 };
+    const stopSc = S.stops.map((s) => clamp(100 - Math.max(0, s.clock - s.sched - 30) / 270 * 100, 0, 100));
+    const time = stopSc.length ? stopSc.reduce((a, b) => a + b, 0) / stopSc.length : 0;
+    const comfort = clamp(S.comfort, 0, 100);
+    const coastPct = T.dist > 1 ? T.coast / T.dist * 100 : 0, regenPct = ELEC() && S.kwh > 1 ? S.regen / S.kwh * 100 : 0;
+    const energy = clamp(35 + coastPct * 0.75 + regenPct * 1.2, 0, 100);
+    const safety = clamp(100 - S.violations.length * 18 - (r.failed ? 45 : 0), 0, 100);
+    const total = Math.round(time * 0.3 + comfort * 0.25 + energy * 0.15 + safety * 0.3);
+    const grade = r.failed ? 'D' : total >= 92 ? 'S' : total >= 80 ? 'A' : total >= 65 ? 'B' : total >= 50 ? 'C' : 'D';
+    return { time: Math.round(time), comfort: Math.round(comfort), energy: Math.round(energy), safety: Math.round(safety), total, grade, coastPct: Math.round(coastPct), regenPct: Math.round(regenPct), pts: T.pts };
+  }
+  function saveGhost(rep, failed) { // simpan perjalanan bila nilai total terbaik (hanya perjalanan selesai)
+    if (failed || !rep.pts.length) return { isBest: false, prev: ghostData() };
+    const prev = ghostData(); if (prev && prev.total >= rep.total) return { isBest: false, prev };
+    const step = Math.max(1, Math.ceil(rep.pts.length / 400)), pts = rep.pts.filter((_, i) => i % step === 0 || i === rep.pts.length - 1);
+    const d = { total: rep.total, grade: rep.grade, time: S.t, date: Date.now(), pts }; try { store.set(ghostKey(), JSON.stringify(d)); } catch (e) { /* penyimpanan penuh */ } GHOST_C = null; return { isBest: true, prev };
+  }
+  function speedChartSVG(pts, gpts) { // grafik kecepatan vs jarak: batas kecepatan (tangga emas), perjalanan ini (merah), terbaik sebelumnya (putus-putus)
+    const st = ROUTE.stations, xa = st[0].x, xb = st[st.length - 1].x, Wd = 600, Hd = 170, pl = 30, pr = 6, pt = 8, pb = 24;
+    const vmax = Math.max(ROUTE.lineSpeed, ...pts.map((p) => p[2])) * 1.08, X = (x) => pl + (Wd - pl - pr) * clamp((x - xa) / Math.max(1, xb - xa), 0, 1), Y = (v) => Hd - pb - (Hd - pt - pb) * clamp(v / vmax, 0, 1);
+    let lim = ''; for (let x = xa; x <= xb; x += Math.max(10, (xb - xa) / 300)) { const z = zoneAt(x), l = z ? z.limit : ROUTE.lineSpeed; lim += `${lim ? 'L' : 'M'}${X(x).toFixed(1)} ${Y(l).toFixed(1)}`; }
+    const path = (P) => P.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)} ${Y(p[2]).toFixed(1)}`).join('');
+    const grid = [0, 0.25, 0.5, 0.75, 1].map((f) => { const v = Math.round(vmax * f / 10) * 10; return `<line x1="${pl}" x2="${Wd - pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(255,255,255,.08)"/><text x="${pl - 4}" y="${Y(v) + 5}" text-anchor="end" font-size="14" fill="rgba(255,255,255,.55)">${v}</text>`; }).join('');
+    const stn = st.map((q) => `<line x1="${X(q.x)}" x2="${X(q.x)}" y1="${pt}" y2="${Hd - pb}" stroke="rgba(255,255,255,.18)" stroke-dasharray="2 3"/><text x="${X(q.x)}" y="${Hd - 7}" text-anchor="${q === st[0] ? 'start' : q === st[st.length - 1] ? 'end' : 'middle'}" font-size="15" fill="rgba(255,255,255,.75)">${titleCase(q.name)}</text>`).join('');
+    return `<svg class="rchart" viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="Grafik kecepatan sepanjang perjalanan">${grid}${stn}<path d="${lim}" fill="none" stroke="#e9b949" stroke-width="2.4" opacity=".85"/>${gpts && gpts.length ? `<path d="${path(gpts)}" fill="none" stroke="rgba(160,220,255,.75)" stroke-width="2.2" stroke-dasharray="7 5"/>` : ''}<path d="${path(pts)}" fill="none" stroke="#ff5a4a" stroke-width="3"/></svg>`;
+  }
+  function reportHTML(rep, gs) {
+    const bar = (lab, v) => `<div class="rbar"><span>${lab}</span><i><b style="width:${v}%" class="${v >= 80 ? 'hi' : v >= 55 ? 'mid' : 'lo'}"></b></i><em>${v}</em></div>`;
+    const prev = gs.prev, dt = prev && prev.time ? S.t - prev.time : null;
+    const cmp = gs.isBest ? (prev ? `<span class="rbest">REKOR BARU · sebelumnya ${prev.total} (${prev.grade})</span>` : '<span class="rbest">Rekaman pertama disimpan sebagai bayangan</span>') : prev ? `<span>Terbaik: ${prev.total} (${prev.grade})${dt !== null ? ` · waktu ${dt >= 0 ? '+' : '−'}${fmtDur(Math.abs(dt))}` : ''}</span>` : '';
+    return `<div class="rreport"><div class="rgrade g${rep.grade}"><b>${rep.grade}</b><small>${rep.total}</small></div><div class="rbars">${bar('Tepat waktu', rep.time)}${bar('Nyaman', rep.comfort)}${bar('Energi', rep.energy)}${bar('Aman', rep.safety)}</div>
+      <div class="rchartw">${speedChartSVG(rep.pts, prev && prev.pts)}<div class="rlegend"><i class="l1"></i>perjalanan ini <i class="l2"></i>batas${prev ? ' <i class="l3"></i>terbaik' : ''}</div></div>
+      <div class="rcmp">${cmp}<span class="rsub">meluncur ${rep.coastPct}%${ELEC() ? ` · regen ${rep.regenPct}%` : ''} · ${S.violations.length ? `${S.violations.length} pelanggaran` : 'tanpa pelanggaran'}</span></div></div>`;
+  }
   function showResult() {
     // kereta listrik: bonus koin untuk masinis hemat energi (rem regeneratif mengembalikan ≥ 20% energi)
     const regenPct = ELEC() && S.kwh > 1 ? Math.round((S.regen / S.kwh) * 100) : 0;
@@ -3820,7 +3866,8 @@
       ['KOIN', `${r.total}`, 'gold', `misi ${r.base} + henti ${S.coins} + nyaman ${r.comfortBonus}${r.penalty ? ` − ${r.penalty}` : ''}${S.expert ? ' ×1,5' : ''}`],
     ];
     if (ELEC()) tiles.push(['ENERGI', `${Math.round(S.kwh)} kWh`, ecoBonus ? 'ok' : '', `regen ${Math.round(S.regen)} kWh (${regenPct}%)${ecoBonus ? ' · +80 hemat' : ' · target 20%'}`]);
-    $('resCard').innerHTML = `${goalList}
+    const rep = travelReport(r), gs = saveGhost(rep, r.failed);
+    $('resCard').innerHTML = `${reportHTML(rep, gs)}${goalList}
       <table class="rtable">
         <thead><tr><th>Stasiun</th><th>Berhenti</th><th>Tiba / jadwal</th></tr></thead>
         <tbody>${loadRows}${rows}${rivalRow}</tbody>
@@ -7982,8 +8029,9 @@
     const C = CLR(), st0 = S || idleState;
     if (!C || MIS.sky !== 'storm') { renderPass(dtReal, ctx); return; }
     const k = stormK(st0.x);
-    if (k >= 0.999) { renderPass(dtReal, ctx); return; }
-    const keep = [MIS.sky, MIS.rain, MIS.golden], both = k > 0.004;
+    const eK = GFX.fx >= 2 ? 0.04 : 0.001; // hemat efek: jendela gambar-dua-lapis dipersempit (ujung transisi yang hampir tak terlihat digambar satu lapis)
+    if (k >= 1 - eK) { renderPass(dtReal, ctx); return; }
+    const keep = [MIS.sky, MIS.rain, MIS.golden], both = k > Math.max(0.004, eK);
     if (both) { // lapis badai dulu (dt sebenarnya: hujan, kilat, kamera bergerak), ke kanvas bantu
       if (!STORM_CV) STORM_CV = document.createElement('canvas'); if (STORM_CV.width !== cv.width || STORM_CV.height !== cv.height) { STORM_CV.width = cv.width; STORM_CV.height = cv.height; }
       const sc = STORM_CV.getContext('2d'); sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, STORM_CV.width, STORM_CV.height);
@@ -8213,6 +8261,7 @@
     drawElephants(LV, 'back');
     drawBridge(LV, 'back');
     drawTrainOnPaddy(LV);
+    drawGhost(LV);
     drawTrain(LV);
     drawSpeedFx(LV);
     drawDoubleShadows(LV); // jalur ganda: bayangan Guntur & Kilat satu lapis
@@ -8629,7 +8678,7 @@
       }
     } else weather.fw.length = 0;
     if (!MIS.rain) { if (!CLEAR_PASS) { weather.drops.length = 0; weather.flash = 0; } return; }
-    const want = Math.round(clamp(W * H / 2600, 60, 260));
+    const want = Math.round(clamp(W * H / 2600, 60, 260) * [1, 0.65, 0.42][GFX.fx]); // butir hujan dikurangi pada mode hemat efek
     while (weather.drops.length < want) weather.drops.push({ x: Math.random() * (W + 200), y: Math.random() * H, s: 0.7 + Math.random() * 0.6 });
     if (weather.drops.length > want) weather.drops.length = want;
     const ppm = clamp(H / 44, 3.4, 13);
@@ -12526,6 +12575,32 @@
   // kereta yang bersilang (tampak samping) dengan cahaya dinamis lingkungan: dilukis ke kanvas terpisah, lalu digelapkan sesuai subuh/petang,
   // diberi cahaya hangat dari arah matahari & kilau matahari yang menyapu badan, pantulan langit di atap, dan sorot lampu depan yang menerangi rel di depannya
   let OPC = null, OPL = null;
+  // kereta bayangan: hologram tipis rekaman perjalanan terbaik di jalur yang sama (di belakang kereta pemain bila bertumpuk)
+  function drawGhost(V) {
+    if (!S || S.mode !== 'play' || CLEAR_PASS || store.get('rn.ghostOn') === '0') return;
+    const gx = ghostXAt(S.t); if (gx === null || Math.abs(gx - S.x) < 0.5) return;
+    const { c, ppm, gy, X } = V, a = X(gx - TRAIN_LEN), b = X(gx);
+    if (b < -20 || a > W + 20) return;
+    const y0 = gy - 0.3 * ppm, top = gy - 3.25 * ppm,  near = clamp(Math.abs(gx - S.x) / 12, 0, 1), al = 0.9 * near;
+    c.save(); c.globalAlpha = al;
+    const g = c.createLinearGradient(0, top, 0, y0); g.addColorStop(0, 'rgba(150,225,255,0.55)'); g.addColorStop(0.55, 'rgba(110,195,245,0.32)'); g.addColorStop(1, 'rgba(80,160,230,0.22)');
+    let f = gx - TRAIN_LEN; const L = Math.max(1, TRAIN_LEN / Math.max(1, Math.round(TRAIN_LEN / 20)));
+    for (let k = 0; f < gx - 0.1; k++, f += L) { // tiap gerbong: badan transparan, garis tepi menyala, deret jendela
+      const xa = X(f) + 0.35 * ppm, xb = X(Math.min(gx, f + L)) - 0.35 * ppm, nose = f + L >= gx - 0.1;
+      c.fillStyle = g; c.strokeStyle = 'rgba(190,240,255,1)'; c.lineWidth = Math.max(1.5, 0.16 * ppm); c.shadowColor = 'rgba(120,210,255,0.9)'; c.shadowBlur = 0.8 * ppm;
+      c.beginPath(); c.moveTo(xa, y0); c.lineTo(xa, top + 0.4 * ppm);
+      if (nose) { c.lineTo(xb - 3.2 * ppm, top + 0.4 * ppm); c.quadraticCurveTo(xb, top + 0.6 * ppm, xb, y0 - 0.6 * ppm); } else c.lineTo(xb, top + 0.4 * ppm), c.lineTo(xb, y0);
+      c.lineTo(xb, y0); c.closePath(); c.fill(); c.stroke();
+      c.shadowBlur = 0; c.fillStyle = 'rgba(215,245,255,0.75)';
+      for (let wx = xa + 1.2 * ppm; wx < xb - (nose ? 4.5 : 1.6) * ppm; wx += 2.1 * ppm) c.fillRect(wx, top + 1.2 * ppm, 1.3 * ppm, 0.9 * ppm);
+    }
+    // garis pindai bergerak (kesan hologram)
+    c.globalAlpha = al * 0.6; c.fillStyle = 'rgba(200,245,255,0.6)';
+    for (let yy = top + ((S.t * 18 * ppm) % (0.8 * ppm)); yy < y0; yy += 0.8 * ppm) c.fillRect(a, yy, b - a, Math.max(1, 0.06 * ppm));
+    c.globalAlpha = Math.min(1, al * 1.6); c.font = `800 ${Math.max(10, Math.round(1.1 * ppm))}px "Plus Jakarta Sans", system-ui, sans-serif`; c.textAlign = 'center'; c.fillStyle = 'rgba(190,240,255,0.95)';
+    c.fillText('TERBAIK', clamp((a + b) / 2, 30, W - 30), top - 0.6 * ppm);
+    c.restore();
+  }
   function drawOppTrain(V) {
     const MT = ROUTE.meet, st = V.st; if (!MT || !st.meet || st.meet.phase !== 'run') return;
     if (MT.cakra) { // rangkaian Cakra livery merah: digambar dengan penggambar kereta game yang sama (detail & cahaya setara kereta pemain)
@@ -15427,6 +15502,14 @@ c.restore();
         c.fillStyle = '#16191b'; c.fillText('?', sx - 3, ly - 6);
       }
     }
+    // kereta bayangan (rekaman terbaik) + selisih waktu
+    const gx = S.mode === 'play' ? ghostXAt(S.t) : null;
+    if (S.mode === 'play' && ghostData() && store.get('rn.ghostOn') !== '0') { const gt = ghostTAt(S.x), d = gt === null ? null : S.t - gt;
+      if (gx !== null) { const ga = M(gx - TRAIN_LEN), gb = M(gx); c.fillStyle = 'rgba(140,215,255,0.55)'; c.fillRect(clamp(ga, -20, w), ly - 3, Math.max(0, Math.min(gb, w) - Math.max(ga, -20)), 6); }
+      if (d !== null && S.x > ROUTE.stations[0].x + 30) { const ahead = d < 0, txt = `TERBAIK ${ahead ? '−' : '+'}${Math.abs(d).toFixed(1)} dtk`;
+        c.font = '800 10px "Plus Jakarta Sans", system-ui, sans-serif'; const tw = c.measureText(txt).width, tx = w - tw - 8;
+        c.fillStyle = 'rgba(10,14,18,0.6)'; roundRect(c, tx - 5, 3, tw + 10, 15, 4); c.fill();
+        c.fillStyle = ahead ? '#7ee08a' : '#ff8a7a'; c.fillText(txt, tx, 11); } }
     // kereta
     const ta = M(S.x - TRAIN_LEN), tb = M(S.x);
     c.fillStyle = '#efe9da'; c.fillRect(ta, ly - 3, tb - ta, 6);
@@ -15484,12 +15567,13 @@ c.restore();
   let last = performance.now();
   const PHYS_DT = 1 / 120;
   let acc = 0;
-  const PERF = { ms: 0, max: 0, n: 0, gap: 0, tick: 0 }; // gap = jarak antar-frame (ms): ukuran kelancaran yang sebenarnya, termasuk waktu perender // waktu menggambar satu frame (rata-rata bergerak & puncak), untuk pengujian & pengaturan kualitas
+  const PERF = { ms: 0, max: 0, n: 0, gap: 0, tick: 0 }; if (typeof window !== 'undefined') window.__gfx = GFX; // gap = jarak antar-frame (ms): ukuran kelancaran yang sebenarnya, termasuk waktu perender // waktu menggambar satu frame (rata-rata bergerak & puncak), untuk pengujian & pengaturan kualitas
   function frame(now) {
     if (last) PERF.gap += (Math.min(250, now - last) - PERF.gap) * 0.08;
     if (!GFX.lock && mode === 'play' && ++PERF.tick % 45 === 0) { // periksa tiap ±45 frame
-      if (PERF.gap > 30) { GFX.fast = 0; if (++GFX.slow >= 2 && GFX.q > 0.6) { GFX.q = Math.max(0.6, GFX.q - 0.2); GFX.slow = 0; } }
-      else if (PERF.gap < 19) { GFX.slow = 0; if (++GFX.fast >= 8 && GFX.q < 1) { GFX.q = Math.min(1, GFX.q + 0.2); GFX.fast = 0; } }
+      // berat: turunkan resolusi dulu; bila sudah minimum (atau layar DPR 1), kurangi efek berat bertahap. Ringan lagi: efek dipulihkan dulu, lalu resolusi
+      if (PERF.gap > 30) { GFX.fast = 0; if (++GFX.slow >= 2) { GFX.slow = 0; if (GFX.q > 0.6 && wantDPR() > 1) GFX.q = Math.max(0.6, GFX.q - 0.2); else if (GFX.fx < 2) GFX.fx++; } }
+      else if (PERF.gap < 19) { GFX.slow = 0; if (++GFX.fast >= 8) { GFX.fast = 0; if (GFX.fx > 0) GFX.fx--; else if (GFX.q < 1) GFX.q = Math.min(1, GFX.q + 0.2); } }
       else { GFX.slow = 0; GFX.fast = 0; }
     }
     const dt = Math.min(0.05, (now - last) / 1000);
