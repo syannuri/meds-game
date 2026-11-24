@@ -5642,14 +5642,39 @@
           if (SUNK > 0) { const sd = SUN.x > t.x ? 1 : -1; c.strokeStyle = `rgba(${sunRim},${(0.6 * SUNK).toFixed(3)})`; c.lineWidth = Math.min(W * 0.006, Math.max(0.6, 0.07 * b.k)); c.beginPath(); c.moveTo(b.x + sd * 0.09 * b.k, b.y); c.lineTo(t.x + sd * 0.09 * b.k, t.y); c.stroke(); }
           if (a0 && a1) { c.lineWidth = Math.min(W * 0.012, Math.max(1, 0.1 * b.k)); c.beginPath(); c.moveTo(t.x, t.y); c.lineTo(a0.x, a0.y); c.moveTo(W3(d, PO, HW).x, W3(d, PO, HW).y); c.lineTo(a1.x, a1.y); c.stroke(); }
         });
-      } else for (let wd = Math.ceil(x0 / 40) * 40; wd < x0 + dMax; wd += 40) if (!inBrW(wd, 3)) add(wd - x0, () => {
-        const d = wd - x0, b = W3(d, 3.6, 0), t = W3(d, 3.6, 7.2), arm = W3(d, 3.6, 6.8);
-        if (!b || !t) return;
-        c.strokeStyle = '#5b4a3a'; c.lineWidth = Math.max(1, 0.22 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
-        if (SUNK > 0) { const sd = SUN.x > t.x ? 1 : -1; c.strokeStyle = `rgba(${sunRim},${(0.5 * SUNK).toFixed(3)})`; c.lineWidth = Math.max(0.6, 0.07 * b.k); c.beginPath(); c.moveTo(b.x + sd * 0.08 * b.k, b.y); c.lineTo(t.x + sd * 0.08 * b.k, t.y); c.stroke();
-          c.fillStyle = `rgba(20,25,15,${(0.2 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sd * 2.2 * b.k, b.y + 0.1 * b.k, 2.4 * b.k, 0.18 * b.k, 0, 0, 7); c.fill(); }
-        c.lineWidth = Math.max(1, 0.12 * b.k); c.beginPath(); c.moveTo(arm.x - 0.9 * b.k, arm.y); c.lineTo(arm.x + 0.9 * b.k, arm.y); c.stroke();
-      });
+      } else {
+        // tiang listrik kayu (jaringan tegangan rendah) di KIRI rel, sama seperti tampak luar: dua palang dengan isolator, kawat melengkung di antara tiang,
+        // berhenti di stasiun, perlintasan, jembatan, terowongan & emplasemen
+        const PL = -4.6, HP = 7.4, ARMS = [7.0, 6.3], INS = [-0.75, -0.25, 0.25, 0.75], SP = 40;
+        const poleOk = (wd) => !inBrW(wd, 6) && !nearStation(wd) && !nearTunnel(wd) && !ROUTE.crossings.some((q) => Math.abs(wd - q.x) < 14)
+          && !(ROUTE.yard && (ROUTE.yard.rev ? wd - ROUTE.yard.at > -250 && wd - ROUTE.yard.at < 240 : wd > -230 && wd < 250));
+        const wood = night ? '#3a3028' : '#5b4a3a', woodL = night ? '#4a3e33' : '#7a6450', insC = night ? '#6c7a72' : '#c9d8cf', wireC = night ? 'rgba(150,160,175,0.55)' : 'rgba(34,30,28,0.7)';
+        for (let wd = Math.ceil(x0 / SP) * SP; wd < x0 + dMax; wd += SP) if (poleOk(wd)) add(wd - x0, () => {
+          const d = wd - x0, b = W3(d, PL, 0), t = W3(d, PL, HP); if (!b || !t) return;
+          const lw = Math.min(W * 0.02, Math.max(1, 0.24 * b.k));
+          // bayangan di tanah & batang kayu dengan sisi terang/gelap
+          if (SUNK > 0) { const sd = SUN.x > t.x ? 1 : -1; c.fillStyle = `rgba(20,25,15,${(0.2 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sd * 2.4 * b.k, b.y + 0.1 * b.k, 2.6 * b.k, 0.18 * b.k, 0, 0, 7); c.fill(); }
+          c.strokeStyle = wood; c.lineWidth = lw; c.lineCap = 'round'; c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
+          c.strokeStyle = woodL; c.lineWidth = Math.max(0.6, lw * 0.35); c.beginPath(); c.moveTo(b.x - lw * 0.25, b.y); c.lineTo(t.x - lw * 0.25, t.y); c.stroke();
+          if (SUNK > 0) { const sd = SUN.x > t.x ? 1 : -1; c.strokeStyle = `rgba(${sunRim},${(0.5 * SUNK).toFixed(3)})`; c.lineWidth = Math.max(0.6, lw * 0.3); c.beginPath(); c.moveTo(b.x + sd * lw * 0.4, b.y); c.lineTo(t.x + sd * lw * 0.4, t.y); c.stroke(); }
+          // palang silang (melintang rel) + penyangga miring + isolator keramik
+          for (const ah of ARMS) { const a0 = W3(d, PL - 0.95, ah), a1 = W3(d, PL + 0.95, ah); if (!a0 || !a1) continue;
+            c.strokeStyle = wood; c.lineWidth = Math.max(1, 0.13 * b.k); c.beginPath(); c.moveTo(a0.x, a0.y); c.lineTo(a1.x, a1.y); c.stroke();
+            const br0 = W3(d, PL - 0.6, ah), br1 = W3(d, PL, ah - 0.55), br2 = W3(d, PL + 0.6, ah); if (br0 && br1 && br2 && b.k > 3) { c.lineWidth = Math.max(0.6, 0.05 * b.k); c.beginPath(); c.moveTo(br0.x, br0.y); c.lineTo(br1.x, br1.y); c.lineTo(br2.x, br2.y); c.stroke(); }
+            if (b.k > 1.2) for (const io of INS) { const q = W3(d, PL + io, ah + 0.12); if (!q) continue; const r = Math.max(1, 0.07 * q.k); c.fillStyle = insC; c.fillRect(q.x - r * 0.6, q.y - r * 1.4, r * 1.2, r * 1.6); } }
+          // kawat ke tiang berikutnya: melengkung (sag) mengikuti gravitasi, tipis menjauh
+          if (poleOk(wd + SP)) { c.strokeStyle = wireC;
+            for (const ah of ARMS) for (const io of INS) { c.beginPath(); let on = false;
+              for (let k = 0; k <= 10; k++) { const tt = k / 10, dd = d + SP * tt, q = W3(dd, PL + io, ah + 0.15 - 0.55 * Math.sin(Math.PI * tt)); if (!q) { on = false; continue; } if (on) c.lineTo(q.x, q.y); else { c.moveTo(q.x, q.y); on = true; } }
+              const q1 = W3(Math.max(1.6, d), PL + io, ah); c.lineWidth = Math.max(0.5, Math.min(2.2, 0.018 * (q1 ? q1.k : 10))); c.stroke(); } }
+          // kawat masuk dari tiang sebelumnya bila tiang ini yang terdekat (agar kabel tidak terputus di tepi kaca)
+          if (d < SP && poleOk(wd - SP)) { c.strokeStyle = wireC;
+            for (const ah of ARMS) for (const io of INS) { c.beginPath(); let on = false;
+              for (let k = 0; k <= 10; k++) { const tt = k / 10, dd = d - SP + SP * tt; if (dd < 1.3) { on = false; continue; } const q = W3(dd, PL + io, ah + 0.15 - 0.55 * Math.sin(Math.PI * tt)); if (!q) { on = false; continue; } if (on) c.lineTo(q.x, q.y); else { c.moveTo(q.x, q.y); on = true; } }
+              c.lineWidth = 2; c.stroke(); } }
+          c.lineCap = 'butt';
+        });
+      }
       const sawit = PLANT();
       for (let i = Math.ceil(x0 / 9); i * 9 < x0 + dMax; i++) {
         const side = hash(i * 1.3) < 0.5 ? -1 : 1, wd = i * 9 + hash(i) * 5, ht = sawit ? 8 + hash(i * 3.7) * 3 : 5 + hash(i * 3.7) * 6;
