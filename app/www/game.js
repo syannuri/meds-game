@@ -6890,7 +6890,7 @@
                 const tt = 1 - (m + 0.5) / M, z = B.col((R1.xs + R2.xs) / 2, tt); let cc;
                 if (z.glass !== undefined) { const sp = night ? 0 : 0.45 * SUNK * Math.exp(-Math.pow((q[0].x - SUN.x) / (W * 0.16), 2)), t = clamp(tt, 0, 1), v = (a0, a1) => Math.round(clamp(a0 + (a1 - a0) * t + 220 * sp, 0, 255));
                   const xm = (R1.xs + R2.xs) / 2, ws = xm < (PT.wsEnd || 0), str = ws && !night ? Math.max(0, 1 - Math.abs(((xm * 0.55 + t * 1.3) % 1.6) - 0.8) / 0.07) * 0.5 : 0; // garis pantulan diagonal di kaca depan
-                  cc = night ? (kL > 0.3 ? '#3a3226' : '#141b26') : mix(`rgb(${v(10, 74)},${v(15, 102)},${v(22, 132)})`, ws ? '#c9e2f2' : '#2a3a4a', ws ? str : 0.12); }
+                  cc = night ? (kL > 0.3 ? '#3a3226' : '#141b26') : mix(`rgb(${v(10, 74)},${v(15, 102)},${v(22, 132)})`, '#9fc3dc', ws ? str * 0.22 : 0); } // kaca depan sewarna kaca samping (gelap), hanya kilau tipis
                 else { const mr2 = (secs[j][0].s + 0) * 0; cc = night ? mix(z.c, '#000000', 0.45) : mix(z.c, '#000000', 0.1 * (1 - tt) + mr2); }
                 c.fillStyle = cc; c.strokeStyle = cc; c.lineWidth = 0.6; c.beginPath(); q.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); } }
             if (isG) { // bingkai kaca perak tipis di tepi atas & bawah, tepi pilar, wiper di kaca depan
@@ -13220,7 +13220,7 @@
       const gUp = curve([[[1.15, 4.1], [2.2, 4.95], [3.6, 5.6], [5.4, 5.68]], [[5.4, 5.68], [6.7, 5.6], [7.4, 4.62], [8.6, 4.62]]]), gLo = curve([[[1.6, 3.66], [3.5, 3.4], [5.8, 2.95], [8.0, 2.95]]]);
       const bTop = curve([[[-2.05, 1.42], [-0.6, 2.2], [2.6, 2.78], [6.2, 2.8]]]), bBot = curve([[[-1.6, 1.22], [-0.4, 1.45], [2.4, 1.6], [5.6, 1.6]]]), acc = curve([[[-2.0, 1.42], [-0.7, 2.1], [1.8, 2.49], [4.6, 2.49]]]);
       const A = (x) => (x > 4.6 ? 2.49 : acc(x)), PN = (x) => (x > 3.6 ? 2.26 : acc(x) - 0.23);
-      const bands = [{ x0: 1.15, x1: 99, lo: (x) => (x > 8.0 ? 2.95 : gLo(x)), hi: (x) => (x > 8.6 ? 4.62 : gUp(x)), col: glassC }];
+      const bands = [{ x0: 1.15, x1: 99, lo: (x) => (x > 8.0 ? 2.95 : gLo(x)), hi: (x) => { const u = x > 8.6 ? 4.62 : gUp(x); return x < 3.6 ? 99 : x < 5.8 ? u + (top(x) + 0.3 - u) * (1 - L(x, 3.6, 5.8)) : u; }, col: glassC }]; // kaca depan membungkus puncak moncong
       if (LV.band) bands.push({ x0: -2.2, x1: 99, lo: (x) => (x > 5.6 ? 1.6 : bBot(x)), hi: (x) => (x > 6.2 ? 2.8 : bTop(x)), col: (x, t) => ({ c: mix(LV.band, LV.acc || LV.band, 0.5 * (1 - Math.abs(t - 0.5) * 2)) }) });
       bands.push({ x0: -2.2, x1: 99, lo: (x) => A(x) - 0.09, hi: (x) => A(x) + 0.09, col: () => ({ c: LV.acc || '#d8262e' }) }, { x0: -2.2, x1: 99, lo: (x) => PN(x) - 0.05, hi: (x) => PN(x) + 0.05, col: () => ({ c: LV.pin || '#4a525a' }) });
       P = { LN: 11.2, xTip: -2.1, Ls: 12.3, bot: 0.9, top: 6.08, top0: top, white: [250, 251, 253], pillars: [[6.2, 6.5], [9.4, 10.8]], wsEnd: 6.2, wiper: 2.8, skirt: { c: '#c3c8ce', h0: 0.72 }, bands,
@@ -13232,7 +13232,7 @@
       const ST = (x) => (x > 4.0 ? 2.66 : sTop(x)), RD = (x) => (x > 4.0 ? 2.62 : sRed(x)) + 0.06;
       P = { LN: 10.0, xTip: -1.9, Ls: 11.1, bot: 1.35, top: 6.08, top0: top, white: [252, 253, 255], pillars: [[6.7, 7.05], [10.2, 10.4]], wsEnd: 6.7, wiper: 2.2, skirt: { c: '#c8cdd3', h0: 0.72 },
         bands: [
-          { x0: 0.25, x1: 99, lo: (x) => (x > 6.2 ? 4.12 : bLo(x)), hi: (x) => (x > 7.4 ? 5.12 : bUp(x)), col: glassC },
+          { x0: 0.25, x1: 99, lo: (x) => (x > 6.2 ? 4.12 : bLo(x)), hi: (x) => { const u = x > 7.4 ? 5.12 : bUp(x); return x < 3.2 ? 99 : x < 5.6 ? u + (top(x) + 0.3 - u) * (1 - L(x, 3.2, 5.6)) : u; }, col: glassC }, // kaca depan membungkus puncak moncong (menghadap depan), lalu menyempit jadi pita jendela samping
           { x0: -1.8, x1: 99, lo: () => 1.76, hi: ST, col: (x) => ({ c: mix(mix('#0b2f6e', '#1567c4', L(x, 15.85, 7)), '#22b6d6', L(x, 6, -1.7)) }) },
           { x0: -1.8, x1: 99, lo: (x) => RD(x) - 0.06, hi: (x) => RD(x) + 0.06, col: () => ({ c: '#d8262e' }) },
           { x0: -1.6, x1: 99, lo: () => 2.84, hi: () => 2.96, col: () => ({ c: '#8a959f' }) }],
