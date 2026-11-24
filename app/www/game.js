@@ -6917,7 +6917,7 @@
             const isG = B.col(0, 0.5).glass !== undefined;
             for (const j of order) { const R1 = rows[j], R2 = rows[j + 1]; if (Math.max(secs[j][0].d, secs[j + 1][0].d) < 1.2) continue;
               if (isG && (PT.pillars || []).some(([g0, g1]) => (R1.xs + R2.xs) / 2 > g0 && (R1.xs + R2.xs) / 2 < g1)) continue; // tiang (pilar) di antara kaca depan & jendela samping
-              for (let m = 0; m < M; m++) { const q = [R1.pts[m], R1.pts[m + 1], R2.pts[m + 1], R2.pts[m]].map((t) => W3(Math.max(1.2, t.d), t.o, t.h)); if (q.some((t) => !t)) continue; if ((side === 'L' ? 1 : -1) * area(q) * CULLS > 40) continue; // permukaan membelakangi kabin tidak digambar
+              for (let m = 0; m < M; m++) { const q = [R1.pts[m], R1.pts[m + 1], R2.pts[m + 1], R2.pts[m]].map((t) => W3(Math.max(1.2, t.d), t.o, t.h)); if (q.some((t) => !t)) continue; if (side === 'R' && -area(q) * CULLS > 40) continue; // hanya sisi kanan (di balik) yang disaring; sisi kiri digambar utuh agar tidak ada celah // permukaan membelakangi kabin tidak digambar
                 const tt = 1 - (m + 0.5) / M, z = B.col((R1.xs + R2.xs) / 2, tt); let cc;
                 if (z.glass !== undefined) { const t = clamp(tt, 0, 1), e = t * t * (3 - 2 * t); // kaca: gradasi tenang (langit samar di atas, gelap di bawah), tanpa kilau bergerak
                   cc = night ? (kL > 0.3 ? '#3a3226' : '#121821') : mix('#0e141b', '#3d5266', 0.85 * e); }
@@ -6937,8 +6937,8 @@
           const full = secs.find((ss) => ss[0].s >= 0.999) || secs[secs.length - 1], kOf = (rr) => full.findIndex((t) => t.a > Math.PI / 2 && t.r < rr);
           const line3 = (k, col, w, from = 0) => { c.strokeStyle = col; let on = false; c.beginPath(); for (let j = from; j < secs.length; j++) { const t = secs[j][Math.min(k, secs[j].length - 1)]; if (t.d < 1.5) { on = false; continue; } const q = W3(t.d, t.o, t.h); if (!q) { on = false; continue; } if (!on) { c.lineWidth = Math.max(1, w * q.k); c.moveTo(q.x, q.y); on = true; } else c.lineTo(q.x, q.y); } c.stroke(); };
           line3(ANG.length - 1, night ? 'rgba(10,12,16,0.9)' : 'rgba(40,46,54,0.85)', 0.05); // tepi bawah badan
-          const kT = kOf(0.42); if (kT > 0) line3(kT, night ? 'rgba(150,160,175,0.35)' : 'rgba(255,255,255,0.55)', 0.03); // lipatan tumblehome
-          const kS = kOf(0.97); if (kS > 0) line3(kS, night ? 'rgba(150,160,175,0.3)' : `rgba(${sunRim},${(0.35 + 0.4 * SUNK).toFixed(2)})`, 0.025); // garis bahu atap
+          const kT = kOf(0.42); if (kT > 0 && mid) line3(kT, night ? 'rgba(150,160,175,0.35)' : 'rgba(255,255,255,0.55)', 0.03); // lipatan tumblehome
+          const kS = kOf(0.97); if (kS > 0 && mid) line3(kS, night ? 'rgba(150,160,175,0.3)' : `rgba(${sunRim},${(0.35 + 0.4 * SUNK).toFixed(2)})`, 0.025); // garis bahu atap
           // pintu penumpang (dekat ujung gerbong) & pintu masinis di belakang moncong: celah gelap + jendela pintu
           const kOfH = (hh) => full.findIndex((t) => t.a > Math.PI / 2 && t.h < hh), kD0 = kOfH(HB + 2.2), kD1 = kOfH(HB + 0.22); if (kD0 > 0 && kD1 > 0) {
             const doors = mid ? [[dn + 1.6, 1.0], [dr - 2.6, 1.0]] : lead ? [[dn + LN + 0.6, 0.7], [dr - 2.6, 1.0]] : [[dn + 1.6, 1.0], [dr - LN - 1.3, 0.7]];
@@ -13251,15 +13251,16 @@
     const lamp = (cl) => ({ x0: 1.0, x1: 2.1, lo: (u) => gLo(u) - 0.52, hi: (u) => gLo(u) - 0.52 + 0.17 * Math.sin(Math.PI * L(u, 1.0, 2.1)) + 0.01, col: () => ({ c: cl }), noZone: true }); // lampu sipit di sudut moncong
     const base = { xTip: 0, LN: 7.2, Ls: 7.2, bot: 0.95, top: 4.05, top0: top, pillars: [[6.0, 6.55], [8.0, 9.1]], wsEnd: 6.0, wiper: 2.2 };
     // livery muka sederhana: satu sabuk warna utama yang menyapu dari sisi ke moncong + satu garis aksen tipis, warna rata
-    const sash = (c1, c2) => [{ x0: -1, x1: 99, lo: (u) => F(u, 1.95, 2.4), hi: (u) => gLo(u) - 0.24, col: () => ({ c: c1 }) },
-      { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.2, hi: (u) => gLo(u) - 0.1, col: () => ({ c: c2 }) }];
+    // sabuk & garis aksen saling menempel lalu langsung bertemu tepi kaca: tanpa celah putih di antaranya
+    const sash = (c1, c2) => [{ x0: -1, x1: 99, lo: (u) => F(u, 1.95, 2.4), hi: (u) => gLo(u) + 0.02, col: () => ({ c: c1 }) }, // sabuk sampai tepi kaca (garis aksen menimpa di atasnya)
+      { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.15, hi: (u) => gLo(u) + 0.02, col: () => ({ c: c2 }) }];
     if (type === 'argo') { // Agraveda: sabuk jingga + garis ungu
-      P = Object.assign({}, base, { white: [248, 248, 250], skirt: { c: '#c9ced4', h0: 0.72 }, bands: [...glassB, ...sash('#ee8227', '#7b3aa8'), lamp('#f4fbff'), seam], zone: () => null });
+      P = Object.assign({}, base, { white: [248, 248, 250], skirt: { c: '#c9ced4', h0: 0.72 }, bands: [...glassB, ...sash('#ee8227', '#7b3aa8'), seam], zone: () => null });
     } else if (type === 'garuda') { // Garuda: sabuk biru tua + garis merah
       const LV = (KD && KD.livery) || {};
-      P = Object.assign({}, base, { white: [250, 251, 253], skirt: { c: '#c3c8ce', h0: 0.72 }, bands: [...glassB, ...sash(LV.band || '#1d3f94', '#e0262e'), lamp('#eaf4ff'), seam], zone: () => null });
+      P = Object.assign({}, base, { white: [250, 251, 253], skirt: { c: '#c3c8ce', h0: 0.72 }, bands: [...glassB, ...sash(LV.band || '#1d3f94', '#e0262e'), seam], zone: () => null });
     } else { // Kilat: sabuk biru + garis toska
-      P = Object.assign({}, base, { white: [252, 253, 255], skirt: { c: '#c8cdd3', h0: 0.72 }, bands: [...glassB, ...sash('#1f5fc8', '#2bb3e8'), lamp('#eaf6ff'), seam], zone: () => null });
+      P = Object.assign({}, base, { white: [252, 253, 255], skirt: { c: '#c8cdd3', h0: 0.72 }, bands: [...glassB, ...sash('#1f5fc8', '#2bb3e8'), seam], zone: () => null });
     }
     // warna dasar permukaan mengikuti lajur yang sama (cadangan di ujung moncong yang lajurnya terlalu sempit untuk dihitung)
     P.zone = (x, h) => { for (let i = P.bands.length - 1; i >= 0; i--) { const B = P.bands[i]; if (B.noZone || x < B.x0 || x > B.x1) continue; const lo = B.lo(x), hi = Math.min(B.hi(x), 50); if (h >= lo && h < hi) return B.col(x, (h - lo) / Math.max(0.05, hi - lo)); } return null; };
