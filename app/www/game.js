@@ -13241,7 +13241,7 @@
     const glassC = (x, t) => ({ glass: t });
     const top = (u) => { const K = [[0, 1.3], [0.35, 1.95], [0.9, 2.55], [1.7, 3.08], [2.8, 3.52], [4.2, 3.86], [5.8, 4.02], [7.0, 4.05]]; if (u >= 7) return 4.05; for (let i = 1; i < K.length; i++) if (u <= K[i][0]) { const f = (u - K[i - 1][0]) / (K[i][0] - K[i - 1][0]), e = f * f * (3 - 2 * f); return K[i - 1][1] + (K[i][1] - K[i - 1][1]) * (0.35 * f + 0.65 * e); } return 4.05; };
     const SM = (a, b, u) => { const f = L(u, a, b); return f * f * (3 - 2 * f); }, F = (u, fr, sd) => fr + (sd - fr) * SM(0.5, 3.0, u); // peralihan halus dari muka ke sisi
-    const gLo = (u) => 2.74 + 0.56 * SM(0.8, 6.4, u); // tepi bawah kaca kanopi: rendah di muka, naik ke belakang
+    const gLo = (u) => 2.74 + 0.56 * SM(2.6, 6.6, u); // tepi bawah kaca kanopi: rendah di muka, naik ke belakang
     const gHi = (u) => (u < 4.4 ? 99 : u < 6.0 ? gLo(u) + (top(u) + 0.3 - gLo(u)) * (1 - SM(4.4, 6.0, u)) : gLo(u)); // membungkus puncak lalu tepi belakang miring
     const cone = () => 1.58; // batas kerucut hidung putih
     const glassB = [{ x0: 0.9, x1: 6.0, lo: gLo, hi: gHi, col: glassC }, // kaca kanopi depan
@@ -13252,8 +13252,12 @@
     const base = { xTip: 0, LN: 7.2, Ls: 7.2, bot: 0.95, top: 4.05, top0: top, pillars: [[6.0, 6.55], [8.0, 9.1]], wsEnd: 6.0, wiper: 2.2 };
     // livery muka sederhana: satu sabuk warna utama yang menyapu dari sisi ke moncong + satu garis aksen tipis, warna rata
     // sabuk & garis aksen saling menempel lalu langsung bertemu tepi kaca: tanpa celah putih di antaranya
-    const sash = (c1, c2) => [{ x0: -1, x1: 99, lo: (u) => F(u, 1.95, 2.4), hi: (u) => gLo(u) + 0.02, col: () => ({ c: c1 }) }, // sabuk sampai tepi kaca (garis aksen menimpa di atasnya)
-      { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.15, hi: (u) => gLo(u) + 0.02, col: () => ({ c: c2 }) }];
+    // tepi atas sabuk = tepi bawah kaca; di ujung moncong turun mengikuti lengkung hidung sehingga garis aksen kiri & kanan bertemu di tengah moncong (bentuk V simetris)
+    // sabuk sampai tepi kaca; garis aksen menyusuri tepi bawah kaca di kedua sisi, lalu di tepi depan kaca menyeberang puncak moncong
+    // sebagai satu garis melintang, sehingga garis kiri & kanan tersambung simetris (seperti bingkai bawah kaca kanopi)
+    const sash = (c1, c2) => [{ x0: -1, x1: 99, lo: (u) => F(u, 1.95, 2.4), hi: (u) => gLo(u) + 0.02, col: () => ({ c: c1 }) },
+      { x0: 0.9, x1: 99, lo: (u) => gLo(u) - 0.17, hi: (u) => gLo(u) + 0.02, col: () => ({ c: c2 }) },
+      { x0: 0.66, x1: 0.92, lo: (u) => gLo(u) - 0.17, hi: () => 99, col: () => ({ c: c2 }) }];
     if (type === 'argo') { // Agraveda: sabuk jingga + garis ungu
       P = Object.assign({}, base, { white: [248, 248, 250], skirt: { c: '#c9ced4', h0: 0.72 }, bands: [...glassB, ...sash('#ee8227', '#7b3aa8'), seam], zone: () => null });
     } else if (type === 'garuda') { // Garuda: sabuk biru tua + garis merah
