@@ -12022,20 +12022,58 @@
     return crossAnim[i];
   }
   function resetCrossings() { crossAnim.length = 0; }
+  // ruas jalan di seberang rel: menerus menjauh sampai perkampungan di cakrawala (tidak buntu). Bahu jalan berumput, marka memudar,
+  // tiang listrik berjajar mengecil, pohon & kelapa di tepi jalan, dan rumah-rumah kampung yang menutupi ujung jalan.
+  function drawFarRoad(V, G, seed, asphaltFar, night) {
+    const { c, ppm } = V, p = V.p, N = 30, ds = []; for (let k = 0; k <= N; k++) ds.push(1 + 1.95 * k / N);
+    const pts = ds.map((d) => G.at(d)), dk = (col, k) => mix(col, '#2a3038', k);
+    // bahu jalan tanah/rumput (lebih lebar dari aspal)
+    c.fillStyle = night ? '#2a2a24' : mix('#9c8d6c', '#b3a27c', p); c.beginPath(); pts.forEach((q, k) => (k ? c.lineTo(q.x - q.hw * 1.35, q.y) : c.moveTo(q.x - q.hw * 1.35, q.y))); for (let k = N; k >= 0; k--) c.lineTo(pts[k].x + pts[k].hw * 1.35, pts[k].y); c.closePath(); c.fill();
+    // aspal, sedikit lebih terang (kabut) ke kejauhan
+    for (let k = 0; k < N; k++) { const a = pts[k], b = pts[k + 1]; c.fillStyle = mix(asphaltFar, night ? '#3a3e50' : mix('#a9aeb4', '#c3c8cc', p), Math.pow(k / N, 1.4) * 0.6);
+      c.beginPath(); c.moveTo(a.x - a.hw, a.y + 0.5); c.lineTo(a.x + a.hw, a.y + 0.5); c.lineTo(b.x + b.hw, b.y); c.lineTo(b.x - b.hw, b.y); c.closePath(); c.fill(); }
+    // marka tepi & tengah putus-putus (memudar ke kejauhan)
+    for (const sd of [-0.9, 0.9]) { c.strokeStyle = 'rgba(240,236,224,0.6)'; c.lineWidth = 1; c.beginPath(); pts.forEach((q, k) => { if (k > N * 0.75) return; k ? c.lineTo(q.x + sd * q.hw, q.y) : c.moveTo(q.x + sd * q.hw, q.y); }); c.stroke(); }
+    c.fillStyle = 'rgba(240,236,224,0.7)'; for (let d = 1.2; d < 2.5; d += 0.13) { const a = G.at(d), b = G.at(d + 0.055); c.globalAlpha = clamp(1 - (d - 1.2) / 1.3, 0, 1); c.beginPath(); c.moveTo(a.x - 0.035 * a.hw, a.y); c.lineTo(a.x + 0.035 * a.hw, a.y); c.lineTo(b.x + 0.035 * b.hw, b.y); c.lineTo(b.x - 0.035 * b.hw, b.y); c.closePath(); c.fill(); } c.globalAlpha = 1;
+    // tiang listrik kayu di sisi kanan jalan, kabel melengkung di antaranya
+    const poles = []; for (let d = 1.55; d < 2.9; d += 0.28) { const q = G.at(d), sc = q.hw / (2.3 * ppm); poles.push([q.x + q.hw * 2.1, q.y, sc]); }
+    c.strokeStyle = night ? '#2a2826' : '#5e5244'; for (const [x, y, sc] of poles) { c.lineWidth = Math.max(1, 0.18 * ppm * sc); c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - 5.5 * ppm * sc); c.moveTo(x - 0.6 * ppm * sc, y - 5.1 * ppm * sc); c.lineTo(x + 0.6 * ppm * sc, y - 5.1 * ppm * sc); c.stroke(); }
+    c.strokeStyle = night ? 'rgba(30,30,34,0.6)' : 'rgba(40,40,44,0.45)'; c.lineWidth = 1; c.beginPath(); for (let k = 0; k < poles.length - 1; k++) { const [x1, y1, s1] = poles[k], [x2, y2, s2] = poles[k + 1]; const ya = y1 - 5.1 * ppm * s1, yb = y2 - 5.1 * ppm * s2; c.moveTo(x1, ya); c.quadraticCurveTo((x1 + x2) / 2, (ya + yb) / 2 + 0.5 * ppm * s1, x2, yb); } c.stroke();
+    // pohon & kelapa di tepi jalan (berselang), mengecil ke kejauhan
+    const leaf = night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', p), leafL = night ? '#26361f' : mix('#5a8a40', '#6fa64e', p), trunk = night ? '#2a221c' : '#6b5442';
+    for (let k = 0; k < 9; k++) { const d = 1.35 + k * 0.17 + hash(seed + k) * 0.06, q = G.at(d), sc = q.hw / (2.3 * ppm), sd = k % 2 ? 1 : -1, x = q.x + sd * q.hw * (2.6 + hash(seed * 3 + k) * 1.2), y = q.y;
+      if (hash(seed + k * 1.7) < 0.45) { // kelapa
+        c.strokeStyle = trunk; c.lineWidth = Math.max(1, 0.22 * ppm * sc); const tx = x + sd * 0.6 * ppm * sc, ty = y - 7 * ppm * sc; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x, y - 4 * ppm * sc, tx, ty); c.stroke();
+        c.strokeStyle = leaf; c.lineWidth = Math.max(1, 0.2 * ppm * sc); for (let f = 0; f < 7; f++) { const a = -Math.PI / 2 + (f - 3) * 0.5, L = 2.2 * ppm * sc; c.beginPath(); c.moveTo(tx, ty); c.quadraticCurveTo(tx + Math.cos(a) * L * 0.6, ty + Math.sin(a) * L * 0.6 - 0.4 * ppm * sc, tx + Math.cos(a) * L, ty + Math.sin(a) * L * 0.4 + 0.9 * ppm * sc); c.stroke(); }
+      } else { // pohon rindang
+        c.fillStyle = trunk; c.fillRect(x - 0.15 * ppm * sc, y - 2.4 * ppm * sc, 0.3 * ppm * sc, 2.4 * ppm * sc);
+        for (let b = 0; b < 4; b++) { c.fillStyle = b < 2 ? leaf : leafL; c.beginPath(); c.arc(x + (b - 1.5) * 0.9 * ppm * sc, y - (3.2 + (b % 2) * 0.9) * ppm * sc, (1.4 + hash(seed + b + k) * 0.5) * ppm * sc, 0, 7); c.fill(); } } }
+    // perkampungan di ujung jalan: rumah beratap genteng menutupi ujung jalan yang membelok, dikelilingi pepohonan
+    const e = G.at(2.9), sc = e.hw / (0.5 * ppm) * 0.32, u = ppm * Math.max(0.28, Math.min(0.5, sc));
+    const wall = night ? '#4a4a52' : mix('#e3dccb', '#f2ecdf', p), roof = night ? '#3a2a28' : mix('#a34a2c', '#c2582f', p), win = night ? '#ffd27a' : '#3c4a52';
+    c.fillStyle = leaf; for (let k = -4; k <= 4; k++) { c.beginPath(); c.arc(e.x + k * 1.5 * u * 2, e.y - (2.6 + hash(seed + k * 2.3) * 1.6) * u * 2, (1.6 + hash(seed + k) * 0.8) * u * 2, 0, 7); c.fill(); }
+    for (const [ox, w2, h2] of [[-3.2, 3.4, 2.2], [0.6, 4.2, 2.5], [4.4, 3.2, 2.0]]) { const hx = e.x + ox * u * 2, hy = e.y + 0.15 * u * 2, ww = w2 * u * 2, hh = h2 * u * 2;
+      c.fillStyle = wall; c.fillRect(hx - ww / 2, hy - hh, ww, hh); c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(hx + ww * 0.2, hy - hh, ww * 0.3, hh);
+      c.fillStyle = roof; c.beginPath(); c.moveTo(hx - ww / 2 - 0.4 * u * 2, hy - hh); c.lineTo(hx - ww * 0.2, hy - hh - 1.3 * u * 2); c.lineTo(hx + ww * 0.2, hy - hh - 1.3 * u * 2); c.lineTo(hx + ww / 2 + 0.4 * u * 2, hy - hh); c.closePath(); c.fill();
+      c.fillStyle = win; c.fillRect(hx - ww * 0.32, hy - hh * 0.65, ww * 0.16, hh * 0.3); c.fillRect(hx + ww * 0.14, hy - hh * 0.65, ww * 0.16, hh * 0.3); }
+  }
   function crossGeom(V, cr) {
     const { ppm, gy, X } = V;
     const sx = X(cr.x);
     const yTop = gy + 1.4 * ppm, yFarEdge = gy - 0.6 * ppm, yFar = gy - 3.2 * ppm;
-    const farX = sx + (W * 0.5 - sx) * 0.05;
+    const farX = sx + (W * 0.5 - sx) * 0.05, farX2 = sx + (W * 0.5 - sx) * 0.09, yH = gy - 5.1 * ppm, bendS = hash(cr.x * 0.013) < 0.5 ? -1 : 1;
     const nearX = V.Xn(sx);
     // titik di sumbu jalan pada kedalaman d, beserta setengah lebar jalan (px)
     const at = (d) => {
       if (d <= 1) { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (nearX - sx) * t, y: yTop + (H - yTop) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm }; }
-      const t = clamp(d - 1, 0, 1);
-      const te = 1 - Math.pow(1 - t, 1.8);
-      return { x: sx + (farX - sx) * te, y: lerp(yFarEdge, yFar, te), hw: lerp(3.5, 2.3, te) * ppm };
+      if (d <= 2) { const t = clamp(d - 1, 0, 1);
+        const te = 1 - Math.pow(1 - t, 1.8);
+        return { x: sx + (farX - sx) * te, y: lerp(yFarEdge, yFar, te), hw: lerp(3.5, 2.3, te) * ppm }; }
+      // lanjutan jalan menjauh ke cakrawala: makin sempit & rapat (perspektif), sedikit berkelok, masuk ke perkampungan di kejauhan
+      const t = clamp(d - 2, 0, 1), tp = 1 - Math.pow(1 - t, 1.6), bend = bendS * ppm * 3.2 * (t * t * (3 - 2 * t));
+      return { x: farX + (farX2 - farX) * tp + bend, y: lerp(yFar, yH, tp), hw: lerp(2.3, 0.32, Math.pow(tp, 0.8)) * ppm };
     };
-    return { sx, yTop, yFarEdge, yFar, farX, nearX, at };
+    return { sx, yTop, yFarEdge, yFar, yH, farX, nearX, at };
   }
   // simpang jalan perlintasan dengan jalan raya: aspal menyatu, sudut membulat, marka berhenti di simpang
   function junctionBlend(V, G, asphalt) {
@@ -12080,7 +12118,7 @@
   function drawRoadPoly(c, pts, fill) { c.fillStyle = fill; c.beginPath(); pts.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fill(); }
   function drawVehicle(c, V, G, v) {
     const p = G.at(v.d);
-    if (v.d < -0.3 || v.d > 2.05) return;
+    if (v.d < -0.3 || v.d > 2.78) return; // jauh: hilang di balik rumah kampung di ujung jalan
     const s = p.hw / 3.5;                    // skala sesuai kedalaman
     const x = p.x + v.lane * p.hw, y = p.y;
     const night = V.night || V.storm;
@@ -12166,10 +12204,8 @@
       const near = (d) => { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (G.nearX - sx) * t, y: yO + (H - yO) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm, t }; };
       const G2 = Object.assign({}, G, { at: (d) => (d <= 1 ? near(d) : G.at(d)) });
       // ruas jauh di belakang rel (keluar dari underpass, naik ke tanah)
-      { const f0 = G.at(1), f1 = G.at(2); drawRoadPoly(c, [[f1.x - f1.hw, f1.y], [f1.x + f1.hw, f1.y], [f0.x + f0.hw, f0.y], [f0.x - f0.hw, f0.y]], asphaltFar);
-        c.strokeStyle = 'rgba(240,236,224,0.6)'; c.lineWidth = 1; for (const sd of [-0.92, 0.92]) { c.beginPath(); for (let d = 1; d <= 2.001; d += 0.1) { const q = G.at(d); d === 1 ? c.moveTo(q.x + sd * q.hw, q.y) : c.lineTo(q.x + sd * q.hw, q.y); } c.stroke(); }
-        const e = G.at(1.92); c.fillStyle = night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', V.p); for (let k = -3; k <= 3; k++) { c.beginPath(); c.arc(e.x + k * 1.1 * ppm, e.y - 0.2 * ppm, (0.9 + hash(k + i * 3.7) * 0.6) * ppm, 0, 7); c.fill(); } }
-      for (const v of A.veh) { v.d += v.dir * dt * v.sp; if (v.d > 2.05) v.d = -0.25; if (v.d < -0.3) v.d = 2.0; }
+      drawFarRoad(V, G, 31 + i * 5.1, asphaltFar, night);
+      for (const v of A.veh) { v.d += v.dir * dt * v.sp * (v.d > 2 ? 0.55 : 1); if (v.d > 2.75) v.d = -0.25; if (v.d < -0.3) v.d = 2.72; } // kendaraan menjauh/datang dari kampung di ujung jalan
       A.veh.filter((v) => v.d > 1.08).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
       // dinding sayap & tanah di sisi galian: tanah berumput di luar dinding, menutup lereng balas di sekitar underpass
       const grass = night ? '#24331f' : mix('#5a8540', '#78a84c', V.p);
@@ -12246,7 +12282,7 @@
         const asphalt = ROUTE.rival ? (V.night ? '#26272c' : '#434449') : mix('#4a4a4d', '#5a5a5e', V.p), asphaltFar = mix('#5d5c62', '#7a7a80', V.p);
         // tanah berumput di seberang rel tempat jalan menjauh (memudar ke samping agar menyatu dengan bukit)
         {
-          const vx0 = G.sx - 30 * ppm, vx1 = G.sx + 30 * ppm, vTop = G.yFar - 0.9 * ppm;
+          const vx0 = G.sx - 30 * ppm, vx1 = G.sx + 30 * ppm, vTop = G.yH - 0.4 * ppm;
           const grass = V.night ? '#24331f' : mix('#5a8540', '#78a84c', V.p);
           c.save();
           c.beginPath(); c.moveTo(vx0, G.yFarEdge + 0.2 * ppm);
@@ -12260,9 +12296,8 @@
           }
           c.restore();
         }
-        // ruas jauh di belakang rel
-        const f0 = G.at(1), f1 = G.at(2);
-        drawRoadPoly(c, [[f1.x - f1.hw, f1.y], [f1.x + f1.hw, f1.y], [f0.x + f0.hw, f0.y], [f0.x - f0.hw, f0.y]], asphaltFar);
+        // ruas jauh di belakang rel: menerus sampai perkampungan di cakrawala
+        drawFarRoad(V, G, 11 + i * 7.3, asphaltFar, V.night);
         // ruas dekat di depan rel
         const n0 = G.at(1), n1 = G.at(0);
         drawRoadPoly(c, [[n0.x - n0.hw, G.yTop], [n0.x + n0.hw, G.yTop], [n1.x + n1.hw, H], [n1.x - n1.hw, H]], asphalt);
@@ -12270,12 +12305,11 @@
         c.strokeStyle = 'rgba(240,236,224,0.75)'; c.lineWidth = 1;
         for (const side of [-0.92, 0.92]) {
           c.beginPath();
-          for (let d = 0; d <= 2.001; d += 0.1) { if (d > 0.999 && d < 1.001) continue; const q = G.at(d); const yy = d <= 1 ? q.y : q.y; if (d === 0) c.moveTo(q.x + side * q.hw, yy); else c.lineTo(q.x + side * q.hw, yy); }
+          for (let d = 0; d <= 1.001; d += 0.1) { const q = G.at(d); if (d === 0) c.moveTo(q.x + side * q.hw, q.y); else c.lineTo(q.x + side * q.hw, q.y); }
           c.stroke();
         }
         c.fillStyle = 'rgba(240,236,224,0.8)';
-        for (let d = 0.05; d < 2; d += 0.16) {
-          if (d > 0.9 && d < 1.12) continue;
+        for (let d = 0.05; d < 0.9; d += 0.16) {
           const a = G.at(d), b = G.at(d + 0.07);
           c.beginPath(); c.moveTo(a.x - 0.03 * a.hw, a.y); c.lineTo(a.x + 0.03 * a.hw, a.y); c.lineTo(b.x + 0.03 * b.hw, b.y); c.lineTo(b.x - 0.03 * b.hw, b.y); c.closePath(); c.fill();
         }
@@ -12303,16 +12337,8 @@
         c.fillText(`JPL ${12 + i * 7}`, hx + 1.0 * ppm, hy - 1.92 * ppm);
         c.textAlign = 'start'; c.textBaseline = 'alphabetic';
         person(c, hx - 2.4 * ppm, hy, ppm * 0.9, 41 + i, { color: '#2e5a8a' });
-        // kendaraan di sisi jauh, lalu semak di ujung jalan agar jalan menghilang di balik vegetasi
+        // kendaraan di sisi jauh (melaju sampai hilang di kampung)
         A.veh.filter((v) => v.d > 1).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
-        {
-          const e = G.at(1.92), bush = V.night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', V.p);
-          c.fillStyle = bush;
-          for (let k = -3; k <= 3; k++) {
-            const bx = e.x + k * 1.1 * ppm, r = (0.9 + hash(k + i * 3.7) * 0.6) * ppm;
-            c.beginPath(); c.arc(bx, e.y - r * 0.2, r, 0, 7); c.fill();
-          }
-        }
         const fs = 0.8 * ppm;
         const fp = G.at(1.12);
         crossingSignal(c, fp.x + fp.hw + 1.1 * ppm, fp.y, fs, blink, !blink, active);
