@@ -12204,9 +12204,16 @@
       const near = (d) => { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (G.nearX - sx) * t, y: yO + (H - yO) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm, t }; };
       const G2 = Object.assign({}, G, { at: (d) => (d <= 1 ? near(d) : G.at(d)) });
       // ruas jauh di belakang rel (keluar dari underpass, naik ke tanah)
+      // jalan lewat DI BAWAH rel: ruas seberang baru tampak di balik tepi jauh tanggul rel jalur 1 (tidak menimpa rel), seolah keluar dari mulut lorong seberang
+      const yEmb = gy - 0.85 * ppm; c.save(); c.beginPath(); c.rect(-W, -H, W * 3, yEmb + H); c.clip();
       drawFarRoad(V, G, 31 + i * 5.1, asphaltFar, night);
+      { const q = G.at(1.04), pw = q.hw * 1.18, cp = night ? '#6a6c76' : mix('#cfc9bd', '#e6e0d4', V.p); // dinding kepala lorong seberang: coping beton tipis & pagar pengaman, jalan keluar dari baliknya
+        c.fillStyle = cp; c.fillRect(q.x - pw, yEmb - 0.22 * ppm, pw * 2, 0.22 * ppm); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(q.x - pw, yEmb - 0.04 * ppm, pw * 2, 0.04 * ppm);
+        c.strokeStyle = night ? 'rgba(150,155,170,0.7)' : 'rgba(110,116,124,0.8)'; c.lineWidth = 1; c.beginPath(); c.moveTo(q.x - pw, yEmb - 0.6 * ppm); c.lineTo(q.x + pw, yEmb - 0.6 * ppm);
+        for (let k = 0; k <= 8; k++) { const xx = q.x - pw + pw * 2 * k / 8; c.moveTo(xx, yEmb - 0.22 * ppm); c.lineTo(xx, yEmb - 0.6 * ppm); } c.stroke(); }
       for (const v of A.veh) { v.d += v.dir * dt * v.sp * (v.d > 2 ? 0.55 : 1); if (v.d > 2.75) v.d = -0.25; if (v.d < -0.3) v.d = 2.72; } // kendaraan menjauh/datang dari kampung di ujung jalan
       A.veh.filter((v) => v.d > 1.08).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
+      c.restore();
       // dinding sayap & tanah di sisi galian: tanah berumput di luar dinding, menutup lereng balas di sekitar underpass
       const grass = night ? '#24331f' : mix('#5a8540', '#78a84c', V.p);
       c.fillStyle = grass; c.beginPath(); c.moveTo(sx - aw - 3 * ppm, yD1); c.lineTo(sx + aw + 3 * ppm, yD1); c.lineTo(sx + aw + 3 * ppm, H); c.lineTo(sx - aw - 3 * ppm, H); c.closePath(); c.save(); c.globalAlpha = 0.0; c.fill(); c.restore();
