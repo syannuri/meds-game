@@ -6781,7 +6781,7 @@
         // sisi tegak, bahu atap membulat; di moncong dasar badan turun rendah jadi rok penutup bogie depan (obstacle deflector)
         const hbOf = (sN) => (mid ? HB : HB - (HB - 0.42) * Math.pow(clamp((0.62 - sN) / 0.62, 0, 1), 0.8));
         const secs = ds.map(([d, sN]) => { const [hw, ht] = shape(sN), o0 = KO(x0 + d), hb = hbOf(sN);
-          return ANG.map((a) => { const ca = Math.cos(a), sa = Math.sin(a), r = Math.pow(sa, 0.5), tb = Math.pow(clamp(1 - r / 0.42, 0, 1), 1.6); return { d, o: o0 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.5) * hw * (1 - 0.16 * tb), h: hb + (ht - hb) * r, a, s: sN, r }; }); });
+          return ANG.map((a) => { const ca = Math.cos(a), sa = Math.sin(a), r = Math.pow(sa, 0.5), tb = Math.pow(clamp(1 - r / 0.42, 0, 1), 1.6); return { d, o: o0 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.5) * hw * (1 - 0.2 * tb), h: hb + (ht - hb) * r, a, s: sN, r }; }); });
         const faces = [];
         // kilau matahari: terkuat pada permukaan yang di layar searah matahari, menyapu badan saat Kilat melaju mendekat
         // arah matahari di layar kabin: kiri = sisi Kilat yang menghadap Guntur tersinari, kanan = membelakangi (teduh + cahaya tepi)
@@ -6832,11 +6832,20 @@
             const st2 = Math.max(1, (ub - ua) / 6), strip = (lat0, lat1, h, col) => { for (let d = ua; d < ub - 0.01; d += st2) { const e = Math.min(ub, d + st2); quad(W3(d, oc(d) + lat0, h), W3(e, oc(e) + lat0, h), W3(e, oc(e) + lat1, h), W3(d, oc(d) + lat1, h), col); } };
             const wall = (lat, h0, h1, col, d0 = ua, d1 = ub) => { d0 = Math.max(1.5, d0); if (d1 <= d0) return; const st3 = Math.max(1, (d1 - d0) / 5); for (let d = d0; d < d1 - 0.01; d += st3) { const e = Math.min(d1, d + st3); quad(W3(d, oc(d) + lat, h0), W3(e, oc(e) + lat, h0), W3(e, oc(e) + lat, h1), W3(d, oc(d) + lat, h1), col); } };
             strip(-1.75, 1.75, 0.03, night ? 'rgba(4,6,10,0.55)' : 'rgba(18,20,24,0.42)'); // bayangan kontak di balas
-            wall(-1.02, 0.42, HB + 0.02, night ? '#121417' : '#1c1f23'); // rangka bawah (gelap, menjorok ke dalam)
+            wall(-1.02, 0.42, HB + 0.02, night ? '#121417' : '#2c3238'); // rangka bawah (gelap, menjorok ke dalam)
             const bcs = mid ? [dn + 2.7, dr - 2.7] : lead ? [dn + LN * 0.62, dr - 2.7] : [dn + 2.7, dr - LN * 0.62];
             for (const bc of bcs) { if (bc < 1.0) continue; const ob = oc(bc);
-              wall(-0.98, 0.5, HB, night ? '#0d0f11' : '#15171a', bc - 1.9, bc + 1.9); // ruang bogie lebih gelap
+              wall(-0.98, 0.5, HB, night ? '#0d0f11' : '#1e2226', bc - 1.9, bc + 1.9); // ruang bogie lebih gelap
               cabBogie(bc, ob, -1, [-1.25, 1.25], null, -(x0 * 1.4) % (Math.PI * 2));
+              if (bc > 2.2) { // detail bogie kereta cepat: rangka H, kotak gandar, pegas spiral, pegas udara (bantal), motor traksi & cakram rem
+                const Wq = (d, l, h) => W3(d, ob + l, h), box3 = (d0, d1, l, h0, h1, col) => { const q0 = Wq(d0, l, h0), q1 = Wq(d1, l, h0), q2 = Wq(d1, l, h1), q3 = Wq(d0, l, h1); if (!q0 || !q1 || !q2 || !q3) return null; c.fillStyle = col; c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.closePath(); c.fill(); return q0; };
+                box3(bc - 1.75, bc + 1.75, -0.9, 0.6, 0.82, night ? '#24282d' : '#58616a'); // balok samping rangka
+                box3(bc - 1.75, bc + 1.75, -0.901, 0.79, 0.82, night ? '#3a4046' : '#a9b2ba'); // tepi atas balok berkilau
+                for (const ax of [-1.25, 1.25]) { box3(bc + ax - 0.28, bc + ax + 0.28, -0.92, 0.46, 0.8, night ? '#2b3036' : '#7d868f'); // kotak gandar
+                  const s0 = Wq(bc + ax - 0.12, -0.93, 0.8), s1 = Wq(bc + ax - 0.12, -0.93, 1.0); if (s0 && s1) { c.strokeStyle = night ? '#6a6f75' : '#b8bfc6'; c.lineWidth = Math.max(1, 0.03 * s0.k); c.beginPath(); for (let q = 0; q <= 5; q++) { const yq = s0.y + (s1.y - s0.y) * q / 5; c.moveTo(s0.x - 0.12 * s0.k, yq); c.lineTo(s0.x + 0.12 * s0.k, yq + 0.02 * s0.k); } c.stroke(); } } // pegas spiral primer
+                box3(bc - 0.6, bc + 0.6, -0.86, 0.85, 1.02, night ? '#151719' : '#22262a'); // pegas udara (bantal karet gelap)
+                box3(bc - 0.35, bc + 0.35, -0.55, 0.42, 0.72, night ? '#2a2e33' : '#4b525a'); // motor traksi / girboks di dalam rangka
+                const ydp = Wq(bc - 1.85, -0.93, 0.95), ydq = Wq(bc - 1.2, -0.93, 0.72); if (ydp && ydq) { c.strokeStyle = night ? '#9a7a20' : '#d9a52a'; c.lineWidth = Math.max(1, 0.05 * ydp.k); c.beginPath(); c.moveTo(ydp.x, ydp.y); c.lineTo(ydq.x, ydq.y); c.stroke(); } } // peredam kuning
               const dp = bc + 1.95; if (dp > 1.5) { const y0 = W3(dp, ob - 1.0, 0.75), y1 = W3(dp + 0.9, ob - 1.0, 0.95); if (y0 && y1) { c.strokeStyle = night ? '#3a3f45' : '#5c636b'; c.lineWidth = Math.max(1, 0.07 * y0.k); c.beginPath(); c.moveTo(y0.x, y0.y); c.lineTo(y1.x, y1.y); c.stroke(); } } } // peredam yaw
             // kotak peralatan bawah lantai (trafo, konverter, tangki udara) di antara bogie, bervariasi panjang & tinggi
             const e0 = bcs[0] + 2.3, e1 = bcs[1] - 2.3; let q = 0;
@@ -6846,8 +6855,15 @@
               d = d1 + 0.35; }
             // rok samping sesuai tampak samping: Kilat rok penuh menutup bogie (tepi bawah roda terlihat), Garuda rok dengan ceruk roda, Agraveda rok grafit setengah roda
             const skC = PT.skirt; if (skC) { const sh = night ? mix(skC.c, '#000000', 0.5) : skC.c;
-              wall(-1.3, skC.h0, HB + 0.02, sh); wall(-1.301, skC.h0, skC.h0 + 0.05, night ? '#2a2e33' : '#6c737b');
-              if (skC.well) for (const bc of bcs) { if (bc < 1.0) continue; wall(-1.302, skC.h0, skC.h0 + 0.45, night ? '#0d0f11' : '#2a2e33', bc - 1.9, bc + 1.9); } }
+              // rok hanya di antara bogie & di bawah moncong; di bogie dibuka (ceruk roda) agar roda, rangka, pegas & peredam terlihat
+              const spans = []; let a0 = ua; for (const bc of bcs.slice().sort((p1, p2) => p1 - p2)) { spans.push([a0, bc - 2.05]); a0 = bc + 2.05; } spans.push([a0, ub]);
+              for (const [s0, s1] of spans) { if (s1 - s0 < 0.3) continue;
+                wall(-1.24, skC.h0, HB + 0.02, sh, s0, s1); // panel rok sedikit masuk dari sisi badan (mengikuti lekuk bawah)
+                wall(-1.241, skC.h0, skC.h0 + 0.06, night ? '#2a2e33' : '#7c838b', s0, s1); // bibir bawah rok menangkap cahaya balas
+                wall(-1.242, HB - 0.06, HB + 0.02, night ? '#0b0d10' : 'rgba(30,34,40,0.45)', s0, s1); } // bayangan di bawah lipatan badan
+              for (const bc of bcs) { if (bc < 1.0) continue; // tepi ceruk roda: lengkung gelap di badan di atas bogie
+                const pts = []; for (let q = 0; q <= 12; q++) { const t = q / 12, d = bc - 2.05 + 4.1 * t; if (d < 1.5) continue; const pq = W3(d, KO(x0 + d) - 1.25, HB + 0.1 * Math.sin(Math.PI * t)); if (pq) pts.push(pq); }
+                if (pts.length > 2) { c.strokeStyle = night ? 'rgba(0,0,0,0.6)' : 'rgba(40,44,50,0.7)'; c.lineWidth = Math.max(1, 0.04 * pts[0].k); c.beginPath(); pts.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.stroke(); } } }
           }
         }
         faces.sort((f1, f2) => f2.z - f1.z).forEach((f) => { const P4 = f.q.map((t) => W3(t.d, t.o, t.h)); if (P4.some((t) => !t)) return; c.fillStyle = f.col; c.strokeStyle = f.col; c.lineWidth = 0.8; c.beginPath(); P4.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke();
@@ -6867,13 +6883,21 @@
             const rows = secs.map((sec) => { const xs = xsOf(sec); if (xs < B.x0 || xs > B.x1) return null; const lo2 = B.lo(xs), hi2 = B.hi(xs); if (hi2 <= lo2) return null; return { xs, lo2, hi2, pts: arc(sec, toW(lo2), toW(hi2)) }; });
             const order = []; for (let j = 0; j < rows.length - 1; j++) if (rows[j] && rows[j + 1] && rows[j].pts && rows[j + 1].pts) order.push(j);
             order.sort((j1, j2) => secs[j2][0].d - secs[j1][0].d);
+            const isG = B.col(0, 0.5).glass !== undefined;
             for (const j of order) { const R1 = rows[j], R2 = rows[j + 1]; if (Math.max(secs[j][0].d, secs[j + 1][0].d) < 1.2) continue;
+              if (isG && (PT.pillars || []).some(([g0, g1]) => (R1.xs + R2.xs) / 2 > g0 && (R1.xs + R2.xs) / 2 < g1)) continue; // tiang (pilar) di antara kaca depan & jendela samping
               for (let m = 0; m < M; m++) { const q = [R1.pts[m], R1.pts[m + 1], R2.pts[m + 1], R2.pts[m]].map((t) => W3(Math.max(1.2, t.d), t.o, t.h)); if (q.some((t) => !t)) continue;
                 const tt = 1 - (m + 0.5) / M, z = B.col((R1.xs + R2.xs) / 2, tt); let cc;
                 if (z.glass !== undefined) { const sp = night ? 0 : 0.45 * SUNK * Math.exp(-Math.pow((q[0].x - SUN.x) / (W * 0.16), 2)), t = clamp(tt, 0, 1), v = (a0, a1) => Math.round(clamp(a0 + (a1 - a0) * t + 220 * sp, 0, 255));
-                  cc = night ? (kL > 0.3 ? '#3a3226' : '#141b26') : `rgb(${v(10, 74)},${v(15, 102)},${v(22, 132)})`; }
+                  const xm = (R1.xs + R2.xs) / 2, ws = xm < (PT.wsEnd || 0), str = ws && !night ? Math.max(0, 1 - Math.abs(((xm * 0.55 + t * 1.3) % 1.6) - 0.8) / 0.07) * 0.5 : 0; // garis pantulan diagonal di kaca depan
+                  cc = night ? (kL > 0.3 ? '#3a3226' : '#141b26') : mix(`rgb(${v(10, 74)},${v(15, 102)},${v(22, 132)})`, ws ? '#c9e2f2' : '#2a3a4a', ws ? str : 0.12); }
                 else { const mr2 = (secs[j][0].s + 0) * 0; cc = night ? mix(z.c, '#000000', 0.45) : mix(z.c, '#000000', 0.1 * (1 - tt) + mr2); }
-                c.fillStyle = cc; c.strokeStyle = cc; c.lineWidth = 0.6; c.beginPath(); q.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); } } }
+                c.fillStyle = cc; c.strokeStyle = cc; c.lineWidth = 0.6; c.beginPath(); q.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); } }
+            if (isG) { // bingkai kaca perak tipis di tepi atas & bawah, tepi pilar, wiper di kaca depan
+              const edge = (m) => { let on = false; c.beginPath(); for (let j = 0; j < rows.length; j++) { const R = rows[j]; if (!R || !R.pts || (PT.pillars || []).some(([g0, g1]) => R.xs > g0 && R.xs < g1)) { on = false; continue; } const t = R.pts[m]; if (t.d < 1.2) { on = false; continue; } const q = W3(t.d, t.o, t.h); if (!q) { on = false; continue; } if (on) c.lineTo(q.x, q.y); else { c.moveTo(q.x, q.y); on = true; } } c.stroke(); };
+              const q0 = W3(Math.max(1.5, dn + 6), KO(x0 + dn + 6) - 1.4, 3), kq = q0 ? q0.k : 10; c.strokeStyle = night ? 'rgba(120,128,140,0.6)' : 'rgba(225,230,236,0.95)'; c.lineWidth = Math.max(1, 0.04 * kq); edge(0); edge(M);
+              for (const [g0, g1] of PT.pillars || []) for (const gx of [g0, g1]) { const j = rows.findIndex((R) => R && R.pts && R.xs >= gx); const R = rows[j]; if (!R) continue; const a1 = W3(R.pts[0].d, R.pts[0].o, R.pts[0].h), b1 = W3(R.pts[M].d, R.pts[M].o, R.pts[M].h); if (a1 && b1) { c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(b1.x, b1.y); c.stroke(); } }
+              const wj = rows.findIndex((R) => R && R.pts && R.xs >= (PT.wiper || 99)), RW = rows[wj], RW2 = rows[wj + 3]; if (RW && RW2 && RW2.pts) { const p1 = RW.pts[M - 1], p2 = RW2.pts[Math.max(0, M - 3)], w1 = W3(p1.d, p1.o, p1.h), w2 = W3(p2.d, p2.o, p2.h); if (w1 && w2) { c.strokeStyle = '#101418'; c.lineWidth = Math.max(1, 0.035 * kq); c.beginPath(); c.moveTo(w1.x, w1.y); c.lineTo(w2.x, w2.y); c.stroke(); } } } }
         }
         { // garis struktur badan: tepi bawah gelap, lipatan sisi bawah (tumblehome) & garis bahu atap berkilau, pintu penumpang
           const full = secs.find((ss) => ss[0].s >= 0.999) || secs[secs.length - 1], kOf = (rr) => full.findIndex((t) => t.a > Math.PI / 2 && t.r < rr);
@@ -13185,7 +13209,7 @@
       const up = curve([[[-0.18, 4.0], [1.0, 5.1], [2.6, 5.62], [5.0, 5.62]]]), lo = curve([[[-0.36, 3.7], [0.6, 3.82], [2.4, 4.4], [4.4, 4.62]]]);
       const lw = (x) => (x > 4.4 ? 4.62 + (x - 4.4) * 0.033 : lo(x)), uE = (x) => (x < 1.6 ? 99 : x < 3.8 ? up(x) + (top(x) + 0.25 - up(x)) * (1 - L(x, 1.6, 3.8)) : up(x));
       const s0 = (x) => { const k = clamp((x + 1.3) / 16, 0, 1); return 2.62 + 0.35 * (1 - L(k, 0, 0.35)); }, s1 = (x) => { const k = clamp((x + 1.3) / 16, 0, 1); return 3.35 + 0.25 * (1 - L(k, 0, 0.3)); };
-      P = { LN: 6.2, xTip: -1.3, Ls: 6.5, bot: 1.7, top: 6.22, top0: top, white: [246, 242, 234], skirt: { c: '#4a4e55', h0: 0.78 },
+      P = { LN: 6.2, xTip: -1.3, Ls: 6.5, bot: 1.7, top: 6.22, top0: top, white: [246, 242, 234], wsEnd: 3.6, skirt: { c: '#4a4e55', h0: 0.78 },
         bands: [
           { x0: -0.45, x1: 99, lo: lw, hi: uE, col: glassC },
           { x0: -0.6, x1: 2.6, lo: (x) => lw(x) - 0.12, hi: lw, col: () => ({ c: '#fff4d8' }) },
@@ -13199,14 +13223,14 @@
       const bands = [{ x0: 1.15, x1: 99, lo: (x) => (x > 8.0 ? 2.95 : gLo(x)), hi: (x) => (x > 8.6 ? 4.62 : gUp(x)), col: glassC }];
       if (LV.band) bands.push({ x0: -2.2, x1: 99, lo: (x) => (x > 5.6 ? 1.6 : bBot(x)), hi: (x) => (x > 6.2 ? 2.8 : bTop(x)), col: (x, t) => ({ c: mix(LV.band, LV.acc || LV.band, 0.5 * (1 - Math.abs(t - 0.5) * 2)) }) });
       bands.push({ x0: -2.2, x1: 99, lo: (x) => A(x) - 0.09, hi: (x) => A(x) + 0.09, col: () => ({ c: LV.acc || '#d8262e' }) }, { x0: -2.2, x1: 99, lo: (x) => PN(x) - 0.05, hi: (x) => PN(x) + 0.05, col: () => ({ c: LV.pin || '#4a525a' }) });
-      P = { LN: 11.2, xTip: -2.1, Ls: 12.3, bot: 0.9, top: 6.08, top0: top, white: [250, 251, 253], skirt: { c: '#c3c8ce', h0: 0.42, well: true }, bands,
+      P = { LN: 11.2, xTip: -2.1, Ls: 12.3, bot: 0.9, top: 6.08, top0: top, white: [250, 251, 253], pillars: [[6.2, 6.5], [9.4, 10.8]], wsEnd: 6.2, wiper: 2.8, skirt: { c: '#c3c8ce', h0: 0.72 }, bands,
         zone: (x, h) => { if (x < -0.2 && x > -1.75 && Math.abs(h - (1.86 + (x + 1.7) * 0.2)) < 0.07) return { c: '#fff6d8' }; if (h < 1.5) return { c: '#b9bfc6' }; return null; } };
     } else { // Kilat: moncong peluru panjang, pita kaca hitam menerus yang meruncing ke hidung, sapuan biru-toska & garis merah
       const top = curve([[[-1.85, 1.6], [-1.9, 1.95], [-1.75, 2.45], [-1.2, 3.0]], [[-1.2, 3.0], [0.8, 4.9], [4.2, 6.05], [9.2, 6.08]]]);
       const bUp = curve([[[0.6, 3.75], [2.4, 4.7], [4.6, 5.12], [7.4, 5.12]]]), bLo = curve([[[0.25, 3.5], [1.6, 3.62], [4.0, 4.05], [6.2, 4.12]]]);
       const sTop = curve([[[-1.74, 2.24], [-0.6, 2.6], [1.4, 2.66], [4.0, 2.66]]]), sRed = curve([[[-1.72, 2.2], [-0.6, 2.55], [1.4, 2.62], [4.0, 2.62]]]);
       const ST = (x) => (x > 4.0 ? 2.66 : sTop(x)), RD = (x) => (x > 4.0 ? 2.62 : sRed(x)) + 0.06;
-      P = { LN: 10.0, xTip: -1.9, Ls: 11.1, bot: 1.35, top: 6.08, top0: top, white: [252, 253, 255], skirt: { c: '#c8cdd3', h0: 0.48 },
+      P = { LN: 10.0, xTip: -1.9, Ls: 11.1, bot: 1.35, top: 6.08, top0: top, white: [252, 253, 255], pillars: [[6.7, 7.05], [10.2, 10.4]], wsEnd: 6.7, wiper: 2.2, skirt: { c: '#c8cdd3', h0: 0.72 },
         bands: [
           { x0: 0.25, x1: 99, lo: (x) => (x > 6.2 ? 4.12 : bLo(x)), hi: (x) => (x > 7.4 ? 5.12 : bUp(x)), col: glassC },
           { x0: -1.8, x1: 99, lo: () => 1.76, hi: ST, col: (x) => ({ c: mix(mix('#0b2f6e', '#1567c4', L(x, 15.85, 7)), '#22b6d6', L(x, 6, -1.7)) }) },
