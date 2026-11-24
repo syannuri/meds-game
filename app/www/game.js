@@ -6919,16 +6919,15 @@
               if (isG && (PT.pillars || []).some(([g0, g1]) => (R1.xs + R2.xs) / 2 > g0 && (R1.xs + R2.xs) / 2 < g1)) continue; // tiang (pilar) di antara kaca depan & jendela samping
               for (let m = 0; m < M; m++) { const q = [R1.pts[m], R1.pts[m + 1], R2.pts[m + 1], R2.pts[m]].map((t) => W3(Math.max(1.2, t.d), t.o, t.h)); if (q.some((t) => !t)) continue; if ((side === 'L' ? 1 : -1) * area(q) * CULLS > 40) continue; // permukaan membelakangi kabin tidak digambar
                 const tt = 1 - (m + 0.5) / M, z = B.col((R1.xs + R2.xs) / 2, tt); let cc;
-                if (z.glass !== undefined) { const sp = night ? 0 : 0.45 * SUNK * Math.exp(-Math.pow((q[0].x - SUN.x) / (W * 0.16), 2)), t = clamp(tt, 0, 1), v = (a0, a1) => Math.round(clamp(a0 + (a1 - a0) * t + 220 * sp, 0, 255));
-                  const xm = (R1.xs + R2.xs) / 2, ws = xm < (PT.wsEnd || 0), str = ws && !night ? Math.max(0, 1 - Math.abs(((xm * 0.55 + t * 1.3) % 1.6) - 0.8) / 0.07) * 0.5 : 0; // garis pantulan diagonal di kaca depan
-                  cc = night ? (kL > 0.3 ? '#3a3226' : '#141b26') : mix(`rgb(${v(10, 74)},${v(15, 102)},${v(22, 132)})`, '#9fc3dc', ws ? str * 0.22 : 0); } // kaca depan sewarna kaca samping (gelap), hanya kilau tipis
+                if (z.glass !== undefined) { const t = clamp(tt, 0, 1), e = t * t * (3 - 2 * t); // kaca: gradasi tenang (langit samar di atas, gelap di bawah), tanpa kilau bergerak
+                  cc = night ? (kL > 0.3 ? '#3a3226' : '#121821') : mix('#0e141b', '#3d5266', 0.85 * e); }
                 else { const mr2 = (secs[j][0].s + 0) * 0; cc = night ? mix(z.c, '#000000', 0.45) : mix(z.c, '#000000', 0.1 * (1 - tt) + mr2); }
                 c.fillStyle = cc; c.strokeStyle = cc; c.lineWidth = 1.3; c.lineJoin = 'round'; c.beginPath(); q.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); } }
             if (isG && side === 'L') { // bingkai kaca perak tipis di tepi atas & bawah, tepi pilar, wiper di kaca depan
               const edge = (m) => { let on = false; c.beginPath(); for (let j = 0; j < rows.length; j++) { const R = rows[j]; if (!R || !R.pts || (PT.pillars || []).some(([g0, g1]) => R.xs > g0 && R.xs < g1)) { on = false; continue; } const t = R.pts[m]; if (t.d < 1.2) { on = false; continue; } const q = W3(t.d, t.o, t.h); if (!q) { on = false; continue; } if (on) c.lineTo(q.x, q.y); else { c.moveTo(q.x, q.y); on = true; } } c.stroke(); };
               const q0 = W3(Math.max(1.5, dn + 6), KO(x0 + dn + 6) - 1.4, 3), kq = q0 ? q0.k : 10; c.strokeStyle = night ? 'rgba(120,128,140,0.6)' : 'rgba(225,230,236,0.95)'; c.lineWidth = Math.max(1, 0.04 * kq); edge(0); edge(M);
               for (const [g0, g1] of PT.pillars || []) for (const gx of [g0, g1]) { const j = rows.findIndex((R) => R && R.pts && R.xs >= gx); const R = rows[j]; if (!R) continue; const a1 = W3(R.pts[0].d, R.pts[0].o, R.pts[0].h), b1 = W3(R.pts[M].d, R.pts[M].o, R.pts[M].h); if (a1 && b1) { c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(b1.x, b1.y); c.stroke(); } }
-              const wj = rows.findIndex((R) => R && R.pts && R.xs >= (PT.wiper || 99)), RW = rows[wj], RW2 = rows[wj + 3]; if (RW && RW2 && RW2.pts) { const p1 = RW.pts[M - 1], p2 = RW2.pts[Math.max(0, M - 3)], w1 = W3(p1.d, p1.o, p1.h), w2 = W3(p2.d, p2.o, p2.h); if (w1 && w2) { c.strokeStyle = '#101418'; c.lineWidth = Math.max(1, 0.035 * kq); c.beginPath(); c.moveTo(w1.x, w1.y); c.lineTo(w2.x, w2.y); c.stroke(); } } } }
+              } }
         }
         if (!mid) { // tutup ujung moncong: penampang terdepan diisi penuh agar ujung hidung tidak bolong
           const sec = lead ? secs[0] : secs[secs.length - 1]; if (sec[0].d > 1.3) { const P5 = sec.map((t) => W3(t.d, t.o, t.h)); if (!P5.some((t) => !t)) {
@@ -13251,32 +13250,16 @@
     const seam = { x0: -1, x1: 1.4, lo: () => 1.55, hi: () => 1.6, col: () => ({ c: '#9aa1a9' }), noZone: true }; // sambungan kerucut hidung
     const lamp = (cl) => ({ x0: 1.0, x1: 2.1, lo: (u) => gLo(u) - 0.52, hi: (u) => gLo(u) - 0.52 + 0.17 * Math.sin(Math.PI * L(u, 1.0, 2.1)) + 0.01, col: () => ({ c: cl }), noZone: true }); // lampu sipit di sudut moncong
     const base = { xTip: 0, LN: 7.2, Ls: 7.2, bot: 0.95, top: 4.05, top0: top, pillars: [[6.0, 6.55], [8.0, 9.1]], wsEnd: 6.0, wiper: 2.2 };
-    if (type === 'argo') { // Agraveda: pita ungu di bawah kaca, sabuk jingga lebar, sabuk hitam berderet lampu, kerucut hidung putih
-      P = Object.assign({}, base, { white: [248, 248, 250], skirt: { c: '#c9ced4', h0: 0.72 },
-        bands: [...glassB,
-          { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.4, hi: (u) => gLo(u) - 0.04, col: () => ({ c: '#7b2fb8' }) },
-          { x0: -1, x1: 99, lo: (u) => F(u, 2.08, 2.4), hi: (u) => gLo(u) - 0.4, col: (u, t) => ({ c: mix('#f07818', '#f8a640', t * 0.7) }) },
-          { x0: -1, x1: 7.5, lo: (u) => F(u, 1.6, 2.1), hi: (u) => F(u, 2.08, 2.4), col: () => ({ c: '#16181c' }) },
-          { x0: 0.9, x1: 2.2, lo: (u) => F(u, 1.6, 2.1) + 0.1, hi: (u) => F(u, 1.6, 2.1) + 0.1 + 0.15 * Math.sin(Math.PI * L(u, 0.9, 2.2)) + 0.01, col: () => ({ c: '#f4fbff' }), noZone: true }, // lampu LED sipit di sabuk hitam
-          seam],
-        zone: () => null });
-    } else if (type === 'garuda') { // Garuda: sabuk biru tua lebar dengan dua garis merah, kerucut hidung putih
-      const LV = (KD && KD.livery) || {}, BL = LV.band || '#1a3f9e', RD = '#e3262e';
-      P = Object.assign({}, base, { white: [250, 251, 253], skirt: { c: '#c3c8ce', h0: 0.72 },
-        bands: [...glassB,
-          { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.26, hi: (u) => gLo(u) - 0.12, col: () => ({ c: RD }) },
-          { x0: -1, x1: 99, lo: (u) => F(u, 1.8, 2.32), hi: (u) => gLo(u) - 0.26, col: (u, t) => ({ c: mix(BL, '#2c5cc8', t * 0.45) }) },
-          { x0: -1, x1: 99, lo: (u) => F(u, 1.62, 2.18), hi: (u) => F(u, 1.8, 2.32), col: () => ({ c: RD }) },
-          lamp('#eaf4ff'), seam],
-        zone: () => null });
-    } else { // Kilat: garis merah di bawah kaca, sabuk biru, sabuk biru muda melingkar ke kerucut hidung
-      P = Object.assign({}, base, { white: [252, 253, 255], skirt: { c: '#c8cdd3', h0: 0.72 },
-        bands: [...glassB,
-          { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.26, hi: (u) => gLo(u) - 0.12, col: () => ({ c: '#e3262e' }) },
-          { x0: -1, x1: 99, lo: (u) => F(u, 1.98, 2.42), hi: (u) => gLo(u) - 0.26, col: (u, t) => ({ c: mix('#1c4fbf', '#2e66d6', t * 0.5) }) },
-          { x0: -1, x1: 99, lo: (u) => F(u, 1.62, 2.12), hi: (u) => F(u, 1.98, 2.42), col: () => ({ c: '#2bb3e8' }) },
-          lamp('#eaf6ff'), seam],
-        zone: () => null });
+    // livery muka sederhana: satu sabuk warna utama yang menyapu dari sisi ke moncong + satu garis aksen tipis, warna rata
+    const sash = (c1, c2) => [{ x0: -1, x1: 99, lo: (u) => F(u, 1.95, 2.4), hi: (u) => gLo(u) - 0.24, col: () => ({ c: c1 }) },
+      { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.2, hi: (u) => gLo(u) - 0.1, col: () => ({ c: c2 }) }];
+    if (type === 'argo') { // Agraveda: sabuk jingga + garis ungu
+      P = Object.assign({}, base, { white: [248, 248, 250], skirt: { c: '#c9ced4', h0: 0.72 }, bands: [...glassB, ...sash('#ee8227', '#7b3aa8'), lamp('#f4fbff'), seam], zone: () => null });
+    } else if (type === 'garuda') { // Garuda: sabuk biru tua + garis merah
+      const LV = (KD && KD.livery) || {};
+      P = Object.assign({}, base, { white: [250, 251, 253], skirt: { c: '#c3c8ce', h0: 0.72 }, bands: [...glassB, ...sash(LV.band || '#1d3f94', '#e0262e'), lamp('#eaf4ff'), seam], zone: () => null });
+    } else { // Kilat: sabuk biru + garis toska
+      P = Object.assign({}, base, { white: [252, 253, 255], skirt: { c: '#c8cdd3', h0: 0.72 }, bands: [...glassB, ...sash('#1f5fc8', '#2bb3e8'), lamp('#eaf6ff'), seam], zone: () => null });
     }
     // warna dasar permukaan mengikuti lajur yang sama (cadangan di ujung moncong yang lajurnya terlalu sempit untuk dihitung)
     P.zone = (x, h) => { for (let i = P.bands.length - 1; i >= 0; i--) { const B = P.bands[i]; if (B.noZone || x < B.x0 || x > B.x1) continue; const lo = B.lo(x), hi = Math.min(B.hi(x), 50); if (h >= lo && h < hi) return B.col(x, (h - lo) / Math.max(0.05, hi - lo)); } return null; };
