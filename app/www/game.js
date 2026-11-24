@@ -6764,7 +6764,8 @@
       const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]);
       // sudut penampang: dari bahu atap kanan (tak terlihat) melintasi atap ke sisi kiri yang menghadap Guntur, rapat di lengkung
       const angs = (n) => { const A2 = []; for (let q = 0; q <= n; q++) { const t = q / n; A2.push(Math.PI * (0.3 + 0.7 * (1 - Math.pow(1 - t, 1.35)))); } return A2; };
-      const ANG_M = angs(26), ANG_L = []; for (let q = 0; q < 5; q++) ANG_L.push(Math.PI * (0.3 + 0.2 * q / 5)); for (let q = 0; q <= 22; q++) { const r = 1 - q / 22; ANG_L.push(Math.PI - Math.asin(Math.min(1, r * r))); } // sisi kiri: sampel rata menurut tinggi
+      const ANG_M = angs(26), ANG_L = []; for (let q = 0; q < 12; q++) { const r = q / 12; ANG_L.push(Math.asin(Math.min(1, r * r))); } // sisi kanan juga (terlihat di ujung moncong dari depan)
+       for (let q = 0; q <= 22; q++) { const r = 1 - q / 22; ANG_L.push(Math.PI - Math.asin(Math.min(1, r * r))); } // sisi kiri: sampel rata menurut tinggi
       let ANG = ANG_M; // lokomotif: penampang lebih rapat agar batas kaca & pita livery halus
       const PT = KPROF(DBc.kilat.loco === 'argo' ? 'argo' : DBc.kilat.loco === 'hst2' ? 'garuda' : 'kilat', DBc.kilat), LN = PT.LN;
       // penampang moncong mengikuti garis atap tampak samping (tinggi) & lebar yang menyempit membulat ke ujung (denah)
@@ -6876,11 +6877,13 @@
           const at = (sec, f) => { const i = Math.min(sec.length - 2, Math.max(0, Math.floor(f))), u = f - i, A1 = sec[i], B1 = sec[i + 1]; return { d: A1.d + (B1.d - A1.d) * u, o: A1.o + (B1.o - A1.o) * u, h: A1.h + (B1.h - A1.h) * u }; };
           const cross = (sec, i0, i1, hw) => { const st = i1 > i0 ? 1 : -1; for (let i = i0; i !== i1; i += st) { const h0 = sec[i].h, h1 = sec[i + st].h; if ((h0 - hw) * (h1 - hw) <= 0 && h0 !== h1) return i + st * (hw - h0) / (h1 - h0); } return null; };
           const arc = (sec, hlo, hhi) => { const nE = sec.length - 1, hT = sec[kTop].h; if (hlo >= hT) return null; // lajur pada sisi kiri, membungkus puncak bila batas atas di atas atap
-            const fLo = cross(sec, kTop, nE, hlo); if (fLo === null) return null; let fHi;
+            let fLo = cross(sec, kTop, nE, hlo); if (fLo === null) { if (hlo < sec[nE].h) fLo = nE; else return null; } let fHi;
             if (hhi >= hT) { const fr = cross(sec, kTop, 0, hlo); fHi = fr === null ? 0 : fr; } else { fHi = cross(sec, kTop, nE, hhi); if (fHi === null) return null; }
             const pts = []; for (let m = 0; m <= M; m++) pts.push(at(sec, fHi + (fLo - fHi) * m / M)); return pts; };
-          for (const B of PT.bands) {
-            const rows = secs.map((sec) => { const xs = xsOf(sec); if (xs < B.x0 || xs > B.x1) return null; const lo2 = B.lo(xs), hi2 = B.hi(xs); if (hi2 <= lo2) return null; return { xs, lo2, hi2, pts: arc(sec, toW(lo2), toW(hi2)) }; });
+          const arcR = (sec, hlo, hhi) => { const hT = sec[kTop].h; if (hhi >= hT || hlo >= hT) return null; let fLo = cross(sec, kTop, 0, hlo); const fHi = cross(sec, kTop, 0, hhi); if (fLo === null && hlo < sec[0].h) fLo = 0; if (fLo === null || fHi === null) return null; // sisi kanan (cermin), terlihat di ujung moncong
+            const pts = []; for (let m = 0; m <= M; m++) pts.push(at(sec, fHi + (fLo - fHi) * m / M)); return pts; };
+          for (const B0 of PT.bands) for (const side of ['R', 'L']) { const B = B0, fA = side === 'L' ? arc : arcR; if (side === 'R' && B.noR) continue;
+            const rows = secs.map((sec) => { const xs = xsOf(sec); if (xs < B.x0 || xs > B.x1) return null; const lo2 = B.lo(xs), hi2 = B.hi(xs); if (hi2 <= lo2) return null; return { xs, lo2, hi2, pts: fA(sec, toW(lo2), toW(hi2)) }; });
             const order = []; for (let j = 0; j < rows.length - 1; j++) if (rows[j] && rows[j + 1] && rows[j].pts && rows[j + 1].pts) order.push(j);
             order.sort((j1, j2) => secs[j2][0].d - secs[j1][0].d);
             const isG = B.col(0, 0.5).glass !== undefined;
@@ -6893,12 +6896,16 @@
                   cc = night ? (kL > 0.3 ? '#3a3226' : '#141b26') : mix(`rgb(${v(10, 74)},${v(15, 102)},${v(22, 132)})`, '#9fc3dc', ws ? str * 0.22 : 0); } // kaca depan sewarna kaca samping (gelap), hanya kilau tipis
                 else { const mr2 = (secs[j][0].s + 0) * 0; cc = night ? mix(z.c, '#000000', 0.45) : mix(z.c, '#000000', 0.1 * (1 - tt) + mr2); }
                 c.fillStyle = cc; c.strokeStyle = cc; c.lineWidth = 0.6; c.beginPath(); q.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill(); c.stroke(); } }
-            if (isG) { // bingkai kaca perak tipis di tepi atas & bawah, tepi pilar, wiper di kaca depan
+            if (isG && side === 'L') { // bingkai kaca perak tipis di tepi atas & bawah, tepi pilar, wiper di kaca depan
               const edge = (m) => { let on = false; c.beginPath(); for (let j = 0; j < rows.length; j++) { const R = rows[j]; if (!R || !R.pts || (PT.pillars || []).some(([g0, g1]) => R.xs > g0 && R.xs < g1)) { on = false; continue; } const t = R.pts[m]; if (t.d < 1.2) { on = false; continue; } const q = W3(t.d, t.o, t.h); if (!q) { on = false; continue; } if (on) c.lineTo(q.x, q.y); else { c.moveTo(q.x, q.y); on = true; } } c.stroke(); };
               const q0 = W3(Math.max(1.5, dn + 6), KO(x0 + dn + 6) - 1.4, 3), kq = q0 ? q0.k : 10; c.strokeStyle = night ? 'rgba(120,128,140,0.6)' : 'rgba(225,230,236,0.95)'; c.lineWidth = Math.max(1, 0.04 * kq); edge(0); edge(M);
               for (const [g0, g1] of PT.pillars || []) for (const gx of [g0, g1]) { const j = rows.findIndex((R) => R && R.pts && R.xs >= gx); const R = rows[j]; if (!R) continue; const a1 = W3(R.pts[0].d, R.pts[0].o, R.pts[0].h), b1 = W3(R.pts[M].d, R.pts[M].o, R.pts[M].h); if (a1 && b1) { c.beginPath(); c.moveTo(a1.x, a1.y); c.lineTo(b1.x, b1.y); c.stroke(); } }
               const wj = rows.findIndex((R) => R && R.pts && R.xs >= (PT.wiper || 99)), RW = rows[wj], RW2 = rows[wj + 3]; if (RW && RW2 && RW2.pts) { const p1 = RW.pts[M - 1], p2 = RW2.pts[Math.max(0, M - 3)], w1 = W3(p1.d, p1.o, p1.h), w2 = W3(p2.d, p2.o, p2.h); if (w1 && w2) { c.strokeStyle = '#101418'; c.lineWidth = Math.max(1, 0.035 * kq); c.beginPath(); c.moveTo(w1.x, w1.y); c.lineTo(w2.x, w2.y); c.stroke(); } } } }
         }
+        if (!mid) { // tutup ujung moncong: penampang terdepan diisi penuh agar ujung hidung tidak bolong
+          const sec = lead ? secs[0] : secs[secs.length - 1]; if (sec[0].d > 1.3) { const P5 = sec.map((t) => W3(t.d, t.o, t.h)); if (!P5.some((t) => !t)) {
+            c.fillStyle = night ? '#5a606a' : `rgb(${PT.white.map((v) => Math.round(v * 0.86)).join(',')})`; c.beginPath(); P5.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
+            c.strokeStyle = night ? 'rgba(0,0,0,0.4)' : 'rgba(90,98,108,0.35)'; c.lineWidth = 1; c.stroke(); } } }
         { // garis struktur badan: tepi bawah gelap, lipatan sisi bawah (tumblehome) & garis bahu atap berkilau, pintu penumpang
           const full = secs.find((ss) => ss[0].s >= 0.999) || secs[secs.length - 1], kOf = (rr) => full.findIndex((t) => t.a > Math.PI / 2 && t.r < rr);
           const line3 = (k, col, w, from = 0) => { c.strokeStyle = col; let on = false; c.beginPath(); for (let j = from; j < secs.length; j++) { const t = secs[j][Math.min(k, secs[j].length - 1)]; if (t.d < 1.5) { on = false; continue; } const q = W3(t.d, t.o, t.h); if (!q) { on = false; continue; } if (!on) { c.lineWidth = Math.max(1, w * q.k); c.moveTo(q.x, q.y); on = true; } else c.lineTo(q.x, q.y); } c.stroke(); };
@@ -13214,7 +13221,8 @@
           { x0: -0.45, x1: 99, lo: lw, hi: uE, col: glassC },
           { x0: -0.6, x1: 2.6, lo: (x) => lw(x) - 0.12, hi: lw, col: () => ({ c: '#fff4d8' }) },
           { x0: -2, x1: 99, lo: (x) => (x < 1.8 ? 2.38 : s0(x)), hi: s1, col: (x, t) => { const k = clamp((x + 1.3) / 16, 0, 1); return { c: x < 1.8 ? mix('#f08a24', '#f7b45e', t * 0.6) : k < 0.45 ? mix('#f08a24', '#d0588a', k / 0.45) : mix('#d0588a', '#7a3a96', (k - 0.45) / 0.55) }; } }],
-        zone: (x, h) => { if (h < 2.3) return { c: '#4a4e55' }; if (h < 2.38) return { c: '#bfc4ca' }; if (x < -0.5 && h > 2.9 && h < 3.15) return { c: '#fffbe8' }; return null; } };
+        zone: (x, h) => { if (h < 2.3) return { c: '#4a4e55' }; if (h < 2.62) return { c: x < 1.8 ? '#f08a24' : '#bfc4ca' }; if (x < -0.5 && h > 2.9 && h < 3.15) return { c: '#fffbe8' }; return null; } };
+      P.bands.push({ x0: -9, x1: 99, lo: () => -9, hi: () => 2.3, noR: true, col: () => ({ c: '#4a4e55' }) }, { x0: -9, x1: 99, lo: () => 2.3, hi: () => 2.38, noR: true, col: () => ({ c: '#bfc4ca' }) });
     } else if (type === 'garuda') { // Garuda (bentuk Guntur): moncong panjang melandai ke bibir rendah, kaca kokpit naik di moncong lalu menyatu ke pita jendela, sabuk biru tua
       const LV = (KD && KD.livery) || {}, top = curve([[[-2.05, 1.55], [-1.75, 2.3], [-0.6, 3.25], [0.9, 4.15]], [[0.9, 4.15], [3.2, 5.55], [6.4, 6.07], [10.2, 6.08]]]);
       const gUp = curve([[[1.15, 4.1], [2.2, 4.95], [3.6, 5.6], [5.4, 5.68]], [[5.4, 5.68], [6.7, 5.6], [7.4, 4.62], [8.6, 4.62]]]), gLo = curve([[[1.6, 3.66], [3.5, 3.4], [5.8, 2.95], [8.0, 2.95]]]);
@@ -13225,6 +13233,7 @@
       bands.push({ x0: -2.2, x1: 99, lo: (x) => A(x) - 0.09, hi: (x) => A(x) + 0.09, col: () => ({ c: LV.acc || '#d8262e' }) }, { x0: -2.2, x1: 99, lo: (x) => PN(x) - 0.05, hi: (x) => PN(x) + 0.05, col: () => ({ c: LV.pin || '#4a525a' }) });
       P = { LN: 11.2, xTip: -2.1, Ls: 12.3, bot: 0.9, top: 6.08, top0: top, white: [250, 251, 253], pillars: [[6.2, 6.5], [9.4, 10.8]], wsEnd: 6.2, wiper: 2.8, skirt: { c: '#c3c8ce', h0: 0.72 }, bands,
         zone: (x, h) => { if (x < -0.2 && x > -1.75 && Math.abs(h - (1.86 + (x + 1.7) * 0.2)) < 0.07) return { c: '#fff6d8' }; if (h < 1.5) return { c: '#b9bfc6' }; return null; } };
+      P.bands.unshift({ x0: -9, x1: 99, lo: () => -9, hi: () => 1.5, noR: true, col: () => ({ c: '#b9bfc6' }) });
     } else { // Kilat: moncong peluru panjang, pita kaca hitam menerus yang meruncing ke hidung, sapuan biru-toska & garis merah
       const top = curve([[[-1.85, 1.6], [-1.9, 1.95], [-1.75, 2.45], [-1.2, 3.0]], [[-1.2, 3.0], [0.8, 4.9], [4.2, 6.05], [9.2, 6.08]]]);
       const bUp = curve([[[0.6, 3.75], [2.4, 4.7], [4.6, 5.12], [7.4, 5.12]]]), bLo = curve([[[0.25, 3.5], [1.6, 3.62], [4.0, 4.05], [6.2, 4.12]]]);
@@ -13237,6 +13246,7 @@
           { x0: -1.8, x1: 99, lo: (x) => RD(x) - 0.06, hi: (x) => RD(x) + 0.06, col: () => ({ c: '#d8262e' }) },
           { x0: -1.6, x1: 99, lo: () => 2.84, hi: () => 2.96, col: () => ({ c: '#8a959f' }) }],
         zone: (x, h) => { if (x < 0 && x > -1.1 && Math.abs(h - (1.95 + (x + 1.0) * 0.07)) < 0.07) return { c: '#fff6d8' }; if (h < 1.72) return { c: '#c4c9cf' }; return null; } };
+      P.bands.unshift({ x0: -9, x1: 99, lo: () => -9, hi: () => 1.72, noR: true, col: () => ({ c: '#c4c9cf' }) });
     }
     const tip = P.xTip, tmax = P.top - P.bot; P.topF = (s) => clamp((P.top0(tip + s * P.Ls) - P.bot) / tmax, 0.05, 1);
     return (KPROF_C[key] = P);
