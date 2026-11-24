@@ -1322,3 +1322,22 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 #resCard .rtrust small { grid-column: 1 / 3; font-size: calc(10.5px * var(--rk)); color: var(--muted); }
 #resCard .rcert.story i { width: calc(34px * var(--rk)); height: calc(34px * var(--rk)); border-radius: 50%; overflow: hidden; flex: none; display: grid; place-items: center; }
 #resCard .rcert.story i svg { width: 100%; height: 100%; }
+
+/* penumpang tetap & keputusan */
+#resCard .rregs { display: grid; gap: calc(4px * var(--rk)); margin-bottom: calc(6px * var(--rk)); }
+#resCard .rreg { display: flex; gap: 8px; align-items: center; padding: calc(4px * var(--rk)) 10px; border-radius: 10px; background: rgba(255,255,255,.05); border-left: 3px solid #f2c230; }
+#resCard .rreg.good { border-left-color: #7ee08a; } #resCard .rreg.bad { border-left-color: #e5483b; }
+#resCard .rreg i { width: calc(30px * var(--rk)); height: calc(30px * var(--rk)); border-radius: 50%; overflow: hidden; flex: none; display: block; }
+#resCard .rreg i svg { width: 100%; height: 100%; display: block; }
+#resCard .rreg b { display: block; font-size: calc(12px * var(--rk)); }
+#resCard .rreg b em { font-style: normal; font-weight: 800; margin-left: 4px; color: #f6d365; }
+#resCard .rreg.good b em { color: #7ee08a; } #resCard .rreg.bad b em { color: #ff8a7a; }
+#resCard .rreg small { display: block; font-size: calc(11px * var(--rk)); color: var(--muted); }
+#resCard .rdec { font-size: calc(11.5px * var(--rk)); margin-bottom: calc(6px * var(--rk)); color: var(--muted); } #resCard .rdec b { color: #f6d365; }
+.kch.reg { display: flex; gap: 8px; align-items: flex-start; }
+.kch.reg > i { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; flex: none; display: block; }
+.kch.reg > i svg { width: 100%; height: 100%; display: block; }
+.kch.reg > div { min-width: 0; flex: 1; }
+.kch .letter { margin-top: 4px; font-style: italic; color: #f2dca0; }
+.tmeter.sm { height: 5px; margin: 3px 0 3px; }
+.choice.story { border-color: rgba(126,224,138,.6); }

@@ -2700,6 +2700,31 @@
       BW: bg('#a68ac4', '#43305f') + fem({ skin: '#cf9e7a', sh: '#9a6a4a', veil: '#8a3244', veilD: '#64202f', veilL: '#a84a5c', lip: '#b8485a', iris: '#3a2418', brooch: '#e8c45a', top: '#fbf8f1', mature: true })
         + `<path d="M19.5 37.6h9.8a1.6 1.6 0 0 1 1.6 1.6v1.2a4 4 0 0 1-4 4h-5a4 4 0 0 1-4-4v-1.2a1.6 1.6 0 0 1 1.6-1.6zM34.7 37.6h9.8a1.6 1.6 0 0 1 1.6 1.6v1.2a4 4 0 0 1-4 4h-5a4 4 0 0 1-4-4v-1.2a1.6 1.6 0 0 1 1.6-1.6z" fill="rgba(255,255,255,.1)" stroke="#c9a24a" stroke-width="1"/><path d="M30.9 39.4q1.1-.8 2.2 0" stroke="#c9a24a" stroke-width="1" fill="none"/>`
         + `<rect x="15" y="57.5" width="8" height="2.6" rx="1" fill="#d9a93a"/><rect x="41" y="57.5" width="8" height="2.6" rx="1" fill="#d9a93a"/><path d="M16 58.8h6M42 58.8h6" stroke="#8a6a20" stroke-width=".6"/>`,
+      // ---- penumpang tetap ----
+      // Pak Darto: pedagang sayur, caping bambu, kaos oblong & handuk kecil di bahu, kumis tipis, senyum ramah
+      DR: bg('#8fb46a', '#3f5f2a') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#d9c9a0"/><path d="M14 56q8-4 14 2l-2 6H12z" fill="#f2f2ea"/><path d="M15 58q6-2 11 2" stroke="#c9c9bc" stroke-width="1" fill="none"/>`
+        + ears('#a8714c') + face('#a8714c', '#6a4028') + `<path d="M16 35c1-9 7-14 16-14s15 5 16 14c-4-3-9-5-16-5s-12 2-16 5z" fill="#2a2420"/>`
+        + eyes(39.5) + brows(34.5, '#2a2420') + nose(45) + `<path d="M26 48.6q6-1.8 12 0" stroke="#2a2420" stroke-width="1.8" fill="none" stroke-linecap="round"/>` + smile(51.5) + blush
+        + `<path d="M4 31L32 11l28 20q-28 5-56 0z" fill="#d6b56a"/><path d="M4 31q28 5 56 0" stroke="#a8843e" stroke-width="1.4" fill="none"/><path d="M14 25L32 12l18 13M20 28L32 14l12 14" stroke="#b8954e" stroke-width=".8" fill="none" opacity=".8"/><circle cx="32" cy="11.5" r="1.4" fill="#8a6a2e"/>`,
+      // Laras: mahasiswi, kerudung biru langit, kacamata bulat tipis, tas ransel, ceria
+      LR: bg('#7ab0d8', '#2e5a86') + fem({ skin: '#e6b892', sh: '#b88262', veil: '#5b8fc9', veilD: '#3f6ea6', veilL: '#86b4e4', lip: '#d4687a', iris: '#3a2418', brooch: '#f2f2f2', top: '#f4efe4', grin: true })
+        + `<circle cx="25.6" cy="40.3" r="4.6" fill="rgba(255,255,255,.08)" stroke="#2a2a30" stroke-width=".9"/><circle cx="38.4" cy="40.3" r="4.6" fill="rgba(255,255,255,.08)" stroke="#2a2a30" stroke-width=".9"/><path d="M30.2 40q1.8-1 3.6 0" stroke="#2a2a30" stroke-width=".9" fill="none"/>`
+        + `<path d="M10 64l3-9 5-1-2 10zM54 64l-3-9-5-1 2 10z" fill="#e0703a"/>`,
+      // Raka: anak sekolah calon masinis, topi masinis mainan kebesaran, gigi ompong, pipi bulat
+      RA: bg('#f2c45a', '#b8742a') + `<path d="M10 64c2-8 10-11 22-11s20 3 22 11z" fill="#f4f1e8"/><path d="M27 53l5 5 5-5" fill="#c8352b"/>`
+        + ears('#b98258') + `<path d="M32 59c-9 0-15-6-15-16v-5c0-9 6-15 15-15s15 6 15 15v5c0 10-6 16-15 16z" fill="#b98258"/>`
+        + `<path d="M17 36c0-9 6-14 15-14s15 5 15 14c-3-4-8-6-15-6s-12 2-15 6z" fill="#1b1512"/>`
+        + eyes(40) + brows(35.5, '#1b1512') + `<ellipse cx="22" cy="46" rx="3.2" ry="2" fill="#e5806a" opacity=".35"/><ellipse cx="42" cy="46" rx="3.2" ry="2" fill="#e5806a" opacity=".35"/>`
+        + `<path d="M26.5 48.5q5.5 5.5 11 0q-5.5 1.8-11 0z" fill="#7a2626"/><rect x="29.2" y="48.8" width="2.4" height="2" fill="#fff"/><rect x="33.2" y="48.8" width="2.4" height="2" fill="#fff"/>`
+        + `<path d="M12 28c1-9 9-14 20-14s19 5 20 14z" fill="#1f3550"/><path d="M8 28h48c0 2.4-2 3.6-4 3.6H12c-2 0-4-1.2-4-3.6z" fill="#152538"/><rect x="12" y="26" width="40" height="2.2" fill="#d9a93a"/><circle cx="32" cy="20" r="2" fill="#d9a93a"/>`,
+      // Mbah Karto: lansia, peci hitam, rambut & kumis putih, kerutan, tongkat, baju batik cokelat
+      MK: bg('#c9a07a', '#6a4a30') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#7a4a28"/><path d="M14 58q4-2 6 0t6 0 6 0 6 0 6 0 6 0" stroke="#d9a35a" stroke-width="1.2" fill="none"/><path d="M14 62q4-2 6 0t6 0 6 0 6 0 6 0 6 0" stroke="#d9a35a" stroke-width="1.2" fill="none"/>`
+        + ears('#a87a58') + face('#a87a58', '#6a4a30') + `<path d="M16 36c0-4 2-6 4-7M48 36c0-4-2-6-4-7" stroke="#eeeae2" stroke-width="3" fill="none" stroke-linecap="round"/>`
+        + eyes(40) + brows(35, '#eeeae2', 0.6) + nose(45) + `<path d="M24.5 48.6q4-2.6 7.5-.8 3.5-1.8 7.5.8-3.6 2.4-7.5 1.2-3.9 1.2-7.5-1.2z" fill="#eeeae2"/><path d="M28.5 53q3.5 1.4 7 0" stroke="#7a3b2e" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+        + `<path d="M22 31.5q3-1 6 0M36 31.5q3-1 6 0M21 44q2 1.5 4 1M43 44q-2 1.5-4 1" stroke="rgba(90,55,35,.45)" stroke-width=".9" fill="none"/>`
+        + `<path d="M17 27c0-8 7-11 15-11s15 3 15 11z" fill="#141414"/><rect x="17" y="25" width="30" height="3" fill="#1e1e1e"/><path d="M19 22q13-4 26 0" stroke="#3a3a3a" stroke-width=".9" fill="none"/>`,
+      // Bu Ratih: guru SD yang sedang hamil, kerudung hijau zaitun, wajah teduh
+      BR: bg('#b8c98a', '#5a6a32') + fem({ skin: '#d6a882', sh: '#a0704e', veil: '#6f8a3a', veilD: '#4f6a22', veilL: '#90aa58', lip: '#c05a64', iris: '#3a2418', brooch: '#f0d9a0', top: '#e8dcc4', mature: true }),
       // Pak Bram: bos bus rival, kacamata hitam, kumis tebal, jaket oranye
       PB: bg('#d9894a', '#6a3218') + `<path d="M8 64c2-9 11-13 24-13s22 4 24 13z" fill="#e8822a"/><path d="M26 52l6 7 6-7" fill="#1d1d1d"/><path d="M22 53l-4 11M42 53l4 11" stroke="#b85a14" stroke-width="2"/>`
         + ears('#a8714c') + face('#a8714c', '#6a4028') + `<path d="M15 34c0-12 8-18 17-18s17 6 17 18c-2-6-5-9-8-10-3 3-15 3-18 0-3 1-6 4-8 10z" fill="#141210"/><path d="M22 21q10-6 20 0" stroke="#3a3632" stroke-width="1.2" fill="none" opacity=".8"/>`
@@ -2846,7 +2871,7 @@
       }
       if (step === 'couple') { tryCouple(); return; }
       if (step === 'close' && !S.choiceOpen) { const cr = crowds.get(S.st); if (cr && cr.people.some((p) => p.transit && (p.state === 'run' || p.state === 'step'))) { toast('Tunggu penumpang transit naik dulu.', 'warn', 2.2, 'transit', 3); return; } }
-      if (step === 'close' && S.choiceOpen) { toast('Putuskan dulu: tunggu KA sambungan atau berangkat tepat waktu.', 'warn', 2.4, 'choice', 3); return; }
+      if (step === 'close' && S.choiceOpen) { toast('Putuskan dulu pilihanmu di panel keputusan.', 'warn', 2.4, 'choice', 3); return; }
       if (step === 'close') {
         S.doors = 'closed'; Sound.door(false);
         const CP = ROUTE.couple;
@@ -2979,7 +3004,8 @@
       }
       if (done) {
         dw.step = 'close'; dw.timer = 0;
-        { const ev = (S.events || []).find((e) => e.kind === 'dispatch' && e.si === S.st); if (ev && !S.dispatch) openDispatch(ev); }
+        { const ev = (S.events || []).find((e) => e.kind === 'dispatch' && e.si === S.st); if (ev && !S.dispatch) openDispatch(ev);
+          else { const D = !MIS.daily && DILEMMAS[MIS.id]; if (D && D.st === S.st && !S.story && !S.choiceOpen) openStory(D); } }
         toast(st.travelers ? 'Pemudik dan barang bawaannya sudah naik. Tutup pintu.' : st.traders ? 'Para pedagang sudah naik dengan keranjangnya. Tutup pintu.' : st.umbrellas ? 'Penumpang naik sambil melipat payung. Tutup pintu.' : 'Penumpang sudah naik. Tutup pintu.', 'info', 3, null, 2);
       }
     } else if (dw.step === 'unload') {
@@ -3800,9 +3826,11 @@
     C.t += dt;
     if (!C.q) { const pool = (CHAT_MIS[MIS.id] || []).concat(CHAT[MIS.id[0]] || CHAT[1]); const off = Math.floor(Math.random() * pool.length); C.q = pool.map((_, i) => pool[(i + off) % pool.length]);
       if (CHAT_MIS[MIS.id]) C.q.unshift(CHAT_MIS[MIS.id][0]);
+      for (const q of regRiders()) { const st = regOf(q.id); C.q.unshift(['Uchie', 'UC', st.n ? q.greet[st.last === 'bad' ? 'bad' : 'good'] : q.greet.first]); } // sapaan penumpang tetap (diteruskan Uchie dari gerbong)
+      try { const F = JSON.parse(store.get('rn.follow') || '[]'); if (F.length) { C.q.unshift(F.shift()); store.set('rn.follow', JSON.stringify(F)); } } catch (e) { /* abaikan */ } // akibat keputusan sebelumnya
       if (!store.get('rn.premiseHeard') && MISSION_ORDER.includes(MIS.id)) C.q.unshift(['Rahmat', 'RH', 'Anett, kabar dari direksi: lintas tua Watugede, rumah Surya, akan ditutup akhir musim kalau dianggap sepi dan merugi.'], ['Rahmat', 'RH', 'Setiap perjalananmu dicatat sebagai Kepercayaan Lintas: tepat waktu, nyaman, hemat, aman. Buktikan jalur ini hidup. Kemajuannya ada di tab Kisah.']); }
     const prem = !store.get('rn.premiseHeard') && C.q[0] && C.q[0][2].startsWith('Anett, kabar dari direksi');
-    if (C.n >= (prem ? 5 : 3) || !C.q.length) return;
+    if (C.n >= (prem ? 6 : 4) || !C.q.length) return;
     const wait = C.n === 0 ? (prem ? 8 : 22) : C.lastPrem ? 7 : 38;
     if (C.t < wait || radioTimer > 0 || toastTimer > 0) return;
     const kmh = S.v * 3.6; if (kmh < Math.max(30, ROUTE.lineSpeed * 0.4)) return;
@@ -3812,6 +3840,81 @@
     if ((S.events || []).some((e) => !e.warned && e.warnAt - S.x < 1500) || S.choiceOpen) return;
     const [who, av, text] = C.q.shift(); radio(text, 6.5, who, av); C.n++; C.t = 0;
     C.lastPrem = text.startsWith('Anett, kabar dari direksi'); if (text.startsWith('Setiap perjalananmu dicatat')) store.set('rn.premiseHeard', '1');
+  }
+  // ---------- penumpang tetap: mengingat cara Anett membawa kereta ----------
+  // kedekatan 0–100 (mulai 50) naik/turun dari hal yang paling mereka pedulikan; kabar di layar hasil, sapaan di perjalanan berikutnya, surat saat ≥ 80
+  const REGULARS = [
+    { id: 'DR', name: 'Pak Darto', role: 'pedagang sayur Pasar Minggu', cares: 'kenyamanan & rem halus', mis: ['1-3', '1-4', '1-6', '2-3'],
+      judge: (o) => (o.comfort >= 90 && !o.eb ? 'good' : o.comfort < 75 || o.eb ? 'bad' : 'ok'),
+      say: { good: 'Sayur saya sampai pasar mulus tanpa memar. Besok saya bawakan kopi untuk masinisnya!', ok: 'Lumayan, cuma dua-tiga ikat bayam yang lecek. Terima kasih, Mbak.', bad: 'Aduh, rem mendadak tadi bikin keranjang tomat saya tumpah. Hati-hati, ya, Mbak masinis.' },
+      greet: { first: 'Pak Darto naik di gerbong dua dengan dua keranjang sayur. Katanya: titip, rem pelan-pelan, ya!', good: 'Pak Darto naik lagi, membawa termos kopi untukmu. "Masinis yang remnya halus, sayurku aman lagi, kan?"', bad: 'Pak Darto naik lagi sambil memeluk keranjang tomatnya erat-erat. Semoga hari ini mulus.' },
+      letter: 'Sepucuk surat berbau daun pisang: "Mbak Anett, berkat kereta yang halus, sayur saya selalu segar dan pelanggan bertambah. Kios saya sekarang ada dua. Salam dari Pasar Minggu. — Darto"' },
+    { id: 'LR', name: 'Laras', role: 'mahasiswi teknik, pulang-pergi kampus', cares: 'ketepatan waktu', mis: ['1-3', '1-7', '3-1', '3-2'],
+      judge: (o) => (o.late !== null && o.late <= 30 ? 'good' : o.late === null || o.late > 120 ? 'bad' : 'ok'),
+      say: { good: 'Tepat waktu! Aku sampai sebelum dosen killer itu masuk kelas. Kamu penyelamatku.', ok: 'Telat sedikit, tapi masih sempat absen. Fiuh.', bad: 'Telat lagi... aku dihitung tidak hadir. Semoga besok lebih cepat, ya.' },
+      greet: { first: 'Mahasiswi bernama Laras naik dengan ransel penuh buku. Ia bertanya: kereta ini selalu tepat waktu, kan?', good: 'Laras naik lagi dan melambai ke kabin: "Kereta Mbak Anett selalu tepat waktu. Aku sampai pakai jadwalmu untuk alarm."', bad: 'Laras naik sambil melirik jam tangannya. Hari ini ada ujian pagi. Jangan sampai terlambat.' },
+      letter: 'Sebuah kartu dari kampus: "Skripsiku tentang ketepatan waktu kereta lokal, dan data terbaiknya dari perjalananmu. Aku lulus dengan nilai A! — Laras"' },
+    { id: 'RA', name: 'Raka', role: 'anak SD, bercita-cita jadi masinis', cares: 'berhenti tepat di marka', mis: ['1-5', '1-6', '3-3', '4-1'],
+      judge: (o) => (o.stops.length && o.stops.every((q) => Math.abs(q.offset) <= 1) ? 'good' : o.stops.some((q) => Math.abs(q.offset) > 4) ? 'bad' : 'ok'),
+      say: { good: 'Pas banget di marka! Aku catat di buku: Kak Anett, berhenti sempurna, nilai seratus!', ok: 'Hampir pas! Kata Kak Uchie, masinis hebat juga pernah meleset sedikit.', bad: 'Lho, kok kelewatan markanya? Aku jadi harus lari ke pintu, hehe.' },
+      greet: { first: 'Anak kecil bertopi masinis mainan duduk paling depan dan menempel di kaca. Namanya Raka. Ia ingin melihatmu berhenti tepat di marka.', good: 'Raka naik lagi dengan buku catatannya. "Kak Anett, hari ini berhenti sempurna lagi, ya? Aku mau mencatat!"', bad: 'Raka naik lagi dan berkata pelan: "Hari ini pasti pas markanya. Aku percaya Kak Anett."' },
+      letter: 'Gambar krayon dari Raka: Surya, Cakra, dan seorang masinis berkerudung di kabin. Di bawahnya tertulis besar-besar: "AKU MAU JADI MASINIS SEPERTI KAK ANETT."' },
+    { id: 'MK', name: 'Mbah Karto', role: 'pensiunan guru, berjalan bertongkat', cares: 'berhenti dekat marka & perjalanan tenang', mis: ['1-5', '1-7', '2-2', '4-1'],
+      judge: (o) => (o.avgOff !== null && o.avgOff <= 2 && o.comfort >= 85 ? 'good' : o.comfort < 70 || (o.avgOff !== null && o.avgOff > 5) ? 'bad' : 'ok'),
+      say: { good: 'Pintunya tepat di depan bangku saya, jadi saya tak perlu berjalan jauh. Matur nuwun, Nduk.', ok: 'Agak jauh sedikit dari pintu, tapi tongkat saya masih kuat.', bad: 'Kereta terguncang dan pintunya jauh sekali. Lutut tua ini kerepotan, Nduk.' },
+      greet: { first: 'Seorang kakek bertongkat naik pelan-pelan. Uchie membantunya duduk. Namanya Mbah Karto, dulu guru SD di Watugede.', good: 'Mbah Karto naik lagi dan tersenyum ke kabin: "Masinis yang sabar, Mbah suka naik keretamu."', bad: 'Mbah Karto naik pelan-pelan, berpegangan erat. Bawa dengan tenang hari ini, ya.' },
+      letter: 'Surat bertulisan tangan rapi gaya lama: "Empat puluh tahun saya mengajar anak-anak Watugede untuk tertib. Kini saya melihat murid yang tak pernah saya ajar, tapi tertib sekali di relnya. Bangga. — Karto"' },
+    { id: 'BR', name: 'Bu Ratih', role: 'guru SD, sedang hamil tujuh bulan', cares: 'kehalusan & keselamatan', mis: ['1-4', '2-3', '3-3', '3-4'],
+      judge: (o) => (o.comfort >= 92 && !o.viol ? 'good' : o.comfort < 80 || o.viol >= 2 ? 'bad' : 'ok'),
+      say: { good: 'Halus sekali, sampai bayiku tidur tenang sepanjang jalan. Terima kasih, Mbak Anett.', ok: 'Aman, hanya agak terguncang di beberapa tempat.', bad: 'Guncangan tadi membuat saya pusing. Tolong lebih pelan, ya, Mbak.' },
+      greet: { first: 'Seorang ibu hamil naik dan duduk di kursi prioritas. Uchie berbisik: itu Bu Ratih, guru SD, tujuh bulan. Bawa dengan halus.', good: 'Bu Ratih naik lagi dan mengangguk ke kabin. "Saya pilih keretamu karena paling halus."', bad: 'Bu Ratih naik lagi dengan hati-hati. Uchie mengingatkan: tolong lebih halus hari ini.' },
+      letter: 'Kartu ucapan dengan foto bayi mungil: "Kenalkan, Anett kecil. Namanya kami ambil dari masinis yang membawa kami dengan selamat setiap minggu. — Keluarga Ratih"' },
+  ];
+  const regOf = (id) => { try { return JSON.parse(store.get('rn.reg.' + id) || 'null') || { v: 50, n: 0, last: null }; } catch (e) { return { v: 50, n: 0, last: null }; } };
+  const regSet = (id, o) => store.set('rn.reg.' + id, JSON.stringify(o));
+  const regRiders = () => (MIS.daily ? [] : REGULARS.filter((q) => q.mis.includes(MIS.id)));
+  function regBump(id, d) { const o = regOf(id); o.v = clamp(o.v + d, 0, 100); regSet(id, o); }
+  function earnRegulars(r) {
+    if (r.failed) return '';
+    const fin = S.stops.find((q) => q.name === finalStation().name), stops = S.stops.concat(S.loads || []);
+    const o = { comfort: S.comfort, eb: !!S.ebUsed, viol: S.violations.length, late: fin ? fin.clock - fin.sched : null, stops, avgOff: stops.length ? stops.reduce((a, q) => a + Math.abs(q.offset), 0) / stops.length : null };
+    return regRiders().map((q) => { const out = q.judge(o), st = regOf(q.id), d = { good: 12, ok: 3, bad: -10 }[out], before = st.v;
+      st.v = clamp(st.v + d, 0, 100); st.n++; st.last = out; const letter = st.v >= 80 && !st.letter; if (letter) st.letter = 1; regSet(q.id, st);
+      return `<div class="rreg ${out}"><i>${PORTRAIT(q.id) || q.id}</i><div><b>${q.name} <em>${d > 0 ? '+' : ''}${d}</em></b><small>"${q.say[out]}"</small></div></div>`
+        + (letter ? `<div class="rcert story"><i>${PORTRAIT(q.id) || '✉️'}</i><div><b>SURAT DARI ${q.name.toUpperCase()}</b><small>${q.letter}</small></div></div>` : ''); }).join('');
+  }
+  // ---------- dilema bermakna: pilihan sah dengan akibat ke waktu, penumpang & cerita berikutnya ----------
+  const DILEMMAS = {
+    '1-5': { st: 1, id: 'badai', title: 'Badai memburuk · Kali Jernih', text: 'Petir menyambar di depan, hujan makin deras. Mbah Karto dan beberapa penumpang lansia tampak cemas. Menunggu 3 menit sampai hujan reda sedikit, atau berangkat sesuai jadwal?',
+      opts: [{ k: 'wait', label: 'Tunggu 3 menit', sub: 'penumpang tenang · tiba lebih lambat', delay: 180, reg: { MK: 10, LR: -6 }, toast: 'Tiga menit kemudian hujan sedikit reda. Penumpang lansia bernapas lega.', follow: ['Uchie', 'UC', 'Mbah Karto menitip salam: terima kasih sudah menunggu badai reda di Kali Jernih. Katanya, masinis yang sabar itu langka.'], log: 'Menunggu badai reda di Kali Jernih' },
+        { k: 'go', label: 'Berangkat sesuai jadwal', sub: 'jadwal aman · penumpang cemas', reg: { MK: -6, LR: 6 }, toast: 'Berangkat menembus hujan. Bawa dengan sangat hati-hati.', follow: ['Rahmat', 'RH', 'Direksi memuji kereta badai kemarin yang tetap tepat waktu. Tapi Bu Anna bilang beberapa penumpang lansia mengeluh takut.'], log: 'Menembus badai tepat waktu' }] },
+    '1-6': { st: 1, id: 'anak', title: 'Anak terpisah · Pasar Lama', text: 'Seorang anak menangis di peron: ibunya masih di loket, berlari ke sini. Bus Pak Bram sudah mendahului. Tahan pintu 30 detik, atau berangkat sekarang?',
+      opts: [{ k: 'wait', label: 'Tahan pintu 30 detik', sub: 'ibu & anak naik bersama · bus makin jauh', delay: 30, pax: 2, runners: 2, reg: { RA: 12, DR: 4 }, toast: 'Sang ibu berlari, menggendong anaknya, dan naik tepat waktu. Seisi gerbong bertepuk tangan.', follow: ['Bu Anna', 'BW', 'Ibu yang anaknya kau tunggu di Pasar Lama menitipkan sekotak kue lebaran untukmu. Katanya, malam takbiran itu tak akan ia lupakan.'], log: 'Menunggu ibu dan anak di Pasar Lama' },
+        { k: 'go', label: 'Berangkat sekarang', sub: 'kejar bus · ibu naik kereta berikutnya', reg: { RA: -8 }, toast: 'Pintu tertutup. Petugas peron menenangkan si anak sampai ibunya datang.', follow: ['Bu Anna', 'BW', 'Anak di Pasar Lama kemarin akhirnya pulang dengan kereta berikutnya. Ia menangis cukup lama, kata petugas peron.'], log: 'Berangkat tanpa menunggu ibu di Pasar Lama' }] },
+    '2-3': { st: 1, id: 'bidan', title: 'Bu Ratih tidak enak badan · Pasar Kopi Liwa', text: 'Bu Ratih pusing setelah perjalanan berguncang. Bidan desa bisa datang memeriksa dalam 2 menit. Tunggu bidan, atau lanjut dan bawa kereta sehalus mungkin?',
+      opts: [{ k: 'wait', label: 'Tunggu bidan 2 menit', sub: 'Bu Ratih diperiksa · tiba lebih lambat', delay: 120, reg: { BR: 15, LR: -4 }, toast: 'Bidan memeriksa Bu Ratih: semuanya baik. Ia tersenyum lega dan berterima kasih.', follow: ['Uchie', 'UC', 'Bu Ratih mengirim pesan: terima kasih sudah menunggu bidan di Liwa. Ia dan bayinya sehat.'], log: 'Menunggu bidan untuk Bu Ratih' },
+        { k: 'go', label: 'Lanjut, bawa sehalus mungkin', sub: 'jadwal aman · kenyamanan harus tetap tinggi', reg: { BR: -5 }, toast: 'Berangkat. Uchie menemani Bu Ratih di gerbong. Jaga tarikan dan rem tetap halus.', follow: ['Uchie', 'UC', 'Bu Ratih sampai dengan selamat kemarin, tapi masih lemas. Lain kali mungkin lebih baik menunggu bidan, katanya pelan.'], log: 'Lanjut membawa Bu Ratih tanpa menunggu bidan' }] },
+    '3-2': { st: 1, id: 'laptop', title: 'Laptop tertinggal · Padi Raya', text: 'Laras berlari ke pintu kabin: laptop berisi skripsinya tertinggal di bangku peron. Petugas bisa mengambilkannya dalam 40 detik. Tahan Guntur, atau berangkat tepat waktu?',
+      opts: [{ k: 'wait', label: 'Tahan 40 detik', sub: 'laptop Laras selamat · jadwal kereta cepat bergeser', delay: 40, reg: { LR: 15 }, toast: 'Petugas berlari membawa laptop itu. Laras memeluknya dan membungkuk ke arah kabin.', follow: ['Laras', 'LR', 'Mbak Anett, skripsiku selamat! Kalau laptop itu hilang, aku harus mengulang setahun. Terima kasih sudah menunggu.'], log: 'Menahan Guntur demi laptop Laras' },
+        { k: 'go', label: 'Berangkat tepat waktu', sub: 'kereta cepat tidak boleh tertunda · laptop dikirim kereta berikutnya', reg: { LR: -10 }, toast: 'Guntur berangkat. Petugas berjanji mengirim laptop itu dengan kereta berikutnya.', follow: ['Laras', 'LR', 'Laptopku sampai juga dengan kereta berikutnya, tapi aku terlambat presentasi. Tidak apa-apa, aku mengerti, kereta cepat harus tepat waktu.'], log: 'Guntur berangkat tepat waktu tanpa menunggu laptop' }] },
+  };
+  const choiceLog = () => { try { return JSON.parse(store.get('rn.choices') || '[]'); } catch (e) { return []; } };
+  function openStory(D) {
+    const q = ROUTE.stations[D.st], el = document.createElement('div'); S.choiceOpen = true; S.storyD = D;
+    el.className = 'choice story'; el.id = 'choiceBox'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Keputusan masinis');
+    el.innerHTML = `<b>KEPUTUSANMU · ${D.title}</b><p>${D.text}</p><div class="cbtns">${D.opts.map((o, i) => `<button type="button" data-i="${i}"${i ? ' data-c="go"' : ''}>${o.label}<small>${o.sub}</small></button>`).join('')}</div>`;
+    el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; Sound.ui && Sound.ui('confirm'); chooseStory(D, D.opts[+b.dataset.i]); });
+    $('game').appendChild(el); Sound.ui && Sound.ui('select'); HAPT.buzz([16, 40, 16], 0); void q;
+  }
+  function chooseStory(D, o) {
+    if (!S || !S.choiceOpen) return; S.choiceOpen = false; S.dispatch = o.k; S.story = { D, o }; const el = $('choiceBox'); if (el) el.remove();
+    if (o.delay) S.clock += o.delay; if (o.pax) S.aboard += o.pax;
+    for (const [id, d] of Object.entries(o.reg || {})) regBump(id, d);
+    if (o.runners) { const cr = crowds.get(D.st), q = ROUTE.stations[D.st]; if (cr) for (let k = 0; k < o.runners; k++) { const seed = 1400 + k * 17; cr.people.push({ role: 'late', state: 'run', kind: k ? 'child' : 'hijab', seed, x: q.x + 18 + k * 1.6, z: 0.4 + k * 0.1,
+      shirt: PAX_SHIRT[Math.floor(hash(seed + 0.5) * PAX_SHIRT.length)], pants: PAX_PANTS[Math.floor(hash(seed + 1.1) * PAX_PANTS.length)], skin: PAX_SKIN[Math.floor(hash(seed + 2.2) * PAX_SKIN.length)], hijab: PAX_HIJAB[Math.floor(hash(seed + 3.3) * PAX_HIJAB.length)], dir: -1, alpha: 1, ph: k, run: true, k: 0, wave: 0, transit: true }); } }
+    try { const F = JSON.parse(store.get('rn.follow') || '[]'); F.push(o.follow); store.set('rn.follow', JSON.stringify(F.slice(-4))); } catch (e) { /* abaikan */ }
+    const L = choiceLog().filter((q) => q.id !== D.id); L.push({ id: D.id, m: MIS.id, k: o.k, t: o.log }); store.set('rn.choices', JSON.stringify(L));
+    toast(o.toast, o.k === 'wait' ? 'good' : 'info', 3.2, null, 3);
   }
   // ---------- misi besar: Kepercayaan Lintas ----------
   // Lintas tua Watugede (rumah Surya) terancam ditutup. Tiap perjalanan menambah kepercayaan: nilai rapor terbaik tiap misi dijumlah (0–100%).
@@ -3843,7 +3946,11 @@
   function renderKisah() {
     const el = $('kisahBox'); if (!el) return;
     const seen = kisahSeen();
-    el.innerHTML = trustHTML() + KISAH.map((a) => {
+    const regH = `<section class="karc regs"><header><div class="kc-av">${PORTRAIT('DR')}</div><div><b>Penumpang tetap</b><small><span>Mereka mengingat cara kamu membawa kereta</span></small></div><span class="kprog">${REGULARS.filter((q) => regOf(q.id).n).length}/${REGULARS.length}</span></header><ol>${REGULARS.map((q) => { const st = regOf(q.id);
+      return st.n ? `<li class="kch open reg"><i>${PORTRAIT(q.id)}</i><div><b>${q.name} · ${q.role}</b><div class="tmeter sm"><i style="width:${st.v}%"></i></div><p>Peduli ${q.cares}. ${st.last ? `"${q.say[st.last]}"` : ''}${st.letter ? `</p><p class="letter">${q.letter}` : ''}</p></div></li>`
+        : `<li class="kch lock"><b>???</b><p><span>Naik di misi</span> ${q.mis.join(', ')}</p></li>`; }).join('')}</ol></section>`;
+    const dl = choiceLog(), decH = dl.length ? `<section class="karc"><header><div class="kc-av">${PORTRAIT('UC')}</div><div><b>Keputusanmu</b><small><span>Pilihan di peron & akibatnya</span></small></div><span class="kprog">${dl.length}/${Object.keys(DILEMMAS).length}</span></header><ol>${dl.map((q) => `<li class="kch open"><b>Misi ${q.m}</b><p>${q.t}</p></li>`).join('')}</ol></section>` : '';
+    el.innerHTML = trustHTML() + regH + decH + KISAH.map((a) => {
       const got = a.ch.filter(kisahOpen).length;
       const chs = a.ch.map((c, i) => kisahOpen(c)
         ? `<li class="kch open${seen.includes(a.av + i) ? '' : ' unread'}"><b>${i + 1}. ${c.t}</b><p>${c.x}</p></li>`
@@ -4016,8 +4123,9 @@
       ['KOIN', `${r.total}`, 'gold', `misi ${r.base} + henti ${S.coins} + nyaman ${r.comfortBonus}${r.penalty ? ` − ${r.penalty}` : ''}${S.expert ? ' ×1,5' : ''}`],
     ];
     if (ELEC()) tiles.push(['ENERGI', `${Math.round(S.kwh)} kWh`, ecoBonus ? 'ok' : '', `regen ${Math.round(S.regen)} kWh (${regenPct}%)${ecoBonus ? ' · +80 hemat' : ' · target 20%'}`]);
-    const rep = travelReport(r), gs = saveGhost(rep, r.failed), cert = earnCert(r), spec = earnSpecial(r, rep), trust = earnTrust(rep, r);
-    $('resCard').innerHTML = `${trust}${cert}${spec}${reportHTML(rep, gs)}${goalList}
+    const rep = travelReport(r), gs = saveGhost(rep, r.failed), cert = earnCert(r), spec = earnSpecial(r, rep), trust = earnTrust(rep, r), regs = earnRegulars(r);
+    const dec = S.story ? `<div class="rdec"><b>Keputusanmu:</b> ${S.story.o.log}</div>` : '';
+    $('resCard').innerHTML = `${trust}${regs ? `<div class="rregs">${regs}</div>` : ''}${dec}${cert}${spec}${reportHTML(rep, gs)}${goalList}
       <table class="rtable">
         <thead><tr><th>Stasiun</th><th>Berhenti</th><th>Tiba / jadwal</th></tr></thead>
         <tbody>${loadRows}${rows}${rivalRow}</tbody>
@@ -4606,7 +4714,7 @@
     const pick = (pad) => { for (let k = 0; k < 80; k++) { const x = Math.round(st[0].x + 600 + Math.random() * (last - st[0].x - 1300)); if (free(x, pad)) return x; } return null; };
     // stasiun antara berpenumpang: tempat keputusan dispatcher (tunggu KA sambungan atau berangkat)
     const midSt = MIS.freight ? [] : st.map((q, i) => [q, i]).filter(([q, i]) => i > 0 && !q.final && !q.pass && i < st.length - 1);
-    const pool = (R.lineSpeed >= 180 ? ['tsr', 'sig'] : ['tsr', 'goat', 'sig']).concat(midSt.length ? ['dispatch', 'dispatch'] : []);
+    const pool = (R.lineSpeed >= 180 ? ['tsr', 'sig'] : ['tsr', 'goat', 'sig']).concat(midSt.length && !DILEMMAS[MIS.id] ? ['dispatch', 'dispatch'] : []); // misi berdilema cerita: tanpa dispatch acak
     const n = Math.random() < 0.45 ? 2 : 1, kinds = [];
     while (kinds.length < n && pool.length) { const k = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; if (!kinds.includes(k)) kinds.push(k); }
     if (typeof window !== 'undefined' && window.__evForce) kinds.splice(0, kinds.length, ...window.__evForce);
@@ -8524,6 +8632,7 @@
     W = W0;
     if (bendCols) endBend(c, bendCols, gy, ppm);
     drawBridge(V, 'front');
+    drawRiverMirror(V); // sungai di bawah jembatan: cermin sungguhan kereta & jembatan yang sedang lewat (bentuk & warna sesuai keretanya)
     drawTunnelPortals(V);
     drawFrontProps(V);
     drawFog(V);
@@ -10523,8 +10632,10 @@
     // jalur ganda: pantulan hanya di air sawah di depan tanggul jalur 2, tidak menimpa balas & rel jalur 2
     if (ROUTE.double) { const yc = gy + (DBL_K * ROUTE.double.o + 1.5) * ppm; c.beginPath(); c.rect(-20, yc, W + 40, H - yc + 20); c.clip(); }
     if (ROUTE.meet) { const M = ROUTE.meet; c.beginPath(); c.moveTo(X(M.entry - 400), H + 40); for (let wx = M.entry - 400; wx <= M.exit + 400; wx += 4) c.lineTo(X(wx), gy + (MEET_NEAR * meetK(wx) + 1.6) * ppm); c.lineTo(X(M.exit + 400), H + 40); c.rect(X(M.exit + 400) - 1, -20, 1e5, H + 80); c.rect(X(M.entry - 400) - 1e5 + 1, -20, 1e5, H + 80); c.clip(); } // sepur belok: pantulan sawah tidak menutupi jalur utama di depan
+    const RB = ROUTE.bridge && !ROUTE.bridge.land && (!ROUTE.bridge.viaduct || ROUTE.bridge.gorge || MIS.land === 'sawit') ? ROUTE.bridge : null; // sungai: dipantulkan oleh cermin sungai, bukan petak sawah
     for (let i = i0; i <= i1; i++) for (let r = 0; r < 4; r++) {
       if (hash(i * 7.31 + r * 1.93) > 0.45) continue;  // hanya petak berair
+      if (RB && (i + 1) * cell > RB.from - 4 && i * cell < RB.to + 4) continue;
       const t0 = r / rows + 0.025, t1 = (r + 1) / rows - 0.025, xa = X(i * cell), xb = X((i + 1) * cell);
       const q = [[at(xa, t0) + 2, rowY(t0)], [at(xb, t0) - 2, rowY(t0)], [at(xb, t1) - 3, rowY(t1)], [at(xa, t1) + 3, rowY(t1)]];
       if (q[1][0] < X(lo) - 40 || q[0][0] > X(hi) + 40) continue;
@@ -11911,20 +12022,58 @@
     return crossAnim[i];
   }
   function resetCrossings() { crossAnim.length = 0; }
+  // ruas jalan di seberang rel: menerus menjauh sampai perkampungan di cakrawala (tidak buntu). Bahu jalan berumput, marka memudar,
+  // tiang listrik berjajar mengecil, pohon & kelapa di tepi jalan, dan rumah-rumah kampung yang menutupi ujung jalan.
+  function drawFarRoad(V, G, seed, asphaltFar, night) {
+    const { c, ppm } = V, p = V.p, N = 30, ds = []; for (let k = 0; k <= N; k++) ds.push(1 + 1.95 * k / N);
+    const pts = ds.map((d) => G.at(d)), dk = (col, k) => mix(col, '#2a3038', k);
+    // bahu jalan tanah/rumput (lebih lebar dari aspal)
+    c.fillStyle = night ? '#2a2a24' : mix('#9c8d6c', '#b3a27c', p); c.beginPath(); pts.forEach((q, k) => (k ? c.lineTo(q.x - q.hw * 1.35, q.y) : c.moveTo(q.x - q.hw * 1.35, q.y))); for (let k = N; k >= 0; k--) c.lineTo(pts[k].x + pts[k].hw * 1.35, pts[k].y); c.closePath(); c.fill();
+    // aspal, sedikit lebih terang (kabut) ke kejauhan
+    for (let k = 0; k < N; k++) { const a = pts[k], b = pts[k + 1]; c.fillStyle = mix(asphaltFar, night ? '#3a3e50' : mix('#a9aeb4', '#c3c8cc', p), Math.pow(k / N, 1.4) * 0.6);
+      c.beginPath(); c.moveTo(a.x - a.hw, a.y + 0.5); c.lineTo(a.x + a.hw, a.y + 0.5); c.lineTo(b.x + b.hw, b.y); c.lineTo(b.x - b.hw, b.y); c.closePath(); c.fill(); }
+    // marka tepi & tengah putus-putus (memudar ke kejauhan)
+    for (const sd of [-0.9, 0.9]) { c.strokeStyle = 'rgba(240,236,224,0.6)'; c.lineWidth = 1; c.beginPath(); pts.forEach((q, k) => { if (k > N * 0.75) return; k ? c.lineTo(q.x + sd * q.hw, q.y) : c.moveTo(q.x + sd * q.hw, q.y); }); c.stroke(); }
+    c.fillStyle = 'rgba(240,236,224,0.7)'; for (let d = 1.2; d < 2.5; d += 0.13) { const a = G.at(d), b = G.at(d + 0.055); c.globalAlpha = clamp(1 - (d - 1.2) / 1.3, 0, 1); c.beginPath(); c.moveTo(a.x - 0.035 * a.hw, a.y); c.lineTo(a.x + 0.035 * a.hw, a.y); c.lineTo(b.x + 0.035 * b.hw, b.y); c.lineTo(b.x - 0.035 * b.hw, b.y); c.closePath(); c.fill(); } c.globalAlpha = 1;
+    // tiang listrik kayu di sisi kanan jalan, kabel melengkung di antaranya
+    const poles = []; for (let d = 1.55; d < 2.9; d += 0.28) { const q = G.at(d), sc = q.hw / (2.3 * ppm); poles.push([q.x + q.hw * 2.1, q.y, sc]); }
+    c.strokeStyle = night ? '#2a2826' : '#5e5244'; for (const [x, y, sc] of poles) { c.lineWidth = Math.max(1, 0.18 * ppm * sc); c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - 5.5 * ppm * sc); c.moveTo(x - 0.6 * ppm * sc, y - 5.1 * ppm * sc); c.lineTo(x + 0.6 * ppm * sc, y - 5.1 * ppm * sc); c.stroke(); }
+    c.strokeStyle = night ? 'rgba(30,30,34,0.6)' : 'rgba(40,40,44,0.45)'; c.lineWidth = 1; c.beginPath(); for (let k = 0; k < poles.length - 1; k++) { const [x1, y1, s1] = poles[k], [x2, y2, s2] = poles[k + 1]; const ya = y1 - 5.1 * ppm * s1, yb = y2 - 5.1 * ppm * s2; c.moveTo(x1, ya); c.quadraticCurveTo((x1 + x2) / 2, (ya + yb) / 2 + 0.5 * ppm * s1, x2, yb); } c.stroke();
+    // pohon & kelapa di tepi jalan (berselang), mengecil ke kejauhan
+    const leaf = night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', p), leafL = night ? '#26361f' : mix('#5a8a40', '#6fa64e', p), trunk = night ? '#2a221c' : '#6b5442';
+    for (let k = 0; k < 9; k++) { const d = 1.35 + k * 0.17 + hash(seed + k) * 0.06, q = G.at(d), sc = q.hw / (2.3 * ppm), sd = k % 2 ? 1 : -1, x = q.x + sd * q.hw * (2.6 + hash(seed * 3 + k) * 1.2), y = q.y;
+      if (hash(seed + k * 1.7) < 0.45) { // kelapa
+        c.strokeStyle = trunk; c.lineWidth = Math.max(1, 0.22 * ppm * sc); const tx = x + sd * 0.6 * ppm * sc, ty = y - 7 * ppm * sc; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x, y - 4 * ppm * sc, tx, ty); c.stroke();
+        c.strokeStyle = leaf; c.lineWidth = Math.max(1, 0.2 * ppm * sc); for (let f = 0; f < 7; f++) { const a = -Math.PI / 2 + (f - 3) * 0.5, L = 2.2 * ppm * sc; c.beginPath(); c.moveTo(tx, ty); c.quadraticCurveTo(tx + Math.cos(a) * L * 0.6, ty + Math.sin(a) * L * 0.6 - 0.4 * ppm * sc, tx + Math.cos(a) * L, ty + Math.sin(a) * L * 0.4 + 0.9 * ppm * sc); c.stroke(); }
+      } else { // pohon rindang
+        c.fillStyle = trunk; c.fillRect(x - 0.15 * ppm * sc, y - 2.4 * ppm * sc, 0.3 * ppm * sc, 2.4 * ppm * sc);
+        for (let b = 0; b < 4; b++) { c.fillStyle = b < 2 ? leaf : leafL; c.beginPath(); c.arc(x + (b - 1.5) * 0.9 * ppm * sc, y - (3.2 + (b % 2) * 0.9) * ppm * sc, (1.4 + hash(seed + b + k) * 0.5) * ppm * sc, 0, 7); c.fill(); } } }
+    // perkampungan di ujung jalan: rumah beratap genteng menutupi ujung jalan yang membelok, dikelilingi pepohonan
+    const e = G.at(2.9), sc = e.hw / (0.5 * ppm) * 0.32, u = ppm * Math.max(0.28, Math.min(0.5, sc));
+    const wall = night ? '#4a4a52' : mix('#e3dccb', '#f2ecdf', p), roof = night ? '#3a2a28' : mix('#a34a2c', '#c2582f', p), win = night ? '#ffd27a' : '#3c4a52';
+    c.fillStyle = leaf; for (let k = -4; k <= 4; k++) { c.beginPath(); c.arc(e.x + k * 1.5 * u * 2, e.y - (2.6 + hash(seed + k * 2.3) * 1.6) * u * 2, (1.6 + hash(seed + k) * 0.8) * u * 2, 0, 7); c.fill(); }
+    for (const [ox, w2, h2] of [[-3.2, 3.4, 2.2], [0.6, 4.2, 2.5], [4.4, 3.2, 2.0]]) { const hx = e.x + ox * u * 2, hy = e.y + 0.15 * u * 2, ww = w2 * u * 2, hh = h2 * u * 2;
+      c.fillStyle = wall; c.fillRect(hx - ww / 2, hy - hh, ww, hh); c.fillStyle = 'rgba(0,0,0,0.12)'; c.fillRect(hx + ww * 0.2, hy - hh, ww * 0.3, hh);
+      c.fillStyle = roof; c.beginPath(); c.moveTo(hx - ww / 2 - 0.4 * u * 2, hy - hh); c.lineTo(hx - ww * 0.2, hy - hh - 1.3 * u * 2); c.lineTo(hx + ww * 0.2, hy - hh - 1.3 * u * 2); c.lineTo(hx + ww / 2 + 0.4 * u * 2, hy - hh); c.closePath(); c.fill();
+      c.fillStyle = win; c.fillRect(hx - ww * 0.32, hy - hh * 0.65, ww * 0.16, hh * 0.3); c.fillRect(hx + ww * 0.14, hy - hh * 0.65, ww * 0.16, hh * 0.3); }
+  }
   function crossGeom(V, cr) {
     const { ppm, gy, X } = V;
     const sx = X(cr.x);
     const yTop = gy + 1.4 * ppm, yFarEdge = gy - 0.6 * ppm, yFar = gy - 3.2 * ppm;
-    const farX = sx + (W * 0.5 - sx) * 0.05;
+    const farX = sx + (W * 0.5 - sx) * 0.05, farX2 = sx + (W * 0.5 - sx) * 0.09, yH = gy - 5.1 * ppm, bendS = hash(cr.x * 0.013) < 0.5 ? -1 : 1;
     const nearX = V.Xn(sx);
     // titik di sumbu jalan pada kedalaman d, beserta setengah lebar jalan (px)
     const at = (d) => {
       if (d <= 1) { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (nearX - sx) * t, y: yTop + (H - yTop) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm }; }
-      const t = clamp(d - 1, 0, 1);
-      const te = 1 - Math.pow(1 - t, 1.8);
-      return { x: sx + (farX - sx) * te, y: lerp(yFarEdge, yFar, te), hw: lerp(3.5, 2.3, te) * ppm };
+      if (d <= 2) { const t = clamp(d - 1, 0, 1);
+        const te = 1 - Math.pow(1 - t, 1.8);
+        return { x: sx + (farX - sx) * te, y: lerp(yFarEdge, yFar, te), hw: lerp(3.5, 2.3, te) * ppm }; }
+      // lanjutan jalan menjauh ke cakrawala: makin sempit & rapat (perspektif), sedikit berkelok, masuk ke perkampungan di kejauhan
+      const t = clamp(d - 2, 0, 1), tp = 1 - Math.pow(1 - t, 1.6), bend = bendS * ppm * 3.2 * (t * t * (3 - 2 * t));
+      return { x: farX + (farX2 - farX) * tp + bend, y: lerp(yFar, yH, tp), hw: lerp(2.3, 0.32, Math.pow(tp, 0.8)) * ppm };
     };
-    return { sx, yTop, yFarEdge, yFar, farX, nearX, at };
+    return { sx, yTop, yFarEdge, yFar, yH, farX, nearX, at };
   }
   // simpang jalan perlintasan dengan jalan raya: aspal menyatu, sudut membulat, marka berhenti di simpang
   function junctionBlend(V, G, asphalt) {
@@ -11969,7 +12118,7 @@
   function drawRoadPoly(c, pts, fill) { c.fillStyle = fill; c.beginPath(); pts.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.fill(); }
   function drawVehicle(c, V, G, v) {
     const p = G.at(v.d);
-    if (v.d < -0.3 || v.d > 2.05) return;
+    if (v.d < -0.3 || v.d > 2.78) return; // jauh: hilang di balik rumah kampung di ujung jalan
     const s = p.hw / 3.5;                    // skala sesuai kedalaman
     const x = p.x + v.lane * p.hw, y = p.y;
     const night = V.night || V.storm;
@@ -12055,11 +12204,16 @@
       const near = (d) => { const t = Math.pow(1 - d, 1 / 1.55); return { x: sx + (G.nearX - sx) * t, y: yO + (H - yO) * Math.pow(t, 1.55), hw: lerp(3.5, 6.1, t) * ppm, t }; };
       const G2 = Object.assign({}, G, { at: (d) => (d <= 1 ? near(d) : G.at(d)) });
       // ruas jauh di belakang rel (keluar dari underpass, naik ke tanah)
-      { const f0 = G.at(1), f1 = G.at(2); drawRoadPoly(c, [[f1.x - f1.hw, f1.y], [f1.x + f1.hw, f1.y], [f0.x + f0.hw, f0.y], [f0.x - f0.hw, f0.y]], asphaltFar);
-        c.strokeStyle = 'rgba(240,236,224,0.6)'; c.lineWidth = 1; for (const sd of [-0.92, 0.92]) { c.beginPath(); for (let d = 1; d <= 2.001; d += 0.1) { const q = G.at(d); d === 1 ? c.moveTo(q.x + sd * q.hw, q.y) : c.lineTo(q.x + sd * q.hw, q.y); } c.stroke(); }
-        const e = G.at(1.92); c.fillStyle = night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', V.p); for (let k = -3; k <= 3; k++) { c.beginPath(); c.arc(e.x + k * 1.1 * ppm, e.y - 0.2 * ppm, (0.9 + hash(k + i * 3.7) * 0.6) * ppm, 0, 7); c.fill(); } }
-      for (const v of A.veh) { v.d += v.dir * dt * v.sp; if (v.d > 2.05) v.d = -0.25; if (v.d < -0.3) v.d = 2.0; }
+      // jalan lewat DI BAWAH rel: ruas seberang baru tampak di balik tepi jauh tanggul rel jalur 1 (tidak menimpa rel), seolah keluar dari mulut lorong seberang
+      const yEmb = gy - 0.85 * ppm; c.save(); c.beginPath(); c.rect(-W, -H, W * 3, yEmb + H); c.clip();
+      drawFarRoad(V, G, 31 + i * 5.1, asphaltFar, night);
+      { const q = G.at(1.04), pw = q.hw * 1.18, cp = night ? '#6a6c76' : mix('#cfc9bd', '#e6e0d4', V.p); // dinding kepala lorong seberang: coping beton tipis & pagar pengaman, jalan keluar dari baliknya
+        c.fillStyle = cp; c.fillRect(q.x - pw, yEmb - 0.22 * ppm, pw * 2, 0.22 * ppm); c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(q.x - pw, yEmb - 0.04 * ppm, pw * 2, 0.04 * ppm);
+        c.strokeStyle = night ? 'rgba(150,155,170,0.7)' : 'rgba(110,116,124,0.8)'; c.lineWidth = 1; c.beginPath(); c.moveTo(q.x - pw, yEmb - 0.6 * ppm); c.lineTo(q.x + pw, yEmb - 0.6 * ppm);
+        for (let k = 0; k <= 8; k++) { const xx = q.x - pw + pw * 2 * k / 8; c.moveTo(xx, yEmb - 0.22 * ppm); c.lineTo(xx, yEmb - 0.6 * ppm); } c.stroke(); }
+      for (const v of A.veh) { v.d += v.dir * dt * v.sp * (v.d > 2 ? 0.55 : 1); if (v.d > 2.75) v.d = -0.25; if (v.d < -0.3) v.d = 2.72; } // kendaraan menjauh/datang dari kampung di ujung jalan
       A.veh.filter((v) => v.d > 1.08).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
+      c.restore();
       // dinding sayap & tanah di sisi galian: tanah berumput di luar dinding, menutup lereng balas di sekitar underpass
       const grass = night ? '#24331f' : mix('#5a8540', '#78a84c', V.p);
       c.fillStyle = grass; c.beginPath(); c.moveTo(sx - aw - 3 * ppm, yD1); c.lineTo(sx + aw + 3 * ppm, yD1); c.lineTo(sx + aw + 3 * ppm, H); c.lineTo(sx - aw - 3 * ppm, H); c.closePath(); c.save(); c.globalAlpha = 0.0; c.fill(); c.restore();
@@ -12135,7 +12289,7 @@
         const asphalt = ROUTE.rival ? (V.night ? '#26272c' : '#434449') : mix('#4a4a4d', '#5a5a5e', V.p), asphaltFar = mix('#5d5c62', '#7a7a80', V.p);
         // tanah berumput di seberang rel tempat jalan menjauh (memudar ke samping agar menyatu dengan bukit)
         {
-          const vx0 = G.sx - 30 * ppm, vx1 = G.sx + 30 * ppm, vTop = G.yFar - 0.9 * ppm;
+          const vx0 = G.sx - 30 * ppm, vx1 = G.sx + 30 * ppm, vTop = G.yH - 0.4 * ppm;
           const grass = V.night ? '#24331f' : mix('#5a8540', '#78a84c', V.p);
           c.save();
           c.beginPath(); c.moveTo(vx0, G.yFarEdge + 0.2 * ppm);
@@ -12149,9 +12303,8 @@
           }
           c.restore();
         }
-        // ruas jauh di belakang rel
-        const f0 = G.at(1), f1 = G.at(2);
-        drawRoadPoly(c, [[f1.x - f1.hw, f1.y], [f1.x + f1.hw, f1.y], [f0.x + f0.hw, f0.y], [f0.x - f0.hw, f0.y]], asphaltFar);
+        // ruas jauh di belakang rel: menerus sampai perkampungan di cakrawala
+        drawFarRoad(V, G, 11 + i * 7.3, asphaltFar, V.night);
         // ruas dekat di depan rel
         const n0 = G.at(1), n1 = G.at(0);
         drawRoadPoly(c, [[n0.x - n0.hw, G.yTop], [n0.x + n0.hw, G.yTop], [n1.x + n1.hw, H], [n1.x - n1.hw, H]], asphalt);
@@ -12159,12 +12312,11 @@
         c.strokeStyle = 'rgba(240,236,224,0.75)'; c.lineWidth = 1;
         for (const side of [-0.92, 0.92]) {
           c.beginPath();
-          for (let d = 0; d <= 2.001; d += 0.1) { if (d > 0.999 && d < 1.001) continue; const q = G.at(d); const yy = d <= 1 ? q.y : q.y; if (d === 0) c.moveTo(q.x + side * q.hw, yy); else c.lineTo(q.x + side * q.hw, yy); }
+          for (let d = 0; d <= 1.001; d += 0.1) { const q = G.at(d); if (d === 0) c.moveTo(q.x + side * q.hw, q.y); else c.lineTo(q.x + side * q.hw, q.y); }
           c.stroke();
         }
         c.fillStyle = 'rgba(240,236,224,0.8)';
-        for (let d = 0.05; d < 2; d += 0.16) {
-          if (d > 0.9 && d < 1.12) continue;
+        for (let d = 0.05; d < 0.9; d += 0.16) {
           const a = G.at(d), b = G.at(d + 0.07);
           c.beginPath(); c.moveTo(a.x - 0.03 * a.hw, a.y); c.lineTo(a.x + 0.03 * a.hw, a.y); c.lineTo(b.x + 0.03 * b.hw, b.y); c.lineTo(b.x - 0.03 * b.hw, b.y); c.closePath(); c.fill();
         }
@@ -12192,16 +12344,8 @@
         c.fillText(`JPL ${12 + i * 7}`, hx + 1.0 * ppm, hy - 1.92 * ppm);
         c.textAlign = 'start'; c.textBaseline = 'alphabetic';
         person(c, hx - 2.4 * ppm, hy, ppm * 0.9, 41 + i, { color: '#2e5a8a' });
-        // kendaraan di sisi jauh, lalu semak di ujung jalan agar jalan menghilang di balik vegetasi
+        // kendaraan di sisi jauh (melaju sampai hilang di kampung)
         A.veh.filter((v) => v.d > 1).sort((a, b) => b.d - a.d).forEach((v) => drawVehicle(c, V, G, v));
-        {
-          const e = G.at(1.92), bush = V.night ? '#1d2a1a' : mix('#3d6a34', '#4f8a40', V.p);
-          c.fillStyle = bush;
-          for (let k = -3; k <= 3; k++) {
-            const bx = e.x + k * 1.1 * ppm, r = (0.9 + hash(k + i * 3.7) * 0.6) * ppm;
-            c.beginPath(); c.arc(bx, e.y - r * 0.2, r, 0, 7); c.fill();
-          }
-        }
         const fs = 0.8 * ppm;
         const fp = G.at(1.12);
         crossingSignal(c, fp.x + fp.hw + 1.1 * ppm, fp.y, fs, blink, !blink, active);
@@ -15167,7 +15311,7 @@
     const conc = V.night ? '#5a5f6a' : V.storm ? '#8d9296' : '#c9c2b4', concD = V.night ? '#3a3e48' : '#9a9285';
     const span = 24, n = Math.round((b.to - b.from) / span), sp = (b.to - b.from) / n, deep = 11;
     c.save();
-    const RIVER = MIS.land === 'sawit' || b.gorge, wY = gy + 3.0 * ppm; // sungai lebar wY = gy + 6.6 * ppm; // sungai lebar: garis air di bawah pangkal lengkung dalam: air naik hingga dekat lantai viaduk sehingga kereta terpantul jelas
+    const RIVER = MIS.land === 'sawit' || b.gorge || !b.land, wY = gy + 3.0 * ppm; // sungai lebar wY = gy + 6.6 * ppm; // sungai lebar: garis air di bawah pangkal lengkung dalam: air naik hingga dekat lantai viaduk sehingga kereta terpantul jelas
     if (RIVER) { // latar di balik lengkung: tepi lembah seberang yang jauh & berkabut, langit terlihat di antara tiang
       const yT = gy + 1.4 * ppm, ramp = 40 * ppm, night = V.night;
       const bg = c.createLinearGradient(0, yT, 0, wY); bg.addColorStop(0, night ? '#1a2238' : mix('#9fb6c2', '#c4d6dc', V.p)); bg.addColorStop(1, night ? '#141c2c' : mix('#7a9a8a', '#94b4a0', V.p));
@@ -15699,6 +15843,33 @@ c.restore();
     }
   }
   // pantulan busur di permukaan sungai
+  // cermin sungai di bawah jembatan biasa (rangka baja / beton): salin gambar di atas garis air (kereta, rangka, langit),
+  // balik ke bawah, beri riak irisan & memudar menjauhi garis air. Geometri air sama dengan drawGround.
+  function riverSpan(V) { const b = ROUTE.bridge; if (!b || b.land || b.viaduct || PLANT() && !b.truss && false) return null; const bx0 = V.X(b.from + 6), bx1 = V.X(b.to - 6); if (bx1 < -40 || bx0 > W + 40) return null; return { b, bx0, bx1, wTop: V.gy + 2.6 * V.ppm }; }
+  function drawRiverMirror(V) {
+    const R0 = riverSpan(V); if (!R0 || V.tf > 0.3) return; const { c, ppm, gy } = V, { bx0, bx1, wTop } = R0, tt = performance.now() / 1000, cvs = c.canvas;
+    const wq = [[bx0 + 2 * ppm, wTop], [bx1 - 2 * ppm, wTop], [V.Xn(bx1) - 4 * ppm, H], [V.Xn(bx0) + 4 * ppm, H]];
+    const Tm = c.getTransform(), hgt = Math.min(wTop - (gy - 9 * ppm), H - wTop); if (hgt < 3) return;
+    const left = Math.min(wq[0][0], wq[3][0]), right = Math.max(wq[1][0], wq[2][0]);
+    const sx0 = Math.max(0, Math.floor(left * Tm.a + Tm.e)), sx1 = Math.min(cvs.width, Math.ceil(right * Tm.a + Tm.e)), sw = sx1 - sx0, srcBot = Math.round(wTop * Tm.d + Tm.f);
+    if (sw < 3) return; const hD = Math.min(Math.ceil(hgt * Tm.d), srcBot); if (hD < 3) return;
+    const Rc = drawRiverMirror.cv || (drawRiverMirror.cv = document.createElement('canvas')); if (Rc.width < sw || Rc.height < hD) { Rc.width = Math.max(Rc.width, sw); Rc.height = Math.max(Rc.height, hD); }
+    const rc = Rc.getContext('2d'); rc.clearRect(0, 0, sw, hD); rc.drawImage(cvs, sx0, srcBot - hD, sw, hD, 0, 0, sw, hD);
+    c.save(); c.beginPath(); wq.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.clip(); c.setTransform(1, 0, 0, 1, 0, 0);
+    const step = Math.max(3, hD / 24), night = V.night;
+    for (let k = 0; k * step < hD; k++) { const dyD = k * step, depth = dyD / hD, h1 = Math.min(step, hD - dyD), sy = hD - dyD - h1;
+      const off = (Math.sin(dyD * 0.09 / Tm.d + tt * 2.2) * (1 + depth * 4) + Math.sin(dyD * 0.023 / Tm.d - tt * 1.1) * 1.6) * Tm.a;
+      c.globalAlpha = (night ? 0.5 : V.storm ? 0.35 : 0.58) * (1 - depth * 0.8);
+      c.save(); c.translate(0, srcBot + dyD + h1); c.scale(1, -1); c.drawImage(Rc, 0, sy, sw, h1, sx0 + off, 0, sw, h1); c.restore(); }
+    c.restore();
+    // permukaan air tetap terbaca: lapisan warna sungai tipis & bayangan gelap tepat di bawah lantai jembatan
+    c.save(); c.beginPath(); wq.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.clip();
+    const tint = c.createLinearGradient(0, wTop, 0, H); tint.addColorStop(0, 'rgba(0,0,0,0.28)'); tint.addColorStop(0.12, night ? 'rgba(20,30,60,0.12)' : 'rgba(40,80,95,0.12)'); tint.addColorStop(1, night ? 'rgba(10,16,36,0.35)' : 'rgba(30,70,85,0.3)');
+    c.fillStyle = tint; c.fillRect(left, wTop, right - left, H - wTop);
+    c.fillStyle = night ? 'rgba(180,200,255,0.16)' : 'rgba(255,255,255,0.26)'; for (let k = 0; k < 40; k++) { const r = hash(k * 3.7), y = wTop + Math.pow(hash(k * 1.3), 1.4) * (H - wTop), d = (y - wTop) / (H - wTop), L = (0.8 + d * 3) * ppm * (0.6 + r * 0.8), xl = bx0 + (V.Xn(bx0) - bx0) * d, xr = bx1 + (V.Xn(bx1) - bx1) * d;
+      c.fillRect(xl + ((hash(k * 5.1) * (xr - xl) + tt * (6 + r * 10) * ppm * 0.2) % Math.max(1, xr - xl)), y, L, Math.max(1, (0.06 + d * 0.1) * ppm)); }
+    c.restore();
+  }
   function drawBridgeReflection(V, waterTop, clip) {
     if (ROUTE.bridge && (ROUTE.bridge.truss || ROUTE.bridge.viaduct)) return;
     const G = bridgeGeom(V);
