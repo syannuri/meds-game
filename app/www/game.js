@@ -84,12 +84,20 @@
         ],
         // depo lokomotif: dua jalur simpan di depan (kanan di kabin) bercabang ke jalur utama lewat wesel, satu jalur ke gedung dipo
         // di belakang (kiri di kabin); kereta terparkir: Cakra + 2 gerbong, rangkaian gerbong barang, lokomotif uap di dalam dipo
-        yard: {
+        yards: [{
           sid: [{ o: 4.6, from: -200, m0: 165, m1: 230, parent: -1 }, { o: 9.2, from: -200, m0: 100, m1: 160, parent: 0 }],
           shed: { from: 34, to: 112, o: -6.5, m0: -55, m1: 15 },
           masts: [[-110, 6.9], [205, 6.9], [70, -2.9]], // tiang lampu sorot depo [x, offset lateral]
           parked: [{ sid: 0, nose: 86, loco: 'argo', n: 2 }, { sid: 1, nose: 24, loco: 'cakra', n: 3, freight: true }, { sid: -1, nose: 21, loco: 'steam', n: 0, flip: true }],
         },
+        // Stasiun Sukamaju (tujuan): emplasemen tiga jalur peron. Cakra masuk jalur 1 lurus; wesel di belakang stasiun (koordinat lokal u = at − x),
+        // kereta menunggu di jalur 2 & 3, sinyal keluar ketiga jalur, tiang lampu sorot tinggi yang menerangi rel & kereta saat subuh
+        { station: true, rev: true, at: 'final', glow: 0.55,
+          sid: [{ o: 8.3, from: -96, m0: 150, m1: 215, parent: -1 }, { o: 12.9, from: -96, m0: 95, m1: 145, parent: 0 }],
+          masts: [[-60, 6.1], [-8, 6.1], [44, 6.1], [-34, 10.6], [18, 10.6]],
+          parked: [{ sid: 0, nose: 14, loco: 'cakra', n: 3 }, { sid: 1, nose: 22, loco: 'cakra', n: 4, pal: 'merah' }],
+          sigs: [{ id: 'K1', x: -72, o: 2.8, label: 'J1', back: true, init: 'R' }, { id: 'K2', x: -76, o: 5.5, label: 'J2', back: true, init: 'R' }, { id: 'K3', x: -80, o: 10.1, label: 'J3', back: true, init: 'R' }],
+        }],
         zones: [{ from: -120, to: 700, limit: 25, label: 'area depo' }],
         signals: [{ id: 'S1', x: 40, start: 0, init: 'R' }],
         scripts: [], crossings: [], goats: [], fog: null, bridge: null, tunnel: null, grades: [], switchX: null, hints: [],
@@ -1160,7 +1168,7 @@
   Object.entries(STRETCH).forEach(([id, cfg]) => { if (MISSIONS[id]) stretchMission(MISSIONS[id], cfg); });
   // beberapa emplasemen per rute: ROUTE.yard = emplasemen terdekat dari kereta (semua fungsi emplasemen tetap memakai satu ROUTE.yard)
   Object.values(MISSIONS).forEach((M) => { const R = M.route; if (!R || !R.yards) return;
-    R.yards.forEach((Y) => { if (Y.at !== 'final') return; const at = R.stations[R.stations.length - 1].x; Y.at = at; // posisi relatif → dunia
+    R.yards.forEach((Y) => { if (Y.at === undefined) Y.at = 0; if (Y.at !== 'final') return; const at = R.stations[R.stations.length - 1].x; Y.at = at; // posisi relatif → dunia
       (Y.masts || []).forEach((m) => { m[0] += at; }); (Y.sigs || []).forEach((q) => { q.x += at; }); (Y.parked || []).forEach((pk) => { pk.nose += at; }); });
     Object.defineProperty(R, 'yard', { configurable: true, get() { let x = 0; try { x = S ? S.x : 0; } catch (e) { /* sebelum status permainan dibuat */ } let best = R.yards[0]; for (const Y of R.yards) if (Math.abs(Y.at - x) < Math.abs(best.at - x)) best = Y; return best; } }); });
   let MIS = MISSIONS['1-4'];
@@ -6170,7 +6178,11 @@
           // di daerah wesel: bantalan panjang menyangga kedua jalur sekaligus
           add(d + 0.01, () => quad(W3(d - 0.12, (inTO ? Math.min(o, pr) : o) - 1.2, 0.05), W3(d - 0.12, (inTO ? Math.max(o, pr) : o) + 1.2, 0.05), W3(d + 0.12, (inTO ? Math.max(o, pr) : o) + 1.2, 0.05), W3(d + 0.12, (inTO ? Math.min(o, pr) : o) - 1.2, 0.05), Math.floor(wd / 0.65) % 7 === 0 ? slpO : slpY)); }
         for (let k = steps.length - 2; k >= 0; k--) { const a = steps[k], b = steps[k + 1], oa = O(x0 + a), ob = O(x0 + b); if (oa === null || ob === null) continue;
-          add(b, () => { for (const ro of [-0.53, 0.53]) { quad(W3(a, oa + ro - 0.04, 0.02), W3(b, ob + ro - 0.04, 0.02), W3(b, ob + ro - 0.035, 0.16), W3(a, oa + ro - 0.035, 0.16), '#3a3e42'); quad(W3(a, oa + ro - 0.035, 0.16), W3(b, ob + ro - 0.035, 0.16), W3(b, ob + ro + 0.035, 0.16), W3(a, oa + ro + 0.035, 0.16), '#a6aeb2'); } }); }
+          add(b, () => { for (const ro of [-0.53, 0.53]) { quad(W3(a, oa + ro - 0.04, 0.02), W3(b, ob + ro - 0.04, 0.02), W3(b, ob + ro - 0.035, 0.16), W3(a, oa + ro - 0.035, 0.16), '#3a3e42'); quad(W3(a, oa + ro - 0.035, 0.16), W3(b, ob + ro - 0.035, 0.16), W3(b, ob + ro + 0.035, 0.16), W3(a, oa + ro + 0.035, 0.16), '#a6aeb2');
+            // kilau matahari rendah di kepala rel stasiun: makin jauh & makin searah matahari makin terang (pantulan sudut landai)
+            if (YD.station && SUNK > 0 && !night) { const q = W3((a + b) / 2, (oa + ob) / 2 + ro, 0.16); if (q) { const f = clamp(1 - Math.abs(q.x - SUN.x) / (W * 0.55), 0, 1), fd = clamp(((a + b) / 2 - 4) / 40, 0, 1), al = SUNK * (0.25 + 0.75 * f * f) * (0.35 + 0.65 * fd);
+              if (al > 0.03) { c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = Math.min(0.95, al); quad(W3(a, oa + ro - 0.02, 0.165), W3(b, ob + ro - 0.02, 0.165), W3(b, ob + ro + 0.02, 0.165), W3(a, oa + ro + 0.02, 0.165), '#ffd9a0'); c.restore(); }
+              if (f > 0.75 && hash(Math.floor(x0 + a) * 3.1 + ro) > 0.8) { c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = 0.8 * SUNK * f; c.strokeStyle = '#fffbe8'; c.lineWidth = 1; const r = Math.max(2, 0.25 * q.k); c.beginPath(); c.moveTo(q.x - r * 2, q.y); c.lineTo(q.x + r * 2, q.y); c.moveTo(q.x, q.y - r); c.lineTo(q.x, q.y + r); c.stroke(); c.restore(); } } } } }); }
         // wesel: lidah wesel meruncing di ujung, jarum (frog) & rel pengantar, mesin penggerak wesel kuning-abu di sisi luar
         const W_ = (u) => (YD.rev ? YD.at - u : u), toe = W_(i < 0 ? YD.shed.m0 : YD.sid[i].m1), heel = W_(i < 0 ? YD.shed.m1 : YD.sid[i].m0), dir = (i < 0 ? 1 : -1) * (YD.rev ? -1 : 1); // arah menjauh dari ujung wesel
         let fx = null; for (let t = 0; t <= 1; t += 0.01) { const xx = toe + dir * (Math.abs(heel - toe)) * t, oo = O(xx); if (oo === null) continue; if (Math.abs(oo - (par(xx) || 0)) >= 1.1) { fx = xx; break; } }
@@ -12775,7 +12787,9 @@
   // kilau matahari di bawah posisi matahari, kilatan pendek yang bergeser bersama rel, cahaya tepi, sorot lampu Kilat di rel depannya
   function railsAlong(V, s0, s1, ok, yAt, kk = 1, isC = false) {
     const { c, ppm, X } = V, night = V.night, wet = MIS.rain || V.storm, tf = V.tf || 0;
-    const sun = sunPos(V), sunK = night || tf > 0.2 ? 0 : V.storm ? 0.35 : clamp(1.1 - V.p * 0.5, 0.45, 1) * (1 - twiOf(V.p));
+    const sun = sunPos(V), sunK0 = night || tf > 0.2 ? 0 : V.storm ? 0.35 : clamp(1.1 - V.p * 0.5, 0.45, 1) * (1 - twiOf(V.p));
+    // stasiun Sukamaju: matahari subuh yang rendah justru memantul paling kuat di kepala rel
+    const sunK = !night && tf <= 0.2 && !V.storm && ROUTE.yard && ROUTE.yard.station && ROUTE.yard.glow ? Math.max(sunK0, 0.7) : sunK0;
     const xa = X(s0), invX = (sx) => s0 + (sx - xa) / ppm;
     for (const [off, k0] of [[-0.48, 0.62], [-0.12, 1]]) {
       const k = k0 * kk, head = Math.max(1.5, 0.13 * ppm * k), web = Math.max(1, 0.11 * ppm * k), foot = Math.max(1, 0.06 * ppm * k);
