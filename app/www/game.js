@@ -6764,7 +6764,7 @@
       const n = DBc.kilat.cars || 6, lens = [LOCO_LEN].concat(Array(n).fill(COACH_LEN), [LOCO_LEN]);
       // sudut penampang: dari bahu atap kanan (tak terlihat) melintasi atap ke sisi kiri yang menghadap Guntur, rapat di lengkung
       const angs = (n) => { const A2 = []; for (let q = 0; q <= n; q++) { const t = q / n; A2.push(Math.PI * (0.3 + 0.7 * (1 - Math.pow(1 - t, 1.35)))); } return A2; };
-      const ANG_M = angs(26), ANG_L = []; for (let q = 0; q < 12; q++) { const r = q / 12; ANG_L.push(Math.asin(Math.min(1, r * r))); } // sisi kanan juga (terlihat di ujung moncong dari depan)
+      const ANG_M = angs(26), ANG_L = []; for (let q = 0; q < 22; q++) { const r = Math.pow(q / 21, 0.8); ANG_L.push(Math.asin(Math.min(1, r * r))); } // sisi kanan juga (terlihat di ujung moncong dari depan)
        for (let q = 0; q <= 22; q++) { const r = 1 - q / 22; ANG_L.push(Math.PI - Math.asin(Math.min(1, r * r))); } // sisi kiri: sampel rata menurut tinggi
       let ANG = ANG_M; // lokomotif: penampang lebih rapat agar batas kaca & pita livery halus
       const PT = KPROF(DBc.kilat.loco === 'argo' ? 'argo' : DBc.kilat.loco === 'hst2' ? 'garuda' : 'kilat', DBc.kilat), LN = PT.LN;
@@ -6773,7 +6773,7 @@
       const HB = 1.05;
       const kilatCar = (dn, dr, kind) => {
         const lead = kind === 'lead', tail = kind === 'tail', mid = kind === 'mid';
-        ANG = mid ? ANG_M : ANG_L; const NJ = Math.round(clamp(30 - dn * 0.12, 12, 30)), NB = Math.round(clamp(8 - dn * 0.04, 3, 8)); // rapat saat dekat, ringan saat jauh
+        ANG = mid ? ANG_M : ANG_L; const NJ = Math.round(clamp(40 - dn * 0.25, 12, 40)), NB = Math.round(clamp(8 - dn * 0.04, 3, 8)); // rapat saat dekat, ringan saat jauh
         const ds = [];
         if (lead) { for (let j = 0; j <= NJ; j++) ds.push([dn + Math.pow(j / NJ, 1.35) * LN, Math.pow(j / NJ, 1.35)]); for (let j = 1; j <= NB; j++) ds.push([dn + LN + (dr - dn - LN) * j / NB, 1]); }
         else if (tail) { for (let j = 0; j < NB; j++) ds.push([dn + (dr - LN - dn) * j / NB, 1]); for (let j = NJ; j >= 0; j--) ds.push([dr - Math.pow(j / NJ, 1.35) * LN, Math.pow(j / NJ, 1.35)]); }
@@ -6799,7 +6799,7 @@
             const v = (x, sky, gnd) => Math.round(clamp(x * lt + (sky - x) * 0.16 * up * SUNK + (gnd - x) * 0.14 * (1 - up) + 255 * sp, 0, 255));
             return night ? `rgb(${Math.round(150 * lt)},${Math.round(156 * lt)},${Math.round(168 * lt)})` : `rgb(${v(PT.white[0], +sunRimRGB[0], 150)},${v(PT.white[1], +sunRimRGB[1], 190)},${v(PT.white[2], +sunRimRGB[2], 120)})`; };
           if (!mid) { // lokomotif: zona kaca, pita & rok persis seperti tampak samping (posisi memanjang xs & tinggi hs dalam satuan gambar samping)
-            const past = ms >= 0.999 ? Math.max(0, lead ? md - (dn + LN) : dr - LN - md) * 1.1 : 0, xs = PT.xTip + ms * PT.Ls + past, hs = PT.bot + (mh - 0.95) / 3.1 * (PT.top - PT.bot), z = PT.zone(xs, hs, left);
+            const past = ms >= 0.999 ? Math.max(0, lead ? md - (dn + LN) : dr - LN - md) * 1.1 : 0, xs = PT.xTip + ms * PT.Ls + past, hs = PT.bot + (mh - 0.95) / 3.1 * (PT.top - PT.bot), z = left ? null : PT.zone(xs, hs, left); // sisi kiri: lajur halus menutup penuh; sisi kanan: warna dasar sebagai cadangan
             if (z && z.glass !== undefined) { const sp = night ? 0 : specAt(A, C), t = clamp(z.glass, 0, 1), v = (a0, a1) => Math.round(clamp(a0 + (a1 - a0) * t + 220 * sp, 0, 255));
               col = night || kL > 0.6 ? (night ? '#1a2230' : `rgb(${v(12, 50)},${v(18, 70)},${v(24, 92)})`) : `rgb(${v(10, 74)},${v(15, 102)},${v(22, 132)})`; }
             else if (z && z.c) col = night ? mix(z.c, '#000000', 0.45) : mix(z.c, '#ffffff', 0.08 * (Math.sin(ma) - 0.5));
@@ -6882,7 +6882,7 @@
             const pts = []; for (let m = 0; m <= M; m++) pts.push(at(sec, fHi + (fLo - fHi) * m / M)); return pts; };
           const arcR = (sec, hlo, hhi) => { const hT = sec[kTop].h; if (hhi >= hT || hlo >= hT) return null; let fLo = cross(sec, kTop, 0, hlo); const fHi = cross(sec, kTop, 0, hhi); if (fLo === null && hlo < sec[0].h) fLo = 0; if (fLo === null || fHi === null) return null; // sisi kanan (cermin), terlihat di ujung moncong
             const pts = []; for (let m = 0; m <= M; m++) pts.push(at(sec, fHi + (fLo - fHi) * m / M)); return pts; };
-          for (const B0 of PT.bands) for (const side of ['R', 'L']) { const B = B0, fA = side === 'L' ? arc : arcR; if (side === 'R' && B.noR) continue;
+          for (const side of ['R', 'L']) for (const B0 of PT.bands) { const B = B0, fA = side === 'L' ? arc : arcR; if (side === 'R' && B.noR) continue; // semua lajur sisi kanan (di belakang) dulu, baru sisi kiri yang menghadap kabin
             const rows = secs.map((sec) => { const xs = xsOf(sec); if (xs < B.x0 || xs > B.x1) return null; const lo2 = B.lo(xs), hi2 = B.hi(xs); if (hi2 <= lo2) return null; return { xs, lo2, hi2, pts: fA(sec, toW(lo2), toW(hi2)) }; });
             const order = []; for (let j = 0; j < rows.length - 1; j++) if (rows[j] && rows[j + 1] && rows[j].pts && rows[j + 1].pts) order.push(j);
             order.sort((j1, j2) => secs[j2][0].d - secs[j1][0].d);
@@ -13209,45 +13209,49 @@
       return (x) => { if (x <= pts[0][0]) return pts[0][1]; if (x >= pts[pts.length - 1][0]) return pts[pts.length - 1][1]; let lo = 0, hi = pts.length - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (pts[m][0] < x) lo = m; else hi = m; } const f = (x - pts[lo][0]) / Math.max(1e-6, pts[hi][0] - pts[lo][0]); return pts[lo][1] + (pts[hi][1] - pts[lo][1]) * f; }; };
     const L = (x, a, b) => clamp((x - a) / (b - a), 0, 1);
     let P;
-    // bands: pita livery & kaca sebagai lajur halus di permukaan (batas bawah/atas dalam satuan tinggi gambar samping), zone: warna dasar (rok, lampu)
+    // desain baru (acuan gambar pengguna): moncong tumpul dengan kaca kanopi hitam besar yang membungkus puncak, kerucut hidung putih di bawah,
+    // lampu sipit di sisi moncong, livery melingkari muka. Satuan: meter dari ujung hidung (x) & tinggi dunia (h)
     const glassC = (x, t) => ({ glass: t });
-    if (type === 'argo') { // Agraveda: moncong peluru tumpul pendek, visor kaca membungkus puncak moncong (helm), pita jingga-merah muda-ungu, rok grafit
-      const top = curve([[[-1.3, 1.85], [-1.3, 2.3], [-1.15, 2.9], [-0.75, 3.6]], [[-0.75, 3.6], [0.2, 5.2], [2.2, 6.2], [5.2, 6.22]]]);
-      const up = curve([[[-0.18, 4.0], [1.0, 5.1], [2.6, 5.62], [5.0, 5.62]]]), lo = curve([[[-0.36, 3.7], [0.6, 3.82], [2.4, 4.4], [4.4, 4.62]]]);
-      const lw = (x) => (x > 4.4 ? 4.62 + (x - 4.4) * 0.033 : lo(x)), uE = (x) => (x < 1.6 ? 99 : x < 3.8 ? up(x) + (top(x) + 0.25 - up(x)) * (1 - L(x, 1.6, 3.8)) : up(x));
-      const s0 = (x) => { const k = clamp((x + 1.3) / 16, 0, 1); return 2.62 + 0.35 * (1 - L(k, 0, 0.35)); }, s1 = (x) => { const k = clamp((x + 1.3) / 16, 0, 1); return 3.35 + 0.25 * (1 - L(k, 0, 0.3)); };
-      P = { LN: 6.2, xTip: -1.3, Ls: 6.5, bot: 1.7, top: 6.22, top0: top, white: [246, 242, 234], wsEnd: 3.6, skirt: { c: '#4a4e55', h0: 0.78 },
-        bands: [
-          { x0: -0.45, x1: 99, lo: lw, hi: uE, col: glassC },
-          { x0: -0.6, x1: 2.6, lo: (x) => lw(x) - 0.12, hi: lw, col: () => ({ c: '#fff4d8' }) },
-          { x0: -2, x1: 99, lo: (x) => (x < 1.8 ? 2.38 : s0(x)), hi: s1, col: (x, t) => { const k = clamp((x + 1.3) / 16, 0, 1); return { c: x < 1.8 ? mix('#f08a24', '#f7b45e', t * 0.6) : k < 0.45 ? mix('#f08a24', '#d0588a', k / 0.45) : mix('#d0588a', '#7a3a96', (k - 0.45) / 0.55) }; } }],
-        zone: (x, h) => { if (h < 2.38) return { c: '#4a4e55' }; if (x < 1.8 && h < 3.3 && !(x < -0.5 && h > 2.9 && h < 3.15)) return { c: '#f08a24' }; if (x < -0.5 && h > 2.9 && h < 3.15) return { c: '#fffbe8' }; return null; } };
-      P.bands.push({ x0: -9, x1: 99, lo: () => -9, hi: () => 2.3, noR: true, col: () => ({ c: '#4a4e55' }) }, { x0: -9, x1: 99, lo: () => 2.3, hi: () => 2.38, noR: true, col: () => ({ c: '#bfc4ca' }) });
-    } else if (type === 'garuda') { // Garuda (bentuk Guntur): moncong panjang melandai ke bibir rendah, kaca kokpit naik di moncong lalu menyatu ke pita jendela, sabuk biru tua
-      const LV = (KD && KD.livery) || {}, top = curve([[[-2.05, 1.55], [-1.75, 2.3], [-0.6, 3.25], [0.9, 4.15]], [[0.9, 4.15], [3.2, 5.55], [6.4, 6.07], [10.2, 6.08]]]);
-      const gUp = curve([[[1.15, 4.1], [2.2, 4.95], [3.6, 5.6], [5.4, 5.68]], [[5.4, 5.68], [6.7, 5.6], [7.4, 4.62], [8.6, 4.62]]]), gLo = curve([[[1.6, 3.66], [3.5, 3.4], [5.8, 2.95], [8.0, 2.95]]]);
-      const bTop = curve([[[-2.05, 1.42], [-0.6, 2.2], [2.6, 2.78], [6.2, 2.8]]]), bBot = curve([[[-1.6, 1.22], [-0.4, 1.45], [2.4, 1.6], [5.6, 1.6]]]), acc = curve([[[-2.0, 1.42], [-0.7, 2.1], [1.8, 2.49], [4.6, 2.49]]]);
-      const A = (x) => (x > 4.6 ? 2.49 : acc(x)), PN = (x) => (x > 3.6 ? 2.26 : acc(x) - 0.23);
-      const bands = [{ x0: 1.15, x1: 99, lo: (x) => (x > 8.0 ? 2.95 : gLo(x)), hi: (x) => { const u = x > 8.6 ? 4.62 : gUp(x); return x < 3.6 ? 99 : x < 5.8 ? u + (top(x) + 0.3 - u) * (1 - L(x, 3.6, 5.8)) : u; }, col: glassC }]; // kaca depan membungkus puncak moncong
-      if (LV.band) bands.push({ x0: -2.2, x1: 99, lo: (x) => (x > 5.6 ? 1.6 : bBot(x)), hi: (x) => (x > 6.2 ? 2.8 : bTop(x)), col: (x, t) => ({ c: mix(LV.band, LV.acc || LV.band, 0.5 * (1 - Math.abs(t - 0.5) * 2)) }) });
-      bands.push({ x0: -2.2, x1: 99, lo: (x) => A(x) - 0.09, hi: (x) => A(x) + 0.09, col: () => ({ c: LV.acc || '#d8262e' }) }, { x0: -2.2, x1: 99, lo: (x) => PN(x) - 0.05, hi: (x) => PN(x) + 0.05, col: () => ({ c: LV.pin || '#4a525a' }) });
-      P = { LN: 11.2, xTip: -2.1, Ls: 12.3, bot: 0.9, top: 6.08, top0: top, white: [250, 251, 253], pillars: [[6.2, 6.5], [9.4, 10.8]], wsEnd: 6.2, wiper: 2.8, skirt: { c: '#c3c8ce', h0: 0.72 }, bands,
-        zone: (x, h) => { if (x < -0.2 && x > -1.75 && Math.abs(h - (1.86 + (x + 1.7) * 0.2)) < 0.07) return { c: '#fff6d8' }; if (h < 1.5) return { c: '#b9bfc6' }; return null; } };
-      P.bands.unshift({ x0: -9, x1: 99, lo: () => -9, hi: () => 1.5, noR: true, col: () => ({ c: '#b9bfc6' }) });
-    } else { // Kilat: moncong peluru panjang, pita kaca hitam menerus yang meruncing ke hidung, sapuan biru-toska & garis merah
-      const top = curve([[[-1.85, 1.6], [-1.9, 1.95], [-1.75, 2.45], [-1.2, 3.0]], [[-1.2, 3.0], [0.8, 4.9], [4.2, 6.05], [9.2, 6.08]]]);
-      const bUp = curve([[[0.6, 3.75], [2.4, 4.7], [4.6, 5.12], [7.4, 5.12]]]), bLo = curve([[[0.25, 3.5], [1.6, 3.62], [4.0, 4.05], [6.2, 4.12]]]);
-      const sTop = curve([[[-1.74, 2.24], [-0.6, 2.6], [1.4, 2.66], [4.0, 2.66]]]), sRed = curve([[[-1.72, 2.2], [-0.6, 2.55], [1.4, 2.62], [4.0, 2.62]]]);
-      const ST = (x) => (x > 4.0 ? 2.66 : sTop(x)), RD = (x) => (x > 4.0 ? 2.62 : sRed(x)) + 0.06;
-      P = { LN: 10.0, xTip: -1.9, Ls: 11.1, bot: 1.35, top: 6.08, top0: top, white: [252, 253, 255], pillars: [[6.7, 7.05], [10.2, 10.4]], wsEnd: 6.7, wiper: 2.2, skirt: { c: '#c8cdd3', h0: 0.72 },
-        bands: [
-          { x0: 0.25, x1: 99, lo: (x) => (x > 6.2 ? 4.12 : bLo(x)), hi: (x) => { const u = x > 7.4 ? 5.12 : bUp(x); return x < 3.2 ? 99 : x < 5.6 ? u + (top(x) + 0.3 - u) * (1 - L(x, 3.2, 5.6)) : u; }, col: glassC }, // kaca depan membungkus puncak moncong (menghadap depan), lalu menyempit jadi pita jendela samping
-          { x0: -1.8, x1: 99, lo: () => 1.76, hi: ST, col: (x) => ({ c: mix(mix('#0b2f6e', '#1567c4', L(x, 15.85, 7)), '#22b6d6', L(x, 6, -1.7)) }) },
-          { x0: -1.8, x1: 99, lo: (x) => RD(x) - 0.06, hi: (x) => RD(x) + 0.06, col: () => ({ c: '#d8262e' }) },
-          { x0: -1.6, x1: 99, lo: () => 2.84, hi: () => 2.96, col: () => ({ c: '#8a959f' }) }],
-        zone: (x, h) => { if (x < 0 && x > -1.1 && Math.abs(h - (1.95 + (x + 1.0) * 0.07)) < 0.07) return { c: '#fff6d8' }; if (h < 1.72) return { c: '#c4c9cf' }; return null; } };
-      P.bands.unshift({ x0: -9, x1: 99, lo: () => -9, hi: () => 1.72, noR: true, col: () => ({ c: '#c4c9cf' }) });
+    const top = (u) => { const K = [[0, 1.3], [0.35, 1.95], [0.9, 2.55], [1.7, 3.08], [2.8, 3.52], [4.2, 3.86], [5.8, 4.02], [7.0, 4.05]]; if (u >= 7) return 4.05; for (let i = 1; i < K.length; i++) if (u <= K[i][0]) { const f = (u - K[i - 1][0]) / (K[i][0] - K[i - 1][0]), e = f * f * (3 - 2 * f); return K[i - 1][1] + (K[i][1] - K[i - 1][1]) * (0.35 * f + 0.65 * e); } return 4.05; };
+    const SM = (a, b, u) => { const f = L(u, a, b); return f * f * (3 - 2 * f); }, F = (u, fr, sd) => fr + (sd - fr) * SM(0.5, 3.0, u); // peralihan halus dari muka ke sisi
+    const gLo = (u) => 2.74 + 0.56 * SM(0.8, 6.4, u); // tepi bawah kaca kanopi: rendah di muka, naik ke belakang
+    const gHi = (u) => (u < 4.4 ? 99 : u < 6.0 ? gLo(u) + (top(u) + 0.3 - gLo(u)) * (1 - SM(4.4, 6.0, u)) : gLo(u)); // membungkus puncak lalu tepi belakang miring
+    const cone = () => 1.58; // batas kerucut hidung putih
+    const glassB = [{ x0: 0.9, x1: 6.0, lo: gLo, hi: gHi, col: glassC }, // kaca kanopi depan
+      { x0: 6.55, x1: 8.0, lo: () => 3.08, hi: () => 3.74, col: glassC }, // jendela samping kabin
+      { x0: 9.1, x1: 9.55, lo: () => 3.12, hi: () => 3.66, col: glassC }, { x0: 10.3, x1: 10.75, lo: () => 3.12, hi: () => 3.66, col: glassC }]; // jendela pintu kru
+    const seam = { x0: -1, x1: 1.4, lo: () => 1.55, hi: () => 1.6, col: () => ({ c: '#9aa1a9' }), noZone: true }; // sambungan kerucut hidung
+    const lamp = (cl) => ({ x0: 1.0, x1: 2.1, lo: (u) => gLo(u) - 0.52, hi: (u) => gLo(u) - 0.52 + 0.17 * Math.sin(Math.PI * L(u, 1.0, 2.1)) + 0.01, col: () => ({ c: cl }), noZone: true }); // lampu sipit di sudut moncong
+    const base = { xTip: 0, LN: 7.2, Ls: 7.2, bot: 0.95, top: 4.05, top0: top, pillars: [[6.0, 6.55], [8.0, 9.1]], wsEnd: 6.0, wiper: 2.2 };
+    if (type === 'argo') { // Agraveda: pita ungu di bawah kaca, sabuk jingga lebar, sabuk hitam berderet lampu, kerucut hidung putih
+      P = Object.assign({}, base, { white: [248, 248, 250], skirt: { c: '#c9ced4', h0: 0.72 },
+        bands: [...glassB,
+          { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.4, hi: (u) => gLo(u) - 0.04, col: () => ({ c: '#7b2fb8' }) },
+          { x0: -1, x1: 99, lo: (u) => F(u, 2.08, 2.4), hi: (u) => gLo(u) - 0.4, col: (u, t) => ({ c: mix('#f07818', '#f8a640', t * 0.7) }) },
+          { x0: -1, x1: 7.5, lo: (u) => F(u, 1.6, 2.1), hi: (u) => F(u, 2.08, 2.4), col: () => ({ c: '#16181c' }) },
+          { x0: 0.9, x1: 2.2, lo: (u) => F(u, 1.6, 2.1) + 0.1, hi: (u) => F(u, 1.6, 2.1) + 0.1 + 0.15 * Math.sin(Math.PI * L(u, 0.9, 2.2)) + 0.01, col: () => ({ c: '#f4fbff' }), noZone: true }, // lampu LED sipit di sabuk hitam
+          seam],
+        zone: () => null });
+    } else if (type === 'garuda') { // Garuda: sabuk biru tua lebar dengan dua garis merah, kerucut hidung putih
+      const LV = (KD && KD.livery) || {}, BL = LV.band || '#1a3f9e', RD = '#e3262e';
+      P = Object.assign({}, base, { white: [250, 251, 253], skirt: { c: '#c3c8ce', h0: 0.72 },
+        bands: [...glassB,
+          { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.26, hi: (u) => gLo(u) - 0.12, col: () => ({ c: RD }) },
+          { x0: -1, x1: 99, lo: (u) => F(u, 1.8, 2.32), hi: (u) => gLo(u) - 0.26, col: (u, t) => ({ c: mix(BL, '#2c5cc8', t * 0.45) }) },
+          { x0: -1, x1: 99, lo: (u) => F(u, 1.62, 2.18), hi: (u) => F(u, 1.8, 2.32), col: () => ({ c: RD }) },
+          lamp('#eaf4ff'), seam],
+        zone: () => null });
+    } else { // Kilat: garis merah di bawah kaca, sabuk biru, sabuk biru muda melingkar ke kerucut hidung
+      P = Object.assign({}, base, { white: [252, 253, 255], skirt: { c: '#c8cdd3', h0: 0.72 },
+        bands: [...glassB,
+          { x0: -1, x1: 99, lo: (u) => gLo(u) - 0.26, hi: (u) => gLo(u) - 0.12, col: () => ({ c: '#e3262e' }) },
+          { x0: -1, x1: 99, lo: (u) => F(u, 1.98, 2.42), hi: (u) => gLo(u) - 0.26, col: (u, t) => ({ c: mix('#1c4fbf', '#2e66d6', t * 0.5) }) },
+          { x0: -1, x1: 99, lo: (u) => F(u, 1.62, 2.12), hi: (u) => F(u, 1.98, 2.42), col: () => ({ c: '#2bb3e8' }) },
+          lamp('#eaf6ff'), seam],
+        zone: () => null });
     }
+    // warna dasar permukaan mengikuti lajur yang sama (cadangan di ujung moncong yang lajurnya terlalu sempit untuk dihitung)
+    P.zone = (x, h) => { for (let i = P.bands.length - 1; i >= 0; i--) { const B = P.bands[i]; if (B.noZone || x < B.x0 || x > B.x1) continue; const lo = B.lo(x), hi = Math.min(B.hi(x), 50); if (h >= lo && h < hi) return B.col(x, (h - lo) / Math.max(0.05, hi - lo)); } return null; };
     const tip = P.xTip, tmax = P.top - P.bot; P.topF = (s) => clamp((P.top0(tip + s * P.Ls) - P.bot) / tmax, 0.05, 1);
     return (KPROF_C[key] = P);
   }
