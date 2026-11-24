@@ -8632,6 +8632,7 @@
     W = W0;
     if (bendCols) endBend(c, bendCols, gy, ppm);
     drawBridge(V, 'front');
+    drawRiverMirror(V); // sungai di bawah jembatan: cermin sungguhan kereta & jembatan yang sedang lewat (bentuk & warna sesuai keretanya)
     drawTunnelPortals(V);
     drawFrontProps(V);
     drawFog(V);
@@ -10631,8 +10632,10 @@
     // jalur ganda: pantulan hanya di air sawah di depan tanggul jalur 2, tidak menimpa balas & rel jalur 2
     if (ROUTE.double) { const yc = gy + (DBL_K * ROUTE.double.o + 1.5) * ppm; c.beginPath(); c.rect(-20, yc, W + 40, H - yc + 20); c.clip(); }
     if (ROUTE.meet) { const M = ROUTE.meet; c.beginPath(); c.moveTo(X(M.entry - 400), H + 40); for (let wx = M.entry - 400; wx <= M.exit + 400; wx += 4) c.lineTo(X(wx), gy + (MEET_NEAR * meetK(wx) + 1.6) * ppm); c.lineTo(X(M.exit + 400), H + 40); c.rect(X(M.exit + 400) - 1, -20, 1e5, H + 80); c.rect(X(M.entry - 400) - 1e5 + 1, -20, 1e5, H + 80); c.clip(); } // sepur belok: pantulan sawah tidak menutupi jalur utama di depan
+    const RB = ROUTE.bridge && !ROUTE.bridge.land && (!ROUTE.bridge.viaduct || ROUTE.bridge.gorge || MIS.land === 'sawit') ? ROUTE.bridge : null; // sungai: dipantulkan oleh cermin sungai, bukan petak sawah
     for (let i = i0; i <= i1; i++) for (let r = 0; r < 4; r++) {
       if (hash(i * 7.31 + r * 1.93) > 0.45) continue;  // hanya petak berair
+      if (RB && (i + 1) * cell > RB.from - 4 && i * cell < RB.to + 4) continue;
       const t0 = r / rows + 0.025, t1 = (r + 1) / rows - 0.025, xa = X(i * cell), xb = X((i + 1) * cell);
       const q = [[at(xa, t0) + 2, rowY(t0)], [at(xb, t0) - 2, rowY(t0)], [at(xb, t1) - 3, rowY(t1)], [at(xa, t1) + 3, rowY(t1)]];
       if (q[1][0] < X(lo) - 40 || q[0][0] > X(hi) + 40) continue;
@@ -15275,7 +15278,7 @@
     const conc = V.night ? '#5a5f6a' : V.storm ? '#8d9296' : '#c9c2b4', concD = V.night ? '#3a3e48' : '#9a9285';
     const span = 24, n = Math.round((b.to - b.from) / span), sp = (b.to - b.from) / n, deep = 11;
     c.save();
-    const RIVER = MIS.land === 'sawit' || b.gorge, wY = gy + 3.0 * ppm; // sungai lebar wY = gy + 6.6 * ppm; // sungai lebar: garis air di bawah pangkal lengkung dalam: air naik hingga dekat lantai viaduk sehingga kereta terpantul jelas
+    const RIVER = MIS.land === 'sawit' || b.gorge || !b.land, wY = gy + 3.0 * ppm; // sungai lebar wY = gy + 6.6 * ppm; // sungai lebar: garis air di bawah pangkal lengkung dalam: air naik hingga dekat lantai viaduk sehingga kereta terpantul jelas
     if (RIVER) { // latar di balik lengkung: tepi lembah seberang yang jauh & berkabut, langit terlihat di antara tiang
       const yT = gy + 1.4 * ppm, ramp = 40 * ppm, night = V.night;
       const bg = c.createLinearGradient(0, yT, 0, wY); bg.addColorStop(0, night ? '#1a2238' : mix('#9fb6c2', '#c4d6dc', V.p)); bg.addColorStop(1, night ? '#141c2c' : mix('#7a9a8a', '#94b4a0', V.p));
@@ -15807,6 +15810,33 @@ c.restore();
     }
   }
   // pantulan busur di permukaan sungai
+  // cermin sungai di bawah jembatan biasa (rangka baja / beton): salin gambar di atas garis air (kereta, rangka, langit),
+  // balik ke bawah, beri riak irisan & memudar menjauhi garis air. Geometri air sama dengan drawGround.
+  function riverSpan(V) { const b = ROUTE.bridge; if (!b || b.land || b.viaduct || PLANT() && !b.truss && false) return null; const bx0 = V.X(b.from + 6), bx1 = V.X(b.to - 6); if (bx1 < -40 || bx0 > W + 40) return null; return { b, bx0, bx1, wTop: V.gy + 2.6 * V.ppm }; }
+  function drawRiverMirror(V) {
+    const R0 = riverSpan(V); if (!R0 || V.tf > 0.3) return; const { c, ppm, gy } = V, { bx0, bx1, wTop } = R0, tt = performance.now() / 1000, cvs = c.canvas;
+    const wq = [[bx0 + 2 * ppm, wTop], [bx1 - 2 * ppm, wTop], [V.Xn(bx1) - 4 * ppm, H], [V.Xn(bx0) + 4 * ppm, H]];
+    const Tm = c.getTransform(), hgt = Math.min(wTop - (gy - 9 * ppm), H - wTop); if (hgt < 3) return;
+    const left = Math.min(wq[0][0], wq[3][0]), right = Math.max(wq[1][0], wq[2][0]);
+    const sx0 = Math.max(0, Math.floor(left * Tm.a + Tm.e)), sx1 = Math.min(cvs.width, Math.ceil(right * Tm.a + Tm.e)), sw = sx1 - sx0, srcBot = Math.round(wTop * Tm.d + Tm.f);
+    if (sw < 3) return; const hD = Math.min(Math.ceil(hgt * Tm.d), srcBot); if (hD < 3) return;
+    const Rc = drawRiverMirror.cv || (drawRiverMirror.cv = document.createElement('canvas')); if (Rc.width < sw || Rc.height < hD) { Rc.width = Math.max(Rc.width, sw); Rc.height = Math.max(Rc.height, hD); }
+    const rc = Rc.getContext('2d'); rc.clearRect(0, 0, sw, hD); rc.drawImage(cvs, sx0, srcBot - hD, sw, hD, 0, 0, sw, hD);
+    c.save(); c.beginPath(); wq.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.clip(); c.setTransform(1, 0, 0, 1, 0, 0);
+    const step = Math.max(3, hD / 24), night = V.night;
+    for (let k = 0; k * step < hD; k++) { const dyD = k * step, depth = dyD / hD, h1 = Math.min(step, hD - dyD), sy = hD - dyD - h1;
+      const off = (Math.sin(dyD * 0.09 / Tm.d + tt * 2.2) * (1 + depth * 4) + Math.sin(dyD * 0.023 / Tm.d - tt * 1.1) * 1.6) * Tm.a;
+      c.globalAlpha = (night ? 0.5 : V.storm ? 0.35 : 0.58) * (1 - depth * 0.8);
+      c.save(); c.translate(0, srcBot + dyD + h1); c.scale(1, -1); c.drawImage(Rc, 0, sy, sw, h1, sx0 + off, 0, sw, h1); c.restore(); }
+    c.restore();
+    // permukaan air tetap terbaca: lapisan warna sungai tipis & bayangan gelap tepat di bawah lantai jembatan
+    c.save(); c.beginPath(); wq.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); c.clip();
+    const tint = c.createLinearGradient(0, wTop, 0, H); tint.addColorStop(0, 'rgba(0,0,0,0.28)'); tint.addColorStop(0.12, night ? 'rgba(20,30,60,0.12)' : 'rgba(40,80,95,0.12)'); tint.addColorStop(1, night ? 'rgba(10,16,36,0.35)' : 'rgba(30,70,85,0.3)');
+    c.fillStyle = tint; c.fillRect(left, wTop, right - left, H - wTop);
+    c.fillStyle = night ? 'rgba(180,200,255,0.16)' : 'rgba(255,255,255,0.26)'; for (let k = 0; k < 40; k++) { const r = hash(k * 3.7), y = wTop + Math.pow(hash(k * 1.3), 1.4) * (H - wTop), d = (y - wTop) / (H - wTop), L = (0.8 + d * 3) * ppm * (0.6 + r * 0.8), xl = bx0 + (V.Xn(bx0) - bx0) * d, xr = bx1 + (V.Xn(bx1) - bx1) * d;
+      c.fillRect(xl + ((hash(k * 5.1) * (xr - xl) + tt * (6 + r * 10) * ppm * 0.2) % Math.max(1, xr - xl)), y, L, Math.max(1, (0.06 + d * 0.1) * ppm)); }
+    c.restore();
+  }
   function drawBridgeReflection(V, waterTop, clip) {
     if (ROUTE.bridge && (ROUTE.bridge.truss || ROUTE.bridge.viaduct)) return;
     const G = bridgeGeom(V);
