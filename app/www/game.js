@@ -13221,7 +13221,7 @@
           { x0: -0.45, x1: 99, lo: lw, hi: uE, col: glassC },
           { x0: -0.6, x1: 2.6, lo: (x) => lw(x) - 0.12, hi: lw, col: () => ({ c: '#fff4d8' }) },
           { x0: -2, x1: 99, lo: (x) => (x < 1.8 ? 2.38 : s0(x)), hi: s1, col: (x, t) => { const k = clamp((x + 1.3) / 16, 0, 1); return { c: x < 1.8 ? mix('#f08a24', '#f7b45e', t * 0.6) : k < 0.45 ? mix('#f08a24', '#d0588a', k / 0.45) : mix('#d0588a', '#7a3a96', (k - 0.45) / 0.55) }; } }],
-        zone: (x, h) => { if (h < 2.3) return { c: '#4a4e55' }; if (h < 2.62) return { c: x < 1.8 ? '#f08a24' : '#bfc4ca' }; if (x < -0.5 && h > 2.9 && h < 3.15) return { c: '#fffbe8' }; return null; } };
+        zone: (x, h) => { if (h < 2.38) return { c: '#4a4e55' }; if (x < 1.8 && h < 3.3 && !(x < -0.5 && h > 2.9 && h < 3.15)) return { c: '#f08a24' }; if (x < -0.5 && h > 2.9 && h < 3.15) return { c: '#fffbe8' }; return null; } };
       P.bands.push({ x0: -9, x1: 99, lo: () => -9, hi: () => 2.3, noR: true, col: () => ({ c: '#4a4e55' }) }, { x0: -9, x1: 99, lo: () => 2.3, hi: () => 2.38, noR: true, col: () => ({ c: '#bfc4ca' }) });
     } else if (type === 'garuda') { // Garuda (bentuk Guntur): moncong panjang melandai ke bibir rendah, kaca kokpit naik di moncong lalu menyatu ke pita jendela, sabuk biru tua
       const LV = (KD && KD.livery) || {}, top = curve([[[-2.05, 1.55], [-1.75, 2.3], [-0.6, 3.25], [0.9, 4.15]], [[0.9, 4.15], [3.2, 5.55], [6.4, 6.07], [10.2, 6.08]]]);
