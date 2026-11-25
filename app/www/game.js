@@ -95,7 +95,8 @@
         { station: true, rev: true, at: 'final', glow: 0.55,
           sid: [{ o: 8.3, from: -96, m0: 150, m1: 215, parent: -1 }, { o: 12.9, from: -96, m0: 95, m1: 145, parent: 0 }],
           masts: [[-60, 6.1], [-8, 6.1], [44, 6.1], [-34, 10.6], [18, 10.6]],
-          parked: [{ sid: 0, nose: 14, loco: 'cakra', n: 3 }, { sid: 1, nose: 22, loco: 'cakra', n: 4, pal: 'merah' }],
+          route: { sid: 0, label: '2', sig: 'MJ' }, // prosedur masuk: sinyal masuk kuning + penunjuk jalur 2, wesel 40 km/h, berhenti di jalur 2 (peron pulau)
+          parked: [{ sid: 1, nose: 22, loco: 'cakra', n: 4, pal: 'merah' }],
           sigs: [{ id: 'K1', x: -72, o: 2.8, label: 'J1', back: true, init: 'R' }, { id: 'K2', x: -76, o: 5.5, label: 'J2', back: true, init: 'R' }, { id: 'K3', x: -80, o: 10.1, label: 'J3', back: true, init: 'R' }],
         }],
         zones: [{ from: -120, to: 700, limit: 25, label: 'area depo' }],
@@ -169,7 +170,8 @@
         { station: true, rev: true, at: 'final', glow: 0.62,
           sid: [{ o: 8.3, from: -110, m0: 150, m1: 215, parent: -1 }, { o: 12.9, from: -110, m0: 95, m1: 145, parent: 0 }],
           masts: [[-60, 6.1], [-8, 6.1], [44, 6.1], [-34, 10.6], [18, 10.6]],
-          parked: [{ sid: 0, nose: 14, loco: 'cakra', n: 3, pal: 'merah' }, { sid: 1, nose: 22, loco: 'argo', n: 2 }],
+          route: { sid: 0, label: '2', sig: 'MC' },
+          parked: [{ sid: 1, nose: 22, loco: 'argo', n: 2 }],
           sigs: [{ id: 'C1', x: -112, o: 2.8, label: 'K1', back: true, init: 'R' }, { id: 'C2', x: -116, o: 5.5, label: 'K2', back: true, init: 'R' }, { id: 'C3', x: -120, o: 10.1, label: 'K3', back: true, init: 'R' }],
         }],
       },
@@ -1169,7 +1171,11 @@
   // beberapa emplasemen per rute: ROUTE.yard = emplasemen terdekat dari kereta (semua fungsi emplasemen tetap memakai satu ROUTE.yard)
   Object.values(MISSIONS).forEach((M) => { const R = M.route; if (!R || !R.yards) return;
     R.yards.forEach((Y) => { if (Y.at === undefined) Y.at = 0; if (Y.at !== 'final') return; const at = R.stations[R.stations.length - 1].x; Y.at = at; // posisi relatif → dunia
-      (Y.masts || []).forEach((m) => { m[0] += at; }); (Y.sigs || []).forEach((q) => { q.x += at; }); (Y.parked || []).forEach((pk) => { pk.nose += at; }); });
+      (Y.masts || []).forEach((m) => { m[0] += at; }); (Y.sigs || []).forEach((q) => { q.x += at; }); (Y.parked || []).forEach((pk) => { pk.nose += at; });
+      if (Y.route) { const sd = Y.sid[Y.route.sid], toe = at - sd.m1, heel = at - sd.m0; // sinyal masuk 90 m sebelum ujung wesel, zona wesel 40 km/h sampai kereta lurus di jalur samping
+        Y.route.toe = toe; Y.route.heel = heel;
+        R.signals.push({ id: Y.route.sig, x: toe - 90, init: 'Y', route: Y.route.label, home: true }); R.signals.sort((p1, p2) => p1.x - p2.x);
+        R.zones.unshift({ from: toe - 20, to: heel + 30, limit: 40, label: `wesel masuk jalur ${Y.route.label}`, turnout: true }); } });
     Object.defineProperty(R, 'yard', { configurable: true, get() { let x = 0; try { x = S ? S.x : 0; } catch (e) { /* sebelum status permainan dibuat */ } let best = R.yards[0]; for (const Y of R.yards) if (Math.abs(Y.at - x) < Math.abs(best.at - x)) best = Y; return best; } }); });
   let MIS = MISSIONS['1-4'];
   let ROUTE = MIS.route;
@@ -3166,12 +3172,13 @@
     }
 
     // --- sinyal ---
+    for (const sig of ROUTE.signals) if (sig.route && prevX < sig.x - 650 && S.x >= sig.x - 650) radio(`${titleCase(finalStation().name)} masuk jalur ${sig.route}. Sinyal masuk ${sig.id} kuning dengan penunjuk jalur ${sig.route}: kurangi ke 40 km/h sebelum wesel, lalu berhenti di marka jalur ${sig.route}.`, 6);
     for (const sig of ROUTE.signals) {
       if (prevX < sig.x && S.x >= sig.x) {
         const asp = S.sig[sig.id];
         if (asp === 'R') { fail(`Melanggar sinyal merah ${sig.id}. Dalam dunia nyata ini pelanggaran paling berat bagi masinis.`); return; }
         S.yellowLimit = asp === 'Y';
-        if (asp === 'Y') toast(`Sinyal ${sig.id} kuning: maksimal 40 km/h sampai sinyal berikutnya.`, 'warn', 3, null, 2);
+        if (asp === 'Y') toast(sig.route ? `Sinyal masuk ${sig.id} kuning, penunjuk jalur ${sig.route}: kereta dibelokkan ke jalur ${sig.route}. Maksimal 40 km/h di wesel.` : `Sinyal ${sig.id} kuning: maksimal 40 km/h sampai sinyal berikutnya.`, 'warn', 3.4, null, 2);
         S.sig[sig.id] = 'R'; // petak di belakang kereta tertutup
       }
     }
@@ -5378,7 +5385,7 @@
     };
     const P = (z, lat, h) => { if (z < 0.8) return null; const k = f / z; return { x: cx + (lat + SEAT) * k, y: hy + (EH - h) * k, k }; };
     // titik dunia: jarak d sepanjang rel, geser samping o (kanan positif) tegak lurus rel, tinggi h
-    const W3 = (d, o, h) => { const q = plan(d); return P(q.z + Math.sin(q.hd) * o, q.lat + Math.cos(q.hd) * o, h); };
+    const PO0 = playerO(x0), W3 = (d, o, h) => { const q = plan(d), oo = o - PO0 - (playerO(x0 + d) - PO0) * 0; return P(q.z + Math.sin(q.hd) * oo, q.lat + Math.cos(q.hd) * oo, h); }; // kabin mengikuti jalur yang dilalui (jalur samping: dunia bergeser)
     const DBc = ROUTE.double, RO = (d, o) => (DBc ? o + dblO3(x0 + d) : o); // jalur ganda: benda di kanan rel pindah ke luar jalur 2
     const TC = DBc ? 2.3 : 0, TS = DBc ? 1.62 : 1; // terowongan jalur ganda: lebih lebar, berpusat di antara kedua jalur
     const quad = (a, b, d2, e, fill) => { if (!a || !b || !d2 || !e) return; c.fillStyle = fill; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(d2.x, d2.y); c.lineTo(e.x, e.y); c.closePath(); c.fill(); };
@@ -5773,6 +5780,7 @@
         c.strokeStyle = '#3a3a3a'; c.lineWidth = Math.max(1, 0.18 * b.k); c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
         const w = 0.7 * b.k, hh = 2.0 * b.k;
         c.fillStyle = '#1b1d1f'; roundRect(c, t.x - w / 2, t.y - hh, w, hh, w * 0.3); c.fill();
+        if (sig.route) routeInd(c, t.x, t.y - hh, b.k, sig.route, (st.sig ? st.sig[sig.id] : 'R') === 'Y');
         const asp = st.sig ? st.sig[sig.id] : 'R';
         [['R', '#ff4b3a'], ['Y', '#ffc42b'], ['G', '#3bff8a']].forEach(([a, col], k) => {
           const on = asp === a, ly = t.y - hh + (k + 0.5) * (hh / 3);
@@ -8870,11 +8878,21 @@
     drawBridge(LV, 'back');
     drawTrainOnPaddy(LV);
     drawGhost(LV);
-    drawTrain(LV);
+    const drawPlayerTrain = () => {
+    { const c = LV.c, Yr = ROUTE.yard && ROUTE.yard.route && LV.st ? ROUTE.yard : null, xs = LV.st ? LV.st.x : 0, tl = TRAIN_LEN, dy = (wx) => DBL_K * playerO(wx) * LV.ppm;
+      if (!Yr || (Math.abs(dy(xs)) < 0.01 && Math.abs(dy(xs - tl)) < 0.01)) drawTrain(LV);
+      else if (Math.abs(dy(xs) - dy(xs - tl)) < 0.5) { c.save(); c.translate(0, dy(xs - tl / 2)); drawTrain(LV); c.restore(); } // seluruh rangkaian di jalur samping
+      else { // sedang melintasi wesel: tiap kendaraan digeser sesuai posisinya sendiri (rangkaian menikung mulus)
+        const XX = LV.bx || LV.X, bnd = [xs + 2, xs - LOCO_LEN - GAP / 2]; for (let q = 1; q <= N_COACH; q++) bnd.push(xs - LOCO_LEN - GAP - q * (CAR_LEN + GAP) + GAP / 2); bnd[bnd.length - 1] -= 3;
+        for (let i = 0; i < bnd.length - 1; i++) { const a0 = XX(bnd[i + 1]), a1 = XX(bnd[i]); c.save(); c.beginPath(); c.rect(Math.min(a0, a1), -H, Math.abs(a1 - a0) + 0.5, H * 3); c.clip(); c.translate(0, dy((bnd[i] + bnd[i + 1]) / 2)); drawTrain(LV); c.restore(); } } }
+    };
+    const onSide = ROUTE.yard && ROUTE.yard.route && LV.st && Math.abs(playerO(LV.st.x)) > 2; // di jalur samping: kereta di depan peron pulau
+    if (!onSide) drawPlayerTrain();
     drawSpeedFx(LV);
     drawDoubleShadows(LV); // jalur ganda: bayangan Guntur & Kilat satu lapis
     drawCoffeeWagon(LV);
     drawPlatformFront(LV, dtReal);
+    if (onSide) drawPlayerTrain();
     drawFlood(LV, 'front');
     drawOppTrain(LV);
     drawChevrons(LV);
@@ -12083,6 +12101,11 @@
     c.textAlign = 'start'; c.textBaseline = 'alphabetic';
   }
 
+  // penunjuk jalur (route indicator): kotak hitam dengan angka jalur menyala putih di atas kepala sinyal masuk
+  function routeInd(c, x, yTop, u, label, on) { const w = 0.9 * u, h = 0.9 * u;
+    c.fillStyle = '#121416'; roundRect(c, x - w / 2, yTop - h - 0.2 * u, w, h, 0.15 * u); c.fill(); c.strokeStyle = '#4b4f52'; c.lineWidth = Math.max(1, 0.06 * u); c.stroke();
+    if (on) { c.fillStyle = '#fff6dc'; c.font = `900 ${Math.max(6, 0.75 * u).toFixed(1)}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(label, x, yTop - h / 2 - 0.2 * u); c.textAlign = 'start'; c.textBaseline = 'alphabetic';
+      c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(x, yTop - h / 2 - 0.2 * u, 0, x, yTop - h / 2 - 0.2 * u, w * 1.3); g.addColorStop(0, 'rgba(255,246,220,0.35)'); g.addColorStop(1, 'rgba(255,246,220,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, yTop - h / 2 - 0.2 * u, w * 1.3, 0, 7); c.fill(); c.restore(); } }
   function signalHead(c, sx, gy, ppm, asp, id, dim) {
     const top = gy - 6.2 * ppm;
     c.fillStyle = '#4b4f52'; c.fillRect(sx - 0.15 * ppm, top, 0.3 * ppm, 6.2 * ppm - 1.0 * ppm);
@@ -12242,6 +12265,7 @@
       if (sig.x < wx0 || sig.x > wx1) continue;
       if (sig.sema) semaphoreHead(c, X(sig.x), gy, ppm, st.sig ? st.sig[sig.id] : 'R', sig.id);
       else signalHead(c, X(sig.x), gy, ppm, st.sig ? st.sig[sig.id] : 'R', sig.id, false);
+      if (sig.route) routeInd(c, X(sig.x), gy - 6.2 * ppm, ppm, sig.route, (st.sig ? st.sig[sig.id] : 'R') === 'Y');
     }
     // tanda landai (tanjakan / turunan) dalam permil
     for (const g of ROUTE.grades) {
@@ -12875,6 +12899,8 @@
     if (MT && MT.liv && m && m.phase === 'run') { if (!m.pk) m.pk = { sid: 0, loco: 'meet', n: MT.cars, flip: true, dyn: true, lit: true, meet: true, lat: (x) => 10 * meetK(x) }; m.pk.nose = m.x; m.pk.moving = true; L.push(m.pk); } // kereta yang bersilang (detail 3D di kabin)
     return L; }
   // lintasan kereta yang masuk: jalur emplasemen lalu jalur induknya (sampai jalur utama) di luar wesel
+  // jalur yang dilalui kereta pemain: di emplasemen dengan rute masuk, kereta mengikuti wesel ke jalur samping (offset lateral)
+  function playerO(x) { const Y = ROUTE.yard; return Y && Y.route ? yardPath(Y.route.sid, x) : 0; }
   function yardPath(i, x) { const Y = ROUTE.yard; if (!Y || i < 0) return 0; const sd = Y.sid[i]; if (yLoc(Y, x) > sd.m1) return yardPath(sd.parent, x); const o = yardO(i, x); return o === null ? 0 : o; }
   function yardSignals() { const Y = ROUTE.yard; if (!Y || Y.station) return []; return Y.sid.map((sd, i) => ({ x: sd.m0 - 6, o: sd.o, side: 1, id: 'L' + (i + 2) })).concat([{ x: Y.shed.m1 + 4, o: Y.shed.o, side: -1, id: 'LD' }]); }
   function dwarfSignal(c, x, y, u, id, glow) {
