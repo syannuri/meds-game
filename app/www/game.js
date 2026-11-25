@@ -7871,6 +7871,38 @@
   }
   // ---------- ruang kabin standar (Cakra/Agraveda/uap): bingkai jendela bergasket karet, pilar & plafon berbahan nyata,
   // tirai penahan silau, lampu kabin, kisi defroster, wiper parkir; terang-gelap interior mengikuti cahaya luar ----------
+  // cahaya dinamis kaca panorama kereta cepat: silau matahari & garis lensa, berkas cahaya jatuh ke dasbor, kilau lengkung kaca,
+  // pantulan dasbor samar di kaki kaca, pendar langit di tepi atas; semuanya mengikuti posisi matahari, waktu, cuaca & kecepatan
+  function cabPanoFX(c, o) {
+    const { sun, sunK, tw, night, inTun, dy0 } = o, t = performance.now() / 1000; if (inTun) return;
+    c.save(); o.clip(); c.clip();
+    if (!night) { // pendar langit di tepi atas kaca kanopi (kaca melengkung menangkap langit)
+      const sky = skyTone(), tg = c.createLinearGradient(0, 0, 0, H * 0.22); tg.addColorStop(0, `rgba(${sky.hi},${(0.18 + 0.12 * (1 - tw)).toFixed(3)})`); tg.addColorStop(1, `rgba(${sky.hi},0)`); c.fillStyle = tg; c.fillRect(0, 0, W, H * 0.22); }
+    if (sunK > 0.05) { const sx = sun.x, sy = sun.y;
+      c.globalCompositeOperation = 'lighter';
+      // silau lembut di sekitar matahari
+      const g = c.createRadialGradient(sx, sy, 0, sx, sy, W * 0.38); g.addColorStop(0, `rgba(255,236,200,${(0.32 * sunK).toFixed(3)})`); g.addColorStop(0.25, `rgba(255,214,160,${(0.12 * sunK).toFixed(3)})`); g.addColorStop(1, 'rgba(255,214,160,0)'); c.fillStyle = g; c.fillRect(0, 0, W, dy0);
+      // garis lensa anamorfik horizontal
+      const hg = c.createLinearGradient(sx - W * 0.45, 0, sx + W * 0.45, 0); hg.addColorStop(0, 'rgba(255,230,190,0)'); hg.addColorStop(0.5, `rgba(255,236,206,${(0.28 * sunK).toFixed(3)})`); hg.addColorStop(1, 'rgba(255,230,190,0)'); c.fillStyle = hg; c.fillRect(sx - W * 0.45, sy - H * 0.004, W * 0.9, H * 0.008);
+      // jari-jari cahaya yang berputar pelan
+      for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + t * 0.05, L = W * (0.08 + 0.05 * ((k * 37) % 5) / 5); c.strokeStyle = `rgba(255,240,210,${(0.07 * sunK).toFixed(3)})`; c.lineWidth = Math.max(1, H * 0.003); c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx + Math.cos(a) * L, sy + Math.sin(a) * L); c.stroke(); }
+      // bayangan lensa (ghost) di garis berlawanan pusat layar
+      const cx = W / 2, cy = H * 0.36; for (const [f, r, col] of [[0.45, 0.022, '160,210,255'], [0.8, 0.012, '255,200,150'], [1.25, 0.035, '170,255,210']]) { const gx = sx + (cx - sx) * 2 * f, gy = sy + (cy - sy) * 2 * f, gr = c.createRadialGradient(gx, gy, 0, gx, gy, W * r);
+        gr.addColorStop(0, `rgba(${col},${(0.12 * sunK).toFixed(3)})`); gr.addColorStop(1, `rgba(${col},0)`); c.fillStyle = gr; c.beginPath(); c.arc(gx, gy, W * r, 0, 7); c.fill(); }
+      // berkas cahaya miring dari matahari jatuh ke dasbor (debu halus berkilau)
+      const dir = sx < W / 2 ? 1 : -1; for (let k = 0; k < 4; k++) { const x0 = sx + dir * W * (0.05 + k * 0.08), w0 = W * (0.025 + 0.012 * k), sh = Math.sin(t * 0.4 + k) * 0.25 + 0.75;
+        const bg = c.createLinearGradient(x0, sy, x0 + dir * W * 0.25, dy0); bg.addColorStop(0, `rgba(255,232,196,${(0.07 * sunK * sh).toFixed(3)})`); bg.addColorStop(1, 'rgba(255,232,196,0)'); c.fillStyle = bg;
+        c.beginPath(); c.moveTo(x0, sy); c.lineTo(x0 + w0, sy); c.lineTo(x0 + dir * W * 0.28 + w0 * 3, dy0); c.lineTo(x0 + dir * W * 0.28, dy0); c.closePath(); c.fill(); }
+      c.globalCompositeOperation = 'source-over'; }
+    // kilau lengkung kaca: pita terang lembut yang mengikuti kelengkungan di kedua sisi, bergeser sedikit seiring laju (getaran halus)
+    const sw = Math.sin(t * 0.7) * W * 0.004 * clamp((o.v || 0) / 30, 0, 1);
+    for (const [x0, a] of [[0.12, night ? 0.025 : 0.06], [0.82, night ? 0.02 : 0.045]]) { const gx = W * x0 + sw, gg = c.createLinearGradient(gx - W * 0.04, 0, gx + W * 0.04, 0); gg.addColorStop(0, 'rgba(220,236,255,0)'); gg.addColorStop(0.5, `rgba(220,236,255,${a})`); gg.addColorStop(1, 'rgba(220,236,255,0)'); c.fillStyle = gg; c.fillRect(gx - W * 0.04, 0, W * 0.08, dy0); }
+    // pantulan dasbor & lampu ambien samar di kaki kaca
+    const rg = c.createLinearGradient(0, dy0 - H * 0.07, 0, dy0); rg.addColorStop(0, 'rgba(90,200,255,0)'); rg.addColorStop(1, `rgba(90,200,255,${night ? 0.12 : 0.05})`); c.fillStyle = rg; c.fillRect(0, dy0 - H * 0.07, W, H * 0.07);
+    c.restore();
+    // cahaya matahari yang menembus kaca menghangatkan dasbor tepat di bawah matahari
+    if (sunK > 0.05) { c.save(); c.globalCompositeOperation = 'lighter'; const lx = sun.x, pg = c.createRadialGradient(lx, dy0 + H * 0.04, 0, lx, dy0 + H * 0.04, W * 0.22); pg.addColorStop(0, `rgba(255,214,160,${(0.12 * sunK).toFixed(3)})`); pg.addColorStop(1, 'rgba(255,214,160,0)'); c.fillStyle = pg; c.fillRect(lx - W * 0.22, dy0, W * 0.44, H * 0.15); c.restore(); }
+  }
   function drawCabInterior(c, o) {
     const { night, inTun, sunK, dy0, tw, rain, sun } = o;
     const amb = inTun ? 0.22 : night ? 0.16 : clamp(1 - tw * 0.75, 0.25, 1); // terang ruang kabin
@@ -7884,7 +7916,7 @@
     const neo = !!o.neo, pano = !!o.pano || neo;
     const pxl = neo ? (y) => W * 0.085 + (W * 0.03 - W * 0.085) * (y / (H * 0.68)) : (y) => W * 0.032 + (W * 0.012 - W * 0.032) * (y / H), pxr = (y) => W - pxl(y);
     // Agraveda: visor kaca membungkus puncak moncong seperti helm, jadi dari dalam tepi atas kaca melengkung tinggi seperti kubah dan turun tajam ke samping
-    const pTop = neo ? (x) => { const t = (x - W / 2) / (W / 2 - W * 0.085); return H * 0.06 + H * 0.065 * t * t; } : (x) => { const t = (x - W / 2) / (W / 2); return H * 0.028 + H * 0.15 * Math.pow(Math.abs(t), 2.4); };
+    const pTop = neo ? (x) => { const t = (x - W / 2) / (W / 2 - W * 0.085); return H * 0.06 + H * 0.065 * t * t; } : (x) => { const t = (x - W / 2) / (W / 2); return H * 0.014 + H * 0.1 * t * t; };
     // kaca visor Cakra NEO: simetris kiri-kanan, keempat sudut dibulatkan dengan jari-jari sama, tepi atas melengkung halus, pilar samping lurus miring
     const neoWin = () => { const xB = W * 0.035, xT = W * 0.085, yS = H * 0.125, yC = H * 0.06, R = H * 0.065, yBt = o.dy0 - H * 0.012;
       const Qt = (t) => { const a = 1 - t, cy = 2 * yC - yS; return [a * a * xT + 2 * a * t * (W / 2) + t * t * (W - xT), a * a * yS + 2 * a * t * cy + t * t * yS]; };
@@ -7927,8 +7959,9 @@
     c.strokeStyle = '#040506'; c.lineWidth = Math.max(3, H * 0.011); c.beginPath(); holes(); c.stroke();
     c.strokeStyle = `rgba(255,255,255,${(0.1 + 0.12 * amb).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(1.2, 1.4); c.beginPath(); holes(); c.stroke(); c.restore();
     if (sunK > 0.05) { c.strokeStyle = `rgba(255,226,180,${(0.25 * sunK).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(-1, 1.5); c.beginPath(); if (pano) winP(); else win(() => cR, xr); c.stroke(); c.restore(); }
+    if (pano && !neo) cabPanoFX(c, { clip: () => { c.beginPath(); winP(); }, sun, sunK, tw, night, inTun, dy0, v: S ? S.v : 0 });
     // wiper parkir di dasar kaca saat tidak hujan
-    if (!rain) for (const [px, py] of [[W * 0.24, H * 0.685], [W * 0.655, H * 0.685]]) { const R = H * 0.63, a = -Math.PI * 0.985, ux = Math.cos(a), uy = Math.sin(a);
+    if (!rain && !(pano && !neo)) for (const [px, py] of [[W * 0.24, H * 0.685], [W * 0.655, H * 0.685]]) { const R = H * 0.63, a = -Math.PI * 0.985, ux = Math.cos(a), uy = Math.sin(a);
       c.lineCap = 'round'; c.strokeStyle = '#0b0c0e'; c.lineWidth = Math.max(3, W * 0.005); c.beginPath(); c.moveTo(px, py); c.lineTo(px + ux * R * 0.6, py + uy * R * 0.6 - W * 0.006); c.stroke();
       c.strokeStyle = '#2d3136'; c.lineWidth = Math.max(2, W * 0.004); c.beginPath(); c.moveTo(px + ux * R * 0.16, py - W * 0.009); c.lineTo(px + ux * R, py + uy * R - W * 0.009); c.stroke();
       c.strokeStyle = `rgba(255,255,255,${(0.12 + 0.2 * sunK).toFixed(3)})`; c.lineWidth = 1; c.beginPath(); c.moveTo(px + ux * R * 0.16, py - W * 0.012); c.lineTo(px + ux * R, py + uy * R - W * 0.012); c.stroke();
@@ -8133,8 +8166,9 @@
     //  Guntur : kaca naik mengikuti moncong panjang lalu turun ke pita jendela samping, jadi tepi atas melengkung tinggi di tengah dan turun ke samping
     //  Halilintar: bentuk kaca Guntur dibingkai topeng moncong gelap mengilap bergaris aksen merah
     const KIND = HL ? 'hali' : MIS.loco === 'hst' ? 'kilat' : 'guntur';
-    const GS = KIND === 'kilat' ? { yS: 0.07, yC: 0.135, xS: 0.04, xB: 0.015, pc: 0.05 } : { yS: 0.2, yC: 0.02, xS: 0.055, xB: 0.02, pc: 0.075 };
-    const topY = (x) => { const t = (x - W / 2) / (W / 2 - W * GS.xS); return H * (GS.yC + (GS.yS - GS.yC) * (KIND === 'kilat' ? Math.pow(Math.abs(t), 0.85) : t * t)); };
+    // kaca kanopi panorama (sesuai kaca hitam besar di moncong): tepi atas tinggi melengkung seperti kubah, pilar A sangat ramping
+    const GS = { yS: 0.1, yC: 0.012, xS: 0.022, xB: 0.006, pc: 0.03 };
+    const topY = (x) => { const t = (x - W / 2) / (W / 2 - W * GS.xS); return H * (GS.yC + (GS.yS - GS.yC) * t * t); };
     const xL0 = W * GS.xS, xR0 = W - xL0, rC = H * 0.03;
     const glassPath = (yBot) => { c.moveTo(W * GS.xB, yBot); c.quadraticCurveTo(W * GS.pc, H * 0.35, xL0, topY(xL0) + rC);
       c.quadraticCurveTo(xL0, topY(xL0), xL0 + rC, topY(xL0 + rC)); for (let x = xL0 + rC; x <= xR0 - rC + 0.1; x += W / 48) c.lineTo(x, topY(x));
@@ -8160,6 +8194,8 @@
       kg(0.62, 0.7, 0.04); kg(0.2, 0.235, 0.03); // kilau kaca melengkung
       const eg = (sd) => { const g = c.createLinearGradient(sd ? W * 0.97 : W * 0.03, 0, sd ? W * 0.9 : W * 0.1, 0); g.addColorStop(0, 'rgba(200,230,255,0.08)'); g.addColorStop(1, 'rgba(200,230,255,0)'); c.fillStyle = g; c.fillRect(sd ? W * 0.9 : 0, 0, W * 0.1, H * 0.66); }; eg(0); eg(1); } // pantulan di lengkung tepi kaca
     c.restore(); // kilau kaca: tak terlihat di terowongan gelap
+    { const pH = dayP(st.clock), twH = night ? 1 : twiOf(pH), sH = inTun || night || MIS.sky === 'storm' ? 0 : clamp(1.15 - pH * 0.55, 0.45, 1) * (1 - twH);
+      cabPanoFX(c, { clip: () => { c.beginPath(); glassPath(H * 0.66); c.closePath(); }, sun: CAB_SUN || { x: W * 0.2, y: H * 0.3 }, sunK: sH, tw: twH, night, inTun, dy0: H * 0.66, v: st.v }); }
     // dasbor karbon melengkung dengan lampu ambien
     const dy0 = H * 0.66;
     const dg = c.createLinearGradient(0, dy0, 0, H); dg.addColorStop(0, night ? '#151a21' : '#222a33'); dg.addColorStop(0.25, '#10141a'); dg.addColorStop(1, '#06080b');
