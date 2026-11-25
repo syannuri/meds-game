@@ -6910,8 +6910,8 @@
             const pts = []; for (let m = 0; m <= M; m++) pts.push(at(sec, fHi + (fLo - fHi) * m / M)); return pts; };
           const arc = arcS('L'), arcR = arcS('R'), CULLS = -1;
           const area = (q) => { let a2 = 0; for (let i = 0; i < 4; i++) { const p1 = q[i], p2 = q[(i + 1) % 4]; a2 += p1.x * p2.y - p2.x * p1.y; } return a2; };
-          for (const side of ['R', 'L']) for (const B0 of PT.bands) { const B = B0, fA = side === 'L' ? arc : arcR; if (side === 'R' && B.noR) continue; // semua lajur sisi kanan (di belakang) dulu, baru sisi kiri yang menghadap kabin
-            const rows = secs.map((sec) => { const xs = xsOf(sec); if (xs < B.x0 || xs > B.x1 || (side === 'R' && xs > 3.2)) return null; /* sisi kanan hanya di ujung moncong */ const lo2 = B.lo(xs), hi2 = B.hi(xs); if (hi2 <= lo2) return null; return { xs, lo2, hi2, pts: fA(sec, toW(lo2), toW(hi2)) }; });
+          for (const side of (tail ? ['L'] : ['R', 'L'])) for (const B0 of PT.bands) { /* ekor: hanya sisi yang menghadap kabin */ const B = B0, fA = side === 'L' ? arc : arcR; if (side === 'R' && B.noR) continue; // semua lajur sisi kanan (di belakang) dulu, baru sisi kiri yang menghadap kabin
+            const rows = secs.map((sec) => { const xs = xsOf(sec); if (xs < B.x0 || xs > B.x1 || (side === 'R' && xs > 3.2) || (tail && xs < 1.25 && B.col(0, 0.5).glass === undefined)) return null; /* sisi kanan hanya di ujung moncong */ const lo2 = B.lo(xs), hi2 = B.hi(xs); if (hi2 <= lo2) return null; return { xs, lo2, hi2, pts: fA(sec, toW(lo2), toW(hi2)) }; });
             const order = []; for (let j = 0; j < rows.length - 1; j++) if (rows[j] && rows[j + 1] && rows[j].pts && rows[j + 1].pts) order.push(j);
             order.sort((j1, j2) => secs[j2][0].d - secs[j1][0].d);
             const isG = B.col(0, 0.5).glass !== undefined, GQ = []; // kaca: kumpulkan semua potongan dulu, lalu diwarnai satu gradasi layar bersama (halus, tanpa faset)
@@ -6963,7 +6963,7 @@
           const kS = kOf(0.97); if (kS > 0 && mid) line3(kS, night ? 'rgba(150,160,175,0.3)' : `rgba(${sunRim},${(0.35 + 0.4 * SUNK).toFixed(2)})`, 0.025); // garis bahu atap
           // pintu penumpang (dekat ujung gerbong) & pintu masinis di belakang moncong: celah gelap + jendela pintu
           const kOfH = (hh) => full.findIndex((t) => t.a > Math.PI / 2 && t.h < hh), kD0 = kOfH(HB + 2.2), kD1 = kOfH(HB + 0.22); if (kD0 > 0 && kD1 > 0) {
-            const doors = mid ? [[dn + 1.6, 1.0], [dr - 2.6, 1.0]] : lead ? [[dn + LN + 0.6, 0.7], [dr - 2.6, 1.0]] : [[dn + 1.6, 1.0], [dr - LN - 1.3, 0.7]];
+            const doors = mid ? [[dn + 1.6, 1.0], [dr - 2.6, 1.0]] : lead ? [[dn + LN + 0.6, 0.7], [dr - 2.6, 1.0]] : [[dn + 1.6, 1.0]]; // ekor: tanpa pintu kru yang memotong pita
             for (const [d0, wd] of doors) { if (d0 < 1.6) continue; const pt = (d, k) => { const t = full[k], o0 = KO(x0 + full[0].d); return W3(d, KO(x0 + d) + (t.o - o0), t.h); };
               const P = [pt(d0, kD1), pt(d0 + wd, kD1), pt(d0 + wd, kD0), pt(d0, kD0)]; if (P.some((t) => !t)) continue;
               c.strokeStyle = night ? 'rgba(20,22,28,0.7)' : 'rgba(80,90,102,0.55)'; c.lineWidth = Math.max(1, 0.02 * P[0].k); c.beginPath(); P.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.stroke();
