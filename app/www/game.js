@@ -7944,6 +7944,21 @@
       for (let i = 0; i < 46; i++) { const r1 = hash(i * 7.3), r2 = hash(i * 3.1 + 2), x = W * (1.05 - ((r1 + (1 - g0) * 1.6) % 1.2)), y = H * (0.08 + 0.56 * r2), L = W * (0.03 + 0.06 * hash(i)) * g0;
         c.lineWidth = Math.max(1, H * 0.003 * (0.5 + r2)); c.beginPath(); c.moveTo(x, y); c.lineTo(x - L, y + L * 0.06); c.stroke(); }
       c.restore(); }
+    const nk = o.nk || 0, v = o.v || 0, hy = o.hy || H * 0.37;
+    if (nk > 0.05 || o.rain) { c.save(); o.clip(); c.clip();
+      if (nk > 0.05) { // sorot lampu depan: kerucut hangat menyapu rel ke cakrawala, kilau memanjang di kepala rel (lebih terang saat basah)
+        c.globalCompositeOperation = 'lighter'; const cx = W / 2, bg = c.createLinearGradient(0, dy0, 0, hy); bg.addColorStop(0, `rgba(255,236,196,${(0.22 * nk).toFixed(3)})`); bg.addColorStop(0.7, `rgba(255,236,196,${(0.07 * nk).toFixed(3)})`); bg.addColorStop(1, 'rgba(255,236,196,0)');
+        c.fillStyle = bg; c.beginPath(); c.moveTo(cx - W * 0.42, dy0); c.lineTo(cx + W * 0.42, dy0); c.lineTo(cx + W * 0.03, hy); c.lineTo(cx - W * 0.03, hy); c.closePath(); c.fill();
+        // pantulan lampu kota & sinyal di kaca kanopi: bokeh hangat-dingin yang mengalir ke samping sesuai laju
+        for (let i = 0; i < 18; i++) { const r1 = hash(i * 5.7), r2 = hash(i * 9.1 + 1), sp = (performance.now() / 1000 * (0.02 + v * 0.0009) + r1) % 1, x = W * (r2 < 0.5 ? 0.5 - sp * 0.55 : 0.5 + sp * 0.55), y = H * (0.06 + 0.22 * hash(i * 2.3)), rr = H * (0.012 + 0.02 * hash(i * 4.4));
+          const col = hash(i * 1.9) < 0.6 ? '255,196,120' : '150,200,255', a = 0.16 * nk * Math.sin(Math.PI * sp), g = c.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, `rgba(${col},${a.toFixed(3)})`); g.addColorStop(1, `rgba(${col},0)`); c.fillStyle = g; c.beginPath(); c.arc(x, y, rr, 0, 7); c.fill(); }
+        c.globalCompositeOperation = 'source-over'; }
+      if (o.rain) { // hujan terdorong angin laju: garis air miring di kaca, makin cepat makin mendatar & mengalir keluar dari tengah
+        const sp = clamp(v / 80, 0, 1), t2 = performance.now() / 1000; c.strokeStyle = nk > 0.3 ? 'rgba(210,225,245,0.32)' : 'rgba(235,242,250,0.38)'; c.lineCap = 'round';
+        for (let i = 0; i < 70; i++) { const r1 = hash(i * 3.3), r2 = hash(i * 7.7 + 3), side = r1 < 0.5 ? -1 : 1, prog = (t2 * (0.4 + 1.6 * sp) + r2) % 1, x = W / 2 + side * W * (0.06 + 0.46 * prog), y = H * (0.05 + 0.55 * hash(i * 1.7)) - H * 0.05 * prog * sp;
+          const L = H * (0.012 + 0.05 * sp) * (0.6 + r2), ang = side * (0.15 + 1.1 * sp); c.lineWidth = Math.max(1, H * 0.0025); c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.sin(ang) * L, y + Math.cos(ang) * L * (1 - sp * 0.85)); c.stroke(); }
+        if (nk > 0.05) { c.globalCompositeOperation = 'lighter'; const hz = c.createLinearGradient(0, hy - H * 0.05, 0, hy + H * 0.04); hz.addColorStop(0, 'rgba(255,230,190,0)'); hz.addColorStop(0.5, `rgba(255,230,190,${(0.09 * nk).toFixed(3)})`); hz.addColorStop(1, 'rgba(255,230,190,0)'); c.fillStyle = hz; c.fillRect(0, hy - H * 0.05, W, H * 0.09); c.globalCompositeOperation = 'source-over'; } } // kabut hujan disinari sorot di cakrawala
+      c.restore(); }
     if (inTun) return;
     c.save(); o.clip(); c.clip();
     if (!night) { // pendar langit di tepi atas kaca kanopi (kaca melengkung menangkap langit)
@@ -8029,7 +8044,7 @@
     c.strokeStyle = '#040506'; c.lineWidth = Math.max(3, H * 0.011); c.beginPath(); holes(); c.stroke();
     c.strokeStyle = `rgba(255,255,255,${(0.1 + 0.12 * amb).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(1.2, 1.4); c.beginPath(); holes(); c.stroke(); c.restore();
     if (sunK > 0.05) { c.strokeStyle = `rgba(255,226,180,${(0.25 * sunK).toFixed(3)})`; c.lineWidth = 1; c.save(); c.translate(-1, 1.5); c.beginPath(); if (pano) winP(); else win(() => cR, xr); c.stroke(); c.restore(); }
-    if (pano && !neo) cabPanoFX(c, { clip: () => { c.beginPath(); winP(); }, sun, sunK, tw, night, inTun, dy0, v: S ? S.v : 0 });
+    if (pano && !neo) { const pA = S ? dayP(S.clock) : 0.5; cabPanoFX(c, { clip: () => { c.beginPath(); winP(); }, sun, sunK, tw, night, inTun, dy0, v: S ? S.v : 0, gust: S ? S.gust || 0 : 0, nk: night ? 1 : Math.max(clamp((0.3 - pA) / 0.2, 0, 1), rain ? 0.55 : 0), rain: !!rain, hy: H * 0.36 }); }
     // wiper parkir di dasar kaca saat tidak hujan
     if (!rain && !(pano && !neo)) for (const [px, py] of [[W * 0.24, H * 0.685], [W * 0.655, H * 0.685]]) { const R = H * 0.63, a = -Math.PI * 0.985, ux = Math.cos(a), uy = Math.sin(a);
       c.lineCap = 'round'; c.strokeStyle = '#0b0c0e'; c.lineWidth = Math.max(3, W * 0.005); c.beginPath(); c.moveTo(px, py); c.lineTo(px + ux * R * 0.6, py + uy * R * 0.6 - W * 0.006); c.stroke();
@@ -8265,7 +8280,7 @@
       const eg = (sd) => { const g = c.createLinearGradient(sd ? W * 0.97 : W * 0.03, 0, sd ? W * 0.9 : W * 0.1, 0); g.addColorStop(0, 'rgba(200,230,255,0.08)'); g.addColorStop(1, 'rgba(200,230,255,0)'); c.fillStyle = g; c.fillRect(sd ? W * 0.9 : 0, 0, W * 0.1, H * 0.66); }; eg(0); eg(1); } // pantulan di lengkung tepi kaca
     c.restore(); // kilau kaca: tak terlihat di terowongan gelap
     { const pH = dayP(st.clock), twH = night ? 1 : twiOf(pH), sH = inTun || night || MIS.sky === 'storm' ? 0 : clamp(1.15 - pH * 0.55, 0.45, 1) * (1 - twH);
-      cabPanoFX(c, { clip: () => { c.beginPath(); glassPath(H * 0.66); c.closePath(); }, sun: CAB_SUN || { x: W * 0.2, y: H * 0.3 }, sunK: sH, tw: twH, night, inTun, dy0: H * 0.66, v: st.v, gust: st.gust || 0 }); }
+      cabPanoFX(c, { clip: () => { c.beginPath(); glassPath(H * 0.66); c.closePath(); }, sun: CAB_SUN || { x: W * 0.2, y: H * 0.3 }, sunK: sH, tw: twH, night, inTun, dy0: H * 0.66, v: st.v, gust: st.gust || 0, nk: night ? 1 : Math.max(clamp((0.3 - pH) / 0.2, 0, 1), MIS.sky === 'storm' ? 0.55 : 0), rain: !!(MIS.rain || MIS.sky === 'storm'), hy: H * 0.37 }); }
     // dasbor karbon melengkung dengan lampu ambien
     const dy0 = H * 0.66;
     const dg = c.createLinearGradient(0, dy0, 0, H); dg.addColorStop(0, night ? '#151a21' : '#222a33'); dg.addColorStop(0.25, '#10141a'); dg.addColorStop(1, '#06080b');
