@@ -6792,7 +6792,7 @@
       const ANG_M = angs(26), ANG_L = []; for (let q = 0; q < 22; q++) { const r = Math.pow(q / 21, 0.8); ANG_L.push(Math.asin(Math.min(1, r * r))); } // sisi kanan juga (terlihat di ujung moncong dari depan)
        for (let q = 0; q <= 22; q++) { const r = 1 - q / 22; ANG_L.push(Math.PI - Math.asin(Math.min(1, r * r))); } // sisi kiri: sampel rata menurut tinggi
       let ANG = ANG_M; // lokomotif: penampang lebih rapat agar batas kaca & pita livery halus
-      const PT = KPROF(DBc.kilat.loco === 'argo' ? 'argo' : DBc.kilat.loco === 'hst2' ? 'garuda' : 'kilat', DBc.kilat), LN = PT.LN;
+      const gLoW = () => 2.74; const PT = KPROF(DBc.kilat.loco === 'argo' ? 'argo' : DBc.kilat.loco === 'hst2' ? 'garuda' : 'kilat', DBc.kilat), LN = PT.LN;
       // penampang moncong mengikuti garis atap tampak samping (tinggi) & lebar yang menyempit membulat ke ujung (denah)
       const shape = (s) => { const e = Math.sqrt(1 - (1 - s) * (1 - s)); return [0.42 + 1.08 * e, 0.95 + 3.1 * PT.topF(s)]; };
       const HB = 1.05;
@@ -6824,7 +6824,7 @@
             const v = (x, sky, gnd) => Math.round(clamp(x * lt + (sky - x) * 0.16 * up * SUNK + (gnd - x) * 0.14 * (1 - up) + 255 * sp, 0, 255));
             return night ? `rgb(${Math.round(150 * lt)},${Math.round(156 * lt)},${Math.round(168 * lt)})` : `rgb(${v(PT.white[0], +sunRimRGB[0], 150)},${v(PT.white[1], +sunRimRGB[1], 190)},${v(PT.white[2], +sunRimRGB[2], 120)})`; };
           if (!mid) { // lokomotif: zona kaca, pita & rok persis seperti tampak samping (posisi memanjang xs & tinggi hs dalam satuan gambar samping)
-            const past = ms >= 0.999 ? Math.max(0, lead ? md - (dn + LN) : dr - LN - md) * 1.1 : 0, xs = PT.xTip + ms * PT.Ls + past, hs = PT.bot + (mh - 0.95) / 3.1 * (PT.top - PT.bot), z = null; // lokomotif: badan putih, seluruh cat livery digambar sebagai lajur halus // sisi kiri: lajur halus menutup penuh; sisi kanan: warna dasar sebagai cadangan
+            const past = ms >= 0.999 ? Math.max(0, lead ? md - (dn + LN) : dr - LN - md) * 1.1 : 0, xs = PT.xTip + ms * PT.Ls + past, hs = PT.bot + (mh - 0.95) / 3.1 * (PT.top - PT.bot), z = ms < 0.35 ? PT.zone(xs, hs, left) : null; // lokomotif: badan putih + cat lajur halus; di ujung hidung warna dasar ikut cat agar tidak ada celah putih // sisi kiri: lajur halus menutup penuh; sisi kanan: warna dasar sebagai cadangan
             if (z && z.glass !== undefined) { const sp = night ? 0 : specAt(A, C), t = clamp(z.glass, 0, 1), v = (a0, a1) => Math.round(clamp(a0 + (a1 - a0) * t + 220 * sp, 0, 255));
               col = night || kL > 0.6 ? (night ? '#1a2230' : `rgb(${v(12, 50)},${v(18, 70)},${v(24, 92)})`) : `rgb(${v(10, 74)},${v(15, 102)},${v(22, 132)})`; }
             else if (z && z.c) col = night ? mix(z.c, '#000000', 0.45) : mix(z.c, '#ffffff', 0.08 * (Math.sin(ma) - 0.5));
@@ -6905,13 +6905,13 @@
           const par = (sec, sd, h) => { const end = sd === 'L' ? sec.length - 1 : 0; if (h <= sec[end].h) return end; if (h >= sec[kTop].h) return kTop; const f = cross(sec, kTop, end, h); return f === null ? end : f; };
           const arcS = (sd) => (sec, hlo, hhi) => { const hT = sec[kTop].h; if (hlo >= hT) return null; let fHi;
             if (hhi >= hT && sd === 'L') fHi = par(sec, 'R', hlo); // kaca kanopi: membungkus puncak sampai sisi kanan
-            else if (hhi >= hT) return null; else fHi = par(sec, sd, hhi);
+            else if (hhi >= hT) fHi = kTop; else fHi = par(sec, sd, hhi); // sisi kanan: lajur yang melewati puncak berhenti di puncak (tidak bolong)
             const fLo = par(sec, sd, hlo); if (Math.abs(fLo - fHi) < 1e-3) return null;
             const pts = []; for (let m = 0; m <= M; m++) pts.push(at(sec, fHi + (fLo - fHi) * m / M)); return pts; };
           const arc = arcS('L'), arcR = arcS('R'), CULLS = -1;
           const area = (q) => { let a2 = 0; for (let i = 0; i < 4; i++) { const p1 = q[i], p2 = q[(i + 1) % 4]; a2 += p1.x * p2.y - p2.x * p1.y; } return a2; };
           for (const side of ['R', 'L']) for (const B0 of PT.bands) { const B = B0, fA = side === 'L' ? arc : arcR; if (side === 'R' && B.noR) continue; // semua lajur sisi kanan (di belakang) dulu, baru sisi kiri yang menghadap kabin
-            const rows = secs.map((sec) => { const xs = xsOf(sec); if (xs < B.x0 || xs > B.x1 || (side === 'R' && xs > 1.6)) return null; /* sisi kanan hanya di ujung moncong */ const lo2 = B.lo(xs), hi2 = B.hi(xs); if (hi2 <= lo2) return null; return { xs, lo2, hi2, pts: fA(sec, toW(lo2), toW(hi2)) }; });
+            const rows = secs.map((sec) => { const xs = xsOf(sec); if (xs < B.x0 || xs > B.x1 || (side === 'R' && xs > 3.2)) return null; /* sisi kanan hanya di ujung moncong */ const lo2 = B.lo(xs), hi2 = B.hi(xs); if (hi2 <= lo2) return null; return { xs, lo2, hi2, pts: fA(sec, toW(lo2), toW(hi2)) }; });
             const order = []; for (let j = 0; j < rows.length - 1; j++) if (rows[j] && rows[j + 1] && rows[j].pts && rows[j + 1].pts) order.push(j);
             order.sort((j1, j2) => secs[j2][0].d - secs[j1][0].d);
             const isG = B.col(0, 0.5).glass !== undefined, GQ = []; // kaca: kumpulkan semua potongan dulu, lalu diwarnai satu gradasi layar bersama (halus, tanpa faset)
@@ -6946,13 +6946,13 @@
               const q0 = W3(Math.max(1.5, dn + 6), KO(x0 + dn + 6) - 1.4, 3), kq = q0 ? q0.k : 10; c.strokeStyle = night ? 'rgba(90,98,110,0.7)' : 'rgba(176,184,192,0.9)'; c.lineWidth = Math.max(1, Math.min(3, 0.03 * kq)); c.lineJoin = 'round'; c.lineCap = 'round';
               const fj = rows.findIndex((R) => R && R.pts && R.xs < (PT.wsEnd || 6)); const FR = rows[fj];
               c.beginPath(); let on = false;
-              if (FR) for (let m = 0; m <= M; m++) { const t = FR.pts[m]; if (t.d < 1.2) continue; const q = W3(t.d, t.o, t.h); if (!q) continue; if (on) c.lineTo(q.x, q.y); else { c.moveTo(q.x, q.y); on = true; } } // tepi depan
+              if (FR && false) for (let m = 0; m <= M; m++) { const t = FR.pts[m]; if (t.d < 1.2) continue; const q = W3(t.d, t.o, t.h); if (!q) continue; if (on) c.lineTo(q.x, q.y); else { c.moveTo(q.x, q.y); on = true; } } // tepi depan
               for (let j = fj < 0 ? 0 : fj; j < rows.length; j++) { const R = rows[j]; if (!R || !R.pts || R.xs > (PT.wsEnd || 6)) break; const t = R.pts[M]; if (t.d < 1.2) continue; const q = W3(t.d, t.o, t.h); if (!q) continue; if (on) c.lineTo(q.x, q.y); else { c.moveTo(q.x, q.y); on = true; } } // tepi bawah kaca depan (menyambung)
               c.stroke(); c.lineCap = 'butt';
               } }
         }
-        if (!mid) { // tutup ujung moncong: penampang terdepan diisi penuh agar ujung hidung tidak bolong
-          const sec = lead ? secs[0] : secs[secs.length - 1]; if (sec[0].d > 1.3) { const P5 = sec.map((t) => W3(t.d, t.o, t.h)); if (!P5.some((t) => !t)) {
+        if (!mid) { // tutup ujung moncong: penampang terdepan diisi penuh agar ujung hidung tidak bolong (hanya di bawah garis aksen, agar tidak menimpa cat)
+          const sec0 = lead ? secs[0] : secs[secs.length - 1], hCap = 0.95 + (gLoW() - PT.bot) / (PT.top - PT.bot) * 3.1 - 0.25, sec = sec0.filter((t) => t.h < hCap); if (sec.length > 2 && sec[0].d > 1.3) { const P5 = sec.map((t) => W3(t.d, t.o, t.h)); if (!P5.some((t) => !t)) {
             c.fillStyle = night ? '#5a606a' : `rgb(${PT.white.map((v) => Math.round(v * 0.86)).join(',')})`; c.beginPath(); P5.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
             c.strokeStyle = night ? 'rgba(0,0,0,0.4)' : 'rgba(90,98,108,0.35)'; c.lineWidth = 1; c.stroke(); } } }
         { // garis struktur badan: tepi bawah gelap, lipatan sisi bawah (tumblehome) & garis bahu atap berkilau, pintu penumpang
@@ -13266,7 +13266,7 @@
     const gLo = (u) => 2.74 + 0.56 * SM(2.6, 6.6, u); // tepi bawah kaca kanopi: rendah di muka, naik ke belakang
     const gHi = (u) => (u < 4.4 ? 99 : u < 6.0 ? gLo(u) + (top(u) + 0.3 - gLo(u)) * (1 - SM(4.4, 6.0, u)) : gLo(u)); // membungkus puncak lalu tepi belakang miring
     const cone = () => 1.58; // batas kerucut hidung putih
-    const glassB = [{ x0: 0.9, x1: 6.0, lo: gLo, hi: gHi, col: glassC }, // kaca kanopi depan
+    const glassB = [{ x0: 0.3, x1: 6.0, lo: gLo, hi: gHi, col: glassC }, // kaca dimulai tepat di ujung moncong (tanpa sisa badan putih di bawahnya) // kaca kanopi depan
       { x0: 6.55, x1: 8.0, lo: () => 3.08, hi: () => 3.74, col: glassC }, // jendela samping kabin
       { x0: 9.1, x1: 9.55, lo: () => 3.12, hi: () => 3.66, col: glassC }, { x0: 10.3, x1: 10.75, lo: () => 3.12, hi: () => 3.66, col: glassC }]; // jendela pintu kru
     const seam = { x0: -1, x1: 1.4, lo: () => 1.55, hi: () => 1.6, col: () => ({ c: '#9aa1a9' }), noZone: true }; // sambungan kerucut hidung
@@ -13278,8 +13278,8 @@
     // sabuk sampai tepi kaca; garis aksen menyusuri tepi bawah kaca di kedua sisi, lalu di tepi depan kaca menyeberang puncak moncong
     // sebagai satu garis melintang, sehingga garis kiri & kanan tersambung simetris (seperti bingkai bawah kaca kanopi)
     const sash = (c1, c2) => [{ x0: -1, x1: 99, lo: (u) => F(u, 1.95, 2.4), hi: (u) => gLo(u) + 0.02, col: () => ({ c: c1 }) },
-      { x0: 0.74, x1: 99, lo: (u) => gLo(u) - 0.17, hi: (u) => gLo(u) + 0.02, col: () => ({ c: c2 }) },
-      { x0: 0.74, x1: 0.95, lo: (u) => gLo(u) - 0.17, hi: () => 99, col: () => ({ c: c2 }) }];
+      { x0: 0.3, x1: 99, lo: (u) => gLo(u) - 0.17, hi: (u) => gLo(u) + 0.02, col: () => ({ c: c2 }) },
+      { x0: 0.3, x1: 1.2, lo: (u) => gLo(u) - 0.17, hi: (u) => gLo(u) + 0.02, col: () => ({ c: c2 }) }];
     if (type === 'argo') { // Agraveda: sabuk jingga + garis ungu
       P = Object.assign({}, base, { white: [248, 248, 250], skirt: { c: '#c9ced4', h0: 0.72 }, bands: [...glassB, ...sash('#ee8227', '#7b3aa8'), seam], zone: () => null });
     } else if (type === 'garuda') { // Garuda: sabuk biru tua + garis merah
