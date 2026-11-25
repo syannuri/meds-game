@@ -2392,6 +2392,8 @@
   let camFast = 0;
   let radioTimer = 0, camLead = 0, camZoom = 1, camZoomV = 0;
   const PHOTO = { on: false, dx: 0, z: 1, filter: 'asli', frame: true }; // mode foto: geser & zoom kamera saat jeda
+  let CAB_FULL = store.get('rn.cabFull') === '1'; // kokpit layar penuh: tanpa bingkai jendela & dasbor
+  let CAB_LOOK = 0, CAB_LOOK_T = 0; // arah pandang kokpit (rad): negatif = lihat kiri, positif = lihat kanan (digeser dengan drag)
   let viewMode = store.get('rn.view') === 'cab' ? 'cab' : 'side'; // 'side' (2.5D) atau 'cab' (kabin masinis)
   let rotateSkipped = false;
 
@@ -5097,13 +5099,22 @@
     b.setAttribute('aria-label', cab ? 'Tampilan samping' : 'Tampilan kabin masinis');
     b.setAttribute('aria-pressed', String(cab));
   }
+  function syncCabFull() { const b = $('btnCabFull'); if (!b) return; b.hidden = viewMode !== 'cab'; b.classList.toggle('on', CAB_FULL); b.setAttribute('aria-pressed', String(CAB_FULL)); b.setAttribute('aria-label', CAB_FULL ? 'Tampilkan jendela kokpit' : 'Kokpit layar penuh'); }
+  $('btnCabFull').addEventListener('click', () => { CAB_FULL = !CAB_FULL; store.set('rn.cabFull', CAB_FULL ? '1' : '0'); syncCabFull();
+    toast(CAB_FULL ? 'Kokpit layar penuh. Geser layar ke kiri/kanan untuk menoleh, ketuk dua kali untuk kembali ke depan.' : 'Jendela kokpit ditampilkan kembali.', 'info', 2.6, 'view', 1); });
+  // menoleh di kokpit: geser (drag) layar ke kiri/kanan; ketuk dua kali untuk kembali menghadap depan
+  { let drag = null, lastTap = 0;
+    const free = (e) => mode === 'play' && viewMode === 'cab' && !e.target.closest('button, input, select, a, .lever, #lever, .screen, #radio, .panel, .sheet, [role="button"], #hud .controls');
+    document.addEventListener('pointerdown', (e) => { if (!free(e)) return; const now = performance.now(); if (now - lastTap < 320) { CAB_LOOK_T = 0; lastTap = 0; drag = null; return; } lastTap = now; drag = { id: e.pointerId, x: e.clientX, L: CAB_LOOK_T }; });
+    document.addEventListener('pointermove', (e) => { if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 6) lastTap = 0; CAB_LOOK_T = clamp(drag.L - dx / window.innerWidth * 1.8, -1.15, 1.15); }); // target; kamera mengejar dengan halus tiap frame
+    const up = (e) => { if (drag && e.pointerId === drag.id) drag = null; }; document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up); }
   function toggleView() {
-    viewMode = viewMode === 'cab' ? 'side' : 'cab';
+    viewMode = viewMode === 'cab' ? 'side' : 'cab'; CAB_LOOK = CAB_LOOK_T = 0; setTimeout(syncCabFull, 0);
     store.set('rn.view', viewMode);
     syncViewButton();
     toast(viewMode === 'cab' ? 'Tampilan kabin masinis. Tekan lagi untuk tampilan samping.' : 'Tampilan samping.', 'info', 2, 'view', 1);
   }
-  $('btnView').addEventListener('click', toggleView);
+  $('btnView').addEventListener('click', toggleView); syncCabFull();
   $('btnExpert').addEventListener('click', () => { expertOn = !expertOn; store.set('rn.expert', expertOn ? '1' : '0'); syncExpert(); });
   $('btnTutSkip').addEventListener('click', () => { store.set('rn.tutSkip', store.get('rn.tutSkip') === '1' ? '0' : '1'); syncTutSkip(); });
   syncViewButton();
@@ -5400,7 +5411,10 @@
       return { z: dC * ch + dS * sh, lat: -(dS * ch - dC * sh), hd: bAt(BEND.H, x) - h0 };
     };
     const PO0 = playerO(x0); // kereta pemain di jalur samping (wesel penyeberang / jalur emplasemen): seluruh dunia bergeser
-    const P = (z, lat, h) => { if (z < 0.8) return null; const k = f / z; return { x: cx + (lat - PO0 + SEAT) * k, y: hy + (EH - h) * k, k }; };
+    if (CAB_LOOK !== CAB_LOOK_T) { const dl = CAB_LOOK_T - CAB_LOOK; CAB_LOOK = Math.abs(dl) < 0.002 ? CAB_LOOK_T : CAB_LOOK + dl * (1 - Math.exp(-14 * Math.min(0.05, dtReal || 0.016))); } // menoleh halus
+    const LK = CAB_LOOK, lc = Math.cos(LK), ls = Math.sin(LK);
+    const P = (z, lat, h) => { let la = lat - PO0 + SEAT; if (LK) { const z2 = z * lc + la * ls; la = la * lc - z * ls; z = z2; } if (z < 0.8) return null; const k = f / z; return { x: cx + la * k, y: hy + (EH - h) * k, k }; };
+    const Pc = LK ? (z, lat, h) => { let la = lat - PO0 + SEAT; const z2 = z * lc + la * ls; la = la * lc - z * ls; z = Math.max(0.8, z2); const k = f / z; return { x: cx + la * k, y: hy + (EH - h) * k, k }; } : P; // tanah saat menoleh: titik di belakang mata dijepit agar sudut bawah tetap terisi // menoleh: dunia diputar di sekitar mata masinis
     // titik dunia: jarak d sepanjang rel, geser samping o (kanan positif) tegak lurus rel, tinggi h
     const W3 = (d, o, h) => { const q = plan(d); return P(q.z + Math.sin(q.hd) * o, q.lat + Math.cos(q.hd) * o, h); };
     const DBc = ROUTE.double, RO = (d, o) => (DBc ? o + dblO3(x0 + d) : o); // jalur ganda: benda di kanan rel pindah ke luar jalur 2
@@ -5413,12 +5427,12 @@
     // ---- langit & bukit jauh (bergeser saat kereta berbelok) ----
     const Vs = { c, gy: hy, p, night, storm, camX: x0 * 0.2 + h0 * 400, ppm: 1, sunX: x0, sunPan: h0 * f };
     if (!inTun) drawSky(Vs); else { c.fillStyle = '#07090b'; c.fillRect(0, 0, W, H); }
-    const pan = h0 * f;
+    const pan = h0 * f + CAB_LOOK * f; // langit & latar jauh ikut bergeser saat menoleh
     // cahaya matahari yang memantul ke objek: posisi layar matahari & kekuatannya (rendah = lebih hangat & kuat)
     const SUN = sunPos(Vs), SUNK = inTun || night || storm ? 0 : clamp(1.15 - p * 0.55, 0.45, 1), tNow = performance.now() / 1000; CAB_SUN = SUN;
     const sunRim = SUNK > 0 ? (MIS.golden || MIS.dusk || p < 0.5 ? '255,196,120' : '255,236,200') : '0,0,0';
     if (!inTun) {
-      if (HSTCAB || !storm || MIS.digitalCab) { drawHstScenery(c, { x0, hy, f, pan, p, P: BEND ? (z, la, h) => (z < 0.8 ? null : W3(z, la - SEAT * 0, h)) : P, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); } // tikungan: sawah & kebun ikut melengkung bersama rel
+      if (HSTCAB || !storm || MIS.digitalCab) { drawHstScenery(c, { x0, hy, f, pan, p, P: BEND ? (z, la, h) => (z < 0.8 ? null : W3(z, la - SEAT * 0, h)) : P, Pg: BEND ? null : Pc, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); } // tikungan: sawah & kebun ikut melengkung bersama rel
       else {
       const ridge = (amp, fq, col, par, ph) => {
         c.fillStyle = col; c.beginPath(); c.moveTo(0, hy + 1);
@@ -7250,8 +7264,9 @@
     if (HSTCAB && !inTun && !night && !storm) drawHstLight(c, { hy, p, pan, st, sun: sunPos(Vs) });
     if (!inTun && !night && !storm) drawFlare(c, sunPos(Vs), HSTCAB ? 0.8 : 0.85, st.v, x0, hy);
     applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0, cab: true, night, storm, sun: SUN });
-    cabZoomBlur(c, cx, hy, inTun ? 0 : Math.min(1.25, fov2 + 0.55 * smooth(140, 220, st.v * 3.6))); // kabur gerak radial benda dekat di tepi pandangan
+    cabZoomBlur(c, cx - Math.tan(clamp(CAB_LOOK, -1.2, 1.2)) * f, hy, inTun ? 0 : Math.min(1.25, fov2 + 0.55 * smooth(140, 220, st.v * 3.6)) * Math.max(0, 1 - Math.abs(CAB_LOOK) / 0.55)); // pusat kabur = titik hilang arah laju (bergeser saat menoleh) // kabur gerak radial benda dekat di tepi pandangan
     // ---- kabin: kaca depan, pilar, dasbor ----
+    if (CAB_FULL) { drawCabFullHud(c, st); return; } // layar penuh: tanpa wiper, kaca, bingkai & dasbor
     const rain = MIS.rain && !inTun;
     if (rain) {
       // wiper pantograf modern: dua lengan sejajar, bilah karet tegak menyapu kaca; butir hujan yang tersapu
@@ -7517,19 +7532,28 @@
     {
       const g0 = c.createLinearGradient(0, hy, 0, H); g0.addColorStop(0, night ? '#1d2c22' : mix('#a3c48a', '#b5d39a', p)); g0.addColorStop(1, night ? '#0f1a12' : mix('#4f8a3e', '#62a04a', p));
       c.fillStyle = g0; c.fillRect(0, hy, W, H - hy);
-      const CL = 16, CW = 14, KMAX = 9, ZF = 330, j0 = Math.floor((x0 + 3) / CL), j1 = Math.floor((x0 + ZF) / CL);
+      const LKs = Math.abs(CAB_LOOK) > 0.003 ? Math.sin(CAB_LOOK) : 0, CL = 16, CW = 14, KMAX = 9, ZF = 330;
+      // menoleh: sudut pandang tepi layar kiri/kanan (arah laju = 0). Petak sawah diperluas sampai tepi layar terisi, termasuk ke belakang bila tepi melewati 90°
+      const aR = CAB_LOOK + Math.atan((W - o.cx) / o.f), aL = -CAB_LOOK + Math.atan(o.cx / o.f);
+      const latX = (a) => (a < 0.37 ? 0 : Math.ceil(Math.min(460, ZF * Math.tan(Math.min(a, 1.48))) / CW) - KMAX); // kolom tambahan di sisi itu
+      const back = LKs ? Math.min(220, 60 + 160 * Math.max(0, Math.max(aR, aL) - 1.0)) : 0;
+      const j0 = Math.floor((x0 + 3 - back) / CL), j1 = Math.floor((x0 + ZF) / CL);
+      const kStep = (k) => (!LKs ? 1 : k >= 17 || k < -17 ? 4 : k >= 9 || k < -9 ? 2 : 1); // petak jauh di samping digabung agar ringan
+      const kLo = -KMAX - (LKs ? Math.max(0, latX(aL)) : 0), kHi = KMAX + (LKs ? Math.max(0, latX(aR)) : 0); // menoleh: petak sawah diperluas ke sisi yang dilihat (dan sedikit ke belakang)
       const SAWIT = PLANT();
       const greens = night ? ['#1f3324', '#233a28', '#1a2c1f'] : SAWIT ? [mix('#3f6a30', '#4f7e3a', p), mix('#4a7436', '#5a8a42', p), mix('#36602c', '#446f34', p), mix('#56703a', '#66843f', p)] : [mix('#4f9a3a', '#5fae44', p), mix('#62a845', '#72bb4e', p), mix('#45883a', '#53993f', p), mix('#74ad47', '#86c152', p)];
       const gold = SAWIT ? mix('#7a5e3e', '#8e6e48', p) : mix('#b9ae55', '#cdbf62', p), waterTop = night ? '#2b3554' : storm ? '#a9b8c0' : MIS.dusk ? '#ffc08a' : MIS.golden ? '#ffe2ac' : mix('#ffd0a0', '#e4f0f4', p), waterBot = night ? '#1e2640' : storm ? '#6f828e' : MIS.dusk ? '#9a86c4' : MIS.golden ? '#88a8d4' : mix('#9a8cc4', '#8ab8e0', p); // jauh: cakrawala hangat terpantul, dekat: langit atas
       for (let j = j1; j >= j0; j--) {
-        const za = Math.max(2.2, j * CL - x0), zb = (j + 1) * CL - x0; if (zb <= 2.2) continue;
-        for (let k = -KMAX; k < KMAX; k++) {
-          const la = k * CW, lb = (k + 1) * CW;
-          const h = hash(j * 7.31 + k * 1.93), q1 = P(za + 0.6, la + 0.6, 0), q2 = P(za + 0.6, lb - 0.6, 0), q3 = P(zb - 0.6, lb - 0.6, 0), q4 = P(zb - 0.6, la + 0.6, 0);
+        const za = LKs ? j * CL - x0 : Math.max(2.2, j * CL - x0), zb = (j + 1) * CL - x0; if (!LKs && zb <= 2.2) continue;
+        for (let k = kLo; k < kHi; k += kStep(k)) {
+          if (LKs && Math.abs(k * CW + CW / 2) < 10 && zb < 4) continue; // jangan menggambar petak di bawah kabin sendiri
+          const la = k * CW, lb = (k + kStep(k)) * CW, PP = LKs && o.Pg ? o.Pg : P;
+          const h = hash(j * 7.31 + k * 1.93), q1 = PP(za + 0.6, la + 0.6, 0), q2 = PP(za + 0.6, lb - 0.6, 0), q3 = PP(zb - 0.6, lb - 0.6, 0), q4 = PP(zb - 0.6, la + 0.6, 0);
           if (!q1 || !q2 || !q3 || !q4) continue;
+          if (Math.max(q1.x, q2.x, q3.x, q4.x) < 0 || Math.min(q1.x, q2.x, q3.x, q4.x) > W || Math.max(q1.y, q2.y, q3.y, q4.y) < hy - 2) continue; // di luar layar
           let fill;
           if (h < 0.22 && SAWIT) fill = night ? '#2a2418' : mix('#6a5034', '#7e6040', p); // tanah merah perkebunan
-          else if (h < 0.22) { const wg = c.createLinearGradient(0, q3.y, 0, q1.y); wg.addColorStop(0, waterTop); wg.addColorStop(1, waterBot); fill = wg; }
+          else if (h < 0.22 && q1.y - q3.y < 3) fill = waterBot; else if (h < 0.22) { const wg = c.createLinearGradient(0, q3.y, 0, q1.y); wg.addColorStop(0, waterTop); wg.addColorStop(1, waterBot); fill = wg; }
           else if (h < 0.34) fill = gold; else fill = greens[Math.floor(h * 97) % greens.length];
           c.fillStyle = fill; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill();
           if (SAWIT && h >= 0.22 && Math.abs(k) >= 1) { // barisan sawit kebun di kejauhan: tajuk bintang di tiap petak
@@ -7995,6 +8019,20 @@
     c.restore();
     // cahaya matahari yang menembus kaca menghangatkan dasbor tepat di bawah matahari
     if (sunK > 0.05) { c.save(); c.globalCompositeOperation = 'lighter'; const lx = sun.x, pg = c.createRadialGradient(lx, dy0 + H * 0.04, 0, lx, dy0 + H * 0.04, W * 0.22); pg.addColorStop(0, `rgba(255,214,160,${(0.12 * sunK).toFixed(3)})`); pg.addColorStop(1, 'rgba(255,214,160,0)'); c.fillStyle = pg; c.fillRect(lx - W * 0.22, dy0, W * 0.44, H * 0.15); c.restore(); }
+  }
+  // HUD ringkas kokpit layar penuh: kecepatan, batas & jarak berhenti di pojok kiri bawah, penunjuk arah pandang saat menoleh
+  function drawCabFullHud(c, st) {
+    const kmh = st.v * 3.6, { lim } = currentLimit(), ns = nextStation(), dS = ns ? Math.max(0, ns.x - st.x) : 0;
+    const hb = ui.btnHorn && ui.btnHorn.getBoundingClientRect(), w = W * 0.2, h = H * 0.15, r = h * 0.2, x = W * 0.025, y = Math.min(H * 0.62, (hb && hb.top > 0 ? hb.top : H * 0.8) - h - H * 0.02); // selalu di atas tombol klakson
+    c.save(); c.fillStyle = 'rgba(8,12,18,0.55)'; roundRect(c, x, y, w, h, r); c.fill(); c.strokeStyle = 'rgba(255,255,255,0.15)'; c.lineWidth = 1; c.stroke();
+    c.textBaseline = 'middle'; c.fillStyle = kmh > lim + 2 ? '#ff6a5a' : '#ffffff'; c.font = `900 ${Math.round(h * 0.55)}px "Big Shoulders Display", sans-serif`; c.fillText(String(Math.round(kmh)), x + w * 0.07, y + h * 0.42);
+    c.font = `700 ${Math.round(h * 0.17)}px "Plus Jakarta Sans", sans-serif`; c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillText('km/h', x + w * 0.07, y + h * 0.82);
+    c.fillStyle = '#ffc247'; c.font = `900 ${Math.round(h * 0.3)}px "Big Shoulders Display", sans-serif`; c.fillText(String(lim), x + w * 0.58, y + h * 0.35);
+    c.fillStyle = 'rgba(255,255,255,0.7)'; c.font = `700 ${Math.round(h * 0.15)}px "Plus Jakarta Sans", sans-serif`; c.fillText('BATAS', x + w * 0.58, y + h * 0.6);
+    if (ns) c.fillText(dS < 1000 ? `${Math.round(dS)} m` : `${(dS / 1000).toFixed(1).replace('.', ',')} km`, x + w * 0.58, y + h * 0.82);
+    if (Math.abs(CAB_LOOK) > 0.03) { const cx2 = W / 2, cy2 = H * 0.08, R = H * 0.035; c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 2; c.beginPath(); c.arc(cx2, cy2, R, 0, 7); c.stroke();
+      c.fillStyle = '#4fe3ff'; c.beginPath(); c.moveTo(cx2, cy2); c.arc(cx2, cy2, R, -Math.PI / 2 + CAB_LOOK - 0.35, -Math.PI / 2 + CAB_LOOK + 0.35); c.closePath(); c.fill(); }
+    c.restore();
   }
   function drawCabInterior(c, o) {
     const { night, inTun, sunK, dy0, tw, rain, sun } = o;
