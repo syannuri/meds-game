@@ -7262,7 +7262,7 @@
     if (HSTCAB && !inTun && !night && !storm) drawHstLight(c, { hy, p, pan, st, sun: sunPos(Vs) });
     if (!inTun && !night && !storm) drawFlare(c, sunPos(Vs), HSTCAB ? 0.8 : 0.85, st.v, x0, hy);
     applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0, cab: true, night, storm, sun: SUN });
-    cabZoomBlur(c, cx, hy, inTun ? 0 : Math.min(1.25, fov2 + 0.55 * smooth(140, 220, st.v * 3.6))); // kabur gerak radial benda dekat di tepi pandangan
+    cabZoomBlur(c, cx - Math.tan(clamp(CAB_LOOK, -1.2, 1.2)) * f, hy, inTun ? 0 : Math.min(1.25, fov2 + 0.55 * smooth(140, 220, st.v * 3.6)) * (1 - 0.5 * Math.min(1, Math.abs(CAB_LOOK)))); // pusat kabur = titik hilang arah laju (bergeser saat menoleh) // kabur gerak radial benda dekat di tepi pandangan
     // ---- kabin: kaca depan, pilar, dasbor ----
     if (CAB_FULL) { drawCabFullHud(c, st); return; } // layar penuh: tanpa wiper, kaca, bingkai & dasbor
     const rain = MIS.rain && !inTun;
@@ -8012,7 +8012,7 @@
   // HUD ringkas kokpit layar penuh: kecepatan, batas & jarak berhenti di pojok kiri bawah, penunjuk arah pandang saat menoleh
   function drawCabFullHud(c, st) {
     const kmh = st.v * 3.6, { lim } = currentLimit(), ns = nextStation(), dS = ns ? Math.max(0, ns.x - st.x) : 0;
-    const x = W * 0.025, y = H * 0.62, w = W * 0.2, h = H * 0.15, r = h * 0.2;
+    const hb = ui.btnHorn && ui.btnHorn.getBoundingClientRect(), w = W * 0.2, h = H * 0.15, r = h * 0.2, x = W * 0.025, y = Math.min(H * 0.62, (hb && hb.top > 0 ? hb.top : H * 0.8) - h - H * 0.02); // selalu di atas tombol klakson
     c.save(); c.fillStyle = 'rgba(8,12,18,0.55)'; roundRect(c, x, y, w, h, r); c.fill(); c.strokeStyle = 'rgba(255,255,255,0.15)'; c.lineWidth = 1; c.stroke();
     c.textBaseline = 'middle'; c.fillStyle = kmh > lim + 2 ? '#ff6a5a' : '#ffffff'; c.font = `900 ${Math.round(h * 0.55)}px "Big Shoulders Display", sans-serif`; c.fillText(String(Math.round(kmh)), x + w * 0.07, y + h * 0.42);
     c.font = `700 ${Math.round(h * 0.17)}px "Plus Jakarta Sans", sans-serif`; c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillText('km/h', x + w * 0.07, y + h * 0.82);
