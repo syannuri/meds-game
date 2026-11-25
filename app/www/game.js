@@ -1177,6 +1177,10 @@
         R.signals.push({ id: Y.route.sig, x: toe - 90, init: 'Y', route: Y.route.label, home: true }); R.signals.sort((p1, p2) => p1.x - p2.x);
         R.zones.unshift({ from: toe - 20, to: heel + 30, limit: 40, label: `wesel masuk jalur ${Y.route.label}`, turnout: true }); } });
     Object.defineProperty(R, 'yard', { configurable: true, get() { let x = 0; try { x = S ? S.x : 0; } catch (e) { /* sebelum status permainan dibuat */ } let best = R.yards[0]; for (const Y of R.yards) if (Math.abs(Y.at - x) < Math.abs(best.at - x)) best = Y; return best; } }); });
+  // jalur ganda kereta cepat: kereta pemain dibelokkan lewat wesel penyeberang ke jalur 2 (peron seberang) di stasiun akhir
+  Object.values(MISSIONS).forEach((M) => { const R = M.route, D = R && R.double; if (!D || D.route) return; const fx = R.stations[R.stations.length - 1].x, toe = fx - 700, heel = fx - 560;
+    D.route = { label: '2', toe, heel }; R.signals.push({ id: 'MS', x: toe - 120, init: 'Y', route: '2', home: true }); R.signals.sort((p1, p2) => p1.x - p2.x);
+    R.zones.unshift({ from: toe - 20, to: heel + 30, limit: 40, label: 'wesel penyeberang ke jalur 2', turnout: true }); });
   let MIS = MISSIONS['1-4'];
   let ROUTE = MIS.route;
   const finalStation = () => ROUTE.stations[ROUTE.stations.length - 1];
@@ -3172,7 +3176,7 @@
       if (zc && zc.curve && kmh > zc.limit * 2) fail(`Kereta anjlok di ${zc.label} karena melaju ${Math.round(kmh)} km/h di batas ${zc.limit} km/h.`);
       if (zc && zc.wood && kmh > 25) fail(`Jembatan kayu tua tidak kuat: kereta melaju ${Math.round(kmh)} km/h di batas ${zc.limit} km/h.`);
       if (zc && zc.wood) { S.shake = Math.max(S.shake, 0.35); toast('Jembatan berderit! Turunkan kecepatan.', 'bad', 1.8, 'creak', 3); }
-      if (zc && zc.turnout && kmh > 45) fail(`Kereta anjlok di ${zc.label}: melaju ${Math.round(kmh)} km/h di wesel berbatas ${zc.limit} km/h.`);
+      if (zc && zc.turnout && kmh > zc.limit + 5) fail(`Kereta anjlok di ${zc.label}: melaju ${Math.round(kmh)} km/h di wesel berbatas ${zc.limit} km/h.`);
     } else {
       S.overT = Math.max(0, S.overT - dt);
     }
@@ -5393,9 +5397,10 @@
       const x = x0 + d, dS = bAt(BEND.S, x) - S0, dC = bAt(BEND.C, x) - C0;
       return { z: dC * ch + dS * sh, lat: -(dS * ch - dC * sh), hd: bAt(BEND.H, x) - h0 };
     };
-    const P = (z, lat, h) => { if (z < 0.8) return null; const k = f / z; return { x: cx + (lat + SEAT) * k, y: hy + (EH - h) * k, k }; };
+    const PO0 = playerO(x0); // kereta pemain di jalur samping (wesel penyeberang / jalur emplasemen): seluruh dunia bergeser
+    const P = (z, lat, h) => { if (z < 0.8) return null; const k = f / z; return { x: cx + (lat - PO0 + SEAT) * k, y: hy + (EH - h) * k, k }; };
     // titik dunia: jarak d sepanjang rel, geser samping o (kanan positif) tegak lurus rel, tinggi h
-    const PO0 = playerO(x0), W3 = (d, o, h) => { const q = plan(d), oo = o - PO0 - (playerO(x0 + d) - PO0) * 0; return P(q.z + Math.sin(q.hd) * oo, q.lat + Math.cos(q.hd) * oo, h); }; // kabin mengikuti jalur yang dilalui (jalur samping: dunia bergeser)
+    const W3 = (d, o, h) => { const q = plan(d); return P(q.z + Math.sin(q.hd) * o, q.lat + Math.cos(q.hd) * o, h); };
     const DBc = ROUTE.double, RO = (d, o) => (DBc ? o + dblO3(x0 + d) : o); // jalur ganda: benda di kanan rel pindah ke luar jalur 2
     const TC = DBc ? 2.3 : 0, TS = DBc ? 1.62 : 1; // terowongan jalur ganda: lebih lebar, berpusat di antara kedua jalur
     const quad = (a, b, d2, e, fill) => { if (!a || !b || !d2 || !e) return; c.fillStyle = fill; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.lineTo(d2.x, d2.y); c.lineTo(e.x, e.y); c.closePath(); c.fill(); };
@@ -5636,6 +5641,7 @@
           c.restore(); }
       };
       trk(dblO3, (d) => dbl3(x0 + d) > 0.02); // jalur 3 dulu agar rel jalur 2 menerus di wesel
+      if (DBc.route) trk((x) => playerO(x), (d) => x0 + d > DBc.route.toe - 4 && x0 + d < DBc.route.heel + 4); // wesel penyeberang ke jalur 2
       trk(dblO, () => true);
     }
 
@@ -8926,14 +8932,14 @@
     drawTrainOnPaddy(LV);
     drawGhost(LV);
     const drawPlayerTrain = () => {
-    { const c = LV.c, Yr = ROUTE.yard && ROUTE.yard.route && LV.st ? ROUTE.yard : null, xs = LV.st ? LV.st.x : 0, tl = TRAIN_LEN, dy = (wx) => DBL_K * playerO(wx) * LV.ppm;
+    { const c = LV.c, Yr = playerRoute() && LV.st ? true : null, xs = LV.st ? LV.st.x : 0, tl = TRAIN_LEN, dy = (wx) => DBL_K * playerO(wx) * LV.ppm;
       if (!Yr || (Math.abs(dy(xs)) < 0.01 && Math.abs(dy(xs - tl)) < 0.01)) drawTrain(LV);
       else if (Math.abs(dy(xs) - dy(xs - tl)) < 0.5) { c.save(); c.translate(0, dy(xs - tl / 2)); drawTrain(LV); c.restore(); } // seluruh rangkaian di jalur samping
       else { // sedang melintasi wesel: tiap kendaraan digeser sesuai posisinya sendiri (rangkaian menikung mulus)
         const XX = LV.bx || LV.X, bnd = [xs + 2, xs - LOCO_LEN - GAP / 2]; for (let q = 1; q <= N_COACH; q++) bnd.push(xs - LOCO_LEN - GAP - q * (CAR_LEN + GAP) + GAP / 2); bnd[bnd.length - 1] -= 3;
         for (let i = 0; i < bnd.length - 1; i++) { const a0 = XX(bnd[i + 1]), a1 = XX(bnd[i]); c.save(); c.beginPath(); c.rect(Math.min(a0, a1), -H, Math.abs(a1 - a0) + 0.5, H * 3); c.clip(); c.translate(0, dy((bnd[i] + bnd[i + 1]) / 2)); drawTrain(LV); c.restore(); } } }
     };
-    const onSide = ROUTE.yard && ROUTE.yard.route && LV.st && Math.abs(playerO(LV.st.x)) > 2; // di jalur samping: kereta di depan peron pulau
+    const onSide = playerRoute() && LV.st && Math.abs(playerO(LV.st.x)) > 2; // di jalur samping: kereta di depan peron pulau
     if (!onSide) drawPlayerTrain();
     drawSpeedFx(LV);
     drawDoubleShadows(LV); // jalur ganda: bayangan Guntur & Kilat satu lapis
@@ -12947,7 +12953,8 @@
     return L; }
   // lintasan kereta yang masuk: jalur emplasemen lalu jalur induknya (sampai jalur utama) di luar wesel
   // jalur yang dilalui kereta pemain: di emplasemen dengan rute masuk, kereta mengikuti wesel ke jalur samping (offset lateral)
-  function playerO(x) { const Y = ROUTE.yard; return Y && Y.route ? yardPath(Y.route.sid, x) : 0; }
+  function playerO(x) { const Y = ROUTE.yard; if (Y && Y.route) return yardPath(Y.route.sid, x); const D = ROUTE.double; if (D && D.route) { const t = smooth(D.route.toe, D.route.heel, x); return t > 0 ? dblO(x) * t : 0; } return 0; }
+  const playerRoute = () => !!((ROUTE.yard && ROUTE.yard.route) || (ROUTE.double && ROUTE.double.route));
   function yardPath(i, x) { const Y = ROUTE.yard; if (!Y || i < 0) return 0; const sd = Y.sid[i]; if (yLoc(Y, x) > sd.m1) return yardPath(sd.parent, x); const o = yardO(i, x); return o === null ? 0 : o; }
   function yardSignals() { const Y = ROUTE.yard; if (!Y || Y.station) return []; return Y.sid.map((sd, i) => ({ x: sd.m0 - 6, o: sd.o, side: 1, id: 'L' + (i + 2) })).concat([{ x: Y.shed.m1 + 4, o: Y.shed.o, side: -1, id: 'LD' }]); }
   function dwarfSignal(c, x, y, u, id, glow) {
@@ -13092,6 +13099,7 @@
       };
       // jalur 3 digambar dulu: di wesel tempat jalur 3 menyatu, balas & ujung relnya tertutup rel jalur 2 yang menerus
       track(dblO3, (x) => dbl3(x) > 0.02, true);
+      if (D.route) track(playerO, (x) => x > D.route.toe - 4 && x < D.route.heel + 4); // wesel penyeberang jalur 1 → jalur 2 menuju stasiun akhir
       track(dblO, () => true);
     }
     // wesel jalur 3 di kedua ujung tiap stasiun
