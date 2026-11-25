@@ -7530,13 +7530,15 @@
     {
       const g0 = c.createLinearGradient(0, hy, 0, H); g0.addColorStop(0, night ? '#1d2c22' : mix('#a3c48a', '#b5d39a', p)); g0.addColorStop(1, night ? '#0f1a12' : mix('#4f8a3e', '#62a04a', p));
       c.fillStyle = g0; c.fillRect(0, hy, W, H - hy);
-      const CL = 16, CW = 14, KMAX = 9, ZF = 330, j0 = Math.floor((x0 + 3) / CL), j1 = Math.floor((x0 + ZF) / CL);
+      const LKs = Math.sin(CAB_LOOK), CL = 16, CW = 14, KMAX = 9, ZF = 330, j0 = Math.floor((x0 + 3 - (LKs ? 90 * Math.abs(LKs) : 0)) / CL), j1 = Math.floor((x0 + ZF) / CL);
+      const kLo = -KMAX - (LKs < 0 ? Math.round(-LKs * 24) : 0), kHi = KMAX + (LKs > 0 ? Math.round(LKs * 24) : 0); // menoleh: petak sawah diperluas ke sisi yang dilihat (dan sedikit ke belakang)
       const SAWIT = PLANT();
       const greens = night ? ['#1f3324', '#233a28', '#1a2c1f'] : SAWIT ? [mix('#3f6a30', '#4f7e3a', p), mix('#4a7436', '#5a8a42', p), mix('#36602c', '#446f34', p), mix('#56703a', '#66843f', p)] : [mix('#4f9a3a', '#5fae44', p), mix('#62a845', '#72bb4e', p), mix('#45883a', '#53993f', p), mix('#74ad47', '#86c152', p)];
       const gold = SAWIT ? mix('#7a5e3e', '#8e6e48', p) : mix('#b9ae55', '#cdbf62', p), waterTop = night ? '#2b3554' : storm ? '#a9b8c0' : MIS.dusk ? '#ffc08a' : MIS.golden ? '#ffe2ac' : mix('#ffd0a0', '#e4f0f4', p), waterBot = night ? '#1e2640' : storm ? '#6f828e' : MIS.dusk ? '#9a86c4' : MIS.golden ? '#88a8d4' : mix('#9a8cc4', '#8ab8e0', p); // jauh: cakrawala hangat terpantul, dekat: langit atas
       for (let j = j1; j >= j0; j--) {
-        const za = Math.max(2.2, j * CL - x0), zb = (j + 1) * CL - x0; if (zb <= 2.2) continue;
-        for (let k = -KMAX; k < KMAX; k++) {
+        const za = LKs ? j * CL - x0 : Math.max(2.2, j * CL - x0), zb = (j + 1) * CL - x0; if (!LKs && zb <= 2.2) continue;
+        for (let k = kLo; k < kHi; k++) {
+          if (LKs && Math.abs(k * CW + CW / 2) < 10 && zb < 4) continue; // jangan menggambar petak di bawah kabin sendiri
           const la = k * CW, lb = (k + 1) * CW;
           const h = hash(j * 7.31 + k * 1.93), q1 = P(za + 0.6, la + 0.6, 0), q2 = P(za + 0.6, lb - 0.6, 0), q3 = P(zb - 0.6, lb - 0.6, 0), q4 = P(zb - 0.6, la + 0.6, 0);
           if (!q1 || !q2 || !q3 || !q4) continue;
