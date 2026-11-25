@@ -8503,17 +8503,22 @@
     c.restore();
   }
   // ---------- kabur gerak radial di tepi pandangan kabin (benda dekat: tiang, pohon, rumput) di atas 200 km/h ----------
-  let ZB = null;
+  let ZB = null, ZB_N = 0;
   function cabZoomBlur(c, cx, cy, k) {
-    if (k < 0.02 || REDUCE_MOTION) return;
-    const cv = c.canvas; if (!ZB) ZB = document.createElement('canvas'); if (ZB.width !== cv.width || ZB.height !== cv.height) { ZB.width = cv.width; ZB.height = cv.height; }
-    const T = c.getTransform(), px = T.a * cx + T.e, py = T.d * cy + T.f, g = ZB.getContext('2d');
+    if (k < 0.02 || REDUCE_MOTION || GFX.fx >= 2) return;
+    // kabur diperbarui selang satu frame (hasilnya kabur, jeda 1 frame tak terlihat) → separuh biaya; mode hemat efek: tiap 3 frame
+    ZB_N = (ZB_N + 1) % (GFX.fx >= 1 ? 3 : 2); if (ZB && ZB_N !== 0 && ZB.width) { const cv0 = c.canvas; c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.imageSmoothingEnabled = true; c.globalAlpha = 0.8 * k; c.drawImage(ZB, 0, 0, ZB.width, ZB.height, 0, 0, cv0.width, cv0.height); c.restore(); return; }
+    // dikerjakan di 1/2 resolusi (hasilnya memang kabur): 4x lebih ringan daripada resolusi penuh
+    const cv = c.canvas, DS = 0.4, zw = Math.max(8, Math.round(cv.width * DS)), zh = Math.max(8, Math.round(cv.height * DS)); if (!ZB) ZB = document.createElement('canvas'); if (ZB.width !== zw || ZB.height !== zh) { ZB.width = zw; ZB.height = zh; }
+    const T = c.getTransform(), px = (T.a * cx + T.e) * DS, py = (T.d * cy + T.f) * DS, g = ZB.getContext('2d'); g.imageSmoothingEnabled = true;
     g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, ZB.width, ZB.height);
-    for (const [sc, a] of [[1 + 0.03 * k, 0.55], [1 + 0.065 * k, 0.4]]) { g.globalAlpha = a; g.setTransform(sc, 0, 0, sc, px * (1 - sc), py * (1 - sc)); g.drawImage(cv, 0, 0); }
+    if (!ZB.snap) ZB.snap = document.createElement('canvas'); const SN = ZB.snap; if (SN.width !== zw || SN.height !== zh) { SN.width = zw; SN.height = zh; } // satu kali baca layar penuh → salinan kecil, lalu zoom dari salinan
+    const sg = SN.getContext('2d'); sg.imageSmoothingEnabled = true; sg.globalCompositeOperation = 'copy'; sg.drawImage(cv, 0, 0, cv.width, cv.height, 0, 0, zw, zh);
+    for (const [sc, a] of [[1 + 0.03 * k, 0.55], [1 + 0.065 * k, 0.4]]) { g.globalAlpha = a; g.setTransform(sc, 0, 0, sc, px * (1 - sc), py * (1 - sc)); g.drawImage(SN, 0, 0); }
     g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'destination-in';
     const R = Math.hypot(ZB.width, ZB.height) * 0.5, mg = g.createRadialGradient(px, py, R * 0.22, px, py, R * 0.8); mg.addColorStop(0, 'rgba(0,0,0,0)'); mg.addColorStop(1, 'rgba(0,0,0,1)');
     g.fillStyle = mg; g.fillRect(0, 0, ZB.width, ZB.height); g.globalCompositeOperation = 'source-over';
-    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 0.8 * k; c.drawImage(ZB, 0, 0); c.restore();
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.imageSmoothingEnabled = true; c.globalAlpha = 0.8 * k; c.drawImage(ZB, 0, 0, zw, zh, 0, 0, cv.width, cv.height); c.restore();
   }
   function activeBridge(x) { // beberapa jembatan per rute: pakai yang terdekat dengan kereta/kamera
     const L = ROUTE.bridges; if (!L || !L.length) return;
