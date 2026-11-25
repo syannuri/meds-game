@@ -2392,6 +2392,8 @@
   let camFast = 0;
   let radioTimer = 0, camLead = 0, camZoom = 1, camZoomV = 0;
   const PHOTO = { on: false, dx: 0, z: 1, filter: 'asli', frame: true }; // mode foto: geser & zoom kamera saat jeda
+  let CAB_FULL = store.get('rn.cabFull') === '1'; // kokpit layar penuh: tanpa bingkai jendela & dasbor
+  let CAB_LOOK = 0; // arah pandang kokpit (rad): negatif = lihat kiri, positif = lihat kanan (digeser dengan drag)
   let viewMode = store.get('rn.view') === 'cab' ? 'cab' : 'side'; // 'side' (2.5D) atau 'cab' (kabin masinis)
   let rotateSkipped = false;
 
@@ -5097,13 +5099,22 @@
     b.setAttribute('aria-label', cab ? 'Tampilan samping' : 'Tampilan kabin masinis');
     b.setAttribute('aria-pressed', String(cab));
   }
+  function syncCabFull() { const b = $('btnCabFull'); if (!b) return; b.hidden = viewMode !== 'cab'; b.classList.toggle('on', CAB_FULL); b.setAttribute('aria-pressed', String(CAB_FULL)); b.setAttribute('aria-label', CAB_FULL ? 'Tampilkan jendela kokpit' : 'Kokpit layar penuh'); }
+  $('btnCabFull').addEventListener('click', () => { CAB_FULL = !CAB_FULL; store.set('rn.cabFull', CAB_FULL ? '1' : '0'); syncCabFull();
+    toast(CAB_FULL ? 'Kokpit layar penuh. Geser layar ke kiri/kanan untuk menoleh, ketuk dua kali untuk kembali ke depan.' : 'Jendela kokpit ditampilkan kembali.', 'info', 2.6, 'view', 1); });
+  // menoleh di kokpit: geser (drag) layar ke kiri/kanan; ketuk dua kali untuk kembali menghadap depan
+  { let drag = null, lastTap = 0;
+    const free = (e) => mode === 'play' && viewMode === 'cab' && !e.target.closest('button, input, select, a, .lever, #lever, .screen, #radio, .panel, .sheet, [role="button"], #hud .controls');
+    document.addEventListener('pointerdown', (e) => { if (!free(e)) return; const now = performance.now(); if (now - lastTap < 320) { CAB_LOOK = 0; lastTap = 0; drag = null; return; } lastTap = now; drag = { id: e.pointerId, x: e.clientX, L: CAB_LOOK }; });
+    document.addEventListener('pointermove', (e) => { if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 6) lastTap = 0; CAB_LOOK = clamp(drag.L - dx / window.innerWidth * 1.8, -1.15, 1.15); });
+    const up = (e) => { if (drag && e.pointerId === drag.id) drag = null; }; document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up); }
   function toggleView() {
-    viewMode = viewMode === 'cab' ? 'side' : 'cab';
+    viewMode = viewMode === 'cab' ? 'side' : 'cab'; CAB_LOOK = 0; setTimeout(syncCabFull, 0);
     store.set('rn.view', viewMode);
     syncViewButton();
     toast(viewMode === 'cab' ? 'Tampilan kabin masinis. Tekan lagi untuk tampilan samping.' : 'Tampilan samping.', 'info', 2, 'view', 1);
   }
-  $('btnView').addEventListener('click', toggleView);
+  $('btnView').addEventListener('click', toggleView); syncCabFull();
   $('btnExpert').addEventListener('click', () => { expertOn = !expertOn; store.set('rn.expert', expertOn ? '1' : '0'); syncExpert(); });
   $('btnTutSkip').addEventListener('click', () => { store.set('rn.tutSkip', store.get('rn.tutSkip') === '1' ? '0' : '1'); syncTutSkip(); });
   syncViewButton();
@@ -5400,7 +5411,8 @@
       return { z: dC * ch + dS * sh, lat: -(dS * ch - dC * sh), hd: bAt(BEND.H, x) - h0 };
     };
     const PO0 = playerO(x0); // kereta pemain di jalur samping (wesel penyeberang / jalur emplasemen): seluruh dunia bergeser
-    const P = (z, lat, h) => { if (z < 0.8) return null; const k = f / z; return { x: cx + (lat - PO0 + SEAT) * k, y: hy + (EH - h) * k, k }; };
+    const LK = CAB_LOOK, lc = Math.cos(LK), ls = Math.sin(LK);
+    const P = (z, lat, h) => { let la = lat - PO0 + SEAT; if (LK) { const z2 = z * lc + la * ls; la = la * lc - z * ls; z = z2; } if (z < 0.8) return null; const k = f / z; return { x: cx + la * k, y: hy + (EH - h) * k, k }; }; // menoleh: dunia diputar di sekitar mata masinis
     // titik dunia: jarak d sepanjang rel, geser samping o (kanan positif) tegak lurus rel, tinggi h
     const W3 = (d, o, h) => { const q = plan(d); return P(q.z + Math.sin(q.hd) * o, q.lat + Math.cos(q.hd) * o, h); };
     const DBc = ROUTE.double, RO = (d, o) => (DBc ? o + dblO3(x0 + d) : o); // jalur ganda: benda di kanan rel pindah ke luar jalur 2
@@ -5413,7 +5425,7 @@
     // ---- langit & bukit jauh (bergeser saat kereta berbelok) ----
     const Vs = { c, gy: hy, p, night, storm, camX: x0 * 0.2 + h0 * 400, ppm: 1, sunX: x0, sunPan: h0 * f };
     if (!inTun) drawSky(Vs); else { c.fillStyle = '#07090b'; c.fillRect(0, 0, W, H); }
-    const pan = h0 * f;
+    const pan = h0 * f + CAB_LOOK * f; // langit & latar jauh ikut bergeser saat menoleh
     // cahaya matahari yang memantul ke objek: posisi layar matahari & kekuatannya (rendah = lebih hangat & kuat)
     const SUN = sunPos(Vs), SUNK = inTun || night || storm ? 0 : clamp(1.15 - p * 0.55, 0.45, 1), tNow = performance.now() / 1000; CAB_SUN = SUN;
     const sunRim = SUNK > 0 ? (MIS.golden || MIS.dusk || p < 0.5 ? '255,196,120' : '255,236,200') : '0,0,0';
@@ -7252,6 +7264,7 @@
     applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0, cab: true, night, storm, sun: SUN });
     cabZoomBlur(c, cx, hy, inTun ? 0 : Math.min(1.25, fov2 + 0.55 * smooth(140, 220, st.v * 3.6))); // kabur gerak radial benda dekat di tepi pandangan
     // ---- kabin: kaca depan, pilar, dasbor ----
+    if (CAB_FULL) { drawCabFullHud(c, st); return; } // layar penuh: tanpa wiper, kaca, bingkai & dasbor
     const rain = MIS.rain && !inTun;
     if (rain) {
       // wiper pantograf modern: dua lengan sejajar, bilah karet tegak menyapu kaca; butir hujan yang tersapu
@@ -7995,6 +8008,20 @@
     c.restore();
     // cahaya matahari yang menembus kaca menghangatkan dasbor tepat di bawah matahari
     if (sunK > 0.05) { c.save(); c.globalCompositeOperation = 'lighter'; const lx = sun.x, pg = c.createRadialGradient(lx, dy0 + H * 0.04, 0, lx, dy0 + H * 0.04, W * 0.22); pg.addColorStop(0, `rgba(255,214,160,${(0.12 * sunK).toFixed(3)})`); pg.addColorStop(1, 'rgba(255,214,160,0)'); c.fillStyle = pg; c.fillRect(lx - W * 0.22, dy0, W * 0.44, H * 0.15); c.restore(); }
+  }
+  // HUD ringkas kokpit layar penuh: kecepatan, batas & jarak berhenti di pojok kiri bawah, penunjuk arah pandang saat menoleh
+  function drawCabFullHud(c, st) {
+    const kmh = st.v * 3.6, { lim } = currentLimit(), ns = nextStation(), dS = ns ? Math.max(0, ns.x - st.x) : 0;
+    const x = W * 0.025, y = H * 0.62, w = W * 0.2, h = H * 0.15, r = h * 0.2;
+    c.save(); c.fillStyle = 'rgba(8,12,18,0.55)'; roundRect(c, x, y, w, h, r); c.fill(); c.strokeStyle = 'rgba(255,255,255,0.15)'; c.lineWidth = 1; c.stroke();
+    c.textBaseline = 'middle'; c.fillStyle = kmh > lim + 2 ? '#ff6a5a' : '#ffffff'; c.font = `900 ${Math.round(h * 0.55)}px "Big Shoulders Display", sans-serif`; c.fillText(String(Math.round(kmh)), x + w * 0.07, y + h * 0.42);
+    c.font = `700 ${Math.round(h * 0.17)}px "Plus Jakarta Sans", sans-serif`; c.fillStyle = 'rgba(255,255,255,0.7)'; c.fillText('km/h', x + w * 0.07, y + h * 0.82);
+    c.fillStyle = '#ffc247'; c.font = `900 ${Math.round(h * 0.3)}px "Big Shoulders Display", sans-serif`; c.fillText(String(lim), x + w * 0.58, y + h * 0.35);
+    c.fillStyle = 'rgba(255,255,255,0.7)'; c.font = `700 ${Math.round(h * 0.15)}px "Plus Jakarta Sans", sans-serif`; c.fillText('BATAS', x + w * 0.58, y + h * 0.6);
+    if (ns) c.fillText(dS < 1000 ? `${Math.round(dS)} m` : `${(dS / 1000).toFixed(1).replace('.', ',')} km`, x + w * 0.58, y + h * 0.82);
+    if (Math.abs(CAB_LOOK) > 0.03) { const cx2 = W / 2, cy2 = H * 0.08, R = H * 0.035; c.strokeStyle = 'rgba(255,255,255,0.6)'; c.lineWidth = 2; c.beginPath(); c.arc(cx2, cy2, R, 0, 7); c.stroke();
+      c.fillStyle = '#4fe3ff'; c.beginPath(); c.moveTo(cx2, cy2); c.arc(cx2, cy2, R, -Math.PI / 2 + CAB_LOOK - 0.35, -Math.PI / 2 + CAB_LOOK + 0.35); c.closePath(); c.fill(); }
+    c.restore();
   }
   function drawCabInterior(c, o) {
     const { night, inTun, sunK, dy0, tw, rain, sun } = o;
