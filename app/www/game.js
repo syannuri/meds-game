@@ -6917,7 +6917,7 @@
             const isG = B.col(0, 0.5).glass !== undefined, GQ = []; // kaca: kumpulkan semua potongan dulu, lalu diwarnai satu gradasi layar bersama (halus, tanpa faset)
             for (const j of order) { const R1 = rows[j], R2 = rows[j + 1]; if (Math.max(secs[j][0].d, secs[j + 1][0].d) < 1.2) continue;
               if (isG && (PT.pillars || []).some(([g0, g1]) => (R1.xs + R2.xs) / 2 > g0 && (R1.xs + R2.xs) / 2 < g1)) continue; // tiang (pilar) di antara kaca depan & jendela samping
-              for (let m = 0; m < M; m++) { const q = [R1.pts[m], R1.pts[m + 1], R2.pts[m + 1], R2.pts[m]].map((t) => W3(Math.max(1.2, t.d), t.o, t.h)); if (q.some((t) => !t)) continue; if (side === 'R' && -area(q) * CULLS > 40) continue; // hanya sisi kanan (di balik) yang disaring; sisi kiri digambar utuh agar tidak ada celah // permukaan membelakangi kabin tidak digambar
+              for (let m = 0; m < M; m++) { const q = [R1.pts[m], R1.pts[m + 1], R2.pts[m + 1], R2.pts[m]].map((t) => (t.d < 1.25 ? null : W3(t.d, t.o, t.h))); if (q.some((t) => !t)) continue; // tak dijepit ke bidang dekat (mencegah cat terseret saat ekor lewat di samping kabin) if (side === 'R' && -area(q) * CULLS > 40) continue; // hanya sisi kanan (di balik) yang disaring; sisi kiri digambar utuh agar tidak ada celah // permukaan membelakangi kabin tidak digambar
                 const tt = 1 - (m + 0.5) / M, z = B.col((R1.xs + R2.xs) / 2, tt); let cc;
                 if (z.glass !== undefined) { GQ.push(q); continue; }
                 if (false) { const t = clamp(tt, 0, 1), e = t * t * (3 - 2 * t); // kaca: gradasi tenang (langit samar di atas, gelap di bawah), tanpa kilau bergerak
