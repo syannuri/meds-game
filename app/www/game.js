@@ -6955,17 +6955,41 @@
           const sec0 = lead ? secs[0] : secs[secs.length - 1], hCap = 0.95 + (gLoW() - PT.bot) / (PT.top - PT.bot) * 3.1 - 0.25, sec = sec0.filter((t) => t.h < hCap); if (sec.length > 2 && sec[0].d > 1.3) { const P5 = sec.map((t) => W3(t.d, t.o, t.h)); if (!P5.some((t) => !t)) {
             c.fillStyle = night ? '#5a606a' : `rgb(${PT.white.map((v) => Math.round(v * 0.86)).join(',')})`; c.beginPath(); P5.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
             c.strokeStyle = night ? 'rgba(0,0,0,0.4)' : 'rgba(90,98,108,0.35)'; c.lineWidth = 1; c.stroke(); } } }
-        if (lead && dn > 2) { // logo nama kereta di muka moncong: huruf mengikuti lengkung hidung, di tengah sabuk warna
-          const NM = DBc.kilat.loco === 'argo' ? 'AGRAVEDA' : (DBc.kilat.livery && DBc.kilat.livery.name) || 'KILAT', hW = 2.12, hs = PT.bot + (hW - 0.95) / 3.1 * (PT.top - PT.bot);
-          let xsC = 0; for (let u = 0; u < 3; u += 0.01) if (PT.top0(u) >= hs) { xsC = u; break; }
-          const sC = clamp((xsC - PT.xTip) / PT.Ls, 0, 1), dC = dn + sC * LN, oC = KO(x0 + dC), n = NM.length, span = Math.min(1.5, 0.2 * n);
-          const pc = W3(dC, oC, hW); if (pc && pc.k > 5) { const fs = clamp(0.3 * pc.k, 5, 60);
-            c.save(); c.font = `italic 900 ${fs.toFixed(1)}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-            const col = night ? 'rgba(235,240,248,0.85)' : DBc.kilat.loco === 'argo' ? '#ffffff' : '#f4f7fb';
-            for (let i = 0; i < n; i++) { const l = -span / 2 + span * (i + 0.5) / n, back = 0.75 * l * l, q = W3(dC + back, oC + l, hW + 0.01), q2 = W3(dC + back + 0.02, oC + l + 0.05, hW + 0.01); if (!q || !q2) continue;
-              c.save(); c.translate(q.x, q.y); c.rotate(Math.atan2(q2.y - q.y, q2.x - q.x) * 0.6); c.scale(clamp((q2.x - q.x) / (0.05 * q.k + 1e-6), 0.55, 1.1), 1);
-              c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillText(NM[i], 0.6, 0.8); c.fillStyle = col; c.fillText(NM[i], 0, 0); c.restore(); }
-            c.restore(); } }
+        if (lead && dn > 2) { // logo kereta di muka moncong: lambang krom di tengah + nama berhuruf metalik bergaris aksen, mengikuti lengkung hidung
+          const TY = DBc.kilat.loco === 'argo' ? 'argo' : DBc.kilat.loco === 'hst2' ? 'garuda' : 'kilat';
+          const NM = TY === 'argo' ? 'AGRAVEDA' : (DBc.kilat.livery && DBc.kilat.livery.name) || 'KILAT', ACC2 = TY === 'argo' ? '#7b3aa8' : TY === 'garuda' ? '#e0262e' : '#2bb3e8';
+          const at = (hW) => { const hs = PT.bot + (hW - 0.95) / 3.1 * (PT.top - PT.bot); let xsC = 0; for (let u = 0; u < 3; u += 0.01) if (PT.top0(u) >= hs) { xsC = u; break; } return dn + clamp((xsC - PT.xTip) / PT.Ls, 0, 1) * LN; };
+          const hE = 2.4, hT = 2.12, dE = at(hE), dT = at(hT), pe = W3(dE, KO(x0 + dE), hE);
+          if (pe && pe.k > 5) { c.save();
+            // lambang krom: digambar dalam satuan meter di bidang muka, menghadap kabin sedikit miring
+            const pr = W3(dE + 0.02, KO(x0 + dE) + 0.1, hE), sx = pr ? clamp((pr.x - pe.x) / (0.1 * pe.k), 0.5, 1.1) : 0.9, u = pe.k;
+            c.translate(pe.x, pe.y); c.scale(sx * u, u);
+            const chrome = c.createLinearGradient(0, -0.2, 0, 0.2); chrome.addColorStop(0, '#ffffff'); chrome.addColorStop(0.45, night ? '#9aa4b2' : '#dfe6ee'); chrome.addColorStop(0.55, night ? '#6a7482' : '#9fadbd'); chrome.addColorStop(1, '#f4f8fc');
+            c.lineJoin = 'round'; c.lineCap = 'round';
+            if (TY === 'kilat') { // cincin + petir
+              c.lineWidth = 0.035; c.strokeStyle = chrome; c.beginPath(); c.arc(0, 0, 0.17, 0, 7); c.stroke();
+              c.fillStyle = chrome; c.beginPath(); c.moveTo(0.03, -0.15); c.lineTo(-0.08, 0.02); c.lineTo(-0.005, 0.02); c.lineTo(-0.04, 0.15); c.lineTo(0.08, -0.03); c.lineTo(0.005, -0.03); c.closePath(); c.fill();
+              c.strokeStyle = ACC2; c.lineWidth = 0.012; c.stroke(); }
+            else if (TY === 'garuda') { // sayap garuda terbentang + kepala
+              c.fillStyle = chrome; for (const sd of [-1, 1]) for (let f = 0; f < 4; f++) { const y0 = -0.06 + f * 0.035, x1 = sd * (0.32 - f * 0.05);
+                c.beginPath(); c.moveTo(sd * 0.04, y0 + 0.03); c.quadraticCurveTo(sd * 0.17, y0 - 0.1 + f * 0.02, x1, y0 - 0.05 + f * 0.03); c.quadraticCurveTo(sd * 0.18, y0 + 0.01, sd * 0.04, y0 + 0.06); c.closePath(); c.fill(); }
+              c.beginPath(); c.ellipse(0, 0.0, 0.045, 0.085, 0, 0, 7); c.fill(); c.beginPath(); c.arc(0, -0.11, 0.035, 0, 7); c.fill();
+              c.fillStyle = ACC2; c.beginPath(); c.moveTo(0.03, -0.115); c.lineTo(0.075, -0.1); c.lineTo(0.03, -0.095); c.closePath(); c.fill(); }
+            else { // matahari terbit di atas gelombang
+              c.fillStyle = chrome; c.beginPath(); c.arc(0, 0.04, 0.11, Math.PI, 0); c.closePath(); c.fill();
+              c.strokeStyle = chrome; c.lineWidth = 0.025; for (let r = 0; r < 7; r++) { const a = Math.PI + Math.PI * (r + 0.5) / 7; c.beginPath(); c.moveTo(Math.cos(a) * 0.15, 0.04 + Math.sin(a) * 0.15); c.lineTo(Math.cos(a) * 0.22, 0.04 + Math.sin(a) * 0.22); c.stroke(); }
+              c.strokeStyle = ACC2; c.lineWidth = 0.03; c.beginPath(); c.moveTo(-0.22, 0.09); c.quadraticCurveTo(-0.11, 0.04, 0, 0.09); c.quadraticCurveTo(0.11, 0.14, 0.22, 0.09); c.stroke(); }
+            c.restore();
+            // nama: huruf metalik bertepi aksen, mengikuti lengkung hidung, dengan garis kecepatan di kedua sisi
+            const pt = W3(dT, KO(x0 + dT), hT); if (pt && pt.k > 6) { const n = NM.length, span = Math.min(1.5, 0.16 * n), fs = clamp(0.22 * pt.k, 5, 50);
+              c.save(); c.font = `italic 900 ${fs.toFixed(1)}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+              const tg = c.createLinearGradient(0, pt.y - fs * 0.5, 0, pt.y + fs * 0.5); tg.addColorStop(0, '#ffffff'); tg.addColorStop(0.5, night ? '#b8c2ce' : '#e6edf4'); tg.addColorStop(0.55, night ? '#8e98a6' : '#b9c6d3'); tg.addColorStop(1, '#ffffff');
+              for (let i = 0; i < n; i++) { const l = -span / 2 + span * (i + 0.5) / n, back = 0.75 * l * l, q = W3(dT + back, KO(x0 + dT) + l, hT), q2 = W3(dT + back + 0.02, KO(x0 + dT) + l + 0.05, hT); if (!q || !q2) continue;
+                c.save(); c.translate(q.x, q.y); c.rotate(Math.atan2(q2.y - q.y, q2.x - q.x) * 0.6); c.scale(clamp((q2.x - q.x) / (0.05 * q.k + 1e-6), 0.55, 1.1), 1);
+                c.strokeStyle = ACC2; c.lineWidth = Math.max(1, fs * 0.12); c.strokeText(NM[i], 0, 0); c.fillStyle = tg; c.fillText(NM[i], 0, 0); c.restore(); }
+              for (const sd of [-1, 1]) { const l0 = sd * (span / 2 + 0.06), l1 = sd * (span / 2 + 0.34), a0 = W3(dT + 0.75 * l0 * l0, KO(x0 + dT) + l0, hT - 0.02), a1 = W3(dT + 0.75 * l1 * l1, KO(x0 + dT) + l1, hT - 0.02);
+                if (a0 && a1) for (let k = 0; k < 3; k++) { c.strokeStyle = k === 1 ? ACC2 : 'rgba(255,255,255,0.85)'; c.lineWidth = Math.max(1, fs * 0.07); const dy = (k - 1) * fs * 0.22, sh = k * 0.18; c.beginPath(); c.moveTo(a0.x, a0.y + dy); c.lineTo(a0.x + (a1.x - a0.x) * (1 - sh), a1.y + dy); c.stroke(); } }
+              c.restore(); } } }
         { // garis struktur badan: tepi bawah gelap, lipatan sisi bawah (tumblehome) & garis bahu atap berkilau, pintu penumpang
           const full = secs.find((ss) => ss[0].s >= 0.999) || secs[secs.length - 1], kOf = (rr) => full.findIndex((t) => t.a > Math.PI / 2 && t.r < rr);
           const line3 = (k, col, w, from = 0) => { c.strokeStyle = col; let on = false; c.beginPath(); for (let j = from; j < secs.length; j++) { const t = secs[j][Math.min(k, secs[j].length - 1)]; if (t.d < 1.5) { on = false; continue; } const q = W3(t.d, t.o, t.h); if (!q) { on = false; continue; } if (!on) { c.lineWidth = Math.max(1, w * q.k); c.moveTo(q.x, q.y); on = true; } else c.lineTo(q.x, q.y); } c.stroke(); };
