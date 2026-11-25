@@ -1565,10 +1565,10 @@
       tone(1170 + r * 60, vol * 0.05, 0.22, { at: t2, bus: b, attack: 0.002 });
       tone(2640 + r * 120, vol * 0.025, 0.12, { at: t2, type: 'triangle', bus: b, attack: 0.002 });
     }
-    function girder(t, vol) { // dentum berongga tiap segmen gelagar jembatan
+    function girder(t, vol, fast) { // dentum berongga tiap segmen gelagar jembatan (cepat: tanpa ketuk sambungan, cukup dentum — hemat suara)
       nz(t, 'lowpass', 190, 0.8, vol * 1.6, 0.2, railBus, 0.004);
       tone(96, vol * 0.9, 0.35, { at: t, to: 82, bus: railBus, attack: 0.004 });
-      clack(t + 0.004, vol * 0.45);
+      if (!fast) clack(t + 0.004, vol * 0.45);
     }
     function klang(t, vol) { // sambungan muai di ujung jembatan
       clack(t, vol * 1.3);
@@ -1842,7 +1842,9 @@
         if (j !== lastGirder) {
           lastGirder = j;
           const vol = clamp(0.018 + v * 0.003, 0.018, 0.075);
-          AXLES.forEach((off, i) => { const d = off / v; if (d < 2.6) girder(t + d, vol * (i % 2 ? 0.75 : 1)); });
+          // anggaran suara: paling banyak ±40 dentum/detik; makin cepat makin sedikit gandar yang dibunyikan (pada kecepatan tinggi dentum menyatu jadi gemuruh)
+          const nA = Math.max(1, Math.min(AXLES.length, Math.floor(14 / Math.max(0.1, v / 12)))), step = AXLES.length / nA;
+          for (let q = 0; q < nA; q++) { const i = Math.floor(q * step), d = AXLES[i] / v; if (d < 2.6) girder(t + d, vol * (i % 2 ? 0.75 : 1) * Math.min(1.6, Math.sqrt(AXLES.length / nA)), v > 30); }
         }
       } else lastGirder = null;
       // sambungan rel: setiap gandar berbunyi sesuai jaraknya
