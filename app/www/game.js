@@ -6955,6 +6955,17 @@
           const sec0 = lead ? secs[0] : secs[secs.length - 1], hCap = 0.95 + (gLoW() - PT.bot) / (PT.top - PT.bot) * 3.1 - 0.25, sec = sec0.filter((t) => t.h < hCap); if (sec.length > 2 && sec[0].d > 1.3) { const P5 = sec.map((t) => W3(t.d, t.o, t.h)); if (!P5.some((t) => !t)) {
             c.fillStyle = night ? '#5a606a' : `rgb(${PT.white.map((v) => Math.round(v * 0.86)).join(',')})`; c.beginPath(); P5.forEach((t, i) => (i ? c.lineTo(t.x, t.y) : c.moveTo(t.x, t.y))); c.closePath(); c.fill();
             c.strokeStyle = night ? 'rgba(0,0,0,0.4)' : 'rgba(90,98,108,0.35)'; c.lineWidth = 1; c.stroke(); } } }
+        if (lead && dn > 2) { // logo nama kereta di muka moncong: huruf mengikuti lengkung hidung, di tengah sabuk warna
+          const NM = DBc.kilat.loco === 'argo' ? 'AGRAVEDA' : (DBc.kilat.livery && DBc.kilat.livery.name) || 'KILAT', hW = 2.12, hs = PT.bot + (hW - 0.95) / 3.1 * (PT.top - PT.bot);
+          let xsC = 0; for (let u = 0; u < 3; u += 0.01) if (PT.top0(u) >= hs) { xsC = u; break; }
+          const sC = clamp((xsC - PT.xTip) / PT.Ls, 0, 1), dC = dn + sC * LN, oC = KO(x0 + dC), n = NM.length, span = Math.min(1.5, 0.2 * n);
+          const pc = W3(dC, oC, hW); if (pc && pc.k > 5) { const fs = clamp(0.3 * pc.k, 5, 60);
+            c.save(); c.font = `italic 900 ${fs.toFixed(1)}px "Big Shoulders Display", sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+            const col = night ? 'rgba(235,240,248,0.85)' : DBc.kilat.loco === 'argo' ? '#ffffff' : '#f4f7fb';
+            for (let i = 0; i < n; i++) { const l = -span / 2 + span * (i + 0.5) / n, back = 0.75 * l * l, q = W3(dC + back, oC + l, hW + 0.01), q2 = W3(dC + back + 0.02, oC + l + 0.05, hW + 0.01); if (!q || !q2) continue;
+              c.save(); c.translate(q.x, q.y); c.rotate(Math.atan2(q2.y - q.y, q2.x - q.x) * 0.6); c.scale(clamp((q2.x - q.x) / (0.05 * q.k + 1e-6), 0.55, 1.1), 1);
+              c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillText(NM[i], 0.6, 0.8); c.fillStyle = col; c.fillText(NM[i], 0, 0); c.restore(); }
+            c.restore(); } }
         { // garis struktur badan: tepi bawah gelap, lipatan sisi bawah (tumblehome) & garis bahu atap berkilau, pintu penumpang
           const full = secs.find((ss) => ss[0].s >= 0.999) || secs[secs.length - 1], kOf = (rr) => full.findIndex((t) => t.a > Math.PI / 2 && t.r < rr);
           const line3 = (k, col, w, from = 0) => { c.strokeStyle = col; let on = false; c.beginPath(); for (let j = from; j < secs.length; j++) { const t = secs[j][Math.min(k, secs[j].length - 1)]; if (t.d < 1.5) { on = false; continue; } const q = W3(t.d, t.o, t.h); if (!q) { on = false; continue; } if (!on) { c.lineWidth = Math.max(1, w * q.k); c.moveTo(q.x, q.y); on = true; } else c.lineTo(q.x, q.y); } c.stroke(); };
