@@ -6849,7 +6849,7 @@
       }
     }
     if (ROUTE.rival && st.bus) { // bus TransKilat modern dilihat dari belakang-samping: kaca hitam panoramik, grafis diagonal, lampu belakang LED vertikal
-      const d = st.bus.x - x0, Tt = ROUTE.tunnel, hidden = Tt && st.bus.x > Tt.from - 12 && st.bus.x - 12 < Tt.to + 12 && !(x0 > Tt.from && x0 < Tt.to);
+      const d = st.bus.x - x0, Tt = ROUTE.tunnel, hidden = Tt && st.bus.x > Tt.from - 15 && st.bus.x - 12 < Tt.to + 12 && !(x0 > Tt.from && x0 < Tt.to);
       if (d > 2 && d < Math.min(FAR, 400) && !hidden) add(d - 12, () => {
         const r0 = d - 12, side = 12.2, far = 14.8, Hb = 3.75, q = (dd, o, h) => W3(dd, o, h);
         const poly = (pts, col) => { if (pts.some((v) => !v)) return false; c.fillStyle = col; c.beginPath(); pts.forEach((v, k) => (k ? c.lineTo(v.x, v.y) : c.moveTo(v.x, v.y))); c.closePath(); c.fill(); return true; };
@@ -7219,7 +7219,8 @@
         for (let i = 0; i < 10; i++) { const d = fa + ((i * 7.3 + st.t * 3) % Math.max(1, fb - fa)), o = -5 + (i * 3.7) % 10; const q0 = W3(d, o, 0.26), q1 = W3(d, o + 1.2, 0.26); if (q0 && q1) { c.beginPath(); c.moveTo(q0.x, q0.y); c.lineTo(q1.x, q1.y); c.stroke(); } }
       });
     }
-    items.sort((a, b) => b.d - a.d).forEach((it) => it.fn());
+    const flushItems = () => items.sort((a, b) => b.d - a.d).forEach((it) => it.fn());
+    if (!(T && !inTun)) flushItems(); // ada mulut terowongan di depan: digambar bersama objek lain menurut jaraknya (bus/pohon yang lebih dekat tidak tertimpa bukit)
     // cipratan air di depan kaca saat menerjang genangan
     if (FLc && st.x > FLc.from && st.x < FLc.to + 4 && st.v > 0.3) {
       c.fillStyle = 'rgba(235,245,250,0.55)';
@@ -7279,7 +7280,7 @@
           c.fillStyle = lg; c.beginPath(); c.moveTo(br.x, br.y); hole.forEach((q) => c.lineTo(q.x, q.y)); c.lineTo(bl.x, bl.y); c.closePath(); c.fill();
         }
       };
-      if (!inTun) portal(T.from - x0, true); else {
+      if (!inTun) { items.push({ d: T.from - x0, fn: () => portal(T.from - x0, true) }); flushItems(); } else {
         // dinding terowongan berbentuk tabung (lengkung tapal kuda), diterangi lampu kereta: terang di dekat, gelap menjauh,
         // sambungan segmen lining tiap 12 m; menggantikan bidang gelap datar sehingga cahaya mengikuti bentuk terowongan
         const RW = 4.3, RH = 7.0, N = 14, dEnd = Math.min(T.to - x0, 260);
