@@ -19,12 +19,7 @@
 <script src="i18n.js"></script>
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="stylesheet" href="style.css">
-<script>/* tinggi layar sebenarnya (iOS: 100vh/inset:0 kadang lebih pendek dari layar saat dibuka mendatar atau setelah diputar) */
-(function () { var d = document.documentElement, set = function () { var h = Math.max(Math.round((window.visualViewport && window.visualViewport.height) || 0), window.innerHeight);
-    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), full = navigator.standalone || !!window.Capacitor || matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
-    if (ios && full && screen.width && screen.height) { var land = window.innerWidth > window.innerHeight, sh = land ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height); h = Math.max(h, sh); } /* aplikasi layar penuh iOS: setinggi layar fisik */ d.style.setProperty('--app-h', h + 'px'); d.style.setProperty('--vh', (h / 100) + 'px'); };
-  var soon = function () { set(); [60, 200, 450, 900].forEach(function (t) { setTimeout(set, t); }); };
-  set(); window.addEventListener('resize', soon); window.addEventListener('orientationchange', soon); window.addEventListener('pageshow', soon); if (window.visualViewport) window.visualViewport.addEventListener('resize', soon); })();</script>
+<script src="viewport.js"></script>
 <style id="splashCss">
 #splash{position:fixed;left:0;right:0;top:0;height:var(--app-h,100dvh);z-index:100;overflow:hidden;color:#fff;text-align:center;font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;
   background:linear-gradient(180deg,#070b10 0%,#0b1016 22%,#14222c 46%,#2a2a2c 60%,#5a3e2a 69%,#a8692e 74%,#d89a48 75%,#141a20 75.2%,#0b1016 100%);transition:opacity .7s ease,visibility .7s}

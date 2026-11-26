@@ -1,0 +1,6 @@
+/* tinggi layar sebenarnya (iOS: 100vh/inset:0 kadang lebih pendek dari layar saat dibuka mendatar atau setelah diputar) */
+(function () { var d = document.documentElement, set = function () { var h = Math.max(Math.round((window.visualViewport && window.visualViewport.height) || 0), window.innerHeight);
+    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), full = navigator.standalone || !!window.Capacitor || matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+    if (ios && full && screen.width && screen.height) { var land = window.innerWidth > window.innerHeight, sh = land ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height); h = Math.max(h, sh); } /* aplikasi layar penuh iOS: setinggi layar fisik */ d.style.setProperty('--app-h', h + 'px'); d.style.setProperty('--vh', (h / 100) + 'px'); };
+  var soon = function () { set(); [60, 200, 450, 900].forEach(function (t) { setTimeout(set, t); }); };
+  set(); window.addEventListener('resize', soon); window.addEventListener('orientationchange', soon); window.addEventListener('pageshow', soon); document.addEventListener('visibilitychange', function () { if (!document.hidden) soon(); }); if (window.visualViewport) window.visualViewport.addEventListener('resize', soon); })();
