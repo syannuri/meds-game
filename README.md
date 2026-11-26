@@ -2,119 +2,119 @@
 
 <img src="docs/play-store/feature-graphic-1024x500.png" alt="Rel Nusantara" width="100%">
 
-# Rel Nusantara · Edisi Masinis
+# Rel Nusantara · Driver's Edition
 
-**Game simulasi masinis kereta api di Jawa & Sumatra, langsung dari peramban HP.**
+**A train driver simulator set across Java & Sumatra, playable right in your phone's browser.**
 
-Bawa Cakra si lokomotif diesel, Argo Senja bertenaga listrik, kereta cepat Guntur & Halilintar hingga **320 km/h**,
-sampai lokomotif uap Surya 1912. Baca sinyal, jaga kenyamanan penumpang, berhenti tepat di marka, dan hidupkan kembali rel Nusantara.
+Drive Cakra the diesel locomotive, the electric Argo Senja, the Guntur and Halilintar high-speed trains at up to **320 km/h**,
+and even the Surya 1912 steam engine. Read the signals, keep your passengers comfortable, stop right on the mark, and bring the Nusantara railway back to life.
 
-### [▶ Main sekarang di syannuri.github.io/meds-game](https://syannuri.github.io/meds-game/)
+### [▶ Play now at syannuri.github.io/meds-game](https://syannuri.github.io/meds-game/)
 
-`15 misi` · `4 babak` · `6 kereta` · `2 pulau` · `Bahasa Indonesia & English` · `iPhone · iPad · Android · Desktop`
+`15 missions` · `4 chapters` · `6 trains` · `2 islands` · `Indonesian & English` · `iPhone · iPad · Android · Desktop`
 
 </div>
 
 ---
 
-## Cuplikan
+## Screenshots
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/menu-utama.jpg" alt="Menu utama"><br><sub><b>Menu utama</b>: karcis misi bergaya karcis kereta lama, Mode Bebas, peta, garasi & kisah kru</sub></td>
-    <td width="50%"><img src="docs/screenshots/kokpit-guntur.jpg" alt="Kokpit layar penuh Guntur"><br><sub><b>Kokpit layar penuh</b>: Guntur melaju 288 km/h di jalur layang saat sore keemasan</sub></td>
+    <td width="50%"><img src="docs/screenshots/menu-utama.jpg" alt="Main menu"><br><sub><b>Main menu</b>: mission cards styled like vintage train tickets, Free Mode, map, garage & crew stories</sub></td>
+    <td width="50%"><img src="docs/screenshots/kokpit-guntur.jpg" alt="Full-screen Guntur cab"><br><sub><b>Full-screen cab</b>: Guntur racing at 288 km/h along an elevated line on a golden afternoon</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/halilintar-badai.jpg" alt="Halilintar menembus badai"><br><sub><b>Halilintar</b> menembus badai di viaduk Lengkung Watu, rel basah & angin samping</sub></td>
-    <td><img src="docs/screenshots/kokpit-argo-senja.jpg" alt="Kokpit Argo Senja"><br><sub><b>Argo Senja</b>: kabin kereta listrik dengan dasbor digital, senja di Kota Kencana</sub></td>
+    <td><img src="docs/screenshots/halilintar-badai.jpg" alt="Halilintar in a storm"><br><sub><b>Halilintar</b> pushing through a storm on the Lengkung Watu viaduct, with wet rails and crosswinds</sub></td>
+    <td><img src="docs/screenshots/kokpit-argo-senja.jpg" alt="Argo Senja cab"><br><sub><b>Argo Senja</b>: electric train cab with a digital dashboard, at dusk near Kota Kencana</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/surya-uap.jpg" alt="Lokomotif uap Surya 1912"><br><sub><b>Surya 1912</b>: lokomotif uap warisan mengepul di lereng Sela</sub></td>
-    <td><img src="docs/screenshots/pagi-cibening.jpg" alt="Pagi di Cibening"><br><sub><b>Pagi berkabut</b> di Cibening, lengkap dengan kartu pos landmark yang bisa dikoleksi</sub></td>
+    <td><img src="docs/screenshots/surya-uap.jpg" alt="Surya 1912 steam locomotive"><br><sub><b>Surya 1912</b>: a heritage steam locomotive puffing up the Sela slopes</sub></td>
+    <td><img src="docs/screenshots/pagi-cibening.jpg" alt="Morning at Cibening"><br><sub><b>Misty morning</b> at Cibening, with collectible landmark postcards</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/kokpit-malam-takbiran.jpg" alt="Kokpit malam takbiran"><br><sub><b>Duel Malam Takbiran</b>: balapan dengan bus TransKilat menuju terowongan Lengkung Watu</sub></td>
-    <td><img src="docs/screenshots/terowongan-malam.jpg" alt="Terowongan malam"><br><sub>Kembang api, terowongan kereta & terowongan jalan raya bus di malam Lebaran</sub></td>
+    <td><img src="docs/screenshots/kokpit-malam-takbiran.jpg" alt="Eid eve cab view"><br><sub><b>Takbiran Night Duel</b>: racing the TransKilat bus toward the Lengkung Watu tunnels</sub></td>
+    <td><img src="docs/screenshots/terowongan-malam.jpg" alt="Tunnels at night"><br><sub>Fireworks, the rail tunnel and the bus road tunnel on Eid eve</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/kokpit-kilat-menoleh.jpg" alt="Menoleh dari kokpit"><br><sub><b>Menoleh</b> ke kiri/kanan dari kokpit dengan geser layar atau memutar ponsel (giroskop)</sub></td>
-    <td><img src="docs/screenshots/mode-bebas.jpg" alt="Mode Bebas"><br><sub><b>Mode Bebas</b>: pilih rute, kereta & suasana sendiri tanpa target</sub></td>
+    <td><img src="docs/screenshots/kokpit-kilat-menoleh.jpg" alt="Looking around from the cab"><br><sub><b>Look around</b> from the cab by dragging the screen or turning your phone (gyroscope)</sub></td>
+    <td><img src="docs/screenshots/mode-bebas.jpg" alt="Free Mode"><br><sub><b>Free Mode</b>: pick your own route, train and atmosphere, with no objectives</sub></td>
   </tr>
 </table>
 
-## Fitur utama
+## Key features
 
-- **Kendali masinis sungguhan**: tuas P1–P4 / N / B1–B4 / EB, rem bertahap, meluncur, rem darurat, pasir untuk rel licin, pantograf untuk kereta listrik, klakson, dan pintu penumpang.
-- **Fisika kereta**: massa rangkaian, tanjakan & turunan, roda selip saat hujan, jarak pengereman yang terasa makin panjang di kecepatan tinggi, dan sentakan yang mengurangi kenyamanan.
-- **Sinyal & aturan jalan**: sinyal blok tiga warna, sinyal semafor tua, batas kecepatan, papan REM, wesel, persilangan di lintas tunggal, perbaikan rel, dan gangguan sinyal acak.
-- **Dua sudut pandang**: tampak samping 2.5D yang sinematik, atau **kokpit** dengan dasbor tiap kereta, kokpit **layar penuh**, dan **menoleh** kiri/kanan (geser layar atau giroskop).
-- **Dunia yang hidup**: sawah berpetak, kebun sawit Sumatra, gunung berlapis, jalur layang & ngarai, terowongan, jembatan, stasiun megah, penumpang yang naik-turun, gajah Sumatra, kambing di rel, bus pesaing, kembang api malam takbiran.
-- **Cuaca & waktu**: fajar, siang, sore keemasan, senja, malam, kabut, hujan, hingga badai yang mereda di tengah perjalanan.
-- **Cerita & karier**: kisah kru yang berlanjut antarmisi, dilema dengan akibat, penumpang tetap yang mengingat kamu, pangkat masinis, sertifikasi lokomotif, medali tantangan, livery spesial, dan album kartu pos.
-- **Rute Harian** dengan kondisi acak setiap hari dan **Mode Bebas** untuk menikmati pemandangan.
-- **Rekaman bayangan (ghost run)** perjalanan terbaikmu, laporan perjalanan lengkap dengan grafik kecepatan, dan mode **Masinis Ahli** tanpa bantuan HUD.
-- **Audio dinamis**: deru mesin, derak rel & wesel, klakson khas tiap kereta, pengumuman stasiun, dan musik adaptif.
-- **Ringan & tanpa instalasi**: HTML5 Canvas + JavaScript murni, grafis adaptif otomatis, bisa dipasang ke layar utama iPhone/iPad/Android.
+- **Real driver controls**: P1–P4 / N / B1–B4 / EB master controller, graduated braking, coasting, emergency brake, sand for slippery rails, pantograph for electric trains, horn and passenger doors.
+- **Train physics**: train mass, gradients, wheel slip in the rain, braking distances that grow at high speed, and jerks that cost passenger comfort.
+- **Signals & rules of the line**: three-aspect block signals, old semaphores, speed limits, BRAKE boards, turnouts, crossings on single track, track works and random signal faults.
+- **Two viewpoints**: a cinematic 2.5D side view, or the **cab view** with a dashboard for each train, a **full-screen cab**, and **looking left/right** (drag the screen or use the gyroscope).
+- **A living world**: patchwork rice fields, Sumatran oil-palm estates, layered mountains, elevated lines and gorges, tunnels, bridges, grand stations, boarding passengers, Sumatran elephants, goats on the track, a rival bus, and Eid eve fireworks.
+- **Weather & time of day**: dawn, midday, golden afternoon, dusk, night, fog, rain, and storms that clear mid-journey.
+- **Story & career**: crew stories that continue across missions, choices with consequences, regular passengers who remember you, driver ranks, locomotive certifications, challenge medals, special liveries and a postcard album.
+- **Daily Route** with new random conditions every day, and **Free Mode** for enjoying the scenery.
+- **Ghost runs** of your best trip, a full trip report with a speed graph, and an **Expert Driver** mode without HUD assists.
+- **Dynamic audio**: engine roar, rail and turnout clatter, a distinct horn for each train, station announcements and adaptive music.
+- **Lightweight, nothing to install**: pure HTML5 Canvas + JavaScript, automatic adaptive graphics, and it can be added to the home screen on iPhone, iPad and Android.
 
-## Kereta
+## Trains
 
-| Kereta | Jenis | Kecepatan | Dipakai di |
+| Train | Type | Top speed | Used in |
 |---|---|---|---|
-| **Cakra** RN 2001 | Lokomotif diesel-elektrik | hingga 150 km/h | Babak 1 & 2 |
-| **Argo Senja** (Agraveda AV 3801) | Kereta listrik 25 kV | 200 km/h | Misi 3-1 |
-| **Kilat G1** | Kereta cepat generasi pertama | 200 km/h | Misi 3-3 |
-| **Guntur** | Kereta cepat | 250 km/h | Misi 3-2 |
-| **Halilintar** | Kereta super cepat | 320 km/h | Misi 3-4 |
-| **Surya 1912** | Lokomotif uap warisan | 100 km/h | Misi 4-1 |
+| **Cakra** RN 2001 | Diesel-electric locomotive | up to 150 km/h | Chapters 1 & 2 |
+| **Argo Senja** (Agraveda AV 3801) | 25 kV electric train | 200 km/h | Mission 3-1 |
+| **Kilat G1** | First-generation high-speed train | 200 km/h | Mission 3-3 |
+| **Guntur** | High-speed train | 250 km/h | Mission 3-2 |
+| **Halilintar** | Very high-speed train | 320 km/h | Mission 3-4 |
+| **Surya 1912** | Heritage steam locomotive | 100 km/h | Mission 4-1 |
 
-## Misi
+## Missions
 
-| Misi | Judul | Rute | Tantangan |
+| Mission | Title | Route | Challenge |
 |---|---|---|---|
-| 1-1 | Langkah Pertama di Depo | Depo Sukamaju → Sukamaju | Mengenal tuas & berhenti di marka |
-| 1-2 | Membaca Sinyal | Sukamaju → Kali Kecil → Cibening | Sinyal & batas kecepatan |
-| 1-3 | Penumpang Pertama | Sukamaju → Sumberrejo → Cibening | Pintu, kenyamanan, klakson di perlintasan |
-| 1-4 | Pagi Pertama Pasar Minggu | Sukamaju → Cibening → Pasar Lama | Kabut, perlintasan, kambing |
-| 1-5 | Hujan di Lengkung Watu | Pasar Lama → Kali Jernih → Watugede | Hujan & petir, terowongan, wesel |
-| 1-6 | Duel Malam Takbiran | Watugede → Pasar Lama → Sukamaju | Balapan bus, kereta penuh pemudik |
-| 1-7 | Bersilang di Krajan | Watugede → Krajan → Kedung Banteng | Persilangan lintas tunggal, pohon tumbang, banjir |
-| 2-1 | Emas Hitam | Tambang Muara Kelam → Dermaga Tanjung Api | Kereta batu bara, muat presisi, gajah |
-| 2-2 | Jalur yang Ditutup | Muara Kelam → Lubuk Tua → Simpang Barisan | Malam gelap, semafor, jembatan kayu |
-| 2-3 | Kereta Rakyat | Simpang Barisan → Pasar Kopi Liwa → Muara Kelam | Menyambung gerbong kopi di hari pasar |
-| 3-1 | Argo Senja | Sukamaju → Kota Kencana | Ekspres listrik 200 km/h saat senja |
-| 3-2 | Guntur di Atas Sawah | Kencana Hub → Padi Raya → Kota Halimun | Kereta cepat 250 km/h di jalur layang |
-| 3-3 | Kilat di Bukit Barisan | Muara Kelam Baru → Lembah Sikai → Kota Barisan | Ngarai, terowongan, kabut pegunungan |
-| 3-4 | Badai di Lengkung Watu | Pasar Lama → … → Tanjung Surya | 320 km/h di tengah badai, sabotase wesel |
-| 4-1 | Uap Pagi di Lereng Sela | Museum Watugede → Halte Sendang → Bukit Kopen | Lokomotif uap, tanjakan, isi air |
+| 1-1 | First Steps at the Depot | Sukamaju Depot → Sukamaju | Learn the controller and stop on the mark |
+| 1-2 | Reading Signals | Sukamaju → Kali Kecil → Cibening | Signals and speed limits |
+| 1-3 | First Passengers | Sukamaju → Sumberrejo → Cibening | Doors, comfort, horn at level crossings |
+| 1-4 | First Sunday Market Morning | Sukamaju → Cibening → Pasar Lama | Fog, level crossings, goats |
+| 1-5 | Rain at Lengkung Watu | Pasar Lama → Kali Jernih → Watugede | Rain and lightning, tunnel, turnout |
+| 1-6 | Takbiran Night Duel | Watugede → Pasar Lama → Sukamaju | Race the bus with a train full of homecoming travellers |
+| 1-7 | Crossing at Krajan | Watugede → Krajan → Kedung Banteng | Single-track crossing, fallen tree, flooding |
+| 2-1 | Black Gold | Muara Kelam Mine → Tanjung Api Wharf | Coal train, precision loading, elephants |
+| 2-2 | The Closed Line | Muara Kelam → Lubuk Tua → Simpang Barisan | Dark night, semaphores, wooden bridge |
+| 2-3 | The People's Train | Simpang Barisan → Pasar Kopi Liwa → Muara Kelam | Coupling the coffee wagon on market day |
+| 3-1 | Argo Senja | Sukamaju → Kota Kencana | 200 km/h electric express at dusk |
+| 3-2 | Guntur over the Rice Fields | Kencana Hub → Padi Raya → Kota Halimun | 250 km/h high-speed train on an elevated line |
+| 3-3 | Kilat in the Bukit Barisan | Muara Kelam Baru → Lembah Sikai → Kota Barisan | Gorges, tunnels, mountain fog |
+| 3-4 | Storm at Lengkung Watu | Pasar Lama → … → Tanjung Surya | 320 km/h through a storm, sabotaged turnout |
+| 4-1 | Morning Steam on Mount Sela | Watugede Museum → Sendang Halt → Bukit Kopen | Steam locomotive, climbs, taking on water |
 
-## Cara bermain
+## How to play
 
-1. Buka **[syannuri.github.io/meds-game](https://syannuri.github.io/meds-game/)** dan putar HP ke posisi **mendatar**.
-2. Pilih misi, baca briefing, lalu tutup pintu dan geser tuas ke **P1–P4** untuk berangkat.
-3. Patuhi sinyal & batas kecepatan, lalu mulai **rem B1–B4** lebih awal agar berhenti tepat di marka.
-4. Raih tiga bintang dari tepat waktu, kenyamanan, dan berhenti presisi.
+1. Open **[syannuri.github.io/meds-game](https://syannuri.github.io/meds-game/)** and turn your phone to **landscape**.
+2. Pick a mission, read the briefing, then close the doors and move the controller to **P1–P4** to depart.
+3. Obey signals and speed limits, and start braking with **B1–B4** early so you stop right on the mark.
+4. Earn three stars for punctuality, comfort and precise stops.
 
-**Pasang seperti aplikasi:**
-- **iPhone / iPad**: buka di Safari → tombol Bagikan → **Tambah ke Layar Utama**.
-- **Android**: buka di Chrome → menu ⋮ → **Instal aplikasi**.
+**Install it like an app:**
+- **iPhone / iPad**: open it in Safari → Share button → **Add to Home Screen**.
+- **Android**: open it in Chrome → ⋮ menu → **Install app**.
 
-**Keyboard (desktop):** `↑/W` tenaga · `↓/S` rem · `Spasi` rem darurat · `H` klakson · `D/Enter` pintu · `A` pasir · `V` ganti tampilan · `Esc` jeda.
+**Keyboard (desktop):** `↑/W` power · `↓/S` brake · `Space` emergency brake · `H` horn · `D/Enter` doors · `A` sand · `V` switch view · `Esc` pause.
 
-## Untuk pengembang
+## For developers
 
 ```bash
 cd app
 npm run serve   # http://localhost:8080
-npm test        # uji asap semua misi (Playwright)
+npm test        # smoke test of every mission (Playwright)
 ```
 
-- Kode game: [`app/www`](app/www) (`index.html`, `game.js`, `style.css`, `i18n.js`), tanpa dependensi.
-- Rancangan game: [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md) · catatan teknis lengkap: [`app/README.md`](app/README.md).
-- Aplikasi Android/iOS dibungkus **Capacitor**; panduan rilis Google Play: [`docs/PLAY_STORE.md`](docs/PLAY_STORE.md).
-- Setiap perubahan di `main` diuji otomatis dan diterbitkan ke GitHub Pages.
+- Game code: [`app/www`](app/www) (`index.html`, `game.js`, `style.css`, `i18n.js`), with no dependencies.
+- Game design: [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md) · full technical notes: [`app/README.md`](app/README.md).
+- The Android/iOS apps are wrapped with **Capacitor**; Google Play release guide: [`docs/PLAY_STORE.md`](docs/PLAY_STORE.md).
+- Every change on `main` is tested automatically and published to GitHub Pages.
 
-## Hak cipta
+## Copyright
 
-© 2026 Prismatix Lab. Semua hak dilindungi. Lihat [LICENSE](LICENSE).
+© 2026 Prismatix Lab. All rights reserved. See [LICENSE](LICENSE).
 
-Semua kereta, livery, operator, stasiun, dan tokoh dalam game ini fiktif.
+All trains, liveries, operators, stations and characters in this game are fictional.
