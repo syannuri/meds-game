@@ -3558,6 +3558,7 @@
       },
     });
     const id = MIS.id;
+    if (MIS.free) return [arrive(`Tiba di ${fname}`), onTime('Tepat waktu', false), smoothStops('Nyaman ≥ 80% · semua berhenti Good', 80)];
     if (id === '1-1') {
       const off = () => { const fs = fin(); return fs ? Math.abs(fs.offset) : null; };
       return [
@@ -3786,7 +3787,7 @@
   }
   let MEDAL_RUN = null;
   function storeMedals() {
-    const id = MIS.daily ? null : MIS.id, got = evalMedals(), prev = id ? medalsOf(id) : [], fresh = got.filter((k) => !prev.includes(k));
+    const id = MIS.daily || MIS.free ? null : MIS.id, got = evalMedals(), prev = id ? medalsOf(id) : [], fresh = got.filter((k) => !prev.includes(k));
     if (id && fresh.length) store.set('rn.medal.' + id, JSON.stringify(prev.concat(fresh)));
     return { id, got, prev, fresh };
   }
@@ -4047,7 +4048,7 @@
   }
   window.addEventListener('resize', () => { if (mode === 'result') fitResult(); });
   // ---------- rapor perjalanan: empat nilai, nilai total & grade, grafik kecepatan, rekaman bayangan terbaik ----------
-  const ghostKey = () => 'rn.ghost.' + (MIS.daily ? 'd' + MIS.daily.key : MIS.id);
+  const ghostKey = () => 'rn.ghost.' + (MIS.free ? `f${MIS.base}.${MIS.free.train}.${MIS.free.mood}` : MIS.daily ? 'd' + MIS.daily.key : MIS.id);
   let GHOST_C = null;
   function ghostData() { const k = ghostKey(); if (GHOST_C && GHOST_C.k === k) return GHOST_C.d; let d = null; try { d = JSON.parse(store.get(k) || 'null'); } catch (e) { d = null; } GHOST_C = { k, d }; return d; }
   function ghostXAt(t) { const g = ghostData(); if (!g || !g.pts.length) return null; const P = g.pts; if (t <= P[0][1]) return P[0][0]; if (t >= P[P.length - 1][1]) return null; // bayangan sudah tiba
@@ -4106,7 +4107,7 @@
     const ecoBonus = ELEC() && !S.failReason && regenPct >= 20 ? 80 : 0;
     if (ecoBonus && !S.ecoGiven) { S.ecoGiven = true; S.coins += ecoBonus; }
     const r = computeResult();
-    const best = MIS.daily ? 3 : bestOf(MIS.id);
+    const best = MIS.daily || MIS.free ? 3 : bestOf(MIS.id);
     const pts0 = totalPoints(), rk0 = rankOf(pts0);
     if (r.stars > best) store.set('relnusantara.best.' + MIS.id, String(r.stars));
     MEDAL_RUN = storeMedals();
@@ -4125,8 +4126,8 @@
       extra += '<div class="reward ahli"><strong>MASINIS AHLI</strong> · tiga bintang tanpa bantuan HUD. Lencana emas ditambahkan ke karcis misi ini.</div>';
     }
     if (r.failed) Sound.failSting(); else Sound.stars(r.stars);
-    $('resTitle').textContent = r.failed ? 'Misi gagal' : 'Misi selesai';
-    const mid = MIS.daily ? `Rute Harian ${MIS.daily.label}` : `Misi ${MIS.id}`;
+    $('resTitle').textContent = MIS.free ? (r.failed ? 'Perjalanan terhenti' : 'Perjalanan selesai') : r.failed ? 'Misi gagal' : 'Misi selesai';
+    const mid = MIS.free ? 'Mode Bebas' : MIS.daily ? `Rute Harian ${MIS.daily.label}` : `Misi ${MIS.id}`;
     $('resEyebrow').textContent = (r.failed ? `${mid} · ${MIS.title}` : `${mid} · tiba ${fmtClock(S.clock)}`) + ` · Masinis ${(MIS.driver || DRIVER).name}` + (S.expert ? ' · Masinis Ahli' : '');
     renderResStars(r.stars, r.failed);
     $('resStars').setAttribute('aria-label', `${r.stars} dari 3 bintang`);
@@ -4647,6 +4648,36 @@
     let n = 0; while (sc[dateKey(d)]) { n++; d.setDate(d.getDate() - 1); }
     return n;
   }
+  // ---------- Mode Bebas: pilih rute, kereta & suasana sendiri; tanpa kejadian acak, tanpa memengaruhi kemajuan karier ----------
+  const FREE_ROUTES = ['1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-2', '3-1', '3-2', '3-3', '3-4', '4-1'];
+  const FREE_TRAINS = { conv: [['asli', 'Asli'], ['cakra', 'Cakra · diesel'], ['argo', 'Argo Senja · listrik'], ['steam', 'Surya 1912 · uap']], hst: [['asli', 'Asli'], ['hst', 'Kilat'], ['hst2', 'Guntur'], ['halilintar', 'Halilintar']] };
+  const FREE_MOODS = [['asli', 'Sesuai rute'], ['pagi', 'Pagi cerah'], ['siang', 'Siang'], ['sore', 'Sore keemasan'], ['senja', 'Senja'], ['malam', 'Malam'], ['hujan', 'Hujan deras']];
+  const freeCfg = () => { let c = {}; try { c = JSON.parse(store.get('rn.free') || '{}') || {}; } catch (e) { c = {}; }
+    if (!FREE_ROUTES.includes(c.base)) c.base = '3-2'; const cls = MISSIONS[c.base].route.lineSpeed >= 200 ? 'hst' : 'conv';
+    if (!FREE_TRAINS[cls].some(([k]) => k === c.train)) c.train = 'asli'; if (!FREE_MOODS.some(([k]) => k === c.mood)) c.mood = 'asli'; return c; };
+  function buildFree(cfg) {
+    const base = MISSIONS[cfg.base], m = JSON.parse(JSON.stringify(Object.assign({}, base, { pal: null })));
+    m.id = 'bebas'; m.free = cfg; m.base = cfg.base; m.pal = base.pal; m.chapter = 'Mode Bebas'; m.tutorial = false; m.goal2 = null;
+    const R = m.route; R.scripts = []; R.tree = null; R.goats = []; R.rival = null; // tanpa gangguan naskah: jalan santai menikmati pemandangan
+    (R.signals || []).forEach((g) => { if (g.start === undefined) g.init = 'G'; });
+    const tr = cfg.train;
+    if (tr !== 'asli') { delete m.digitalCab; delete m.livery;
+      if (tr === 'cakra') delete m.loco; else if (tr === 'halilintar') { m.loco = 'hst2'; m.livery = 'halilintar'; } else m.loco = tr;
+      if (tr === 'steam') m.driver = MISSIONS['4-1'].driver; }
+    const mood = cfg.mood;
+    if (mood !== 'asli') {
+      ['dusk', 'golden', 'day', 'dayCycle', 'dark', 'rain', 'mist'].forEach((k) => delete m[k]); m.rain = false;
+      const P = { pagi: ['dawn', 6 * 3600 + 20 * 60, '1-3', 'pagi cerah'], siang: ['dawn', 10 * 3600 + 30 * 60, '3-3', 'siang cerah', { day: true }], sore: ['dawn', 15 * 3600 + 40 * 60, '3-2', 'sore cerah keemasan', { golden: true, dayCycle: { from: 0.62, to: 0.22 } }],
+        senja: ['dawn', 16 * 3600 + 50 * 60, '3-1', 'senja cerah', { dusk: true, dayCycle: { from: 0.6, to: 0.1 } }], malam: ['night', 19 * 3600 + 30 * 60, '1-6', 'malam cerah'], hujan: ['storm', 15 * 3600 + 30 * 60, '1-5', 'hujan deras', { rain: true }] }[mood];
+      m.sky = P[0]; m.startClock = P[1]; m.pal = MISSIONS[P[2]].pal; m.weather = P[3]; Object.assign(m, P[4] || {});
+      if (mood === 'pagi' && base.sky === 'dawn' && !base.golden && !base.dusk && !base.day) m.pal = base.pal; // pagi di rute yang memang pagi: palet aslinya
+    }
+    const tl = { argo: 'Argo Senja', hst: 'Kilat', hst2: m.livery === 'halilintar' ? 'Halilintar' : 'Guntur', steam: 'Surya' }[m.loco] || 'Cakra';
+    m.title = `${tl} · ${titleCase(R.stations[0].name)} → ${titleCase(R.stations[R.stations.length - 1].name)}`; m.nick = 'Bebas';
+    m.brief = 'Mode Bebas: tanpa target dan tanpa kejadian acak. Nikmati perjalanan, coba kokpit layar penuh, dan berhenti di stasiun sesukamu.';
+    m.intro = `Mode Bebas. ${tl} siap, ${m.weather}. Tutup pintu dan nikmati perjalanan.`; m.reward = '';
+    return m;
+  }
   const ahliSet = () => { try { const a = JSON.parse(store.get('rn.ahli') || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
   let expertOn = store.get('rn.expert') === '1';
   const expertAllowed = (m) => MISSION_ORDER.includes(m.id) && bestOf(m.id) > 0;
@@ -4663,7 +4694,13 @@
         <span class="tbody"><b>Harian · ${bm.nick || bm.title}</b><small>Misi ${D.base} · ${D.daily.mods.join(' · ')}</small><span class="dline">${best ? `Terbaik <strong>${best}</strong>` : 'Rute baru tiap hari'}${streak ? ` · 🔥 ${streak} hari` : ''}</span></span>${dailyArt(D.base)}
       </button></li>`;
     const ahli = ahliSet();
-    $('missionList').innerHTML = dailyLi + MISSION_ORDER.map((id, ix) => {
+    MISSIONS.bebas = buildFree(freeCfg());
+    const FB = MISSIONS.bebas;
+    const freeLi = `<li class="daily free"><button class="ticket t-daily t-free" data-id="bebas">
+        <span class="stub"><small>MODE</small><b>BEBAS</b><small>santai</small></span>
+        <span class="tbody"><b>Mode Bebas</b><small>${FB.title}</small><span class="dline">Pilih rute, kereta &amp; suasana sendiri</span></span>${misArt(FB.base)}
+      </button></li>`;
+    $('missionList').innerHTML = dailyLi + freeLi + MISSION_ORDER.map((id, ix) => {
       const m = MISSIONS[id], b = bestOf(id), st = m.route.stations;
       const route = `${titleCase(st[0].name)} → ${titleCase(st[st.length - 1].name)} · ${clockOf(m.startClock)} · ${m.weather}`;
       const stars = b ? `<span class="tstars" aria-label="${b} dari 3 bintang">${'★'.repeat(b)}<i>${'★'.repeat(3 - b)}</i></span>` : '<span class="tnew">BARU</span>';
@@ -4699,25 +4736,26 @@
   const BRIEF_SHORT = {"3-4": "Bawa Halilintar 320 km/h menembus badai di Lengkung Watu sampai Tanjung Surya. Rel basah: rem jauh lebih awal, ikuti papan REM, waspadai wesel Watu. Badai reda sebelum kota.", "1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Bersilang dengan KA 117 di Kali Kecil: tunggu sinyal S2 hijau.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
   function showBrief() {
     const m = MIS, R = ROUTE, f = finalStation();
-    $('briefEyebrow').textContent = m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
+    $('briefEyebrow').textContent = m.free ? `Mode Bebas · rute Misi ${m.base}` : m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
     $('briefTitle').textContent = m.title;
     setAvatar($('briefAvatar'), m.speaker.initials);
     $('briefWho').textContent = m.speaker.who;
-    $('briefText').textContent = BRIEF_SHORT[m.daily ? m.base : m.id] || m.brief;
+    $('briefText').textContent = m.free ? m.brief : BRIEF_SHORT[m.daily ? m.base : m.id] || m.brief;
     const stops = R.stations.slice(1);
     $('briefFacts').innerHTML = `
       <dt>Rute</dt><dd>${R.stations.map((s) => titleCase(s.name)).join(' → ')}</dd>
       <dt>Jarak</dt><dd>${(f.x / 1000).toFixed(1).replace('.', ',')} km · ${m.freight ? 'muat di tambang, bongkar di dermaga' : `${stops.length} pemberhentian`}</dd>
       ${(() => { const d = m.driver || DRIVER; return `<dt>Masinis</dt><dd class="drv"><span class="drvpic">${PORTRAIT(d.initials) || ''}</span>${d.name}</dd>`; })()}<dt>Kereta</dt><dd>${m.freight ? `Cakra + ${m.wagons} gerbong batu bara` : `${m.loco === 'hst2' ? 'Guntur GT 6001' : m.loco === 'hst' ? 'Kilat G1 KN 5001' : m.loco === 'argo' ? 'Agraveda AV 3801' : m.loco === 'steam' ? 'Lokomotif uap Surya 1912' : 'Cakra'} + ${N_COACH} gerbong ${m.loco === 'hst2' || m.loco === 'hst' ? 'bisnis' : m.loco === 'argo' ? 'eksekutif' : m.loco === 'steam' ? 'wisata' : 'penumpang'}${ROUTE.couple ? ' (+ gerbong kopi di Pasar Kopi Liwa)' : ''}`}</dd>
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
-      <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd><dt>Lintas</dt><dd>Kepercayaan ${trustNow()}% · ${trustBest(m.id) ? `nilai terbaikmu di misi ini ${trustBest(m.id)}` : 'misi ini belum menyumbang'}</dd>${m.tutorial || m.id === '1-1' ? '' : `<dt>Medali</dt><dd class="bmed">${MEDALS.map((q) => `<span title="${q.name}: ${q.tip}">${q.icon}</span>`).join(' ')} <small>+ kejadian acak</small></dd>`}${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
+      <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.free ? '<dt>Mode</dt><dd>Santai · tanpa kejadian acak · tidak mengubah bintang & karier</dd>' : ''}<dt${m.free ? ' hidden' : ''}>Lintas</dt><dd${m.free ? ' hidden' : ''}>Kepercayaan ${trustNow()}% · ${trustBest(m.id) ? `nilai terbaikmu di misi ini ${trustBest(m.id)}` : 'misi ini belum menyumbang'}</dd>${m.tutorial || m.free || m.id === '1-1' ? '' : `<dt>Medali</dt><dd class="bmed">${MEDALS.map((q) => `<span title="${q.name}: ${q.tip}">${q.icon}</span>`).join(' ')} <small>+ kejadian acak</small></dd>`}${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
-      const art = m.daily ? dailyArt(m.base).replace('class="tart"', 'class="bart"') : misArt(m.id).replace('class="tart"', 'class="bart"');
+      const art = m.free ? misArt(m.base).replace('class="tart"', 'class="bart"') : m.daily ? dailyArt(m.base).replace('class="tart"', 'class="bart"') : misArt(m.id).replace('class="tart"', 'class="bart"');
       const x0 = R.stations[0].x, x1 = f.x;
       const pts = R.stations.map((s2, i) => { const u = (s2.x - x0) / Math.max(1, x1 - x0); return `<span class="bst${i === 0 ? ' first' : ''}${i === R.stations.length - 1 ? ' last' : ''}${i % 2 ? ' up' : ''}" style="left:${(u * 100).toFixed(1)}%"><i></i><em>${titleCase(s2.name)}</em><small>${i === 0 ? fmtClock(0) : s2.sched !== undefined ? fmtClock(s2.sched) : ''}</small></span>`; }).join('');
       $('briefHero').innerHTML = `${art}<div class="broute"><div class="brail"></div>${pts}</div>`;
     }
-    $('briefGoals').innerHTML = goalDefs().map((g) => `<li><span class="star">★</span>${g.label}</li>`).join('');
+    $('briefGoals').innerHTML = m.free ? freeOptsHTML(m) : goalDefs().map((g) => `<li><span class="star">★</span>${g.label}</li>`).join('');
+    $('briefGoals').classList.toggle('freeopts', !!m.free);
     const tb = $('btnTutSkip');
     tb.hidden = !TUTORIAL[m.id];
     syncTutSkip();
@@ -4726,6 +4764,13 @@
     showScreen('brief');
     fitBrief();
   }
+  function freeOptsHTML(m) {
+    const c = m.free, cls = MISSIONS[c.base].route.lineSpeed >= 200 ? 'hst' : 'conv';
+    const row = (k, lbl, opts) => `<li class="fo"><span class="fol">${lbl}</span><span class="foc">${opts.map(([v, t]) => `<button type="button" class="chip${c[k] === v ? ' on' : ''}" data-fk="${k}" data-fv="${v}" aria-pressed="${c[k] === v}">${t}</button>`).join('')}</span></li>`;
+    return row('base', 'Rute', FREE_ROUTES.map((id) => [id, `${id} · ${MISSIONS[id].nick || MISSIONS[id].title}`])) + row('train', 'Kereta', FREE_TRAINS[cls]) + row('mood', 'Suasana', FREE_MOODS);
+  }
+  $('briefGoals').addEventListener('click', (e) => { const b = e.target.closest('.chip[data-fk]'); if (!b || !MIS || !MIS.free) return;
+    const c = Object.assign({}, MIS.free, { [b.dataset.fk]: b.dataset.fv }); store.set('rn.free', JSON.stringify(c)); MISSIONS.bebas = buildFree(freeCfg()); Sound.ui('select'); selectMission('bebas'); showBrief(); });
   // halaman deskripsi selalu muat satu layar: perkecil skala huruf sampai tidak perlu digulir
   function fitBrief() {
     const scr = ui.screens.brief, inner = scr && scr.querySelector('.screen-inner'); if (!inner) return;
@@ -4737,7 +4782,7 @@
   function rollEvents() {
     const R = ROUTE; if (!R._base) R._base = { zones: R.zones.slice(), goats: R.goats.slice() };
     R.zones = R._base.zones.slice(); R.goats = R._base.goats.slice(); RAND_EV = [];
-    if (MIS.tutorial || MIS.id === '1-1' || MIS.freight === 'none') return;
+    if (MIS.tutorial || MIS.free || MIS.id === '1-1' || MIS.freight === 'none') return;
     const st = R.stations, last = st[st.length - 1].x, brs = R.bridges || (R.bridge ? [R.bridge] : []);
     const free = (x, pad) => x > st[0].x + 600 && x < last - 700 && !st.some((q) => Math.abs(q.x - x) < 650)
       && !brs.some((b) => x > b.from - pad && x < b.to + pad) && !(R.tunnel && x > R.tunnel.from - pad && x < R.tunnel.to + pad)
@@ -5011,7 +5056,7 @@
   $('btnQuit').addEventListener('click', () => { S = null; showScreen('title'); });
   $('btnContinue').addEventListener('click', () => { Sound.init(); selectMission(nextMissionId()); showBrief(); });
   // peta misi: sorot rute saat karcis disentuh, ketuk rute untuk memilih misi, tab peta/garasi
-  const mapId = (id) => (id === 'daily' && MISSIONS.daily ? MISSIONS.daily.base : id);
+  const mapId = (id) => (id === 'daily' && MISSIONS.daily ? MISSIONS.daily.base : id === 'bebas' && MISSIONS.bebas ? MISSIONS.bebas.base : id);
   $('missionList').addEventListener('pointerover', (e) => { const b = e.target.closest('.ticket'); if (b) titleMap.focus = mapId(b.dataset.id); });
   $('missionList').addEventListener('focusin', (e) => { const b = e.target.closest('.ticket'); if (b) titleMap.focus = mapId(b.dataset.id); });
   document.querySelectorAll('[data-maptab]').forEach((b) => b.addEventListener('click', () => {
