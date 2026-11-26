@@ -5784,11 +5784,12 @@
       for (let i = Math.ceil(x0 / 9); i * 9 < x0 + dMax; i++) {
         const side = hash(i * 1.3) < 0.5 ? -1 : 1, wd = i * 9 + hash(i) * 5, ht = sawit ? 8 + hash(i * 3.7) * 3 : 5 + hash(i * 3.7) * 6;
         // jalur ganda: pohon di kanan bergeser ke luar jalur 2/3 (tidak tumbuh di antara rel, sama seperti tampilan luar)
-        const o = side * (8 + hash(i * 2.1) * 26) + (side > 0 && DBc ? dblO3(wd) : 0) + (side > 0 && ROUTE.meet ? 10 * meetK(wd) : 0); // persilangan: pohon kanan tidak tumbuh di jalur 2
+        const o = (side > 0 && ROUTE.rival ? 23 + hash(i * 2.1) * 16 : side * (8 + hash(i * 2.1) * 26)) + (side > 0 && DBc ? dblO3(wd) : 0) + (side > 0 && ROUTE.meet ? 10 * meetK(wd) : 0); // persilangan: pohon kanan tidak tumbuh di jalur 2
         if (nearStation(wd) && side < 0 && Math.abs(o) < 22) continue;
         if (side < 0 && ROUTE.stations.some((g) => (g.grand || g.grandJ || g.heri || g.bening || g.modern) && wd > g.x - 140 && wd < g.x + 45)) continue;
         if (ROUTE.yard && (ROUTE.yard.rev ? wd - ROUTE.yard.at > -250 && wd - ROUTE.yard.at < 240 : wd > -230 && wd < 250) && Math.abs(o) < 34) continue; // area depo: jalur simpan & gedung dipo, tanpa pohon // halaman terminal megah terbuka (tidak tertutup pohon)
         if (inBrW(wd, 12)) continue;
+        if (side > 0 && ROUTE.rival && ROUTE.tunnel && wd > ROUTE.tunnel.from - 30 && wd < ROUTE.tunnel.to + 20) continue; // jalan raya: pohon kanan tumbuh di luar trotoar (jalur hijau), bukan di aspal; tidak menutupi mulut terowongan jalan
         add(wd - x0, () => {
           const d = wd - x0, b = W3(d, o, 0), t = W3(d, o, ht); if (!b || !t) return;
           const fadeA = 1 - smooth(dMax - 120, dMax, d); if (fadeA <= 0.01) return; c.globalAlpha = fadeA;
