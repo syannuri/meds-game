@@ -5099,14 +5099,31 @@
     b.setAttribute('aria-label', cab ? 'Tampilan samping' : 'Tampilan kabin masinis');
     b.setAttribute('aria-pressed', String(cab));
   }
-  function syncCabFull() { const b = $('btnCabFull'); if (!b) return; b.hidden = viewMode !== 'cab'; b.classList.toggle('on', CAB_FULL); document.body.classList.toggle('cabfull', viewMode === 'cab' && CAB_FULL); b.setAttribute('aria-pressed', String(CAB_FULL)); b.setAttribute('aria-label', CAB_FULL ? 'Tampilkan jendela kokpit' : 'Kokpit layar penuh'); }
+  // menoleh dengan giroskop: memutar ponsel ke kiri/kanan (seperti melihat lewat jendela) di kokpit layar penuh
+  const GYRO = { ok: typeof window.DeviceOrientationEvent !== 'undefined' && matchMedia('(pointer: coarse)').matches, on: false, base: null, head: null, got: false };
+  function gyroHead(e) { // arah hadap punggung ponsel di bidang datar (rad), tidak bergantung orientasi layar
+    if (e.alpha == null || e.beta == null || e.gamma == null) return null; const r = Math.PI / 180, a = e.alpha * r, b = e.beta * r, g = e.gamma * r;
+    const sA = Math.sin(a), cA = Math.cos(a), sB = Math.sin(b), cB = Math.cos(b), sG = Math.sin(g), cG = Math.cos(g);
+    const vx = -(cA * sG + sA * sB * cG), vy = -(sA * sG - cA * sB * cG); if (Math.hypot(vx, vy) < 0.35) return null; // ponsel hampir rata: arah tidak stabil
+    return Math.atan2(vx, vy); }
+  function gyroEv(e) { const h = gyroHead(e); if (h == null) return; GYRO.got = true; GYRO.head = h; if (GYRO.base == null) GYRO.base = h;
+    let d = h - GYRO.base; d = Math.atan2(Math.sin(d), Math.cos(d)); CAB_LOOK_T = clamp(d, -1.15, 1.15); }
+  function gyroOff() { GYRO.on = false; window.removeEventListener('deviceorientation', gyroEv); CAB_LOOK_T = 0; }
+  async function gyroOn() {
+    try { if (typeof DeviceOrientationEvent.requestPermission === 'function' && (await Promise.race([DeviceOrientationEvent.requestPermission(), new Promise((r) => setTimeout(() => r('granted'), 2500))])) === 'denied') { toast('Izin sensor gerak ditolak. Menoleh tetap bisa dengan geser layar.', 'warn', 3, 'view', 1); return; } }
+    catch (_) { toast('Sensor gerak tidak bisa diaktifkan di sini. Menoleh tetap bisa dengan geser layar.', 'warn', 3, 'view', 1); return; }
+    GYRO.on = true; GYRO.base = null; GYRO.got = false; window.addEventListener('deviceorientation', gyroEv); store.set('rn.gyro', '1');
+    toast('Putar ponsel ke kiri/kanan untuk menoleh. Ketuk dua kali untuk menengahkan pandangan.', 'info', 3, 'view', 1);
+    setTimeout(() => { if (GYRO.on && !GYRO.got) { gyroOff(); syncCabFull(); toast('Sensor gerak tidak tersedia di perangkat/peramban ini. Menoleh tetap bisa dengan geser layar.', 'warn', 3.4, 'view', 1); } }, 1600); }
+  function syncCabFull() { const b = $('btnCabFull'); if (!b) return; b.hidden = viewMode !== 'cab'; b.classList.toggle('on', CAB_FULL); document.body.classList.toggle('cabfull', viewMode === 'cab' && CAB_FULL); const g = $('btnGyro'); if (g) { g.hidden = !(viewMode === 'cab' && CAB_FULL && GYRO.ok); g.classList.toggle('on', GYRO.on); g.setAttribute('aria-pressed', String(GYRO.on)); } if (GYRO.on && !(viewMode === 'cab' && CAB_FULL)) gyroOff(); b.setAttribute('aria-pressed', String(CAB_FULL)); b.setAttribute('aria-label', CAB_FULL ? 'Tampilkan jendela kokpit' : 'Kokpit layar penuh'); }
+  $('btnGyro').addEventListener('click', async () => { if (GYRO.on) { gyroOff(); store.set('rn.gyro', '0'); toast('Menoleh dengan ponsel dimatikan.', 'info', 2, 'view', 1); } else await gyroOn(); syncCabFull(); });
   $('btnCabFull').addEventListener('click', () => { CAB_FULL = !CAB_FULL; store.set('rn.cabFull', CAB_FULL ? '1' : '0'); syncCabFull();
     toast(CAB_FULL ? 'Kokpit layar penuh. Geser layar ke kiri/kanan untuk menoleh, ketuk dua kali untuk kembali ke depan.' : 'Jendela kokpit ditampilkan kembali.', 'info', 2.6, 'view', 1); });
   // menoleh di kokpit: geser (drag) layar ke kiri/kanan; ketuk dua kali untuk kembali menghadap depan
   { let drag = null, lastTap = 0;
     const free = (e) => mode === 'play' && viewMode === 'cab' && !e.target.closest('button, input, select, a, .lever, #lever, .screen, #radio, .panel, .sheet, [role="button"], #hud .controls');
-    document.addEventListener('pointerdown', (e) => { if (!free(e)) return; const now = performance.now(); if (now - lastTap < 320) { CAB_LOOK_T = 0; lastTap = 0; drag = null; return; } lastTap = now; drag = { id: e.pointerId, x: e.clientX, L: CAB_LOOK_T }; });
-    document.addEventListener('pointermove', (e) => { if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 6) lastTap = 0; CAB_LOOK_T = clamp(drag.L - dx / window.innerWidth * 1.8, -1.15, 1.15); }); // target; kamera mengejar dengan halus tiap frame
+    document.addEventListener('pointerdown', (e) => { if (!free(e)) return; const now = performance.now(); if (now - lastTap < 320) { CAB_LOOK_T = 0; if (GYRO.on) GYRO.base = GYRO.head; lastTap = 0; drag = null; return; } lastTap = now; drag = { id: e.pointerId, x: e.clientX, L: CAB_LOOK_T }; });
+    document.addEventListener('pointermove', (e) => { if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 6) lastTap = 0; CAB_LOOK_T = clamp(drag.L - dx / window.innerWidth * 1.8, -1.15, 1.15); if (GYRO.on && GYRO.head != null) GYRO.base = GYRO.head - CAB_LOOK_T; }); // giroskop aktif: geser menggeser titik tengahnya // target; kamera mengejar dengan halus tiap frame
     const up = (e) => { if (drag && e.pointerId === drag.id) drag = null; }; document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up); }
   function toggleView() {
     viewMode = viewMode === 'cab' ? 'side' : 'cab'; CAB_LOOK = CAB_LOOK_T = 0; setTimeout(syncCabFull, 0);
