@@ -23,7 +23,7 @@
 [hidden] { display: none !important; }
 
 html, body {
-  height: 100%;
+  height: var(--app-h, 100%);
   margin: 0;
   background: var(--night);
   color: var(--text);
@@ -38,7 +38,7 @@ body {
   -webkit-touch-callout: none;
 }
 
-#game { position: fixed; inset: 0; overflow: hidden; touch-action: none; background: var(--night); }
+#game { position: fixed; left: 0; right: 0; top: 0; height: var(--app-h, 100dvh); overflow: hidden; touch-action: none; background: var(--night); }
 #world { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
@@ -1343,3 +1343,13 @@ body.cabfull #lever { background-color: rgba(8, 12, 18, 0.45); border-radius: 22
 .kch .letter { margin-top: 4px; font-style: italic; color: #f2dca0; }
 .tmeter.sm { height: 5px; margin: 3px 0 3px; }
 .choice.story { border-color: rgba(126,224,138,.6); }
+/* Mode Bebas: pilihan rute, kereta & suasana di halaman deskripsi */
+.goals.freeopts { gap: 8px; }
+.goals.freeopts li.fo { display: block; }
+.goals.freeopts .fol { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
+.goals.freeopts .foc { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.goals.freeopts .foc::-webkit-scrollbar { display: none; }
+.goals.freeopts .chip { flex: none; font: 700 calc(11.5px * var(--bk, 1)) "Plus Jakarta Sans", sans-serif; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: inherit; cursor: pointer; white-space: nowrap; }
+.goals.freeopts .chip.on { background: var(--saffron, #f2a516); border-color: transparent; color: #1b1406; }
+.ticket.t-free .stub { background: linear-gradient(180deg, #f2a516, #b4610f); color: #fff8e8; }
+.ticket.t-free .dline { color: #b4610f; }
