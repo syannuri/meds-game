@@ -626,6 +626,8 @@ h2 { font-family: var(--display); font-weight: 800; font-size: 32px; line-height
 /* tuas: transparan saat diam, jelas saat disentuh atau saat pemain perlu bertindak */
 #lever { transition: opacity 0.35s ease, box-shadow 0.25s ease, transform 0.2s ease; }
 #lever:not(.awake):not(.touch) { opacity: 0.3; }
+body.cabfull #lever:not(.awake):not(.touch) { opacity: 0.72; } /* layar penuh: tanpa panel kokpit, tuas tetap terbaca */
+body.cabfull #lever { background-color: rgba(8, 12, 18, 0.45); border-radius: 22px; }
 #lever.awake { opacity: 0.92; }
 #lever.touch { opacity: 1; box-shadow: 0 0 0 2px rgba(242, 165, 22, 0.75), 0 0 22px rgba(242, 165, 22, 0.45); transform: scale(1.03); }
 #lever.urgent:not(.touch) { opacity: 1; animation: leverPulse 1.1s ease-in-out infinite; }
