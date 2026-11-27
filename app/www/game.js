@@ -5472,6 +5472,7 @@
       const x = x0 + d, dS = bAt(BEND.S, x) - S0, dC = bAt(BEND.C, x) - C0;
       return { z: dC * ch + dS * sh, lat: -(dS * ch - dC * sh), hd: bAt(BEND.H, x) - h0 };
     };
+    const bendLut = () => { const a = new Float32Array(451 * 3); for (let i = 0; i <= 450; i++) { const q = plan(i * 2); a[i * 3] = q.z; a[i * 3 + 1] = q.lat; a[i * 3 + 2] = q.hd; } return a; }; // tabel lengkung rel untuk tanah per piksel di tikungan
     const PO0 = playerO(x0); // kereta pemain di jalur samping (wesel penyeberang / jalur emplasemen): seluruh dunia bergeser
     if (CAB_LOOK !== CAB_LOOK_T) { const dl = CAB_LOOK_T - CAB_LOOK; CAB_LOOK = Math.abs(dl) < 0.002 ? CAB_LOOK_T : CAB_LOOK + dl * (1 - Math.exp(-14 * Math.min(0.05, dtReal || 0.016))); } // menoleh halus
     const LK = CAB_LOOK, lc = Math.cos(LK), ls = Math.sin(LK);
@@ -5494,7 +5495,7 @@
     const SUN = sunPos(Vs), SUNK = inTun || night || storm ? 0 : clamp(1.15 - p * 0.55, 0.45, 1), tNow = performance.now() / 1000; CAB_SUN = SUN;
     const sunRim = SUNK > 0 ? (MIS.golden || MIS.dusk || p < 0.5 ? '255,196,120' : '255,236,200') : '0,0,0';
     if (!inTun) {
-      if (true) { drawHstScenery(c, { x0, hy, f, pan, p, P: BEND ? (z, la, h) => (z < 0.8 ? null : W3(z, la - SEAT * 0, h)) : P, Pg: BEND ? null : Pc, inv: BEND ? null : { PO0, SEAT, lc, ls, EH }, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); } // tikungan: sawah & kebun ikut melengkung bersama rel
+      if (true) { drawHstScenery(c, { x0, hy, f, pan, p, P: BEND ? (z, la, h) => (z < 0.8 ? null : W3(z, la - SEAT * 0, h)) : P, Pg: BEND ? null : Pc, inv: { PO0, SEAT, lc, ls, EH, lut: BEND ? bendLut() : null }, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); } // tikungan: sawah & kebun ikut melengkung bersama rel
       else {
       const ridge = (amp, fq, col, par, ph) => {
         c.fillStyle = col; c.beginPath(); c.moveTo(0, hy + 1);
@@ -7565,22 +7566,29 @@
     const GS = (GFX.fx ? 0.26 : 0.36) * Math.min(1, GFX.q + 0.15), hy = o.hy, f = o.f, cx = o.cx, I = o.inv;
     const bw = Math.max(8, Math.round(W * GS)), y0 = Math.max(0, Math.floor(hy)), bh = Math.max(4, Math.round((H - y0) * GS));
     if (FPX.w !== bw || FPX.h !== bh) { FPX.w = FPX.cv.width = bw; FPX.h = FPX.cv.height = bh; FPX.img = FPX.ctx.createImageData(bw, bh); }
-    const d = FPX.img.data, night = o.night, storm = o.storm, tt = performance.now() / 1000, x0 = o.x0;
-    const greens = pal.greens.map(rgbA), gold = rgbA(pal.gold), wT = rgbA(pal.waterTop), wB = rgbA(pal.waterBot), dyke = rgbA(pal.base), sky0 = rgbA(night ? '#1a2142' : storm ? '#8a96a0' : mix('#e8b98f', '#cfe0e6', pal.p));
+    const LUT = I.lut, d = FPX.img.data, night = o.night, storm = o.storm, tt = performance.now() / 1000, x0 = o.x0;
+    const SAW = !!pal.sawit, soil = rgbA(pal.soil || '#6a5034'), greens = pal.greens.map(rgbA), gold = rgbA(pal.gold), wT = rgbA(pal.waterTop), wB = rgbA(pal.waterBot), dyke = rgbA(pal.base), sky0 = rgbA(night ? '#1a2142' : storm ? '#8a96a0' : mix('#e8b98f', '#cfe0e6', pal.p));
     const wet = !!MIS.rain || storm, sun = o.sun, day = !night && !storm, sunK = night ? 0.45 : storm ? 0.12 : MIS.dusk || MIS.golden ? 1 : 0.8, sunC = night ? [200, 212, 245] : MIS.dusk || MIS.golden ? [255, 206, 140] : [255, 240, 214];
     const sunAz = Math.atan((sun.x - cx) / f), sunEl = Math.max(0.03, Math.atan((hy - sun.y) / f)), wind = tt * 6;
     for (let y = 0; y < bh; y++) { const sy = y0 + (y + 0.5) / GS, row = y * bw * 4; if (sy <= hy + 0.5) { for (let x = 0; x < bw; x++) d[row + x * 4 + 3] = 0; continue; }
       const z2 = I.EH * f / (sy - hy), fp = z2 / (f * GS), fog = 1 - Math.exp(-z2 / (storm ? 260 : night ? 420 : 700)), stripeK = fp < 0.11 ? (fp < 0.03 ? 1 : 1 - (fp - 0.03) / 0.08) : 0, dep = Math.atan(I.EH / z2), de2 = (dep - sunEl) * (dep - sunEl);
       for (let x = 0; x < bw; x++) {
-        const sx = (x + 0.5) / GS, la2 = (sx - cx) * z2 / f, z = z2 * I.lc - la2 * I.ls, la = z2 * I.ls + la2 * I.lc, lat = la + I.PO0 - I.SEAT, wx = x0 + z; // balik proyeksi P (dengan menoleh)
+        const sx = (x + 0.5) / GS, la2 = (sx - cx) * z2 / f; let z = z2 * I.lc - la2 * I.ls, lat = z2 * I.ls + la2 * I.lc + I.PO0 - I.SEAT; // balik proyeksi P (dengan menoleh)
+        if (LUT && z > 0) { const Z = z, LA = lat; let dd = Z, oo = LA; for (let it = 0; it < 2; it++) { const u = Math.min(449.99, dd / 2), i0 = Math.floor(u), t = u - i0, A = i0 * 3, B = A + 3, qz = LUT[A] + (LUT[B] - LUT[A]) * t, ql = LUT[A + 1] + (LUT[B + 1] - LUT[A + 1]) * t, qh = LUT[A + 2] + (LUT[B + 2] - LUT[A + 2]) * t;
+            oo = (LA - ql) / Math.cos(qh); dd = Math.max(0, dd + (Z - (qz + Math.sin(qh) * oo))); } z = dd; lat = oo; } // tikungan: petak mengikuti lengkung rel
+        const wx = x0 + z;
         const j = Math.floor(wx / 16), k = Math.floor(lat / 14), fx = wx - j * 16, fl = lat - k * 14, edge = Math.min(fx, 16 - fx, fl, 14 - fl);
         const h = hash(j * 7.31 + k * 1.93), n1 = fpxNoise(wx * 0.3, lat * 0.3), n2 = fpxNoise(wx * 2, lat * 2);
         let r, g, b, ks = 0.2, aa = 3, bb = 10;
+        if (SAW) { // kebun sawit: tanah merah & tanaman penutup, barisan tanam bergaris gelap, jalan panen
+          if (h < 0.22) { const m = 0.82 + n2 * 0.3; r = soil[0] * m; g = soil[1] * m; b = soil[2] * m; ks = 0.12; }
+          else { const G = greens[Math.floor(h * 97) % greens.length], m = 0.8 + n1 * 0.3 + n2 * 0.12; r = G[0] * m; g = G[1] * m; b = G[2] * m; const rw = ((lat % 9) + 9) % 9; if (rw < 1.6) { const q = 0.78 + rw * 0.08; r *= q; g *= q; b *= q; } ks = 0.14; }
+        } else
         if (h < 0.22) { const rip = fpxNoise(wx * 1.2 + tt * 0.4, lat * 1.2) * 0.14, t = Math.min(1, dep * 6 + rip); r = wB[0] + (wT[0] - wB[0]) * (1 - t); g = wB[1] + (wT[1] - wB[1]) * (1 - t); b = wB[2] + (wT[2] - wB[2]) * (1 - t); ks = 1.5 * (0.7 + rip * 3); aa = 26; bb = 240;
           if (stripeK > 0 && Math.abs((lat * 4) % 1 - 0.5) < 0.12) { const q = stripeK * 0.22; r += (greens[0][0] - r) * q; g += (greens[0][1] - g) * q; b += (greens[0][2] - b) * q; } }
         else if (h < 0.34) { const m = 0.85 + n2 * 0.25; r = gold[0] * m; g = gold[1] * m; b = gold[2] * m; if (stripeK > 0 && Math.abs((wx * 3.5) % 1 - 0.5) < 0.2) { const q = 1 - stripeK * 0.22; r *= q; g *= q; b *= q; } ks = 0.3; }
         else { const G = greens[Math.floor(h * 97) % greens.length], m = 0.84 + n1 * 0.28 + n2 * 0.08; r = G[0] * m; g = G[1] * m; b = G[2] * m; if (stripeK > 0 && Math.abs((lat * 3.2) % 1 - 0.5) < 0.18) { const q = 1 - stripeK * 0.26; r *= q; g *= q; b *= q; } }
-        if (edge < 0.6) { const q = (edge < 0.3 ? 1 : (0.6 - edge) / 0.3) * (fp < 1 ? 1 : 0.5); r += (dyke[0] - r) * q; g += (dyke[1] - g) * q; b += (dyke[2] - b) * q; ks = 0.12; } // pematang
+        if (!SAW && edge < 0.6) { const q = (edge < 0.3 ? 1 : (0.6 - edge) / 0.3) * (fp < 1 ? 1 : 0.5); r += (dyke[0] - r) * q; g += (dyke[1] - g) * q; b += (dyke[2] - b) * q; ks = 0.12; } // pematang
         let lit = 1; if (day) { const cs = fpxNoise((wx + wind) / 70, (lat + wind * 0.4) / 70); lit = 0.74 + 0.26 * (cs < 0.38 ? 0 : cs > 0.62 ? 1 : (cs - 0.38) / 0.24); r *= lit; g *= lit; b *= lit; } // bayangan awan bergerak
         const da = Math.atan((sx - sun.x) / f), sp = ks * sunK * Math.exp(-(da * da * aa + de2 * bb)) * (lit - 0.6) / 0.4; // pantulan matahari/bulan
         if (sp > 0.003) { const q = Math.min(1, sp); r += (sunC[0] - r) * q + sp * 26; g += (sunC[1] - g) * q + sp * 22; b += (sunC[2] - b) * q + sp * 14; }
@@ -7765,7 +7773,9 @@
       const SAWIT = PLANT();
       const greens = night ? ['#34573f', '#3c6347', '#2e4f38', '#385c42'] : SAWIT ? [mix('#3f6a30', '#4f7e3a', p), mix('#4a7436', '#5a8a42', p), mix('#36602c', '#446f34', p), mix('#56703a', '#66843f', p)] : [mix('#4f9a3a', '#5fae44', p), mix('#62a845', '#72bb4e', p), mix('#45883a', '#53993f', p), mix('#74ad47', '#86c152', p)];
       const gold = night ? '#3a3e2a' : SAWIT ? mix('#7a5e3e', '#8e6e48', p) : mix('#b9ae55', '#cdbf62', p), waterTop = night ? '#6474a8' : storm ? '#a9b8c0' : MIS.dusk ? '#ffc08a' : MIS.golden ? '#ffe2ac' : mix('#ffd0a0', '#e4f0f4', p), waterBot = night ? '#1e2640' : storm ? '#6f828e' : MIS.dusk ? '#7e8c9c' : MIS.golden ? '#88a8d4' : mix('#8a98b0', '#8ab8e0', p); // senja: air memantulkan langit tetapi tidak ungu pekat // jauh: cakrawala hangat terpantul, dekat: langit atas
-      if (o.inv && !SAWIT && GFX.fx < 2 && !ROUTE.yard) fieldsPx(c, o, { greens, gold, waterTop, waterBot, base: night ? '#1d2c22' : mix('#a3c48a', '#b5d39a', p), p }); else // sawah per piksel (perspektif sungguhan, tekstur & cahaya dinamis); cadangan: petak poligon
+      const PXF = !!o.inv && GFX.fx < 2; // tanah per piksel (sawah Jawa, kebun sawit, depo, tikungan); kebun sawit tetap memakai tajuk sawit dari petak poligon
+      if (PXF) fieldsPx(c, o, { greens, gold, waterTop, waterBot, base: night ? '#1d2c22' : mix('#a3c48a', '#b5d39a', p), p, sawit: SAWIT, soil: night ? '#2a2418' : mix('#6a5034', '#7e6040', p) });
+      if (!PXF || SAWIT) // sawah per piksel (perspektif sungguhan, tekstur & cahaya dinamis); cadangan: petak poligon
       for (let j = j1; j >= j0; j--) {
         const za = LKs ? j * CL - x0 : Math.max(2.2, j * CL - x0), zb = (j + 1) * CL - x0; if (!LKs && zb <= 2.2) continue;
         for (let k = kLo; k < kHi; k += kStep(k)) {
@@ -7778,7 +7788,7 @@
           if (h < 0.22 && SAWIT) fill = night ? '#2a2418' : mix('#6a5034', '#7e6040', p); // tanah merah perkebunan
           else if (h < 0.22 && q1.y - q3.y < 3) fill = waterBot; else if (h < 0.22) { const wg = c.createLinearGradient(0, q3.y, 0, q1.y); wg.addColorStop(0, waterTop); wg.addColorStop(1, waterBot); fill = wg; }
           else if (h < 0.34) fill = gold; else fill = greens[Math.floor(h * 97) % greens.length];
-          c.fillStyle = fill; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill();
+          if (!PXF) { c.fillStyle = fill; c.beginPath(); c.moveTo(q1.x, q1.y); c.lineTo(q2.x, q2.y); c.lineTo(q3.x, q3.y); c.lineTo(q4.x, q4.y); c.closePath(); c.fill(); }
           if (SAWIT && h >= 0.22 && Math.abs(k) >= 1) { // barisan sawit kebun di kejauhan: tajuk bintang di tiap petak
             const tw = Math.abs(q2.x - q1.x), sc = tw * 0.16; if (sc > 0.7 && sc < 22) for (let r2 = 0; r2 < 2; r2++) {
               // sawit muda: batang pendek gelap + tajuk bulat rimbun (bukan tonggak telanjang); pelepah baru digambar bila cukup dekat
@@ -7813,7 +7823,7 @@
                 c.fillStyle = `rgba(255,252,240,${(0.8 * near * tw).toFixed(3)})`; c.fillRect(sx2 - 1, sy2 - 0.5, 2 + ch2 * 0.04, 1); }
               c.restore(); }
           }
-          else if (h > 0.34 && (q1.y - q3.y) > 6) { // alur tanaman padi mengarah ke titik hilang
+          else if (!PXF && h > 0.34 && (q1.y - q3.y) > 6) { // alur tanaman padi mengarah ke titik hilang
             c.strokeStyle = 'rgba(255,255,255,0.08)'; c.lineWidth = 1; c.beginPath();
             for (let r = 1; r < 4; r++) { const a2 = P(za + 0.6, la + (CW * r) / 4, 0), b2 = P(zb - 0.6, la + (CW * r) / 4, 0); if (a2 && b2) { c.moveTo(a2.x, a2.y); c.lineTo(b2.x, b2.y); } } c.stroke();
           }
