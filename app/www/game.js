@@ -4352,7 +4352,7 @@
   // ---------- layar pembuka: muat font & render awal, lalu "Ketuk untuk mulai" (membuka audio & mengunci mendatar) ----------
   function bootSplash() {
     const sp = $('splash'), SPL = window.__splash; if (!sp || !SPL) return;
-    { const hi = $('spHeroImg'); if (hi) { try { hi.src = heroTrainImg(); hi.classList.add('in'); } catch (e) { /* tanpa ilustrasi */ } } }
+    { const hi = $('spHeroImg'); if (hi && getComputedStyle(hi.parentNode).display !== 'none') { try { hi.src = heroTrainImg(); hi.classList.add('in'); } catch (e) { /* tanpa ilustrasi */ } } }
     if (navigator.webdriver) { sp.remove(); return; } // uji otomatis: lewati
     let k = 0; const say = () => SPL.msgs[k++ % SPL.msgs.length];
     SPL.set(35, say());
