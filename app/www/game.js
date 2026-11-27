@@ -3526,10 +3526,36 @@
     renderLever();
   }
 
+  // ---------- adegan sinematik (video 3D pembuka & penutup) ----------
+  const CUTS = {
+    '3-1': {
+      intro: { src: 'argo-intro.mp4', sub: 'Babak 3 · Ekspres Jawa', title: 'Argo Senja', line: 'Sukamaju → Kota Kencana · berangkat 16.50' },
+      mid: { src: 'argo-jembatan.mp4', at: 11210, sub: 'Kilometer 11', title: 'Jembatan Kali Kencana', line: 'Melesat di atas sungai saat matahari terbenam' },
+      outro: { src: 'argo-outro.mp4', sub: 'Tiba petang', title: 'Kota Kencana', line: 'Lampu kota menyambut Argo Senja' },
+    },
+  };
+  function playCine(clip, done) {
+    const box = $('cine'), v = $('cineVid');
+    if (!clip || !box || !v || navigator.webdriver) { done(); return; }
+    let over = false, guard = 0;
+    const end = () => { if (over) return; over = true; clearTimeout(guard); box.classList.add('out'); box.classList.remove('on');
+      setTimeout(() => { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) { /* abaikan */ } box.hidden = true; box.classList.remove('out'); }, 520); done(); };
+    const cap = $('cineCap'); cap.querySelector('small').textContent = clip.sub; cap.querySelector('b').textContent = clip.title; cap.querySelector('em').textContent = clip.line;
+    if (window.RN_i18n) window.RN_i18n.walk(cap);
+    box.hidden = false; requestAnimationFrame(() => box.classList.add('on'));
+    v.onended = end; v.onerror = end; $('cineSkip').onclick = end;
+    v.muted = Sound.muted ? true : false; v.volume = 0.8; v.src = clip.src;
+    guard = setTimeout(() => { if (v.readyState < 2) end(); }, 4000); // jaringan lambat: langsung main
+    v.oncanplay = () => clearTimeout(guard);
+    const pr = v.play(); if (pr && pr.catch) pr.catch(() => { v.muted = true; v.play().catch(end); });
+  }
+  const cineOf = (kind) => (MIS && !MIS.free && !MIS.daily && CUTS[MIS.id] ? CUTS[MIS.id][kind] : null);
+
   // ---------- akhir misi ----------
   function finish() {
     S.mode = 'done';
-    showResult();
+    const c = cineOf('outro');
+    if (c) setTimeout(() => playCine(c, showResult), 900); else showResult();
   }
 
   // ---------- target bintang: tiga sasaran per misi, dinilai langsung saat bermain ----------
@@ -5120,7 +5146,7 @@
     if (next) { selectMission(next); showBrief(); }
   });
   $('btnBack').addEventListener('click', () => showScreen('title'));
-  $('btnGo').addEventListener('click', () => { Sound.init(); startMission(); });
+  $('btnGo').addEventListener('click', () => { Sound.init(); const c = cineOf('intro'); if (c) playCine(c, startMission); else startMission(); });
   $('btnAgain').addEventListener('click', () => { Sound.init(); startMission(); });
   $('btnMenu').addEventListener('click', () => { S = null; showScreen('title'); });
   const SPK_ON = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -17029,7 +17055,10 @@ c.restore();
     }
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (mode === 'play' && S && (S.mode === 'play' || S.mode === 'fail')) {
+    if (mode === 'play' && S && S.mode === 'play' && !S.cineHold && !S.midCine) { // adegan sinematik di tengah misi: fisika dibekukan selama video
+      const mc = cineOf('mid'); if (mc && S.x >= mc.at && S.v > 8) { S.midCine = true; S.cineHold = true; playCine(mc, () => { S.cineHold = false; acc = 0; last = performance.now(); }); }
+    }
+    if (mode === 'play' && S && !S.cineHold && (S.mode === 'play' || S.mode === 'fail')) {
       const speed = window.__rn ? window.__rn.speed : 1;
       acc += dt * speed;
       let guard = 0;
