@@ -5782,6 +5782,22 @@
           c.lineCap = 'butt';
         });
       }
+      if (!PLANT() && !MIS.paddy && !inTun && GFX.fx < 2) { // kampung di kiri-kanan sawah (Jawa): kelompok rumah tiap ±120 m, diterangi dari arah matahari, berbayang & berkabut sesuai jarak
+        const HS = houseSprites(night, p, SUN.x > W / 2 ? 1 : -1, SUNK);
+        for (let g = Math.ceil((x0 - 20) / 120); g * 120 < x0 + Math.min(FAR, 460); g++) {
+          if (hash(g * 3.7 + 1) < 0.35) continue; const side = hash(g * 5.1) < 0.5 ? -1 : 1, gx = g * 120 + hash(g * 2.3) * 60, base0 = side * (34 + hash(g * 7.9) * 90);
+          if (nearStation(gx) || inBrW(gx, 30) || (ROUTE.tunnel && gx > ROUTE.tunnel.from - 80 && gx < ROUTE.tunnel.to + 40) || (ROUTE.yard && Math.abs(gx - (ROUTE.yard.at || 0)) < 300)) continue;
+          if (side > 0 && ROUTE.rival && base0 < 45) continue;
+          const n = 2 + Math.floor(hash(g * 4.4) * 4);
+          for (let q = 0; q < n; q++) { const wd = gx + q * (10 + hash(g + q) * 6), o2 = base0 + side * (hash(g * 9 + q) - 0.5) * 22 + (side > 0 && DBc ? dblO3(wd) : 0), v = Math.floor(hash(g * 11 + q * 3) * 4), sc = 0.9 + hash(g * 13 + q) * 0.3;
+            add(wd - x0, () => { const d = wd - x0, b = W3(d, o2, 0); if (!b) return; const img = HS[v], ph = 6.4 * sc * b.k, pw = ph * 320 / 230; if (b.x + pw < -40 || b.x - pw > W + 40) return;
+              const fade = clamp(1 - (d - 220) / 260, 0, 1); if (fade <= 0.01) return; const by = b.y + ph * (26 / 230); // garis tanah sprite di 204/230
+              if (SUNK > 0) { const sS = SUN.x > b.x ? 1 : -1; c.fillStyle = `rgba(20,28,14,${(0.24 * SUNK * fade).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sS * pw * 0.35, b.y + 0.2 * b.k, pw * 0.62, Math.max(1, 0.9 * b.k), 0, 0, 7); c.fill(); }
+              c.globalAlpha = fade; c.drawImage(img, b.x - pw / 2, by - ph, pw, ph);
+              if (night) { c.save(); c.globalCompositeOperation = 'lighter'; const R = pw * 0.7, gl = c.createRadialGradient(b.x, by - ph * 0.35, 0, b.x, by - ph * 0.35, R); gl.addColorStop(0, `rgba(255,190,110,${(0.32 * fade).toFixed(3)})`); gl.addColorStop(1, 'rgba(255,190,110,0)'); c.fillStyle = gl; c.fillRect(b.x - R, by - ph * 0.35 - R, R * 2, R * 2); c.restore(); }
+              c.globalAlpha = 1; }); }
+        }
+      }
       const sawit = PLANT();
       for (let i = Math.ceil(x0 / 9); i * 9 < x0 + dMax; i++) {
         const side = hash(i * 1.3) < 0.5 ? -1 : 1, wd = i * 9 + hash(i) * 5, ht = sawit ? 8 + hash(i * 3.7) * 3 : 5 + hash(i * 3.7) * 6;
@@ -5802,7 +5818,7 @@
           if (tD > 0) {
             const hDet = palm ? 8 + hash(i + 2) * 5 : (3.4 + hash(i + 7) * 1.6) * 1.35 + 1.2 + hash(i + 6) * 1.2, sS = SUN.x > b.x ? 1 : -1, kk = b.k * ht / hDet;
             c.globalAlpha = fadeA * tD;
-            if (SUNK > 0) { c.fillStyle = `rgba(20,30,10,${(0.22 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sS * ht * 0.35 * b.k, b.y + 0.15 * b.k, ht * 0.45 * b.k, 0.45 * b.k, 0, 0, 7); c.fill(); }
+            if (SUNK > 0) { const sl = 0.45 + 0.6 * clamp((SUN.y - H * 0.05) / (hy - H * 0.05), 0, 1); c.fillStyle = `rgba(20,30,10,${(0.26 * SUNK).toFixed(3)})`; c.beginPath(); c.ellipse(b.x - sS * ht * sl * 0.5 * b.k, b.y + 0.15 * b.k, ht * sl * 0.55 * b.k, 0.5 * b.k, 0, 0, 7); c.fill(); } // bayangan memanjang menjauhi matahari (lebih panjang saat matahari rendah)
             c.save(); c.translate(b.x, 0); c.scale(sS, 1);
             if (MIS.paddy) treeMix(c, { night, rimA: SUNK > 0 ? 0.6 : 0, rim: `rgb(${sunRim})` }, 0, b.y, i, b.k, p, hash(i * 5.3));
             else (palm ? treeCoconut : treeBroadleaf)(c, { night, rimA: SUNK > 0 ? 0.6 : 0, rim: `rgb(${sunRim})` }, 0, b.y, i, kk, p);
@@ -7567,6 +7583,47 @@
     }
     FPX.ctx.putImageData(FPX.img, 0, 0);
     c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; c.drawImage(FPX.cv, 0, y0, W, bh / GS); c.restore();
+  }
+  // ---------- rumah desa untuk kokpit: limasan berteras, rumah tembok beratap seng, rumah panggung kayu, warung bertenda.
+  // Sprite dibuat sekali per suasana (siang/malam, arah matahari) lalu diskalakan sesuai jarak ----------
+  const HOUSE_SPR = { key: '', list: null };
+  function houseSprites(night, p, sd, lit) {
+    const key = `${night ? 1 : 0}|${Math.round(p * 10)}|${sd}|${Math.round(lit * 4)}`; if (HOUSE_SPR.key === key) return HOUSE_SPR.list;
+    const dk = night ? 0.34 : 0.82 + 0.18 * p, L = (col, k) => `rgb(${col.map((x) => Math.round(clamp(x * k * dk, 0, 255))).join(',')})`;
+    const mk = (v) => { const cv = document.createElement('canvas'); cv.width = 320; cv.height = 230; const c = cv.getContext('2d');
+      const wallCol = [[232, 220, 196], [214, 222, 214], [190, 150, 110], [226, 210, 180]][v], roofCol = [[166, 76, 50], [70, 110, 120], [120, 80, 56], [40, 110, 150]][v];
+      const win = (x, y) => { c.fillStyle = L([240, 236, 226], 1); c.fillRect(x - 3, y - 3, 34, 36); c.fillStyle = night ? '#ffc56a' : L([46, 58, 70], 1); c.fillRect(x, y, 28, 30); c.strokeStyle = L([230, 226, 214], 1); c.lineWidth = 2; c.beginPath(); c.moveTo(x + 14, y); c.lineTo(x + 14, y + 30); c.moveTo(x, y + 15); c.lineTo(x + 28, y + 15); c.stroke(); if (!night) { c.fillStyle = 'rgba(255,255,255,0.2)'; c.fillRect(x + 2, y + 2, 10, 11); } };
+      if (v === 2) { // rumah panggung kayu bertangga
+        c.fillStyle = L([70, 52, 38], 1); for (const x of [70, 120, 200, 250]) c.fillRect(x, 150, 8, 54);
+        c.fillStyle = L(wallCol, 0.95); c.fillRect(60, 90, 200, 62); c.strokeStyle = L(wallCol, 0.7); c.lineWidth = 1; for (let x = 64; x < 260; x += 8) { c.beginPath(); c.moveTo(x, 90); c.lineTo(x, 152); c.stroke(); }
+        c.fillStyle = L(wallCol, 0.7); c.fillRect(60, 90, 34, 62);
+        c.fillStyle = L(roofCol, 1); c.beginPath(); c.moveTo(40, 96); c.lineTo(110, 36); c.lineTo(210, 36); c.lineTo(282, 96); c.closePath(); c.fill();
+        c.fillStyle = L(roofCol, 0.7); c.beginPath(); c.moveTo(40, 96); c.lineTo(110, 36); c.lineTo(110, 96); c.closePath(); c.fill();
+        if (lit > 0) { c.fillStyle = `rgba(255,214,150,${0.2 * lit})`; c.beginPath(); c.moveTo(210, 36); c.lineTo(282, 96); c.lineTo(240, 96); c.lineTo(180, 36); c.closePath(); c.fill(); }
+        c.fillStyle = L([90, 70, 50], 1); c.fillRect(140, 150, 40, 6); for (let i = 0; i < 5; i++) c.fillRect(150 + i * 3, 156 + i * 9, 22, 3);
+        win(120, 104); win(200, 104); return cv; }
+      c.fillStyle = L(wallCol, 0.95); c.fillRect(40, 92, 240, 108); c.fillStyle = L(wallCol, 0.72); c.fillRect(40, 92, 52, 108);
+      c.fillStyle = L([120, 110, 100], 1); c.fillRect(36, 196, 248, 8);
+      if (v === 0 || v === 3) { c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(92, 120, 188, 76); c.fillStyle = L([110, 80, 56], 1); for (const x of [96, 150, 210, 270]) c.fillRect(x, 118, 7, 80);
+        c.fillStyle = L([120, 88, 60], 1); c.fillRect(92, 168, 188, 4); for (let x = 96; x < 276; x += 10) c.fillRect(x, 172, 3, 24); }
+      if (v !== 1) { // atap limasan genteng dengan bubungan
+        c.fillStyle = L(roofCol, 1); c.beginPath(); c.moveTo(18, 100); c.lineTo(108, 30); c.lineTo(212, 30); c.lineTo(302, 100); c.closePath(); c.fill();
+        c.fillStyle = L(roofCol, 0.68); c.beginPath(); c.moveTo(18, 100); c.lineTo(108, 30); c.lineTo(108, 100); c.closePath(); c.fill();
+        c.strokeStyle = L(roofCol, 0.5); c.lineWidth = 1; for (let y = 38; y < 100; y += 6) { const t = (y - 30) / 70; c.beginPath(); c.moveTo(lerp(108, 18, t), y); c.lineTo(lerp(212, 302, t), y); c.stroke(); }
+        c.fillStyle = L(roofCol, 0.45); c.fillRect(106, 26, 108, 6);
+        if (lit > 0) { c.fillStyle = `rgba(255,214,150,${0.2 * lit})`; c.beginPath(); c.moveTo(212, 30); c.lineTo(302, 100); c.lineTo(250, 100); c.lineTo(190, 30); c.closePath(); c.fill(); }
+      } else { // atap pelana seng bergelombang
+        c.fillStyle = L(roofCol, 1); c.beginPath(); c.moveTo(24, 98); c.lineTo(160, 34); c.lineTo(296, 98); c.closePath(); c.fill();
+        c.fillStyle = L(roofCol, 0.7); c.beginPath(); c.moveTo(24, 98); c.lineTo(92, 66); c.lineTo(92, 98); c.closePath(); c.fill();
+        c.strokeStyle = L(roofCol, 1.25); c.lineWidth = 1; for (let x = 30; x < 292; x += 6) { const y = 98 - Math.max(0, 64 - Math.abs(x - 160) * 0.47); c.beginPath(); c.moveTo(x, y + 2); c.lineTo(x, 98); c.stroke(); }
+        c.fillStyle = L(wallCol, 0.88); c.beginPath(); c.moveTo(92, 92); c.lineTo(160, 50); c.lineTo(228, 92); c.closePath(); c.fill(); c.fillStyle = L([60, 64, 70], 1); c.fillRect(150, 66, 20, 14);
+      }
+      win(116, 122); win(236, 122); c.fillStyle = L([96, 66, 44], 1); c.fillRect(172, 132, 34, 66); c.fillStyle = L([70, 48, 32], 1); c.fillRect(176, 138, 12, 24); c.fillRect(190, 138, 12, 24); c.fillStyle = '#d8b04a'; c.fillRect(200, 166, 3, 3);
+      if (v === 3) { c.fillStyle = L([200, 60, 50], 1); c.beginPath(); c.moveTo(100, 112); c.lineTo(290, 112); c.lineTo(296, 128); c.lineTo(94, 128); c.closePath(); c.fill(); c.fillStyle = L([240, 230, 210], 1); for (let x = 104; x < 290; x += 24) c.fillRect(x, 112, 12, 16); }
+      c.fillStyle = L([46, 110, 50], 1); for (const x of [56, 300]) { c.beginPath(); c.arc(x, 192, 12, 0, 7); c.fill(); } c.fillStyle = L([150, 90, 60], 1); c.fillRect(50, 194, 12, 8); c.fillRect(294, 194, 12, 8);
+      if (sd < 0) { const m = document.createElement('canvas'); m.width = 320; m.height = 230; const mc = m.getContext('2d'); mc.translate(320, 0); mc.scale(-1, 1); mc.drawImage(cv, 0, 0); return m; } // cahaya dari kiri: cerminkan
+      return cv; };
+    HOUSE_SPR.key = key; HOUSE_SPR.list = [0, 1, 2, 3].map(mk); return HOUSE_SPR.list;
   }
   function drawHstScenery(c, o) {
     const { x0, hy, f, pan, p, P, night } = o, storm = !!o.storm, tt = performance.now() / 1000;
