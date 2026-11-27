@@ -18,6 +18,10 @@
 
   var D = {
 "Babak 1 · Jawa": "Chapter 1 · Java",
+"Lewati ›": "Skip ›",
+"Sukamaju → Kota Kencana · berangkat 16.50": "Sukamaju → Kota Kencana · departs 16:50",
+"Tiba petang": "Arriving at dusk",
+"Lampu kota menyambut Argo Senja": "The city lights welcome the Argo Senja",
 "Game tersimpan di perangkat: kini bisa dimainkan tanpa internet.": "Game saved on this device: you can now play without internet.",
 "Langkah Pertama di Depo": "First Steps at the Depot",
 "Kenalan Cakra": "Meet Cakra",
