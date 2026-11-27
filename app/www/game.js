@@ -7567,6 +7567,7 @@
     const bw = Math.max(8, Math.round(W * GS)), y0 = Math.max(0, Math.floor(hy)), bh = Math.max(4, Math.round((H - y0) * GS));
     if (FPX.w !== bw || FPX.h !== bh) { FPX.w = FPX.cv.width = bw; FPX.h = FPX.cv.height = bh; FPX.img = FPX.ctx.createImageData(bw, bh); }
     const LUT = I.lut, d = FPX.img.data, night = o.night, storm = o.storm, tt = performance.now() / 1000, x0 = o.x0;
+    const RIV = (ROUTE.bridges || (ROUTE.bridge ? [ROUTE.bridge] : [])).filter((B) => !B.land).map((B) => [B.from + 4, B.to - 4, !!B.viaduct]), rivC = rgbA(night ? '#232a55' : mix('#5f8ea2', '#86bdd0', pal.p)), forC = rgbA(night ? '#18261c' : mix('#2c6a34', '#357a3c', pal.p)); // sungai di bawah jembatan: berlaku ke segala arah (juga saat menoleh)
     const SAW = !!pal.sawit, soil = rgbA(pal.soil || '#6a5034'), greens = pal.greens.map(rgbA), gold = rgbA(pal.gold), wT = rgbA(pal.waterTop), wB = rgbA(pal.waterBot), dyke = rgbA(pal.base), sky0 = rgbA(night ? '#1a2142' : storm ? '#8a96a0' : mix('#e8b98f', '#cfe0e6', pal.p));
     const wet = !!MIS.rain || storm, sun = o.sun, day = !night && !storm, sunK = night ? 0.45 : storm ? 0.12 : MIS.dusk || MIS.golden ? 1 : 0.8, sunC = night ? [200, 212, 245] : MIS.dusk || MIS.golden ? [255, 206, 140] : [255, 240, 214];
     const sunAz = Math.atan((sun.x - cx) / f), sunEl = Math.max(0.03, Math.atan((hy - sun.y) / f)), wind = tt * 6;
@@ -7579,7 +7580,13 @@
         const wx = x0 + z;
         const j = Math.floor(wx / 16), k = Math.floor(lat / 14), fx = wx - j * 16, fl = lat - k * 14, edge = Math.min(fx, 16 - fx, fl, 14 - fl);
         const h = hash(j * 7.31 + k * 1.93), n1 = fpxNoise(wx * 0.3, lat * 0.3), n2 = fpxNoise(wx * 2, lat * 2);
-        let r, g, b, ks = 0.2, aa = 3, bb = 10;
+        let r, g, b, ks = 0.2, aa = 3, bb = 10, rv = null;
+        for (let q = 0; q < RIV.length; q++) if (wx > RIV[q][0] && wx < RIV[q][1]) { rv = RIV[q]; break; }
+        const al = Math.abs(lat);
+        if (rv && al > 4 && al < (rv[2] ? 220 : 200)) { // permukaan sungai (atau tebing hutan ngarai di bawah viaduk)
+          if (rv[2] && al > 90) { const m = 0.75 + n1 * 0.4; r = forC[0] * m; g = forC[1] * m; b = forC[2] * m; ks = 0.1; }
+          else { const rip = fpxNoise(wx * 0.9 + tt * 0.6, lat * 0.9) * 0.16, t = Math.min(1, dep * 5 + rip); r = rivC[0] + (wT[0] - rivC[0]) * (1 - t) * 0.6; g = rivC[1] + (wT[1] - rivC[1]) * (1 - t) * 0.6; b = rivC[2] + (wT[2] - rivC[2]) * (1 - t) * 0.6; ks = 1.4 * (0.7 + rip * 3); aa = 22; bb = 200; }
+        } else
         if (SAW) { // kebun sawit: tanah merah & tanaman penutup, barisan tanam bergaris gelap, jalan panen
           if (h < 0.22) { const m = 0.82 + n2 * 0.3; r = soil[0] * m; g = soil[1] * m; b = soil[2] * m; ks = 0.12; }
           else { const G = greens[Math.floor(h * 97) % greens.length], m = 0.8 + n1 * 0.3 + n2 * 0.12; r = G[0] * m; g = G[1] * m; b = G[2] * m; const rw = ((lat % 9) + 9) % 9; if (rw < 1.6) { const q = 0.78 + rw * 0.08; r *= q; g *= q; b *= q; } ks = 0.14; }
@@ -7588,7 +7595,7 @@
           if (stripeK > 0 && Math.abs((lat * 4) % 1 - 0.5) < 0.12) { const q = stripeK * 0.22; r += (greens[0][0] - r) * q; g += (greens[0][1] - g) * q; b += (greens[0][2] - b) * q; } }
         else if (h < 0.34) { const m = 0.85 + n2 * 0.25; r = gold[0] * m; g = gold[1] * m; b = gold[2] * m; if (stripeK > 0 && Math.abs((wx * 3.5) % 1 - 0.5) < 0.2) { const q = 1 - stripeK * 0.22; r *= q; g *= q; b *= q; } ks = 0.3; }
         else { const G = greens[Math.floor(h * 97) % greens.length], m = 0.84 + n1 * 0.28 + n2 * 0.08; r = G[0] * m; g = G[1] * m; b = G[2] * m; if (stripeK > 0 && Math.abs((lat * 3.2) % 1 - 0.5) < 0.18) { const q = 1 - stripeK * 0.26; r *= q; g *= q; b *= q; } }
-        if (!SAW && edge < 0.6) { const q = (edge < 0.3 ? 1 : (0.6 - edge) / 0.3) * (fp < 1 ? 1 : 0.5); r += (dyke[0] - r) * q; g += (dyke[1] - g) * q; b += (dyke[2] - b) * q; ks = 0.12; } // pematang
+        if (!SAW && !rv && edge < 0.6) { const q = (edge < 0.3 ? 1 : (0.6 - edge) / 0.3) * (fp < 1 ? 1 : 0.5); r += (dyke[0] - r) * q; g += (dyke[1] - g) * q; b += (dyke[2] - b) * q; ks = 0.12; } // pematang
         let lit = 1; if (day) { const cs = fpxNoise((wx + wind) / 70, (lat + wind * 0.4) / 70); lit = 0.74 + 0.26 * (cs < 0.38 ? 0 : cs > 0.62 ? 1 : (cs - 0.38) / 0.24); r *= lit; g *= lit; b *= lit; } // bayangan awan bergerak
         const da = Math.atan((sx - sun.x) / f), sp = ks * sunK * Math.exp(-(da * da * aa + de2 * bb)) * (lit - 0.6) / 0.4; // pantulan matahari/bulan
         if (sp > 0.003) { const q = Math.min(1, sp); r += (sunC[0] - r) * q + sp * 26; g += (sunC[1] - g) * q + sp * 22; b += (sunC[2] - b) * q + sp * 14; }
