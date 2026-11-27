@@ -7401,7 +7401,14 @@
     applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0, cab: true, night, storm, sun: SUN });
     cabZoomBlur(c, cx - Math.tan(clamp(CAB_LOOK, -1.2, 1.2)) * f, hy, inTun ? 0 : Math.min(1.25, fov2 + 0.55 * smooth(140, 220, st.v * 3.6)) * Math.max(0, 1 - Math.abs(CAB_LOOK) / 0.55)); // pusat kabur = titik hilang arah laju (bergeser saat menoleh) // kabur gerak radial benda dekat di tepi pandangan
     // ---- kabin: kaca depan, pilar, dasbor ----
-    if (CAB_FULL) { drawCabFullHud(c, st); return; } // layar penuh: tanpa wiper, kaca, bingkai & dasbor
+    if (CAB_FULL) { // layar penuh: tanpa wiper, bingkai & dasbor; saat hujan tetap ada tetes di kaca yang terdorong angin ke atas & ke samping
+      if (MIS.rain && !inTun) { const now = performance.now() / 1000, kmh = st.v * 3.6, wind = clamp(kmh / 140, 0, 1);
+        for (let k = 0; k < 46; k++) { const life = 2.5 + hash(k * 1.7) * 3, t = ((now + hash(k * 3.1) * life) % life) / life, x0r = hash(k * 5.3 + Math.floor((now + hash(k * 3.1) * life) / life) * 0.37);
+          const x = (x0r + (x0r - 0.5) * t * wind * 0.5) * W, y = (hash(k * 7.9 + Math.floor((now + hash(k * 3.1) * life) / life)) * 0.85 - t * wind * 0.35) * H, rr = (3 + hash(k * 2.2) * 6) * W / 900 * (0.6 + 0.4 * Math.min(1, t * 4));
+          if (y < -10) continue; const g = c.createRadialGradient(x - rr * 0.3, y - rr * 0.35, 0, x, y, rr); g.addColorStop(0, 'rgba(255,255,255,0.6)'); g.addColorStop(0.55, 'rgba(170,185,195,0.3)'); g.addColorStop(0.85, 'rgba(40,52,62,0.4)'); g.addColorStop(1, 'rgba(255,255,255,0.25)');
+          c.fillStyle = g; c.beginPath(); c.arc(x, y, rr, 0, 7); c.fill();
+          if (wind > 0.3) { const tx = x - (x0r - 0.5) * rr * 6 * wind, ty = y + rr * (3 + 6 * wind), tg = c.createLinearGradient(x, y + rr, tx, ty); tg.addColorStop(0, 'rgba(210,222,230,0.16)'); tg.addColorStop(1, 'rgba(210,222,230,0)'); c.strokeStyle = tg; c.lineWidth = Math.max(1, rr * 0.35); c.beginPath(); c.moveTo(x, y + rr * 0.8); c.lineTo(tx, ty); c.stroke(); } /* jejak air tipis yang memudar */ } }
+      drawCabFullHud(c, st); return; }
     const rain = MIS.rain && !inTun;
     if (rain) {
       // wiper pantograf modern: dua lengan sejajar, bilah karet tegak menyapu kaca; butir hujan yang tersapu
@@ -7560,7 +7567,7 @@
     if (FPX.w !== bw || FPX.h !== bh) { FPX.w = FPX.cv.width = bw; FPX.h = FPX.cv.height = bh; FPX.img = FPX.ctx.createImageData(bw, bh); }
     const d = FPX.img.data, night = o.night, storm = o.storm, tt = performance.now() / 1000, x0 = o.x0;
     const greens = pal.greens.map(rgbA), gold = rgbA(pal.gold), wT = rgbA(pal.waterTop), wB = rgbA(pal.waterBot), dyke = rgbA(pal.base), sky0 = rgbA(night ? '#1a2142' : storm ? '#8a96a0' : mix('#e8b98f', '#cfe0e6', pal.p));
-    const sun = o.sun, day = !night && !storm, sunK = night ? 0.45 : storm ? 0.12 : MIS.dusk || MIS.golden ? 1 : 0.8, sunC = night ? [200, 212, 245] : MIS.dusk || MIS.golden ? [255, 206, 140] : [255, 240, 214];
+    const wet = !!MIS.rain || storm, sun = o.sun, day = !night && !storm, sunK = night ? 0.45 : storm ? 0.12 : MIS.dusk || MIS.golden ? 1 : 0.8, sunC = night ? [200, 212, 245] : MIS.dusk || MIS.golden ? [255, 206, 140] : [255, 240, 214];
     const sunAz = Math.atan((sun.x - cx) / f), sunEl = Math.max(0.03, Math.atan((hy - sun.y) / f)), wind = tt * 6;
     for (let y = 0; y < bh; y++) { const sy = y0 + (y + 0.5) / GS, row = y * bw * 4; if (sy <= hy + 0.5) { for (let x = 0; x < bw; x++) d[row + x * 4 + 3] = 0; continue; }
       const z2 = I.EH * f / (sy - hy), fp = z2 / (f * GS), fog = 1 - Math.exp(-z2 / (storm ? 260 : night ? 420 : 700)), stripeK = fp < 0.11 ? (fp < 0.03 ? 1 : 1 - (fp - 0.03) / 0.08) : 0, dep = Math.atan(I.EH / z2), de2 = (dep - sunEl) * (dep - sunEl);
@@ -7577,6 +7584,9 @@
         let lit = 1; if (day) { const cs = fpxNoise((wx + wind) / 70, (lat + wind * 0.4) / 70); lit = 0.74 + 0.26 * (cs < 0.38 ? 0 : cs > 0.62 ? 1 : (cs - 0.38) / 0.24); r *= lit; g *= lit; b *= lit; } // bayangan awan bergerak
         const da = Math.atan((sx - sun.x) / f), sp = ks * sunK * Math.exp(-(da * da * aa + de2 * bb)) * (lit - 0.6) / 0.4; // pantulan matahari/bulan
         if (sp > 0.003) { const q = Math.min(1, sp); r += (sunC[0] - r) * q + sp * 26; g += (sunC[1] - g) * q + sp * 22; b += (sunC[2] - b) * q + sp * 14; }
+        if (wet) { const q = Math.min(1, ks) * 0.3 * (dep < 0.02 ? 1 : dep > 0.2 ? 0 : (0.2 - dep) / 0.18); r += (sky0[0] - r) * q; g += (sky0[1] - g) * q; b += (sky0[2] - b) * q; } // permukaan basah memantulkan langit mendung
+        if (night) { const lt = lat - I.PO0, wz = z, bw2 = 1.5 + wz * 0.07, lamp = wz < 3 ? 0 : Math.exp(-(lt * lt) / (bw2 * bw2)) * Math.min(1, (wz - 3) / 12) * Math.exp(-wz / 65) * 1.5; // sorot lampu kereta menerangi sawah per piksel
+          if (lamp > 0.004) { r = r * (1 + lamp * 1.6) + lamp * 34; g = g * (1 + lamp * 1.5) + lamp * 28; b = b * (1 + lamp * 1.1) + lamp * 16; if (ks > 1) { const q = Math.min(0.6, lamp * 0.9); r += (255 - r) * q; g += (238 - g) * q; b += (200 - b) * q; } } }
         r += (sky0[0] - r) * fog; g += (sky0[1] - g) * fog; b += (sky0[2] - b) * fog;
         const pp = row + x * 4; d[pp] = r; d[pp + 1] = g; d[pp + 2] = b; d[pp + 3] = 255;
       }
