@@ -5494,7 +5494,7 @@
     const SUN = sunPos(Vs), SUNK = inTun || night || storm ? 0 : clamp(1.15 - p * 0.55, 0.45, 1), tNow = performance.now() / 1000; CAB_SUN = SUN;
     const sunRim = SUNK > 0 ? (MIS.golden || MIS.dusk || p < 0.5 ? '255,196,120' : '255,236,200') : '0,0,0';
     if (!inTun) {
-      if (true) { drawHstScenery(c, { x0, hy, f, pan, p, P: BEND ? (z, la, h) => (z < 0.8 ? null : W3(z, la - SEAT * 0, h)) : P, Pg: BEND ? null : Pc, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); } // tikungan: sawah & kebun ikut melengkung bersama rel
+      if (true) { drawHstScenery(c, { x0, hy, f, pan, p, P: BEND ? (z, la, h) => (z < 0.8 ? null : W3(z, la - SEAT * 0, h)) : P, Pg: BEND ? null : Pc, inv: BEND ? null : { PO0, SEAT, lc, ls, EH }, cx, night, storm, st, sun: sunPos(Vs) }); if (storm) drawStormCab(c, { hy, x0, pan }); } // tikungan: sawah & kebun ikut melengkung bersama rel
       else {
       const ridge = (amp, fq, col, par, ph) => {
         c.fillStyle = col; c.beginPath(); c.moveTo(0, hy + 1);
@@ -5649,6 +5649,8 @@
               const al = clamp(base + toward * 0.35 * SUNK + far * 0.25 * SUNK, 0, 1);
               c.strokeStyle = night ? `rgba(200,210,255,${al * 0.7})` : `rgba(255,${238 - Math.round(toward * 30)},${210 - Math.round(toward * 60)},${al})`;
               c.lineWidth = Math.max(0.7, 0.022 * m0.k); c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke();
+              if (SUNK > 0) { const da = Math.atan((m0.x - sunX) / f), de = Math.atan(EH / steps[i]) - Math.max(0.03, Math.atan((hy - SUN.y) / f)), gl = SUNK * Math.exp(-(da * da * 1.6 + de * de * 14)) * (wet ? 1.3 : 1); // pita kilau: jarak tempat sudut pantul = tinggi matahari
+                if (gl > 0.04) { c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = `rgba(255,228,170,${Math.min(0.85, gl).toFixed(3)})`; c.lineWidth = Math.max(1, 0.06 * m0.k); c.beginPath(); c.moveTo(m0.x, m0.y); c.lineTo(m1.x, m1.y); c.stroke(); c.restore(); } }
             } }
         }
       });
@@ -7530,6 +7532,42 @@
   function cabScene(x) { // bobot jenis pemandangan di depan kabin (melihat ±300 m ke depan)
     const out = {}; for (const sc of ROUTE.scenes || []) { const w = smooth(sc.from - 250, sc.from + 150, x) * (1 - smooth(sc.to - 150, sc.to + 250, x)); if (w > (out[sc.kind] || 0)) out[sc.kind] = w; } return out;
   }
+  // ---------- sawah per piksel untuk kokpit: tiap piksel tanah diproyeksikan balik ke dunia (petak, pematang, alur padi, air),
+  // lalu diberi bayangan awan yang bergerak dan pantulan matahari sesuai bahan; dirender di resolusi rendah lalu diperhalus ----------
+  const FPX = { cv: null, ctx: null, img: null, w: 0, h: 0, nz: null };
+  const fpxNoise = (x, y) => { const T = FPX.nz, xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, a = T[(xi & 255) | ((yi & 255) << 8)], b = T[((xi + 1) & 255) | ((yi & 255) << 8)], cc = T[(xi & 255) | (((yi + 1) & 255) << 8)], d = T[((xi + 1) & 255) | (((yi + 1) & 255) << 8)], u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf); return a + (b - a) * u + (cc - a + (d - cc - b + a) * u) * v; };
+  const rgbA = (cc) => { const n = colNum(cc); return [n >> 16, (n >> 8) & 255, n & 255]; };
+  function fieldsPx(c, o, pal) {
+    if (!FPX.nz) { FPX.nz = new Float32Array(65536); for (let i = 0; i < 65536; i++) FPX.nz[i] = hash(i * 0.731 + 3.1); FPX.cv = document.createElement('canvas'); FPX.ctx = FPX.cv.getContext('2d'); }
+    const GS = (GFX.fx ? 0.26 : 0.36) * Math.min(1, GFX.q + 0.15), hy = o.hy, f = o.f, cx = o.cx, I = o.inv;
+    const bw = Math.max(8, Math.round(W * GS)), y0 = Math.max(0, Math.floor(hy)), bh = Math.max(4, Math.round((H - y0) * GS));
+    if (FPX.w !== bw || FPX.h !== bh) { FPX.w = FPX.cv.width = bw; FPX.h = FPX.cv.height = bh; FPX.img = FPX.ctx.createImageData(bw, bh); }
+    const d = FPX.img.data, night = o.night, storm = o.storm, tt = performance.now() / 1000, x0 = o.x0;
+    const greens = pal.greens.map(rgbA), gold = rgbA(pal.gold), wT = rgbA(pal.waterTop), wB = rgbA(pal.waterBot), dyke = rgbA(pal.base), sky0 = rgbA(night ? '#1a2142' : storm ? '#8a96a0' : mix('#e8b98f', '#cfe0e6', pal.p));
+    const sun = o.sun, day = !night && !storm, sunK = night ? 0.45 : storm ? 0.12 : MIS.dusk || MIS.golden ? 1 : 0.8, sunC = night ? [200, 212, 245] : MIS.dusk || MIS.golden ? [255, 206, 140] : [255, 240, 214];
+    const sunAz = Math.atan((sun.x - cx) / f), sunEl = Math.max(0.03, Math.atan((hy - sun.y) / f)), wind = tt * 6;
+    for (let y = 0; y < bh; y++) { const sy = y0 + (y + 0.5) / GS, row = y * bw * 4; if (sy <= hy + 0.5) { for (let x = 0; x < bw; x++) d[row + x * 4 + 3] = 0; continue; }
+      const z2 = I.EH * f / (sy - hy), fp = z2 / (f * GS), fog = 1 - Math.exp(-z2 / (storm ? 260 : night ? 420 : 700)), stripeK = fp < 0.11 ? (fp < 0.03 ? 1 : 1 - (fp - 0.03) / 0.08) : 0, dep = Math.atan(I.EH / z2), de2 = (dep - sunEl) * (dep - sunEl);
+      for (let x = 0; x < bw; x++) {
+        const sx = (x + 0.5) / GS, la2 = (sx - cx) * z2 / f, z = z2 * I.lc - la2 * I.ls, la = z2 * I.ls + la2 * I.lc, lat = la + I.PO0 - I.SEAT, wx = x0 + z; // balik proyeksi P (dengan menoleh)
+        const j = Math.floor(wx / 16), k = Math.floor(lat / 14), fx = wx - j * 16, fl = lat - k * 14, edge = Math.min(fx, 16 - fx, fl, 14 - fl);
+        const h = hash(j * 7.31 + k * 1.93), n1 = fpxNoise(wx * 0.3, lat * 0.3), n2 = fpxNoise(wx * 2, lat * 2);
+        let r, g, b, ks = 0.2, aa = 3, bb = 10;
+        if (h < 0.22) { const rip = fpxNoise(wx * 1.2 + tt * 0.4, lat * 1.2) * 0.14, t = Math.min(1, dep * 6 + rip); r = wB[0] + (wT[0] - wB[0]) * (1 - t); g = wB[1] + (wT[1] - wB[1]) * (1 - t); b = wB[2] + (wT[2] - wB[2]) * (1 - t); ks = 1.5 * (0.7 + rip * 3); aa = 26; bb = 240;
+          if (stripeK > 0 && Math.abs((lat * 4) % 1 - 0.5) < 0.12) { const q = stripeK * 0.22; r += (greens[0][0] - r) * q; g += (greens[0][1] - g) * q; b += (greens[0][2] - b) * q; } }
+        else if (h < 0.34) { const m = 0.85 + n2 * 0.25; r = gold[0] * m; g = gold[1] * m; b = gold[2] * m; if (stripeK > 0 && Math.abs((wx * 3.5) % 1 - 0.5) < 0.2) { const q = 1 - stripeK * 0.22; r *= q; g *= q; b *= q; } ks = 0.3; }
+        else { const G = greens[Math.floor(h * 97) % greens.length], m = 0.84 + n1 * 0.28 + n2 * 0.08; r = G[0] * m; g = G[1] * m; b = G[2] * m; if (stripeK > 0 && Math.abs((lat * 3.2) % 1 - 0.5) < 0.18) { const q = 1 - stripeK * 0.26; r *= q; g *= q; b *= q; } }
+        if (edge < 0.6) { const q = (edge < 0.3 ? 1 : (0.6 - edge) / 0.3) * (fp < 1 ? 1 : 0.5); r += (dyke[0] - r) * q; g += (dyke[1] - g) * q; b += (dyke[2] - b) * q; ks = 0.12; } // pematang
+        let lit = 1; if (day) { const cs = fpxNoise((wx + wind) / 70, (lat + wind * 0.4) / 70); lit = 0.74 + 0.26 * (cs < 0.38 ? 0 : cs > 0.62 ? 1 : (cs - 0.38) / 0.24); r *= lit; g *= lit; b *= lit; } // bayangan awan bergerak
+        const da = Math.atan((sx - sun.x) / f), sp = ks * sunK * Math.exp(-(da * da * aa + de2 * bb)) * (lit - 0.6) / 0.4; // pantulan matahari/bulan
+        if (sp > 0.003) { const q = Math.min(1, sp); r += (sunC[0] - r) * q + sp * 26; g += (sunC[1] - g) * q + sp * 22; b += (sunC[2] - b) * q + sp * 14; }
+        r += (sky0[0] - r) * fog; g += (sky0[1] - g) * fog; b += (sky0[2] - b) * fog;
+        const pp = row + x * 4; d[pp] = r; d[pp + 1] = g; d[pp + 2] = b; d[pp + 3] = 255;
+      }
+    }
+    FPX.ctx.putImageData(FPX.img, 0, 0);
+    c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high'; c.drawImage(FPX.cv, 0, y0, W, bh / GS); c.restore();
+  }
   function drawHstScenery(c, o) {
     const { x0, hy, f, pan, p, P, night } = o, storm = !!o.storm, tt = performance.now() / 1000;
     const SC = cabScene(x0 + 300), sun = o.sun;
@@ -7660,6 +7698,7 @@
       const SAWIT = PLANT();
       const greens = night ? ['#34573f', '#3c6347', '#2e4f38', '#385c42'] : SAWIT ? [mix('#3f6a30', '#4f7e3a', p), mix('#4a7436', '#5a8a42', p), mix('#36602c', '#446f34', p), mix('#56703a', '#66843f', p)] : [mix('#4f9a3a', '#5fae44', p), mix('#62a845', '#72bb4e', p), mix('#45883a', '#53993f', p), mix('#74ad47', '#86c152', p)];
       const gold = night ? '#3a3e2a' : SAWIT ? mix('#7a5e3e', '#8e6e48', p) : mix('#b9ae55', '#cdbf62', p), waterTop = night ? '#6474a8' : storm ? '#a9b8c0' : MIS.dusk ? '#ffc08a' : MIS.golden ? '#ffe2ac' : mix('#ffd0a0', '#e4f0f4', p), waterBot = night ? '#1e2640' : storm ? '#6f828e' : MIS.dusk ? '#7e8c9c' : MIS.golden ? '#88a8d4' : mix('#8a98b0', '#8ab8e0', p); // senja: air memantulkan langit tetapi tidak ungu pekat // jauh: cakrawala hangat terpantul, dekat: langit atas
+      if (o.inv && !SAWIT && GFX.fx < 2 && !ROUTE.yard) fieldsPx(c, o, { greens, gold, waterTop, waterBot, base: night ? '#1d2c22' : mix('#a3c48a', '#b5d39a', p), p }); else // sawah per piksel (perspektif sungguhan, tekstur & cahaya dinamis); cadangan: petak poligon
       for (let j = j1; j >= j0; j--) {
         const za = LKs ? j * CL - x0 : Math.max(2.2, j * CL - x0), zb = (j + 1) * CL - x0; if (!LKs && zb <= 2.2) continue;
         for (let k = kLo; k < kHi; k += kStep(k)) {
