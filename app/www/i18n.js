@@ -830,6 +830,7 @@
   [/^Musik (.)$/, "Music $1"],
   [/^Suara (.)$/, "Sound $1"],
   [/^Getar (.)$/, "Vibrate $1"],
+  [/^Kabur gerak (.)$/, "Motion blur $1"],
   [/^memuat gerbong (\d+)\.\.\.$/, "loading wagon $1..."],
   [/^ke gerbong kopi · (\S+) km\/h$/, "to the coffee wagon · $1 km/h"],
   [/^lagi ke marka "(\S+)"$/, "to marker \"$1\""],

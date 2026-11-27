@@ -2385,6 +2385,7 @@
   let W = 0, H = 0, DPR = 1, SW = 0, SH = 0;
   // kualitas grafis adaptif: bila jarak antar-frame terus tinggi (HP kewalahan), resolusi gambar diturunkan bertahap;
   // dinaikkan lagi bila sudah lancar cukup lama. 'rn.gfx' = 'high' mengunci resolusi penuh.
+  const MBLUR = { on: store.get('rn.mblur') !== '0' }; // kabur gerak kokpit di kecepatan tinggi (bisa dimatikan di layar judul)
   const GFX = { q: 1, fx: 0, slow: 0, fast: 0, lock: store.get('rn.gfx') === 'high' }; // q = skala resolusi; fx = tingkat pengurangan efek berat (0 penuh, 1 hemat, 2 hemat-lanjut) bila resolusi sudah minimum
   const wantDPR = () => Math.max(1, Math.min(2, window.devicePixelRatio || 1) * GFX.q);
   let mode = 'title';
@@ -5072,7 +5073,7 @@
   // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
   const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
     btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
-    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
+    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnBlurTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
   document.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('button, .ticket'); if (!el || el.disabled) return;
     if (el.classList.contains('act')) return;
@@ -5132,7 +5133,9 @@
     $('btnMusicTitle').textContent = `Musik ${mu ? '✓' : '✕'}`;
     $('btnSoundTitle').textContent = `Suara ${m ? '✕' : '✓'}`;
     const bh = $('btnHapticTitle'); if (bh) bh.textContent = `Getar ${HAPT.on ? '✓' : '✕'}`;
+    const bb = $('btnBlurTitle'); if (bb) bb.textContent = `Kabur gerak ${MBLUR.on ? '✓' : '✕'}`;
   }
+  { const bb = $('btnBlurTitle'); if (bb) bb.addEventListener('click', () => { MBLUR.on = !MBLUR.on; store.set('rn.mblur', MBLUR.on ? '1' : '0'); syncAudioButtons(); }); }
   { const bh = $('btnHapticTitle'); if (bh) { bh.hidden = !('vibrate' in navigator) && !(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics); bh.addEventListener('click', () => { HAPT.toggle(); syncAudioButtons(); }); } }
   $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
   $('btnSoundTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
@@ -7400,7 +7403,7 @@
     if (HSTCAB && !inTun && !night && !storm) drawHstLight(c, { hy, p, pan, st, sun: sunPos(Vs) });
     if (!inTun && !night && !storm) drawFlare(c, sunPos(Vs), HSTCAB ? 0.8 : 0.85, st.v, x0, hy);
     applyGrade(c, { gy: hy + EH * f / 40, ppm: f / 40, tf: inTun ? 1 : 0, cab: true, night, storm, sun: SUN });
-    cabZoomBlur(c, cx - Math.tan(clamp(CAB_LOOK, -1.2, 1.2)) * f, hy, inTun ? 0 : Math.min(1.25, fov2 + 0.55 * smooth(140, 220, st.v * 3.6)) * Math.max(0, 1 - Math.abs(CAB_LOOK) / 0.55)); // pusat kabur = titik hilang arah laju (bergeser saat menoleh) // kabur gerak radial benda dekat di tepi pandangan
+    cabZoomBlur(c, cx - Math.tan(clamp(CAB_LOOK, -1.2, 1.2)) * f, hy, inTun || !MBLUR.on ? 0 : Math.min(1.25, 0.5 * fov2 + 0.3 * smooth(200, 300, st.v * 3.6)) * Math.max(0, 1 - Math.abs(CAB_LOOK) / 0.55)); // pusat kabur = titik hilang arah laju (bergeser saat menoleh) // kabur gerak radial benda dekat di tepi pandangan
     // ---- kabin: kaca depan, pilar, dasbor ----
     if (CAB_FULL) { // layar penuh: tanpa wiper, bingkai & dasbor; saat hujan tetap ada tetes di kaca yang terdorong angin ke atas & ke samping
       if (MIS.rain && !inTun) { const now = performance.now() / 1000, kmh = st.v * 3.6, wind = clamp(kmh / 140, 0, 1);
@@ -7563,7 +7566,7 @@
   const rgbA = (cc) => { const n = colNum(cc); return [n >> 16, (n >> 8) & 255, n & 255]; };
   function fieldsPx(c, o, pal) {
     if (!FPX.nz) { FPX.nz = new Float32Array(65536); for (let i = 0; i < 65536; i++) FPX.nz[i] = hash(i * 0.731 + 3.1); FPX.cv = document.createElement('canvas'); FPX.ctx = FPX.cv.getContext('2d'); }
-    const GS = (GFX.fx ? 0.26 : 0.36) * Math.min(1, GFX.q + 0.15), hy = o.hy, f = o.f, cx = o.cx, I = o.inv;
+    const GS = (GFX.fx ? 0.34 : 0.58) * Math.min(1, GFX.q + 0.15), hy = o.hy, f = o.f, cx = o.cx, I = o.inv;
     const bw = Math.max(8, Math.round(W * GS)), y0 = Math.max(0, Math.floor(hy)), bh = Math.max(4, Math.round((H - y0) * GS));
     if (FPX.w !== bw || FPX.h !== bh) { FPX.w = FPX.cv.width = bw; FPX.h = FPX.cv.height = bh; FPX.img = FPX.ctx.createImageData(bw, bh); }
     const LUT = I.lut, d = FPX.img.data, night = o.night, storm = o.storm, tt = performance.now() / 1000, x0 = o.x0;
