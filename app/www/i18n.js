@@ -18,6 +18,7 @@
 
   var D = {
 "Babak 1 · Jawa": "Chapter 1 · Java",
+"Game tersimpan di perangkat: kini bisa dimainkan tanpa internet.": "Game saved on this device: you can now play without internet.",
 "Langkah Pertama di Depo": "First Steps at the Depot",
 "Kenalan Cakra": "Meet Cakra",
 "Tuas": "Lever",
@@ -831,6 +832,9 @@
   [/^Suara (.)$/, "Sound $1"],
   [/^Getar (.)$/, "Vibrate $1"],
   [/^Kabur gerak (.)$/, "Motion blur $1"],
+  [/^Grafis: Otomatis$/, "Graphics: Auto"],
+  [/^Grafis: Tinggi$/, "Graphics: High"],
+  [/^Grafis: Hemat$/, "Graphics: Saver"],
   [/^memuat gerbong (\d+)\.\.\.$/, "loading wagon $1..."],
   [/^ke gerbong kopi · (\S+) km\/h$/, "to the coffee wagon · $1 km/h"],
   [/^lagi ke marka "(\S+)"$/, "to marker \"$1\""],

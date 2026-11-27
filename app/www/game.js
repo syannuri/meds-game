@@ -2386,7 +2386,7 @@
   // kualitas grafis adaptif: bila jarak antar-frame terus tinggi (HP kewalahan), resolusi gambar diturunkan bertahap;
   // dinaikkan lagi bila sudah lancar cukup lama. 'rn.gfx' = 'high' mengunci resolusi penuh.
   const MBLUR = { on: store.get('rn.mblur') !== '0' }; // kabur gerak kokpit di kecepatan tinggi (bisa dimatikan di layar judul)
-  const GFX = { q: 1, fx: 0, slow: 0, fast: 0, lock: store.get('rn.gfx') === 'high' }; // q = skala resolusi; fx = tingkat pengurangan efek berat (0 penuh, 1 hemat, 2 hemat-lanjut) bila resolusi sudah minimum
+  const GFX = { q: 1, fx: 0, slow: 0, fast: 0, lock: store.get('rn.gfx') === 'high' || store.get('rn.gfx') === 'low', mode: store.get('rn.gfx') === 'high' ? 'high' : store.get('rn.gfx') === 'low' ? 'low' : 'auto' }; if (GFX.mode === 'low') { GFX.q = 0.6; GFX.fx = 1; } // q = skala resolusi; fx = tingkat pengurangan efek berat (0 penuh, 1 hemat, 2 hemat-lanjut) bila resolusi sudah minimum
   const wantDPR = () => Math.max(1, Math.min(2, window.devicePixelRatio || 1) * GFX.q);
   let mode = 'title';
   let radioDur = 1, trainScr = null;
@@ -2478,7 +2478,7 @@
   }
   function fitStrip() {
     const w = sv.clientWidth, h = sv.clientHeight;
-    if (w !== SW || h !== SH) { SW = w; SH = h; sv.width = Math.round(w * DPR); sv.height = Math.round(h * DPR); }
+    if (w !== SW || h !== SH || DPR !== fitStrip.dpr) { SW = w; SH = h; fitStrip.dpr = DPR; sv.width = Math.round(w * DPR); sv.height = Math.round(h * DPR); } // skala piksel ikut diperiksa (grafis adaptif bisa mengubahnya)
   }
   function checkOrientation() {
     const portrait = window.innerHeight > window.innerWidth;
@@ -5073,7 +5073,7 @@
   // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
   const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
     btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
-    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnBlurTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
+    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnBlurTitle: 'toggle', btnGfxTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
   document.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('button, .ticket'); if (!el || el.disabled) return;
     if (el.classList.contains('act')) return;
@@ -5134,7 +5134,10 @@
     $('btnSoundTitle').textContent = `Suara ${m ? '✕' : '✓'}`;
     const bh = $('btnHapticTitle'); if (bh) bh.textContent = `Getar ${HAPT.on ? '✓' : '✕'}`;
     const bb = $('btnBlurTitle'); if (bb) bb.textContent = `Kabur gerak ${MBLUR.on ? '✓' : '✕'}`;
+    const bg = $('btnGfxTitle'); if (bg) bg.textContent = `Grafis: ${{ auto: 'Otomatis', high: 'Tinggi', low: 'Hemat' }[GFX.mode]}`;
   }
+  { const bg = $('btnGfxTitle'); if (bg) bg.addEventListener('click', () => { // Otomatis → Tinggi (resolusi penuh terkunci) → Hemat (resolusi & efek dikurangi) → Otomatis
+    GFX.mode = { auto: 'high', high: 'low', low: 'auto' }[GFX.mode]; store.set('rn.gfx', GFX.mode === 'auto' ? '' : GFX.mode); GFX.lock = GFX.mode !== 'auto'; GFX.q = GFX.mode === 'low' ? 0.6 : 1; GFX.fx = GFX.mode === 'low' ? 1 : 0; GFX.slow = GFX.fast = 0; resize(); syncAudioButtons(); }); }
   { const bb = $('btnBlurTitle'); if (bb) bb.addEventListener('click', () => { MBLUR.on = !MBLUR.on; store.set('rn.mblur', MBLUR.on ? '1' : '0'); syncAudioButtons(); }); }
   { const bh = $('btnHapticTitle'); if (bh) { bh.hidden = !('vibrate' in navigator) && !(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics); bh.addEventListener('click', () => { HAPT.toggle(); syncAudioButtons(); }); } }
   $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
@@ -5185,6 +5188,8 @@
   syncViewButton();
   $('btnMusicTitle').addEventListener('click', () => { Sound.init(); Sound.toggleMusic(); syncAudioButtons(); });
   syncAudioButtons();
+  // mode offline: simpan berkas game di ponsel (hanya di situs https; aplikasi Capacitor sudah menyimpan berkasnya sendiri)
+  try { if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Capacitor) navigator.serviceWorker.register('sw.js').then((reg) => { if (store.get('rn.offline') === '1') return; const done = () => { store.set('rn.offline', '1'); toast('Game tersimpan di perangkat: kini bisa dimainkan tanpa internet.', 'info', 3.4, 'offline', 1); }; if (reg.active) done(); else navigator.serviceWorker.ready.then(done); }).catch(() => {}); } catch (e) { /* tanpa mode offline */ }
   // browser hanya mengizinkan audio setelah sentuhan pertama
   document.addEventListener('pointerdown', () => Sound.init(), { once: true });
   document.addEventListener('keydown', () => Sound.init(), { once: true });
@@ -16794,8 +16799,8 @@ c.restore();
     fitStrip();
     const c = sctx, w = SW, h = SH;
     if (!w || !h) return;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, sv.width, sv.height); // hapus seluruh kanvas (bukan hanya area berskala)
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
-    c.clearRect(0, 0, w, h);
     const span = ROUTE.lineSpeed >= 100 ? 640 + clamp((S.v * 3.6 - 60) / 60, 0, 1) * 760 + (ROUTE.hst ? clamp((S.v * 3.6 - 120) / 130, 0, 1) * 2600 : 0) : 640;
     const x0 = S.x - 60, x1 = S.x + span;
     const M = (wx) => ((wx - x0) / (x1 - x0)) * w;
