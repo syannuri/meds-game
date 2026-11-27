@@ -2478,7 +2478,7 @@
   }
   function fitStrip() {
     const w = sv.clientWidth, h = sv.clientHeight;
-    if (w !== SW || h !== SH) { SW = w; SH = h; sv.width = Math.round(w * DPR); sv.height = Math.round(h * DPR); }
+    if (w !== SW || h !== SH || DPR !== fitStrip.dpr) { SW = w; SH = h; fitStrip.dpr = DPR; sv.width = Math.round(w * DPR); sv.height = Math.round(h * DPR); } // skala piksel ikut diperiksa (grafis adaptif bisa mengubahnya)
   }
   function checkOrientation() {
     const portrait = window.innerHeight > window.innerWidth;
@@ -16794,8 +16794,8 @@ c.restore();
     fitStrip();
     const c = sctx, w = SW, h = SH;
     if (!w || !h) return;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, sv.width, sv.height); // hapus seluruh kanvas (bukan hanya area berskala)
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
-    c.clearRect(0, 0, w, h);
     const span = ROUTE.lineSpeed >= 100 ? 640 + clamp((S.v * 3.6 - 60) / 60, 0, 1) * 760 + (ROUTE.hst ? clamp((S.v * 3.6 - 120) / 130, 0, 1) * 2600 : 0) : 640;
     const x0 = S.x - 60, x1 = S.x + span;
     const M = (wx) => ((wx - x0) / (x1 - x0)) * w;
