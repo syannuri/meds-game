@@ -24,6 +24,12 @@
 #splash{position:fixed;left:0;right:0;top:0;height:var(--app-h,100dvh);z-index:100;overflow:hidden;color:#fff;text-align:center;font-family:"Plus Jakarta Sans",system-ui,-apple-system,sans-serif;
   background:linear-gradient(180deg,#070b10 0%,#0b1016 22%,#14222c 46%,#2a2a2c 60%,#5a3e2a 69%,#a8692e 74%,#d89a48 75%,#141a20 75.2%,#0b1016 100%);transition:opacity .7s ease,visibility .7s}
 #splash.out{opacity:0;visibility:hidden}
+#splash .sp-art{position:absolute;inset:-2%;background:url(pembuka.jpg) 72% 58%/cover no-repeat;transform-origin:72% 60%;animation:spArt 1.4s cubic-bezier(.2,.8,.3,1) both,spKen 24s 1.4s ease-in-out infinite alternate}
+#splash .sp-art::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,9,16,.55) 0%,rgba(5,9,16,0) 38%,rgba(5,9,16,0) 62%,rgba(5,9,16,.7) 100%)}
+#splash .sp-art~.sp-stars,#splash .sp-art~.sp-rays,#splash .sp-art~.sp-sun,#splash .sp-art~.sp-land,#splash .sp-art~.sp-ground,#splash .sp-art~.sp-via,#splash .sp-art~.sp-speed,#splash .sp-art~.sp-hero{display:none}
+@keyframes spArt{from{opacity:0;transform:scale(1.12)}to{opacity:1;transform:scale(1)}}
+@keyframes spKen{from{transform:scale(1)}to{transform:scale(1.06) translateX(-1%)}}
+@media (prefers-reduced-motion:reduce){#splash .sp-art{animation:none}}
 #splash .sp-stars{position:absolute;inset:0 0 50% 0;background-image:radial-gradient(1.5px 1.5px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 28% 8%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 46% 22%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 63% 12%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 81% 20%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 92% 6%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 6% 34%,#fff 50%,transparent 51%);opacity:.7;animation:spTw 3s ease-in-out infinite alternate}
 #splash .sp-sun{position:absolute;left:50%;top:75%;width:52vmin;height:52vmin;margin:-26vmin 0 0 -26vmin;border-radius:50%;
   background:radial-gradient(circle,#fff1c4 0,#f2c45a 18%,rgba(242,165,22,.35) 38%,rgba(242,165,22,0) 68%);animation:spBreath 4s ease-in-out infinite}
@@ -102,6 +108,7 @@
 </head>
 <body>
 <div id="splash" role="dialog" aria-label="Memuat Rel Nusantara">
+  <div class="sp-art" aria-hidden="true"></div>
   <div class="sp-stars" aria-hidden="true"></div>
   <div class="sp-rays" aria-hidden="true"></div>
   <div class="sp-sun" aria-hidden="true"></div>
@@ -119,7 +126,7 @@
     <h1 class="sp-logo" aria-label="Rel Nusantara"><span class="fg">Nusantara</span></h1>
     <div class="sp-rule">Edisi Masinis · Jawa · Sumatra</div>
   </div>
-    <div class="sp-chips" aria-hidden="true"><b>14 MISI</b><b>2 PULAU</b><b>250 KM/H</b></div>
+    <div class="sp-chips" aria-hidden="true"><b>15 MISI</b><b>2 PULAU</b><b>320 KM/H</b></div>
   </div>
   <div class="sp-bot">
     <div class="sp-msg" id="spMsg">Membuka depo Sukamaju…</div>
