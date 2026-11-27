@@ -4335,7 +4335,7 @@
   }
   const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100', '3-4': '0 0 80 100', '4-1': '0 0 80 100' };
   const cardArt = (id) => TRAIN_CARD[id] ? CARD_BG[id] + `<image href="${trainCardImg(TRAIN_CARD[id])}" x="0" y="0" width="80" height="100" preserveAspectRatio="none"/>` : MIS_ART[id];
-  const misArt = (id) => MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
+  const misArt = (id) => MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" data-art="${id}" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
   function dailyArt(base) {
     const night = base === '1-6' || base === '2-2', storm = base === '1-5' || base === '1-7', sum = base[0] === '2';
