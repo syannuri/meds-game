@@ -4335,7 +4335,8 @@
   }
   const MIS_VB = { '3-2': '0 0 80 100', '3-3': '0 0 80 100', '3-4': '0 0 80 100', '4-1': '0 0 80 100' };
   const cardArt = (id) => TRAIN_CARD[id] ? CARD_BG[id] + `<image href="${trainCardImg(TRAIN_CARD[id])}" x="0" y="0" width="80" height="100" preserveAspectRatio="none"/>` : MIS_ART[id];
-  const misArt = (id) => MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" data-art="${id}" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
+  const K3D = new Set(['1-1', '1-2', '1-3', '1-4', '1-5', '1-6', '1-7', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3', '3-4', '4-1']); // misi dengan ilustrasi kartu 3D (menu-kartu-<id>.jpg, dipasang lewat CSS)
+  const misArt = (id) => K3D.has(id) ? `<span class="tart k3d" data-art="${id}" aria-hidden="true"></span>` : MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" data-art="${id}" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
   function dailyArt(base) {
     const night = base === '1-6' || base === '2-2', storm = base === '1-5' || base === '1-7', sum = base[0] === '2';
@@ -4750,7 +4751,7 @@
       <dt>Berangkat</dt><dd>${fmtClock(0)}, ${m.weather}</dd>
       <dt>Jadwal</dt><dd>${stops.map((s) => `${titleCase(s.name)} ${fmtClock(s.sched)}`).join(' · ')}</dd>${m.free ? '<dt>Mode</dt><dd>Santai · tanpa kejadian acak · tidak mengubah bintang & karier</dd>' : ''}<dt${m.free ? ' hidden' : ''}>Lintas</dt><dd${m.free ? ' hidden' : ''}>Kepercayaan ${trustNow()}% · ${trustBest(m.id) ? `nilai terbaikmu di misi ini ${trustBest(m.id)}` : 'misi ini belum menyumbang'}</dd>${m.tutorial || m.free || m.id === '1-1' ? '' : `<dt>Medali</dt><dd class="bmed">${MEDALS.map((q) => `<span title="${q.name}: ${q.tip}">${q.icon}</span>`).join(' ')} <small>+ kejadian acak</small></dd>`}${m.daily ? `<dt>Kondisi hari ini</dt><dd>${m.daily.mods.join(' · ')}</dd>` : ''}`;
     { // sampul misi: ilustrasi adegan + peta rute mini dengan jam tiap stasiun
-      const art = m.free ? misArt(m.base).replace('class="tart"', 'class="bart"') : m.daily ? dailyArt(m.base).replace('class="tart"', 'class="bart"') : misArt(m.id).replace('class="tart"', 'class="bart"');
+      const art = m.free ? misArt(m.base).replace('class="tart', 'class="bart') : m.daily ? dailyArt(m.base).replace('class="tart', 'class="bart') : misArt(m.id).replace('class="tart', 'class="bart');
       const x0 = R.stations[0].x, x1 = f.x;
       const pts = R.stations.map((s2, i) => { const u = (s2.x - x0) / Math.max(1, x1 - x0); return `<span class="bst${i === 0 ? ' first' : ''}${i === R.stations.length - 1 ? ' last' : ''}${i % 2 ? ' up' : ''}" style="left:${(u * 100).toFixed(1)}%"><i></i><em>${titleCase(s2.name)}</em><small>${i === 0 ? fmtClock(0) : s2.sched !== undefined ? fmtClock(s2.sched) : ''}</small></span>`; }).join('');
       $('briefHero').innerHTML = `${art}<div class="broute"><div class="brail"></div>${pts}</div>`;
