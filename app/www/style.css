@@ -1400,12 +1400,13 @@ body.cabfull #lever { background-color: rgba(8, 12, 18, 0.45); border-radius: 22
 #cine video { width: 100%; height: 100%; object-fit: cover; }
 #cine::before, #cine::after { content: ''; position: absolute; left: 0; right: 0; height: 9%; background: #000; z-index: 1; transition: height 0.8s cubic-bezier(.2,.8,.2,1); }
 #cine::before { top: 0; } #cine::after { bottom: 0; }
-#cine .cine-cap { position: absolute; left: max(5%, env(safe-area-inset-left)); bottom: 14%; z-index: 2; display: flex; flex-direction: column; gap: 4px; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7); opacity: 0; transform: translateY(10px); transition: opacity 1s ease 0.8s, transform 1s ease 0.8s; }
-#cine.on .cine-cap { opacity: 1; transform: none; }
+#cine .cine-cap { position: absolute; left: max(5%, env(safe-area-inset-left)); bottom: 14%; z-index: 2; display: flex; flex-direction: column; gap: 4px; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7); opacity: 0; }
+#cine.on .cine-cap { animation: cineCap 1s 0.6s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes cineCap { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 #cine .cine-cap small { font-family: "Cinzel", Georgia, serif; font-weight: 700; font-size: clamp(10px, 2.6vh, 14px); letter-spacing: 0.4em; color: #f2c45a; text-transform: uppercase; }
 #cine .cine-cap b { font-family: "Cinzel", Georgia, serif; font-weight: 900; font-size: clamp(28px, 11vh, 72px); line-height: 1; letter-spacing: 0.06em; text-transform: uppercase;
   background: linear-gradient(180deg, #fff1c4, #f2c45a 50%, #c98a1e); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6)); }
 #cine .cine-cap em { font-style: normal; font-weight: 700; font-size: clamp(11px, 3vh, 16px); letter-spacing: 0.08em; color: #f4efe2; }
-#cine.out .cine-cap { opacity: 0; transition-delay: 0s; }
+#cine.out .cine-cap { animation: none; opacity: 0; }
 #cine .cine-skip { position: absolute; right: max(4%, env(safe-area-inset-right)); top: max(12%, env(safe-area-inset-top)); z-index: 3; font: inherit; font-weight: 800; font-size: 13px; letter-spacing: 0.06em; color: #fff;
   padding: 7px 14px; border-radius: 999px; background: rgba(10, 14, 20, 0.55); border: 1px solid rgba(242, 196, 90, 0.6); cursor: pointer; }

@@ -3530,6 +3530,7 @@
   const CUTS = {
     '3-1': {
       intro: { src: 'argo-intro.mp4', sub: 'Babak 3 · Ekspres Jawa', title: 'Argo Senja', line: 'Sukamaju → Kota Kencana · berangkat 16.50' },
+      mid: { src: 'argo-jembatan.mp4', at: 11210, sub: 'Kilometer 11', title: 'Jembatan Kali Kencana', line: 'Melesat di atas sungai saat matahari terbenam' },
       outro: { src: 'argo-outro.mp4', sub: 'Tiba petang', title: 'Kota Kencana', line: 'Lampu kota menyambut Argo Senja' },
     },
   };
@@ -17054,7 +17055,10 @@ c.restore();
     }
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (mode === 'play' && S && (S.mode === 'play' || S.mode === 'fail')) {
+    if (mode === 'play' && S && S.mode === 'play' && !S.cineHold && !S.midCine) { // adegan sinematik di tengah misi: fisika dibekukan selama video
+      const mc = cineOf('mid'); if (mc && S.x >= mc.at && S.v > 8) { S.midCine = true; S.cineHold = true; playCine(mc, () => { S.cineHold = false; acc = 0; last = performance.now(); }); }
+    }
+    if (mode === 'play' && S && !S.cineHold && (S.mode === 'play' || S.mode === 'fail')) {
       const speed = window.__rn ? window.__rn.speed : 1;
       acc += dt * speed;
       let guard = 0;
