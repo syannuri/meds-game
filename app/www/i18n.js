@@ -19,6 +19,7 @@
   var D = {
 "Babak 1 · Jawa": "Chapter 1 · Java",
 "Lewati ›": "Skip ›",
+"belum ada rekor": "no record yet",
 "Sukamaju → Kota Kencana · berangkat 16.50": "Sukamaju → Kota Kencana · departs 16:50",
 "Tiba petang": "Arriving at dusk",
 "Kilometer 11": "Kilometre 11",

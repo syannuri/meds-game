@@ -4029,7 +4029,7 @@
       const cur = { stop: stops.length ? stops.reduce((a, q) => a + Math.abs(q.offset), 0) / stops.length : null, comfort: Math.round(S.comfort), late: fin ? fin.clock - fin.sched : null };
       const better = { stop: cur.stop !== null && (R0.stop === undefined || cur.stop < R0.stop - 0.005), comfort: R0.comfort === undefined || cur.comfort > R0.comfort, late: cur.late !== null && (R0.late === undefined || cur.late < R0.late) };
       const N = { ...R0, runs: (R0.runs || 0) + 1 }; for (const k2 of ['stop', 'comfort', 'late']) if (better[k2]) N[k2] = cur[k2]; store.set('rn.rec.' + id, JSON.stringify(N));
-      const cell = (lbl, v, b, old) => `<div class="rrec-c${b && old !== undefined ? ' new' : ''}"><small>${lbl}</small><b>${v}</b><em>${b ? (old === undefined ? 'rekor pertama' : 'REKOR BARU') : 'rekor ' + old}</em></div>`;
+      const cell = (lbl, v, b, old) => `<div class="rrec-c${b && old !== undefined ? ' new' : ''}"><small>${lbl}</small><b>${v}</b><em>${b ? (old === undefined ? 'rekor pertama' : 'REKOR BARU') : old === undefined ? 'belum ada rekor' : 'rekor ' + old}</em></div>`;
       const fmtLate = (l) => (l <= 0 ? `${fmtDur(-l)} lebih awal` : `terlambat ${fmtDur(l)}`);
       recHtml = `<div class="rrec"><div class="rrec-h">Lembar rekor · percobaan ke-${N.runs}</div>${cell('Rata-rata henti', `${fmtM(cur.stop || 0)} m`, better.stop, R0.stop === undefined ? undefined : fmtM(R0.stop) + ' m')}${cell('Kenyamanan', `${cur.comfort}%`, better.comfort, R0.comfort === undefined ? undefined : R0.comfort + '%')}${cell('Tiba akhir', fmtLate(cur.late || 0), better.late, R0.late === undefined ? undefined : fmtLate(R0.late))}</div>`; }
     const evHtml = (S.events || []).length ? `<div class="revents"><b>Kejadian acak:</b> ${S.events.map((e) => e.kind === 'tsr' ? `perbaikan rel ${e.z.limit} km/h` : e.kind === 'sig' ? `gangguan sinyal ${e.z.limit} km/h` : e.kind === 'dispatch' ? `KA sambungan: ${S.dispatch === 'wait' ? 'ditunggu' : S.dispatch === 'go' ? 'berangkat tepat waktu' : 'belum diputuskan'}` : 'kambing di rel').join(' · ')}</div>` : '';
@@ -4155,6 +4155,8 @@
     if (r.failed) Sound.failSting(); else Sound.stars(r.stars);
     $('resTitle').textContent = MIS.free ? (r.failed ? 'Perjalanan terhenti' : 'Perjalanan selesai') : r.failed ? 'Misi gagal' : 'Misi selesai';
     const mid = MIS.free ? 'Mode Bebas' : MIS.daily ? `Rute Harian ${MIS.daily.label}` : `Misi ${MIS.id}`;
+    { const ra = $('resArt'), aid = MIS.free ? MIS.base : MIS.daily ? MIS.base : MIS.id; // latar 3D layar hasil: ilustrasi misi
+      if (ra) { ra.dataset.art = aid; ra.classList.toggle('k3d', K3D.has(aid)); ra.classList.toggle('fail', !!S.failReason); ra.classList.remove('go'); void ra.offsetWidth; ra.classList.add('go'); } }
     $('resEyebrow').textContent = (r.failed ? `${mid} · ${MIS.title}` : `${mid} · tiba ${fmtClock(S.clock)}`) + ` · Masinis ${(MIS.driver || DRIVER).name}` + (S.expert ? ' · Masinis Ahli' : '');
     renderResStars(r.stars, r.failed);
     $('resStars').setAttribute('aria-label', `${r.stars} dari 3 bintang`);
@@ -17112,6 +17114,7 @@ c.restore();
     get ROUTE() { return ROUTE; },
     get MIS() { return MIS; },
     get S() { return S; },
+    finish: () => { if (S && S.mode === 'play') finish(); }, // dipakai uji otomatis & pratinjau layar hasil
     starsDemo: (n) => { renderResStars(n, false); Sound.stars(n); },
     radio: (t, w, i) => radio(t, 6, w, i), portrait: (id) => PORTRAIT(id),
     get mode() { return mode; },
