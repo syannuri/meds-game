@@ -10461,6 +10461,23 @@
     const blob = (px, py, r, col, ry) => { c.fillStyle = T(col); c.beginPath(); c.ellipse(x + px * s, y - py * s, r * s, (ry || r) * s, 0, 0, 7); c.fill(); };
     const smoke = (px, py, n, sc) => { for (let i = 0; i < n; i++) { const k = ((t * 0.12 + i / n) % 1); c.fillStyle = `rgba(${night ? '120,120,140' : '228,224,214'},${0.42 * (1 - k)})`; c.beginPath(); c.arc(x + (px - k * 14 * sc) * s, y - (py + k * 16 * sc) * s, (1.2 + k * 5) * sc * s, 0, 7); c.fill(); } };
     const win = (px, py, w, h) => box(px, py, w, h, night ? '#f2c76a' : '#3d2f28');
+    // kepulan asap alami: gumpalan lembut bergradasi yang membesar, memudar & melengkung terbawa angin sambil bergolak
+    const plume = (px, py, sc, n, dark) => {
+      const wind = 1 + 0.25 * Math.sin(t * 0.13), c0 = night ? [70, 72, 84] : dark ? [104, 98, 92] : [150, 146, 140], c1 = night ? [118, 120, 138] : [226, 222, 214];
+      for (let i = n - 1; i >= 0; i--) {
+        const k = ((t * 0.055 + i / n + hash(i * 1.37) * 0.04) % 1), kk = k * k;
+        const rise = (34 * k - 9 * kk) * sc, drift = (4 * k + 30 * kk) * wind * sc;
+        const wob = (Math.sin(t * 0.6 + i * 1.9) * 1.6 + Math.sin(t * 1.3 + i * 0.7) * 0.7) * k * sc;
+        const cx = x + (px - drift + wob) * s, cy = y - (py + rise + Math.sin(t * 0.9 + i) * 0.5 * k * sc) * s;
+        const r = (1.0 + 8.5 * Math.pow(k, 0.75)) * sc * (0.75 + 0.5 * hash(i * 2.11)) * s;
+        const a = 0.62 * Math.pow(1 - k, 1.35) * Math.min(1, k / 0.05) * (0.7 + 0.3 * hash(i * 3.7));
+        if (a < 0.01 || r < 0.5) continue;
+        const m = Math.min(1, k * 2.2), col = c0.map((v, j) => Math.round(v + (c1[j] - v) * m)).join(',');
+        const g = c.createRadialGradient(cx - r * 0.2, cy - r * 0.25, r * 0.1, cx, cy, r);
+        g.addColorStop(0, `rgba(${col},${a.toFixed(3)})`); g.addColorStop(0.6, `rgba(${col},${(a * 0.55).toFixed(3)})`); g.addColorStop(1, `rgba(${col},0)`);
+        c.fillStyle = g; c.beginPath(); c.arc(cx, cy, r, 0, 7); c.fill();
+      }
+    };
     if (kind === 'tower') { // menara air 1921: tangki baja berpaku keling di atas kaki rangka, tangga, selasar, lengan pengisi & selang kanvas
       const L = (x1, y1, x2, y2, col, w) => { c.strokeStyle = T(col); c.lineWidth = Math.max(1, w * s); c.beginPath(); c.moveTo(x + x1 * s, y - y1 * s); c.lineTo(x + x2 * s, y - y2 * s); c.stroke(); };
       const steelD = night ? '#2c3136' : '#4a5258', steel = night ? '#3a4046' : '#646d73', steelL = night ? '#4a5056' : '#8b949a';
@@ -10522,13 +10539,13 @@
       // rumah ketel di kanan + pipa uap & katup
       box(8, 0, 9, 7.5, brickD); box(7.8, 7.3, 9.4, 0.45, stucco); poly([[7.6, 7.75], [17.4, 7.75], [17.4, 9.2]], night ? '#3a221d' : '#7a3a2a');
       winC(9.4, 1.6, 1.6, 2.6); winC(12.4, 1.6, 1.6, 2.6); box(14.8, 0.9, 1.6, 3.4, night ? '#2a1e18' : '#4a3426');
-      L(8, 6.3, 6.4, 6.3, '#5d6366', 0.32); L(16.5, 7.75, 16.5, 10.8, '#5d6366', 0.26); smoke(16.5, 11, 4, 0.45);
+      L(8, 6.3, 6.4, 6.3, '#5d6366', 0.32); L(16.5, 7.75, 16.5, 10.8, '#5d6366', 0.26); plume(16.5, 10.9, 0.34, 12, false);
       // cerobong bata tinggi: alas lebar, pita bata gelap, kepala bermahkota, penangkal petir
       { const cx = 20.2; poly([[cx - 2.4, 0], [cx - 2.4, 4.2], [cx + 2.4, 4.2], [cx + 2.4, 0]], brickD); box(cx - 2.6, 4.2, 5.2, 0.5, stucco);
         poly([[cx - 1.75, 4.7], [cx - 1.05, 37], [cx + 1.05, 37], [cx + 1.75, 4.7]], brick); poly([[cx - 1.75, 4.7], [cx - 1.05, 37], [cx - 0.55, 37], [cx - 0.95, 4.7]], brickL);
         for (const hy of [12, 20, 28]) { const hw = 1.75 - (hy - 4.7) / 32.3 * 0.7; box(cx - hw - 0.05, hy, hw * 2 + 0.1, 0.55, brickD); }
         box(cx - 1.45, 37, 2.9, 0.6, brickD); box(cx - 1.25, 37.6, 2.5, 0.5, brick); box(cx - 1.5, 38.1, 3.0, 0.35, '#2b1a14');
-        L(cx + 1.1, 38.4, cx + 1.1, 40.2, '#4a4f53', 0.08); smoke(cx, 38.8, 8, 1.1);
+        L(cx + 1.1, 38.4, cx + 1.1, 40.2, '#4a4f53', 0.08); plume(cx, 38.6, 1.05, 30, true);
         c.fillStyle = 'rgba(20,14,10,0.28)'; c.fillRect(x + (cx - 1.0) * s, y - 38.1 * s, 2 * s, 2.4 * s); }
       // lampu halaman malam
       if (night) [-17, 6].forEach((lx) => { L(lx, 0, lx, 6, '#3a3f44', 0.15); blob(lx, 6.1, 0.3, '#ffe2a0'); c.save(); c.globalCompositeOperation = 'lighter'; const gg = c.createRadialGradient(x + lx * s, y - 6 * s, 0, x + lx * s, y - 6 * s, 7 * s); gg.addColorStop(0, 'rgba(255,196,110,0.3)'); gg.addColorStop(1, 'rgba(255,196,110,0)'); c.fillStyle = gg; c.fillRect(x + (lx - 7) * s, y - 13 * s, 14 * s, 14 * s); c.restore(); });
