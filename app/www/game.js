@@ -4766,6 +4766,8 @@
   const BRIEF_SHORT = {"3-4": "Bawa Halilintar 320 km/h menembus badai di Lengkung Watu sampai Tanjung Surya. Rel basah: rem jauh lebih awal, ikuti papan REM, waspadai wesel Watu. Badai reda sebelum kota.", "1-1": "Kenali Cakra: bawa pelan dari depo ke Peron 1 Sukamaju dan berhenti tepat di marka.", "1-2": "Bawa Cakra ke Cibening. Bersilang dengan KA 117 di Kali Kecil: tunggu sinyal S2 hijau.", "1-3": "Penumpang pertamamu: jemput di Sumberrejo, antar ke Cibening. Tarik dan rem halus.", "1-4": "Pedagang pasar menunggu di Cibening. Pagi berkabut: awasi sinyal di jembatan.", "1-5": "Hujan deras, rel licin. Berangkat P1–P2, tabur pasir saat selip, rem lebih awal. Ada yang mengutak-atik wesel Watu.", "1-6": "Duel dengan bus Pak Bram: bawa pemudik ke Sukamaju lebih dulu. Bus harus berhenti saat palang turun.", "2-1": "Muat 4 gerbong batu bara tepat di bawah corong, antar ke Tanjung Api. Rangkaian berat: rem jauh lebih awal.", "1-7": "Jalur tunggal: di Krajan masuk sepur belok, berhenti sebelum patok bebas, tunggu KA 112 lewat. Waspadai pohon tumbang.", "2-2": "Kereta inspeksi malam di jalur tua. Semafor: lengan datar berhenti, terangkat aman. Jembatan kayu maks 15 km/h.", "2-3": "Antar panen kopi ke Muara Kelam. Di Liwa mundur pelan, sambung gerbong kopi maks 3 km/h.", "3-1": "Agraveda menarik Argo Senja ke Kota Kencana, hingga 200 km/h. Naikkan pantograf, tuas N di seksi netral, ikuti papan REM.", "3-2": "Guntur di jalur layang hingga 250 km/h. Rem butuh lebih dari 3 km: ikuti papan REM. Berhenti di Padi Raya.", "3-3": "Kilat G1 menembus Bukit Barisan, hingga 200 km/h. Rem lebih panjang: mulai lebih awal. Jemput warga di Lembah Sikai.", "4-1": "Surya 1912 menarik kereta wisata ke Bukit Kopen. Tarik pelan, cegah selip, tiup peluit di perlintasan, isi air di Sendang."};
   function showBrief() {
     const m = MIS, R = ROUTE, f = finalStation();
+    { const ba = $('briefArt'), aid = m.free || m.daily ? m.base : m.id; // latar 3D penuh layar: ilustrasi misi
+      if (ba) { ba.dataset.art = aid; ba.classList.toggle('k3d', K3D.has(aid)); ba.classList.remove('go'); void ba.offsetWidth; ba.classList.add('go'); } }
     $('briefEyebrow').textContent = m.free ? `Mode Bebas · rute Misi ${m.base}` : m.daily ? `Rute Harian · ${m.daily.hari} ${m.daily.label} · Misi ${m.base}` : `${m.chapter} · Misi ${m.id}${m.nick ? ` · “${m.nick}”` : ''}`;
     $('briefTitle').textContent = m.title;
     setAvatar($('briefAvatar'), m.speaker.initials);
@@ -5102,7 +5104,7 @@
   // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
   const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
     btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
-    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnBlurTitle: 'toggle', btnGfxTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
+    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnBlurTitle: 'toggle', btnGfxTitle: 'toggle', btnSettings: 'select', btnSettingsClose: 'back', btnLang: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
   document.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('button, .ticket'); if (!el || el.disabled) return;
     if (el.classList.contains('act')) return;
@@ -5167,6 +5169,14 @@
   }
   { const bg = $('btnGfxTitle'); if (bg) bg.addEventListener('click', () => { // Otomatis → Tinggi (resolusi penuh terkunci) → Hemat (resolusi & efek dikurangi) → Otomatis
     GFX.mode = { auto: 'high', high: 'low', low: 'auto' }[GFX.mode]; store.set('rn.gfx', GFX.mode === 'auto' ? '' : GFX.mode); GFX.lock = GFX.mode !== 'auto'; GFX.q = GFX.mode === 'low' ? 0.6 : 1; GFX.fx = GFX.mode === 'low' ? 1 : 0; GFX.slow = GFX.fast = 0; resize(); syncAudioButtons(); }); }
+  { // panel Pengaturan: musik, suara, getar, grafis, kabur gerak, bahasa
+    const sp = $('settingsPanel'), ob = $('btnSettings');
+    const close = () => { if (!sp || sp.hidden) return; sp.classList.remove('on'); setTimeout(() => { sp.hidden = true; }, 220); if (ob) ob.focus(); };
+    const open = () => { if (!sp) return; syncAudioButtons(); sp.hidden = false; requestAnimationFrame(() => sp.classList.add('on')); const f = $('btnSettingsClose'); if (f) f.focus(); };
+    if (ob) ob.addEventListener('click', open);
+    if ($('btnSettingsClose')) $('btnSettingsClose').addEventListener('click', close);
+    if (sp) { sp.addEventListener('click', (e) => { if (e.target === sp) close(); }); document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sp.hidden) { e.stopPropagation(); close(); } }, true); }
+  }
   { const bb = $('btnBlurTitle'); if (bb) bb.addEventListener('click', () => { MBLUR.on = !MBLUR.on; store.set('rn.mblur', MBLUR.on ? '1' : '0'); syncAudioButtons(); }); }
   { const bh = $('btnHapticTitle'); if (bh) { bh.hidden = !('vibrate' in navigator) && !(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics); bh.addEventListener('click', () => { HAPT.toggle(); syncAudioButtons(); }); } }
   $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });
