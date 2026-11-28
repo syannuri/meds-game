@@ -5104,7 +5104,7 @@
   // bunyi khas menu untuk setiap tombol di layar menu & tombol bulat HUD (klakson/pintu/pasir punya bunyi sendiri)
   const UI_KIND = { btnContinue: 'confirm', btnGo: 'confirm', btnResume: 'confirm', btnNext: 'confirm', btnAgain: 'confirm', btnRestart: 'confirm', spGo: 'confirm',
     btnBack: 'back', btnHowtoBack: 'back', btnQuit: 'back', btnMenu: 'back', btnRotateSkip: 'back',
-    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnBlurTitle: 'toggle', btnGfxTitle: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
+    btnPause: 'pause', btnNewLoco: 'select', btnPanto: 'click', carPrev: 'tab', carNext: 'tab', btnMusicTitle: 'toggle', btnSoundTitle: 'toggle', btnHapticTitle: 'toggle', btnBlurTitle: 'toggle', btnGfxTitle: 'toggle', btnSettings: 'select', btnSettingsClose: 'back', btnLang: 'toggle', btnMusic: 'toggle', btnMute: 'toggle', btnExpert: 'toggle', btnTutSkip: 'toggle', btnView: 'toggle' };
   document.addEventListener('pointerdown', (e) => {
     const el = e.target.closest('button, .ticket'); if (!el || el.disabled) return;
     if (el.classList.contains('act')) return;
@@ -5169,6 +5169,14 @@
   }
   { const bg = $('btnGfxTitle'); if (bg) bg.addEventListener('click', () => { // Otomatis → Tinggi (resolusi penuh terkunci) → Hemat (resolusi & efek dikurangi) → Otomatis
     GFX.mode = { auto: 'high', high: 'low', low: 'auto' }[GFX.mode]; store.set('rn.gfx', GFX.mode === 'auto' ? '' : GFX.mode); GFX.lock = GFX.mode !== 'auto'; GFX.q = GFX.mode === 'low' ? 0.6 : 1; GFX.fx = GFX.mode === 'low' ? 1 : 0; GFX.slow = GFX.fast = 0; resize(); syncAudioButtons(); }); }
+  { // panel Pengaturan: musik, suara, getar, grafis, kabur gerak, bahasa
+    const sp = $('settingsPanel'), ob = $('btnSettings');
+    const close = () => { if (!sp || sp.hidden) return; sp.classList.remove('on'); setTimeout(() => { sp.hidden = true; }, 220); if (ob) ob.focus(); };
+    const open = () => { if (!sp) return; syncAudioButtons(); sp.hidden = false; requestAnimationFrame(() => sp.classList.add('on')); const f = $('btnSettingsClose'); if (f) f.focus(); };
+    if (ob) ob.addEventListener('click', open);
+    if ($('btnSettingsClose')) $('btnSettingsClose').addEventListener('click', close);
+    if (sp) { sp.addEventListener('click', (e) => { if (e.target === sp) close(); }); document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sp.hidden) { e.stopPropagation(); close(); } }, true); }
+  }
   { const bb = $('btnBlurTitle'); if (bb) bb.addEventListener('click', () => { MBLUR.on = !MBLUR.on; store.set('rn.mblur', MBLUR.on ? '1' : '0'); syncAudioButtons(); }); }
   { const bh = $('btnHapticTitle'); if (bh) { bh.hidden = !('vibrate' in navigator) && !(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics); bh.addEventListener('click', () => { HAPT.toggle(); syncAudioButtons(); }); } }
   $('btnMute').addEventListener('click', () => { Sound.init(); Sound.toggleMute(); syncAudioButtons(); });

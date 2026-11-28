@@ -248,11 +248,7 @@
           <button class="btn" id="btnHowto">Panduan</button>
         </div>
         <div class="btn-row sub-row">
-          <button class="btn sm" id="btnMusicTitle">Musik ✓</button>
-          <button class="btn sm" id="btnSoundTitle">Suara ✓</button>
-          <button class="btn sm" id="btnHapticTitle" type="button">Getar ✓</button>
-          <button class="btn sm" id="btnBlurTitle" type="button">Kabur gerak ✓</button>
-          <button class="btn sm" id="btnGfxTitle" type="button">Grafis: Otomatis</button>
+          <button class="btn sm set-open" id="btnSettings" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.6 7.6 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.5 7.5 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 1.7-1l2.4 1 2-3.4zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>Pengaturan</button>
           <button class="btn sm newloco" id="btnNewLoco" type="button"><i>BARU</i>Agraveda</button>
         </div>
       </div>
@@ -265,7 +261,27 @@
         <button class="carrow prev off" id="carPrev" type="button" aria-label="Misi sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="#3a2205" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button class="carrow next" id="carNext" type="button" aria-label="Misi berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="#3a2205" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
     </div>
-    <p class="copyright">© 2026 Prismatix Lab · <a href="privacy.html">Kebijakan privasi</a> · <button class="lang" id="btnLang" type="button">🌐 English</button></p>
+    <div class="settings" id="settingsPanel" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
+      <div class="set-box">
+        <div class="set-head"><h3 id="setTitle">Pengaturan</h3><button class="set-x" id="btnSettingsClose" type="button" aria-label="Tutup pengaturan">✕</button></div>
+        <div class="set-sec">Suara &amp; getar</div>
+        <div class="set-grid">
+          <button class="btn sm" id="btnMusicTitle" type="button">Musik ✓</button>
+          <button class="btn sm" id="btnSoundTitle" type="button">Suara ✓</button>
+          <button class="btn sm" id="btnHapticTitle" type="button">Getar ✓</button>
+        </div>
+        <div class="set-sec">Tampilan</div>
+        <div class="set-grid">
+          <button class="btn sm" id="btnGfxTitle" type="button">Grafis: Otomatis</button>
+          <button class="btn sm" id="btnBlurTitle" type="button">Kabur gerak ✓</button>
+        </div>
+        <div class="set-sec">Bahasa</div>
+        <div class="set-grid">
+          <button class="btn sm" id="btnLang" type="button">🌐 English</button>
+        </div>
+      </div>
+    </div>
+    <p class="copyright">© 2026 Prismatix Lab · <a href="privacy.html">Kebijakan privasi</a></p>
   </section>
 
   <section class="screen" id="screenHowto" hidden>

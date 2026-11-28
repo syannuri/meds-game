@@ -1439,3 +1439,23 @@ body.cabfull #lever { background-color: rgba(8, 12, 18, 0.45); border-radius: 22
 #screenBrief .res-art::after { background: radial-gradient(110% 100% at 0% 50%, rgba(5, 8, 13, 0.86) 0%, rgba(5, 8, 13, 0.55) 38%, rgba(5, 8, 13, 0.12) 64%, rgba(5, 8, 13, 0.35) 100%),
   linear-gradient(180deg, #000 0, #000 5%, rgba(4, 7, 12, 0.35) 5.2%, rgba(0, 0, 0, 0) 28%, rgba(0, 0, 0, 0) 70%, rgba(4, 7, 12, 0.6) 94.8%, #000 95%, #000 100%); }
 #screenBrief h2 { background: linear-gradient(180deg, #ffffff, #f4efe2 55%, #f2c45a); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.55)) drop-shadow(0 10px 22px rgba(0, 0, 0, 0.5)); }
+/* ===== Panel Pengaturan ===== */
+#screenTitle .set-open svg { width: 15px; height: 15px; margin-right: 6px; vertical-align: -3px; }
+.settings { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(3, 6, 10, 0.55); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.22s ease; }
+.settings.on { opacity: 1; }
+.settings[hidden] { display: none; }
+.settings .set-box { position: relative; width: min(440px, 100%); max-height: calc(100% - 8px); overflow: auto; padding: 14px 16px 16px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(16, 20, 28, 0.96), rgba(8, 11, 16, 0.97)); border: 1px solid rgba(255, 190, 80, 0.6);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 24px rgba(255, 170, 60, 0.22), 0 20px 44px rgba(0, 0, 0, 0.55); transform: translateY(10px) scale(0.98); transition: transform 0.22s cubic-bezier(.2,.8,.2,1); }
+.settings.on .set-box { transform: none; }
+.settings .set-box::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: repeating-linear-gradient(180deg, rgba(255, 220, 150, 0.03) 0 1px, transparent 1px 3px); }
+.settings .set-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.settings h3 { margin: 0; font-family: "Cinzel", Georgia, serif; font-weight: 900; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase;
+  background: linear-gradient(180deg, #fff1c4, #f2c45a 55%, #c98a1e); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.settings .set-x { position: relative; z-index: 1; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(243, 238, 225, 0.3); background: rgba(255, 255, 255, 0.06); color: #f3eee1; font-size: 15px; cursor: pointer; }
+.settings .set-sec { margin: 10px 0 6px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: #e2ac45; }
+.settings .set-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 8px; }
+.settings .set-grid .btn { width: 100%; justify-content: center; font-size: 13px; padding: 9px 10px; }
+.settings .set-grid .btn[hidden] { display: none; }
+@media (max-height: 420px) { .settings .set-box { padding: 10px 14px 12px; } .settings .set-sec { margin: 6px 0 4px; } .settings .set-grid .btn { padding: 7px 10px; } }

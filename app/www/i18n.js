@@ -19,6 +19,11 @@
   var D = {
 "Babak 1 · Jawa": "Chapter 1 · Java",
 "Lewati ›": "Skip ›",
+"Pengaturan": "Settings",
+"Suara & getar": "Sound & vibration",
+"Tampilan": "Display",
+"Bahasa": "Language",
+"Tutup pengaturan": "Close settings",
 "belum ada rekor": "no record yet",
 "Sukamaju → Kota Kencana · berangkat 16.50": "Sukamaju → Kota Kencana · departs 16:50",
 "Tiba petang": "Arriving at dusk",
