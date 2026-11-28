@@ -4367,6 +4367,7 @@
   const misArt = (id) => K3D.has(id) ? `<span class="tart k3d" data-art="${id}" aria-hidden="true"></span>` : MIS_ART[id] || TRAIN_CARD[id] ? `<span class="tart" data-art="${id}" aria-hidden="true"><svg viewBox="${MIS_VB[id] || '0 0 120 70'}" preserveAspectRatio="xMidYMid slice">${cardArt(id)}</svg></span>` : '';
   // panorama rute harian: Cakra menarik gerbong; langit & alam mengikuti misi dasar hari ini
   function dailyArt(base) {
+    if (base) return '<span class="tart k3d" data-art="harian" aria-hidden="true"></span>'; // ilustrasi 3D pagi → sore → malam (menu-kartu-harian.jpg)
     const night = base === '1-6' || base === '2-2', storm = base === '1-5' || base === '1-7', sum = base[0] === '2';
     const sky = night ? ['#0d1634', '#3f4d7a'] : storm ? ['#4f6673', '#a7b8bd'] : sum ? ['#6a9aa6', '#e6dcc0'] : ['#f2a65c', '#fde3b0'];
     const hill = sum ? '#4f7a4a' : '#7d9a6a', field = night ? '#1f2c3a' : storm ? '#5e7a5a' : '#8fb070';

@@ -1392,6 +1392,8 @@ body.cabfull #lever { background-color: rgba(8, 12, 18, 0.45); border-radius: 22
 .k3d[data-art="3-3"] { --kart: url(menu-kartu-3-3.jpg); }
 .k3d[data-art="3-4"] { --kart: url(menu-kartu-3-4.jpg); }
 .k3d[data-art="4-1"] { --kart: url(menu-kartu-4-1.jpg); }
+.k3d[data-art="harian"] { --kart: url(menu-kartu-harian.jpg); }
+#screenTitle .tickets li.daily .tart.k3d { background-position: 50% 50%; }
 
 /* ===== Adegan sinematik (video pembuka & penutup misi) ===== */
 #cine { position: fixed; inset: 0; z-index: 90; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; opacity: 0; transition: opacity 0.5s ease; }
