@@ -4853,6 +4853,7 @@
     return { argo: { name: 'Argo Senja', kind: 'Kereta eksekutif' }, hst: { name: 'Kilat', kind: 'Kereta cepat' }, hst2: { name: 'Guntur', kind: 'Kereta cepat' }, steam: { name: 'Surya', kind: 'Kereta wisata' } }[MIS.loco] || { name: 'Cakra', kind: 'Kereta lokal' };
   }
   function startMission() {
+    try { const md = MIS.dusk || MIS.golden ? 1 : 0; for (let v = 0; v < 5; v++) tree3DSprite(v, md); } catch (e) { /* pohon 3D dibuat saat pertama tampil */ } // siapkan pohon 3D di awal agar tidak tersendat saat muncul
     { const ob = $('choiceBox'); if (ob) ob.remove(); }
     ROUTE._bb = null; initGauge();
     rollEvents();
@@ -11021,32 +11022,76 @@
     c.strokeStyle = mix('#7a6238', '#9a7c46', p); c.lineWidth = Math.max(1, 0.18 * ppm);
     c.beginPath(); c.moveTo(sx - 0.1 * ppm, top + 0.6 * ppm); c.quadraticCurveTo(sx - 1.2 * ppm, top + 1.2 * ppm, sx - 1.1 * ppm, top + 2.4 * ppm); c.stroke();
   }
+  // ---------- pohon rindang 3D realistis: dirender sekali ke kanvas (5 varian × siang/senja/malam), lalu ditempel ----------
+  // tajuk = belasan gerombol bola daun; tiap helai daun diberi cahaya dari normal bola (matahari kanan-atas), gelap di bagian bawah/dalam,
+  // kilau tepi di sisi matahari, celah langit; batang berkulit kayu beralur dengan dahan utama yang masuk ke tajuk
+  const TREE3D = {}, TREE_U = 150;
+  function tree3DSprite(v, mode) {
+    const key = v + ':' + mode; if (TREE3D[key]) return TREE3D[key];
+    const U = TREE_U, SW = Math.round(2.8 * U), SH = Math.round(3.7 * U), SX = SW / 2, SY = Math.round(1.38 * U);
+    const cv = document.createElement('canvas'); cv.width = SW; cv.height = SH; const g = cv.getContext('2d');
+    let sd = 1 + v * 97.13; const rnd = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+    const P = mode === 2 ? { bD: '#120e0a', bL: '#2a2219', d: [10, 22, 15], m: [22, 40, 28], l: [40, 64, 46], h: [64, 92, 74], rim: [120, 150, 190] }
+      : mode === 1 ? { bD: '#2a1e14', bL: '#9a6a42', d: [34, 46, 26], m: [78, 100, 44], l: [150, 160, 66], h: [246, 214, 128], rim: [255, 200, 120] }
+      : { bD: '#2c2219', bL: '#7a6046', d: [26, 54, 30], m: [60, 112, 50], l: [126, 178, 76], h: [214, 236, 150], rim: [240, 248, 200] };
+    const lerp3 = (a, b, t) => a.map((x, k) => Math.round(x + (b[k] - x) * t));
+    const shadeCol = (t) => (t < 0.33 ? lerp3(P.d, P.m, t / 0.33) : t < 0.72 ? lerp3(P.m, P.l, (t - 0.33) / 0.39) : lerp3(P.l, P.h, (t - 0.72) / 0.28));
+    const Lx = 0.55, Ly = -0.72, Lz = 0.42;
+    // batang meruncing dengan akar melebar, alur kulit kayu
+    const trunkTop = SY + 0.5 * U, bW = 0.17 * U, tW = 0.08 * U;
+    const tg = g.createLinearGradient(SX - bW, 0, SX + bW, 0); tg.addColorStop(0, P.bD); tg.addColorStop(0.65, P.bL); tg.addColorStop(1, P.bD);
+    g.fillStyle = tg; g.beginPath(); g.moveTo(SX - bW * 1.5, SH); g.quadraticCurveTo(SX - bW, SH - 0.25 * U, SX - tW, trunkTop); g.lineTo(SX + tW, trunkTop); g.quadraticCurveTo(SX + bW, SH - 0.25 * U, SX + bW * 1.6, SH); g.closePath(); g.fill();
+    g.lineWidth = 1.2; for (let k = 0; k < 22; k++) { const f = (k / 21) * 2 - 1; g.strokeStyle = k % 3 ? 'rgba(0,0,0,0.22)' : 'rgba(255,235,200,0.12)'; g.beginPath();
+      for (let y = SH; y > trunkTop; y -= 6) { const w = tW + (bW - tW) * ((y - trunkTop) / (SH - trunkTop)), xx = SX + f * w * 0.9 + Math.sin(y * 0.09 + k) * 1.5; y === SH ? g.moveTo(xx, y) : g.lineTo(xx, y); } g.stroke(); }
+    // dahan utama & ranting: dari pucuk batang menyebar ke gerombol
+    const limbs = []; for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + (k - 2.5) * 0.36 + (rnd() - 0.5) * 0.2, len = (0.38 + rnd() * 0.3) * U; limbs.push([SX + Math.cos(a) * len * 1.2, trunkTop - 0.1 * U + Math.sin(a) * len * 0.85]); }
+    g.lineCap = 'round';
+    for (const [ex, ey] of limbs) { for (let w = 3; w >= 1; w--) { g.strokeStyle = w === 1 ? P.bL : P.bD; g.lineWidth = w * 0.022 * U; g.beginPath(); g.moveTo(SX, trunkTop + 0.05 * U); g.quadraticCurveTo(SX + (ex - SX) * 0.25, ey + (trunkTop - ey) * 0.55, ex, ey); g.stroke(); }
+      for (let r = 0; r < 3; r++) { const rx = ex + (rnd() - 0.5) * 0.5 * U, ry = ey - rnd() * 0.3 * U; g.strokeStyle = P.bD; g.lineWidth = 0.012 * U; g.beginPath(); g.moveTo(ex, ey); g.lineTo(rx, ry); g.stroke(); } }
+    // gerombol tajuk berbentuk kubah lebar, diurutkan dari belakang ke depan
+    const cl = [], NC = 13 + Math.floor(rnd() * 4);
+    for (let k = 0; k < NC; k++) { const a = rnd() * Math.PI * 2, rr = Math.sqrt(rnd()); cl.push({ x: Math.cos(a) * rr * 0.95 * U, y: (Math.sin(a) * rr * 0.62 - 0.1) * U, z: (rnd() - 0.5) * 0.8, r: (0.3 + rnd() * 0.2) * U }); }
+    cl.push({ x: 0, y: -0.25 * U, z: 0.3, r: 0.48 * U }); cl.sort((a, b) => a.z - b.z || b.y - a.y);
+    for (const C of cl) {
+      const cx = SX + C.x, cy = SY + C.y, R = C.r;
+      // isian gerombol (oklusi) sedikit lebih kecil dari helai terluar agar tepi tajuk bergerigi, bukan garis bola
+      g.fillStyle = `rgb(${lerp3(P.d, P.m, 0.35)})`; g.beginPath(); for (let q = 0; q < 6; q++) { const aa = q / 6 * 6.283 + rnd(), r2 = R * (0.5 + rnd() * 0.2); g.moveTo(cx + Math.cos(aa) * R * 0.3 + r2, cy + Math.sin(aa) * R * 0.28); g.arc(cx + Math.cos(aa) * R * 0.3, cy + Math.sin(aa) * R * 0.28, r2, 0, 7); } g.fill();
+      // helai daun: normal gabungan bola gerombol + kubah tajuk, cahaya kanan-atas, gelap di bawah tajuk
+      const NL = Math.round(230 * (R / (0.4 * U)) ** 2), leaves = [];
+      for (let k = 0; k < NL; k++) { let nx, ny; do { nx = rnd() * 2 - 1; ny = rnd() * 2 - 1; } while (nx * nx + ny * ny > 1); const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+        const depth = 0.78 + rnd() * 0.32; leaves.push([nx, ny, nz, depth, rnd()]); }
+      leaves.sort((a, b) => a[2] * a[3] - b[2] * b[3]);
+      for (const [nx, ny, nz, dep, rr] of leaves) {
+        const px = C.x + nx * R * dep, py = C.y + ny * R * dep * 0.9, gx = px / (1.1 * U), gy2 = (py + 0.1 * U) / (0.8 * U), gz = Math.sqrt(Math.max(0.05, 1 - gx * gx - gy2 * gy2));
+        let Nx = 0.55 * nx + 0.45 * gx, Ny = 0.55 * ny + 0.45 * gy2, Nz = 0.55 * nz + 0.45 * gz; const nl = Math.hypot(Nx, Ny, Nz) || 1; Nx /= nl; Ny /= nl; Nz /= nl;
+        const lit = Math.max(0, Nx * Lx + Ny * Ly + Nz * Lz), ao = Math.min(1, Math.max(0.32, 1.05 - Math.max(0, gy2) * 0.75)) * (0.6 + 0.4 * nz);
+        const t = Math.min(1, Math.max(0, 0.06 + Math.pow(lit, 0.9) * ao * 1.02 + (rr - 0.5) * 0.16 + C.z * 0.08));
+        const col = shadeCol(t), sz = (0.03 + rr * 0.026) * U;
+        g.fillStyle = `rgb(${col})`; g.beginPath(); g.ellipse(SX + px, SY + py, sz, sz * 0.55, rr * 6.283, 0, 7); g.fill();
+      }
+      // kilau tepi helai yang menangkap matahari
+      for (let k = 0; k < NL * 0.08; k++) { const aa = -0.25 - rnd() * 1.5, rr = R * (0.8 + rnd() * 0.2), lx = cx + Math.cos(aa) * rr, ly = cy + Math.sin(aa) * rr * 0.9;
+        g.fillStyle = `rgba(${P.rim},${(0.35 + rnd() * 0.4).toFixed(2)})`; g.beginPath(); g.ellipse(lx, ly, 0.018 * U, 0.009 * U, rnd() * 6.283, 0, 7); g.fill(); }
+    }
+    // celah langit kecil di tepi tajuk
+    g.globalCompositeOperation = 'destination-out';
+    for (let k = 0; k < 12; k++) { const a = rnd() * 6.283, rr = (0.8 + rnd() * 0.25) * U, hx = SX + Math.cos(a) * rr * 1.05, hy = SY + (Math.sin(a) * rr * 0.68 - 0.1 * U); g.beginPath(); g.ellipse(hx, hy, (0.03 + rnd() * 0.05) * U, (0.02 + rnd() * 0.035) * U, rnd() * 3, 0, 7); g.fill(); }
+    g.globalCompositeOperation = 'source-over';
+    // dahan yang tampak di celah bawah tajuk
+    g.strokeStyle = P.bD; g.lineWidth = 0.02 * U; for (const [ex, ey] of limbs.slice(0, 3)) { g.beginPath(); g.moveTo(SX, trunkTop + 0.04 * U); g.quadraticCurveTo(SX + (ex - SX) * 0.3, trunkTop - 0.05 * U, SX + (ex - SX) * 0.45, trunkTop - 0.18 * U); g.stroke(); }
+    return (TREE3D[key] = { cv, SX, SY, U, SW, SH });
+  }
   function treeBroadleaf(c, V, sx, base, i, ppm, p) {
-    // pohon rindang (mangga/trembesi): batang meruncing bercabang, tajuk dari banyak gerombol daun tak beraturan,
-    // bagian bawah & sisi jauh dari matahari gelap, sisi matahari terang, celah langit di antara dahan
+    // pohon rindang (mangga/trembesi) 3D: sprite berpencahayaan per helai daun; ukuran & posisi sama dengan versi lama
     const night = V.night, warm = MIS.dusk && !night;
     const cr = (3.4 + hash(i + 7) * 1.6) * ppm, ht = cr * 1.35 + (1.2 + hash(i + 6) * 1.2) * ppm, cy = base - ht;
-    const barkD = night ? '#14100c' : mix('#2a2018', '#3c2e20', p), barkL = night ? '#241c14' : warm ? '#a8744a' : mix('#5e4a34', '#7c6246', p);
-    const tg = c.createLinearGradient(sx - 0.4 * ppm, 0, sx + 0.4 * ppm, 0); tg.addColorStop(0, barkD); tg.addColorStop(1, barkL);
-    c.fillStyle = tg; c.beginPath(); c.moveTo(sx - 0.42 * ppm, base); c.quadraticCurveTo(sx - 0.2 * ppm, base - ht * 0.2, sx - 0.16 * ppm, cy + cr * 0.55); c.lineTo(sx + 0.2 * ppm, cy + cr * 0.55); c.quadraticCurveTo(sx + 0.22 * ppm, base - ht * 0.2, sx + 0.46 * ppm, base); c.closePath(); c.fill();
-    c.strokeStyle = tg; c.lineCap = 'round';
-    for (const [dx, dy, w] of [[-0.62, 0.12, 0.2], [0.66, 0.06, 0.2], [-0.25, -0.3, 0.15], [0.3, -0.25, 0.15]]) { c.lineWidth = w * ppm; c.beginPath(); c.moveTo(sx, cy + cr * 0.85); c.quadraticCurveTo(sx + dx * cr * 0.4, cy + cr * 0.5, sx + dx * cr, cy + dy * cr); c.stroke(); }
-    c.lineCap = 'butt';
-    const dk = night ? '#0e1c14' : mix('#17331e', '#214a28', p), md = night ? '#182a1e' : mix('#2a5630', '#3a763c', p), lt = night ? '#20362a' : warm ? '#6f9a44' : mix('#58924a', '#76b25a', p), hi = night ? '#2a4434' : warm ? '#b9b45a' : mix('#8cbc66', '#a8d47a', p);
-    // gerombol daun: tersebar membentuk kubah lebar, lebih rapat di tepi atas
-    const N = 20, cl = [];
-    for (let k = 0; k < N; k++) { const a = hash(i * 3.1 + k * 1.7) * Math.PI * 2, rr = Math.sqrt(hash(i * 5.3 + k * 2.3)) * 0.95, x = Math.cos(a) * rr * 1.12, y = Math.sin(a) * rr * 0.78 - 0.08; cl.push([x, y, 0.3 + hash(i + k * 3.7) * 0.22, hash(k * 9.1 + i) * 3]); }
-    cl.sort((a, b) => b[1] - a[1]);
-    const blob = (x, y, r, rot, col) => { c.fillStyle = col; c.beginPath(); c.ellipse(sx + x * cr, cy + y * cr, r * cr, r * cr * 0.8, rot, 0, 7); c.fill(); };
-    for (const [x, y, r, rot] of cl) blob(x - 0.05, y + 0.1, r * 1.05, rot, dk);
-    for (const [x, y, r, rot] of cl) blob(x + 0.04, y - 0.03, r * 0.8, rot, md);
-    for (const [x, y, r, rot] of cl) { const lit = x * 0.6 - y; if (lit > -0.15) blob(x + 0.12, y - 0.12, r * (0.36 + 0.2 * Math.min(1, lit + 0.3)), rot, lt); }
-    for (const [x, y, r, rot] of cl) { const lit = x * 0.6 - y; if (lit > 0.55) blob(x + 0.18, y - 0.18, r * 0.15, rot, hi); }
-    // butir daun & celah gelap kecil supaya tajuk tidak tampak seperti balon
-    for (let k = 0; k < 16; k++) { const a = hash(i * 9 + k) * 6.28, rr = Math.sqrt(hash(i * 5 + k)) * 0.95, x = sx + Math.cos(a) * rr * cr * 1.1, y = cy + (Math.sin(a) * rr * 0.78 - 0.08) * cr, s = clamp(0.09 * ppm, 0.7, 2.2);
-      c.fillStyle = k % 3 ? (night ? 'rgba(80,110,90,0.18)' : warm ? 'rgba(240,220,150,0.32)' : 'rgba(210,240,160,0.4)') : 'rgba(8,22,12,0.3)'; c.beginPath(); c.arc(x, y, s * (k % 3 ? 1 : 1.5), 0, 7); c.fill(); }
-    if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.5; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.1 * ppm); c.beginPath(); c.ellipse(sx + 0.05 * cr, cy - 0.08 * cr, cr * 1.05, cr * 0.8, 0, Math.PI * 1.4, Math.PI * 1.95); c.stroke(); c.restore(); }
+    const T = tree3DSprite(Math.floor(hash(i * 2.71) * 5), night ? 2 : warm || MIS.golden ? 1 : 0), k = (cr / T.U) * 1.02;
+    const srcH = Math.min(T.SH, T.SY + (base - cy) / k);
+    if (srcH <= 0 || k * T.SW < 2) return;
+    c.drawImage(T.cv, 0, 0, T.SW, srcH, sx - T.SX * k, cy - T.SY * k, T.SW * k, srcH * k);
+    if (V.rimA > 0.05) { c.save(); c.globalAlpha = V.rimA * 0.35; c.strokeStyle = V.rim; c.lineWidth = Math.max(1, 0.08 * ppm); c.beginPath(); c.ellipse(sx + 0.05 * cr, cy - 0.12 * cr, cr * 1.0, cr * 0.72, 0, Math.PI * 1.45, Math.PI * 1.95); c.stroke(); c.restore(); }
   }
+
 
   // kawat aliran atas 25 kV: tiang baja tiap 50 m, lengan kantilever, kawat penggantung melengkung & kawat kontak lurus
   function drawCatenary(V) {
@@ -17268,6 +17313,7 @@ c.restore();
     setShape: (k) => { LOCO_SHAPE = k; },
     drawGarage: (c, w, h) => { const kw = W, kh = H; W = w; H = h; try { drawGarage(c, w, h, 0); } finally { W = kw; H = kh; } },
     drawLandmark: (c, kind, x, y, sc, o) => drawLandmark(c, kind, x, y, sc, o || {}),
+    tree3D: (v, m) => tree3DSprite(v, m).cv,
     drawPax: (c, x, y, sc, p) => paxDraw(c, x, y, sc, p, 0),
     select: (id) => selectMission(id),
   };
